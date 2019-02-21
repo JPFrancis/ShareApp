@@ -187,6 +187,7 @@ class ItemEditState extends State<ItemEdit> {
                           onPressed: () {
                             setState(() {
                               goToLastScreen();
+                              deleteItem();
                               debugPrint("Delete button clicked");
                             });
                           },
@@ -199,6 +200,12 @@ class ItemEditState extends State<ItemEdit> {
             ),
           ),
         ));
+  }
+
+  void deleteItem() {
+    if (item.id != null) {
+      Firestore.instance.collection('items').document(item.id).delete();
+    }
   }
 
   void saveItem() async {
