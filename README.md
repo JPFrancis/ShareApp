@@ -1,3 +1,3 @@
-# SharAapp
+# Shareapp
 
 Share App
