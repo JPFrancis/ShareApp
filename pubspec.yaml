@@ -16,6 +16,8 @@ dependencies:
 
   cloud_firestore:
 
+  firebase_storage:
+
   flutter:
     sdk: flutter
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shareapp/item.dart';
 import 'package:shareapp/item_edit.dart';
+import 'package:shareapp/item_detail.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ItemList extends StatefulWidget {
@@ -59,7 +60,8 @@ class ItemListState extends State<ItemList> {
                         title: Text(ds['name'], style: TextStyle(fontWeight: FontWeight.bold),),
                         subtitle: Text(ds['description']),
                         onTap: () {
-                          navigateToEdit(Item(ds['name'], ds['description'], ds['type'], ds['id']));
+                          //navigateToEdit(Item.fromMap(ds.data, ds['id']));
+                          navigateToDetail(Item.fromMap(ds.data, ds['id']));
                           debugPrint("ListTile Tapped");
                         },
                         trailing: IconButton(
@@ -79,7 +81,12 @@ class ItemListState extends State<ItemList> {
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           debugPrint('FAB (add item) clicked');
-          navigateToEdit(Item('', '', true, null));
+          navigateToEdit(new Item(
+              id: null,
+              name: "",
+              description: "",
+              type: true));
+          //navigateToEdit(Item({null, '', '', true}));
           //navigateToDetail(Item('', '', 2), 'Add Item');
 
         },
@@ -94,12 +101,23 @@ class ItemListState extends State<ItemList> {
     );
   }
 
-  // title should be "Add" or "Edit"
   void navigateToEdit(Item item) async {
     debugPrint('navToEdit function called');
 
     bool result = await Navigator.push(context, MaterialPageRoute(builder: (context) {
       return ItemEdit(item);
+    }));
+    /*
+    Navigator.push(context, MaterialPageRoute(builder: (context) {
+      return ItemEdit(item, title);
+    }));*/
+  }
+
+  void navigateToDetail(Item item) async {
+    debugPrint('navToDetail function called');
+
+    bool result = await Navigator.push(context, MaterialPageRoute(builder: (context) {
+      return ItemDetail(item);
     }));
     /*
     Navigator.push(context, MaterialPageRoute(builder: (context) {

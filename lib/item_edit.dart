@@ -16,15 +16,18 @@ class ItemEdit extends StatefulWidget {
 
 enum ItemType { tool, leisure }
 
+/// We initially assume we are in editing mode
 class ItemEditState extends State<ItemEdit> {
   Item item;
-  //var itemVar = new Item();
-  String editStatus = "Edit"; //
+  String appBarText = "Edit"; // Either 'Edit' or 'Add'. Prepended to " Item"
+  String updateButton = "Update"; // 'Update' if edit, 'Add' if adding
+  bool isEdit = true; // true if on editing mode, false if on adding mode
 
   TextEditingController nameController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
 
   ItemType currSelected;
+
   // = ItemType.tool;
 
   ItemEditState(this.item);
@@ -32,15 +35,13 @@ class ItemEditState extends State<ItemEdit> {
   @override
   Widget build(BuildContext context) {
     TextStyle textStyle = Theme.of(context).textTheme.title;
-    String updateButton = "Save"; // 'Save' if edit, 'Add' if adding
-    bool isEdit = true; // true if on editing mode, false if on adding mode
 
     nameController.text = item.name;
     descriptionController.text = item.description;
 
     if (item.id == null) {
       isEdit = false;
-      editStatus = "Add";
+      appBarText = "Add";
       updateButton = "Add";
     }
 
@@ -57,7 +58,7 @@ class ItemEditState extends State<ItemEdit> {
         },
         child: Scaffold(
           appBar: AppBar(
-            title: Text(editStatus + ' Item'),
+            title: Text(appBarText + ' Item'),
             leading: IconButton(
               icon: Icon(Icons.arrow_back),
               onPressed: () {
@@ -186,7 +187,6 @@ class ItemEditState extends State<ItemEdit> {
                           ),
                           onPressed: () {
                             setState(() {
-                              goToLastScreen();
                               deleteItem();
                               debugPrint("Delete button clicked");
                             });
@@ -203,6 +203,8 @@ class ItemEditState extends State<ItemEdit> {
   }
 
   void deleteItem() {
+    goToLastScreen();
+
     if (item.id != null) {
       Firestore.instance.collection('items').document(item.id).delete();
     }
@@ -213,10 +215,9 @@ class ItemEditState extends State<ItemEdit> {
 
     // new item
     if (item.id == null) {
-
       // insert your data ({ 'group_name'...) instead of `data` here
       final DocumentReference documentReference =
-      await Firestore.instance.collection("items").add({
+          await Firestore.instance.collection("items").add({
         'description': item.description,
         'id': 'temp',
         'name': item.name,
@@ -226,7 +227,10 @@ class ItemEditState extends State<ItemEdit> {
       // update the newly added item with the updated doc id
       final String returnedID = documentReference.documentID;
 
-      Firestore.instance.collection('items').document(returnedID).updateData({ 'id': returnedID});
+      Firestore.instance
+          .collection('items')
+          .document(returnedID)
+          .updateData({'id': returnedID});
 
       // another way of adding new item. The above is better because
       // you can get the doc id of the newly added item
