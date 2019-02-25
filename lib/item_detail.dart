@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shareapp/item.dart';
 import 'package:shareapp/item_edit.dart';
+import 'dart:io';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:path/path.dart' as path;
 
 class ItemDetail extends StatefulWidget {
   Item item;
@@ -17,6 +20,8 @@ class ItemDetailState extends State<ItemDetail> {
   Item item;
   String appBarTitle = "Item Details";
   String strType;
+  File image;
+  String url;
 
   ItemDetailState(this.item);
 
@@ -32,6 +37,8 @@ class ItemDetailState extends State<ItemDetail> {
     } else {
       strType = "Leisure";
     }
+
+    getImage();
 
     return WillPopScope(
         onWillPop: () {
@@ -116,6 +123,17 @@ class ItemDetailState extends State<ItemDetail> {
                       )
                   ),
                 ),
+
+                // fourth element
+                Padding(
+                  padding: EdgeInsets.only(
+                      top: 15.0, bottom: 15.0, left: 10.0, right: 10.0),
+                  child: Container(
+                    child:
+                    image == null ? Text('Select an image') : Image.network(url),
+                    //Image.file(image, height: 300.0, width: 300.0),
+                  ),
+                ),
               ],
             ),
           ),
@@ -132,6 +150,17 @@ class ItemDetailState extends State<ItemDetail> {
     Navigator.push(context, MaterialPageRoute(builder: (context) {
       return ItemEdit(item, title);
     }));*/
+  }
+
+  void getImage() async {
+    StorageReference ref = FirebaseStorage.instance.ref().child(item.id);
+
+    var url = await ref.getDownloadURL();
+    setState(() {
+      this.url = url;
+
+      image = Image.network(url) as File;
+    });
   }
 
   void goToLastScreen() {

@@ -2,37 +2,57 @@ import 'package:flutter/material.dart';
 import 'package:shareapp/item.dart';
 import 'package:shareapp/item_edit.dart';
 import 'package:shareapp/item_detail.dart';
+import 'package:shareapp/auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ItemList extends StatefulWidget {
+  BaseAuth auth;
+  VoidCallback onSignOut;
+  ItemList({this.auth, this.onSignOut});
+
   @override
   State<StatefulWidget> createState() {
-    return ItemListState();
+    return ItemListState(this.auth, this.onSignOut);
   }
 }
 
 class ItemListState extends State<ItemList> {
+  BaseAuth auth;
+  VoidCallback onSignOut;
   List<Item> itemList;
   int count = 0;
 
+  ItemListState(this.auth, this.onSignOut);
+
   @override
   Widget build(BuildContext context) {
+
+    void signOut() async {
+      try {
+        await auth.signOut();
+        widget.onSignOut();
+      } catch (e) {
+        print(e);
+      }
+    }
     //count = itemList.length;
 
     // Scaffold is like a layout XML file in regular Android.
     // Set position of different widgets/views/buttons etc here
     return Scaffold(
       appBar: AppBar(
-        title: Text('Items List'), /*
+        title: Text('Items List'),
         actions: <Widget>[
           IconButton(
-            icon: Icon(Icons.refresh),
-            tooltip: 'Refresh',
+            icon: Icon(Icons.exit_to_app),
+            tooltip: 'Sign out',
             onPressed: () {
-              debugPrint('refresh was pressed');
+              signOut();
+              //goToLastScreen();
+              debugPrint('signout was pressed');
             },
         ),]
-          */
       ),
 
       body: StreamBuilder(
@@ -68,6 +88,7 @@ class ItemListState extends State<ItemList> {
                             icon: Icon(Icons.delete),
                             onPressed: () {
                               debugPrint('delete was pressed');
+                              FirebaseStorage.instance.ref().child(ds['id']).delete();
                               Firestore.instance.collection('items').document(
                                   ds['id']).delete();
                             })
@@ -123,6 +144,10 @@ class ItemListState extends State<ItemList> {
     Navigator.push(context, MaterialPageRoute(builder: (context) {
       return ItemEdit(item, title);
     }));*/
+  }
+
+  void goToLastScreen() {
+    Navigator.pop(context);
   }
 }
 

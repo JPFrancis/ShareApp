@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:shareapp/item_list.dart';
-import 'package:shareapp/item_edit.dart';
+import 'package:shareapp/auth.dart';
+import 'package:shareapp/root_page.dart';
 
 void main() => runApp(MyApp());
 
@@ -14,8 +14,8 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.red,
       ),
-      home: ItemList(),
-      //home: ItemEdit(),
+      //home: ItemList(),
+      home: new RootPage(auth: new Auth()),
     );
   }
 }

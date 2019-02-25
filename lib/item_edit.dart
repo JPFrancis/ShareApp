@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:shareapp/item.dart';
+import 'package:shareapp/image_detail.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:path/path.dart' as path;
+import 'package:firebase_core/firebase_core.dart';
+import 'dart:io';
+import 'dart:async';
 
 class ItemEdit extends StatefulWidget {
   Item item;
@@ -19,12 +26,16 @@ enum ItemType { tool, leisure }
 /// We initially assume we are in editing mode
 class ItemEditState extends State<ItemEdit> {
   Item item;
+  File image;
+  String imageFileName;
+  //List images;
   String appBarText = "Edit"; // Either 'Edit' or 'Add'. Prepended to " Item"
   String updateButton = "Update"; // 'Update' if edit, 'Add' if adding
   bool isEdit = true; // true if on editing mode, false if on adding mode
 
   TextEditingController nameController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
+  BuildContext scaffoldContext;
 
   ItemType currSelected;
 
@@ -147,7 +158,67 @@ class ItemEditState extends State<ItemEdit> {
                   ),
                 ),
 
-                // fourth element, save and delete buttons
+                // fourth element, add image button
+                Padding(
+                  padding: EdgeInsets.only(
+                      top: 15.0, bottom: 15.0, left: 10.0, right: 10.0),
+                  child: Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: RaisedButton(
+                          shape: new RoundedRectangleBorder(
+                              borderRadius: new BorderRadius.circular(5.0)),
+                          color: Colors.blue,
+                          textColor: Colors.white,
+                          child: Text(
+                            updateButton + " Image",
+                            textScaleFactor: 1.25,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              getImage();
+                              //saveItem();
+                              //debugPrint("Save button clicked");
+                            });
+                          },
+                        ),
+                      ),
+                      Container(
+                        width: 15.0,
+                      ),
+                      Expanded(
+                        child: RaisedButton(
+                          shape: new RoundedRectangleBorder(
+                              borderRadius: new BorderRadius.circular(5.0)),
+                          color: Colors.blue,
+                          textColor: Colors.white,
+                          child: Text(
+                            "View Image",
+                            textScaleFactor: 1.25,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              debugPrint("Nav to image button pressed");
+
+                              if (image != null) {
+                                navigateToImageDetail(image);
+                              }
+                            });
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // fifth element: selected picture
+                Container(
+                  child:
+                      image == null ? Text('Select an image') :
+                      Image.file(image, height: 300.0, width: 300.0),
+                ),
+
+                // sixth element, save and delete buttons
                 Padding(
                   padding: EdgeInsets.only(
                       top: 15.0, bottom: 15.0, left: 10.0, right: 10.0),
@@ -232,6 +303,8 @@ class ItemEditState extends State<ItemEdit> {
           .document(returnedID)
           .updateData({'id': returnedID});
 
+      uploadImage(returnedID);
+
       // another way of adding new item. The above is better because
       // you can get the doc id of the newly added item
       /*
@@ -266,7 +339,60 @@ class ItemEditState extends State<ItemEdit> {
     item.type = newType;
   }
 
+  void getImage() async {
+    var newImage = await ImagePicker.pickImage(source: ImageSource.gallery);
+    imageFileName = path.basename(newImage.path);
+
+    setState(() {
+      image = newImage;
+    });
+  }
+
+  void uploadImage(String fileName) async {
+    StorageReference storageRef = FirebaseStorage.instance.ref().child(fileName);
+    StorageUploadTask task = storageRef.putFile(image);
+
+    /*
+    String fileName = image.toString() + ".jpg";
+    final ref = FirebaseStorage.instance.ref().child(fileName);
+
+    ref.putFile(image);
+
+    var url = await ref.getDownloadURL() as String;
+    return url;*/
+  }
+
+  void deleteImage(String fileName) async {
+    FirebaseStorage.instance.ref().child(fileName).delete();
+  }
+
+  void navigateToImageDetail(File file) async {
+    debugPrint('navigateToImageDetail function called');
+
+    bool result =
+        await Navigator.push(context, MaterialPageRoute(builder: (context) {
+      return ImageDetail(file);
+    }));
+    /*
+    Navigator.push(context, MaterialPageRoute(builder: (context) {
+      return ItemEdit(item, title);
+    }));*/
+  }
+
   void goToLastScreen() {
     Navigator.pop(context);
+  }
+
+  void showSnackBar(String item) {
+    var message = SnackBar(
+      content: Text("$item was pressed"),
+      action: SnackBarAction(
+          label: "Undo",
+          onPressed: () {
+            debugPrint('Performing dummy UNDO operation');
+          }),
+    );
+
+    Scaffold.of(scaffoldContext).showSnackBar(message);
   }
 }
