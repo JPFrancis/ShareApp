@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shareapp/primary_button.dart';
 import 'package:shareapp/auth.dart';
+import 'dart:convert';
+import 'package:flutter_facebook_login/flutter_facebook_login.dart';
+import 'package:http/http.dart' as http;
 
 class LoginPage extends StatefulWidget {
   LoginPage({Key key, this.title, this.auth, this.onSignIn}) : super(key: key);
@@ -13,10 +16,7 @@ class LoginPage extends StatefulWidget {
   _LoginPageState createState() => new _LoginPageState();
 }
 
-enum FormType {
-  login,
-  register
-}
+enum FormType { login, register }
 
 class _LoginPageState extends State<LoginPage> {
   static final formKey = new GlobalKey<FormState>();
@@ -35,6 +35,38 @@ class _LoginPageState extends State<LoginPage> {
     return false;
   }
 
+  void initFbLogin() async {
+    try {
+      String userId = await widget.auth.loginFB();
+
+      setState(() {
+        _authHint = 'Signed In\n\nUser id: $userId';
+      });
+      widget.onSignIn();
+    } catch (e) {
+      setState(() {
+        _authHint = 'Sign In Error\n\n${e.toString()}';
+      });
+      print(e);
+    }
+  }
+
+  void initGoogleLogin() async {
+    try {
+      String userId = await widget.auth.logInGoogle();
+
+      setState(() {
+        _authHint = 'Signed In\n\nUser id: $userId';
+      });
+      widget.onSignIn();
+    } catch (e) {
+      setState(() {
+        _authHint = 'Sign In Error\n\n${e.toString()}';
+      });
+      print(e);
+    }
+  }
+
   void validateAndSubmit() async {
     if (validateAndSave()) {
       try {
@@ -45,8 +77,7 @@ class _LoginPageState extends State<LoginPage> {
           _authHint = 'Signed In\n\nUser id: $userId';
         });
         widget.onSignIn();
-      }
-      catch (e) {
+      } catch (e) {
         setState(() {
           _authHint = 'Sign In Error\n\n${e.toString()}';
         });
@@ -77,14 +108,16 @@ class _LoginPageState extends State<LoginPage> {
 
   List<Widget> usernameAndPassword() {
     return [
-      padded(child: new TextFormField(
+      padded(
+          child: new TextFormField(
         key: new Key('email'),
         decoration: new InputDecoration(labelText: 'Email'),
         autocorrect: false,
         validator: (val) => val.isEmpty ? 'Email can\'t be empty.' : null,
         onSaved: (val) => _email = val,
       )),
-      padded(child: new TextFormField(
+      padded(
+          child: new TextFormField(
         key: new Key('password'),
         decoration: new InputDecoration(labelText: 'Password'),
         obscureText: true,
@@ -103,13 +136,11 @@ class _LoginPageState extends State<LoginPage> {
               key: new Key('login'),
               text: 'Login',
               height: 44.0,
-              onPressed: validateAndSubmit
-          ),
+              onPressed: validateAndSubmit),
           new FlatButton(
               key: new Key('need-account'),
               child: new Text("Need an account? Register"),
-              onPressed: moveToRegister
-          ),
+              onPressed: moveToRegister),
         ];
       case FormType.register:
         return [
@@ -117,30 +148,43 @@ class _LoginPageState extends State<LoginPage> {
               key: new Key('register'),
               text: 'Create an account',
               height: 44.0,
-              onPressed: validateAndSubmit
-          ),
+              onPressed: validateAndSubmit),
           new FlatButton(
               key: new Key('need-login'),
               child: new Text("Have an account? Login"),
-              onPressed: moveToLogin
-          ),
+              onPressed: moveToLogin),
         ];
     }
     return null;
   }
 
-  Widget hintText() {
-    return new Container(
-      //height: 80.0,
-        padding: const EdgeInsets.all(32.0),
-        child: new Text(
-            _authHint,
-            key: new Key('hint'),
-            style: new TextStyle(fontSize: 18.0, color: Colors.grey),
-            textAlign: TextAlign.center)
-    );
+  List<Widget> goToFacebookLogin() {
+    return [
+      new RaisedButton(
+        child: Text("Login with Facebook"),
+        onPressed: () => initFbLogin(),
+      ),
+    ];
   }
 
+  List<Widget> googleLogin() {
+    return [
+      new RaisedButton(
+        child: Text("Login with Google"),
+        onPressed: () => initGoogleLogin(),
+      ),
+    ];
+  }
+
+  Widget hintText() {
+    return new Container(
+        //height: 80.0,
+        padding: const EdgeInsets.all(32.0),
+        child: new Text(_authHint,
+            key: new Key('hint'),
+            style: new TextStyle(fontSize: 18.0, color: Colors.grey),
+            textAlign: TextAlign.center));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -149,31 +193,29 @@ class _LoginPageState extends State<LoginPage> {
           title: new Text(widget.title),
         ),
         backgroundColor: Colors.grey[300],
-        body: new SingleChildScrollView(child: new Container(
-            padding: const EdgeInsets.all(16.0),
-            child: new Column(
-                children: [
+        body: new SingleChildScrollView(
+            child: new Container(
+                padding: const EdgeInsets.all(16.0),
+                child: new Column(children: [
                   new Card(
                       child: new Column(
                           mainAxisSize: MainAxisSize.min,
                           children: <Widget>[
-                            new Container(
-                                padding: const EdgeInsets.all(16.0),
-                                child: new Form(
-                                    key: formKey,
-                                    child: new Column(
-                                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                                      children: usernameAndPassword() + submitWidgets(),
-                                    )
-                                )
-                            ),
-                          ])
-                  ),
+                        new Container(
+                            padding: const EdgeInsets.all(16.0),
+                            child: new Form(
+                                key: formKey,
+                                child: new Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: usernameAndPassword() +
+                                      submitWidgets() +
+                                      googleLogin() +
+                                      goToFacebookLogin(),
+                                ))),
+                      ])),
                   hintText()
-                ]
-            )
-        ))
-    );
+                ]))));
   }
 
   Widget padded({Widget child}) {

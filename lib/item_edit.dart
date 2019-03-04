@@ -8,6 +8,10 @@ import 'package:path/path.dart' as path;
 import 'package:firebase_core/firebase_core.dart';
 import 'dart:io';
 import 'dart:async';
+import 'package:multi_image_picker/multi_image_picker.dart';
+import 'package:flutter/services.dart';
+import 'package:shareapp/asset_view.dart';
+//import 'package:multi_image_picker/multi_image_picker.dart';
 
 class ItemEdit extends StatefulWidget {
   Item item;
@@ -28,6 +32,7 @@ class ItemEditState extends State<ItemEdit> {
   Item item;
   File image;
   String imageFileName;
+
   //List images;
   String appBarText = "Edit"; // Either 'Edit' or 'Add'. Prepended to " Item"
   String updateButton = "Update"; // 'Update' if edit, 'Add' if adding
@@ -35,7 +40,11 @@ class ItemEditState extends State<ItemEdit> {
 
   TextEditingController nameController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
+  TextEditingController priceController = TextEditingController();
   BuildContext scaffoldContext;
+
+  List<Asset> images = List<Asset>();
+  String _error = 'No Error Dectected';
 
   ItemType currSelected;
 
@@ -49,6 +58,7 @@ class ItemEditState extends State<ItemEdit> {
 
     nameController.text = item.name;
     descriptionController.text = item.description;
+    priceController.text = item.price.toString();
 
     if (item.id == null) {
       isEdit = false;
@@ -158,7 +168,27 @@ class ItemEditState extends State<ItemEdit> {
                   ),
                 ),
 
-                // fourth element, add image button
+                // fourth element - price controller
+                Padding(
+                  padding: EdgeInsets.only(
+                      top: 15.0, bottom: 15.0, left: 10.0, right: 10.0),
+                  child: TextField(
+                    keyboardType: TextInputType.number,
+                    controller: priceController,
+                    style: textStyle,
+                    onChanged: (value) {
+                      updatePrice();
+                      debugPrint('Something changed in price text field');
+                    },
+                    decoration: InputDecoration(
+                        labelText: 'Price',
+                        labelStyle: textStyle,
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(5.0))),
+                  ),
+                ),
+
+                // fifth element, add image button
                 Padding(
                   padding: EdgeInsets.only(
                       top: 15.0, bottom: 15.0, left: 10.0, right: 10.0),
@@ -176,8 +206,8 @@ class ItemEditState extends State<ItemEdit> {
                           ),
                           onPressed: () {
                             setState(() {
-                              getImage();
-                              //saveItem();
+                              loadAssets();
+                              //getImage();
                               //debugPrint("Save button clicked");
                             });
                           },
@@ -193,16 +223,13 @@ class ItemEditState extends State<ItemEdit> {
                           color: Colors.blue,
                           textColor: Colors.white,
                           child: Text(
-                            "View Image",
+                            "Delete Images",
                             textScaleFactor: 1.25,
                           ),
                           onPressed: () {
                             setState(() {
-                              debugPrint("Nav to image button pressed");
-
-                              if (image != null) {
-                                navigateToImageDetail(image);
-                              }
+                              //debugPrint("Nav to image button pressed");
+                              deleteAssets();
                             });
                           },
                         ),
@@ -211,14 +238,13 @@ class ItemEditState extends State<ItemEdit> {
                   ),
                 ),
 
-                // fifth element: selected picture
-                Container(
-                  child:
-                      image == null ? Text('Select an image') :
-                      Image.file(image, height: 300.0, width: 300.0),
-                ),
+                // sixth element: selected picture
+                Padding(
+                    padding: EdgeInsets.only(
+                        top: 15.0, bottom: 15.0, left: 10.0, right: 10.0),
+                    child: Text("Num images selected: ${images.length}")),
 
-                // sixth element, save and delete buttons
+                // seventh element, save and delete buttons
                 Padding(
                   padding: EdgeInsets.only(
                       top: 15.0, bottom: 15.0, left: 10.0, right: 10.0),
@@ -292,6 +318,7 @@ class ItemEditState extends State<ItemEdit> {
         'description': item.description,
         'id': 'temp',
         'name': item.name,
+        'price': item.price,
         'type': item.type
       });
 
@@ -304,17 +331,6 @@ class ItemEditState extends State<ItemEdit> {
           .updateData({'id': returnedID});
 
       uploadImage(returnedID);
-
-      // another way of adding new item. The above is better because
-      // you can get the doc id of the newly added item
-      /*
-      Firestore.instance.collection('items').document().setData({
-        'description': item.description,
-        'id': 'temp',
-        'name': item.name,
-        'type': item.type
-      });
-      */
     }
 
     // update item aka item already exists
@@ -335,8 +351,73 @@ class ItemEditState extends State<ItemEdit> {
     item.description = descriptionController.text;
   }
 
+  void updatePrice() {
+    item.price = int.parse(priceController.text);
+  }
+
   void updateType(bool newType) {
     item.type = newType;
+  }
+
+  Future<void> loadAssets() async {
+    setState(() {
+      images = List<Asset>();
+    });
+
+    List<Asset> resultList = List<Asset>();
+    String error = 'No Error Dectected';
+
+    try {
+      resultList = await MultiImagePicker.pickImages(
+        maxImages: 300,
+        enableCamera: true,
+        options: CupertinoOptions(takePhotoIcon: "chat"),
+      );
+    } on PlatformException catch (e) {
+      error = e.message;
+    }
+
+    // If the widget was removed from the tree while the asynchronous platform
+    // message was in flight, we want to discard the reply rather than calling
+    // setState to update our non-existent appearance.
+    if (!mounted) return;
+
+    setState(() {
+      images = resultList;
+      _error = error;
+    });
+  }
+
+  Widget buildBody(BuildContext ctxt, int index) {
+    Asset asset = images[index];
+    return AssetView(
+      index,
+      asset,
+      key: UniqueKey(),
+    );
+  }
+
+  Widget buildGridView() {
+    if (images.length > 0) {
+      return GridView.count(
+        crossAxisCount: 3,
+        children: List.generate(images.length, (index) {
+          Asset asset = images[index];
+          return AssetView(
+            index,
+            asset,
+            key: UniqueKey(),
+          );
+        }),
+      );
+    }
+  }
+
+  Future<void> deleteAssets() async {
+    //await MultiImagePicker.deleteImages(assets: images);
+    setState(() {
+      images = List<Asset>();
+    });
   }
 
   void getImage() async {
@@ -349,7 +430,17 @@ class ItemEditState extends State<ItemEdit> {
   }
 
   void uploadImage(String fileName) async {
-    StorageReference storageRef = FirebaseStorage.instance.ref().child(fileName);
+    StorageReference storageRef =
+        FirebaseStorage.instance.ref().child(fileName);
+/*
+    for(var i = 0; i < images.length; i++){
+      Asset asset = images[i];
+
+      storageRef.putFile(image);
+      //StorageUploadTask task = storageRef.putFile(images[i]);
+      
+    }*/
+
     StorageUploadTask task = storageRef.putFile(image);
 
     /*
