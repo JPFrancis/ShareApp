@@ -106,6 +106,7 @@ class ItemListState extends State<ItemList> {
               id: null,
               name: "",
               description: "",
+              price: 0,
               type: true));
           //navigateToEdit(Item({null, '', '', true}));
           //navigateToDetail(Item('', '', 2), 'Add Item');

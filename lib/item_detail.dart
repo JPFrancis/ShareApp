@@ -116,7 +116,7 @@ class ItemDetailState extends State<ItemDetail> {
                         alignment: AlignmentDirectional.center,
                         color: Color(0x00000000),
                         child: Text(
-                          strType,
+                          item.price.toString(),
                           style: TextStyle(color: Colors.black, fontSize: 24.0),
                           textAlign: TextAlign.center,
                         ),
@@ -125,6 +125,24 @@ class ItemDetailState extends State<ItemDetail> {
                 ),
 
                 // fourth element
+                Padding(
+                  padding: EdgeInsets.only(
+                      top: 15.0, bottom: 15.0, left: 10.0, right: 10.0),
+                  child: SizedBox(
+                      height: 50.0,
+                      child: Container(
+                        alignment: AlignmentDirectional.center,
+                        color: Color(0x00000000),
+                        child: Text(
+                          strType,
+                          style: TextStyle(color: Colors.black, fontSize: 24.0),
+                          textAlign: TextAlign.center,
+                        ),
+                      )
+                  ),
+                ),
+
+                // fifth element
                 Padding(
                   padding: EdgeInsets.only(
                       top: 15.0, bottom: 15.0, left: 10.0, right: 10.0),
