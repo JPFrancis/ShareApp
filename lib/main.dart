@@ -1,6 +1,44 @@
+
+
+
+
+/// ===================================
+
+/// below is a empty app, can be used to test anything
+/*
+
 import 'package:flutter/material.dart';
-import 'package:shareapp/auth.dart';
-import 'package:shareapp/root_page.dart';
+
+void main() {
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final title = 'Test';
+
+    return MaterialApp(
+      title: title,
+      home: Scaffold(
+        appBar: AppBar(
+          title: Text(title),
+        ),
+        body: Container(),
+      ),
+    );
+  }
+}
+
+*/
+
+/// ========================================================================
+/// Our actual app
+
+
+import 'package:flutter/material.dart';
+import 'package:shareapp/services/auth.dart';
+import 'package:shareapp/pages/root_page.dart';
 
 void main() => runApp(MyApp());
 
@@ -19,3 +57,4 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
