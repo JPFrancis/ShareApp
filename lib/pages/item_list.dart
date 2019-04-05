@@ -12,6 +12,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shareapp/pages/chat.dart';
 
 class ItemList extends StatefulWidget {
   BaseAuth auth;
@@ -101,19 +102,22 @@ class ItemListState extends State<ItemList> {
       }
     }
 
-    final tabPages = <Widget>[
+    final bottomTabPages = <Widget>[
       homeTabPage(),
-      rentalsTabPage(),
+      //rentalsTabPage(),
+      usersTabPage(),
       myListingsTabPage(),
       messagesTabPage(),
       profileTabPage(),
     ];
 
-    final navBarTiles = <BottomNavigationBarItem>[
+    final bottomNavBarTiles = <BottomNavigationBarItem>[
       BottomNavigationBarItem(icon: Icon(Icons.search), title: Text('Search')),
-
+      BottomNavigationBarItem(icon: Icon(Icons.people), title: Text('Users')),
+      /*
       BottomNavigationBarItem(
           icon: Icon(Icons.shopping_cart), title: Text('Rentals')),
+      */
       BottomNavigationBarItem(
           icon: Icon(Icons.style), title: Text('My Listings')),
       BottomNavigationBarItem(icon: Icon(Icons.forum), title: Text('Messages')),
@@ -122,9 +126,9 @@ class ItemListState extends State<ItemList> {
       //more_horiz
       //view_headline
     ];
-    assert(tabPages.length == navBarTiles.length);
+    assert(bottomTabPages.length == bottomNavBarTiles.length);
     final bottomNavBar = BottomNavigationBar(
-      items: navBarTiles,
+      items: bottomNavBarTiles,
       currentIndex: currentTabIndex,
       type: BottomNavigationBarType.fixed,
       onTap: (int index) {
@@ -144,7 +148,7 @@ class ItemListState extends State<ItemList> {
           },
         ),
       ]),
-      body: tabPages[currentTabIndex],
+      body: bottomTabPages[currentTabIndex],
       floatingActionButton: showFAB(),
       bottomNavigationBar: bottomNavBar,
     );
@@ -203,24 +207,25 @@ class ItemListState extends State<ItemList> {
       padding: edgeInset,
       child: Column(
         children: <Widget>[
-          //Container(child: showSignedInAs()),
+          /*
+      Container(child: showSignedInAs()),
           Container(
             height: padding,
           ),
+          */
           buildItemList(),
         ],
       ),
     );
   }
 
-  Widget messagesTabPage() {
+  Widget usersTabPage() {
     return Padding(
       padding: edgeInset,
-      child: Center(
-        child: Text(
-          'Messages',
-          textScaleFactor: 2.5,
-        ),
+      child: Column(
+        children: <Widget>[
+          buildUserList(),
+        ],
       ),
     );
   }
@@ -243,6 +248,18 @@ class ItemListState extends State<ItemList> {
       child: Center(
         child: Text(
           'My Listings',
+          textScaleFactor: 2.5,
+        ),
+      ),
+    );
+  }
+
+  Widget messagesTabPage() {
+    return Padding(
+      padding: edgeInset,
+      child: Center(
+        child: Text(
+          'Messages',
           textScaleFactor: 2.5,
         ),
       ),
@@ -297,7 +314,7 @@ class ItemListState extends State<ItemList> {
                 height: 15,
               ),
               Text(
-                'Account creation:: ${details[2]}',
+                'Account creation: ${details[2]}',
                 textScaleFactor: 1,
               ),
               Container(
@@ -429,6 +446,75 @@ class ItemListState extends State<ItemList> {
                             .delete();
                       },
                     ),
+                  );
+                },
+              );
+          }
+        },
+      ),
+    );
+  }
+
+  Widget buildUserList() {
+    CollectionReference collectionReference =
+        Firestore.instance.collection('users');
+    return Expanded(
+      child: StreamBuilder<QuerySnapshot>(
+        stream: collectionReference
+            .where('lastActiveTimestamp', isGreaterThan: 0)
+            .snapshots(),
+        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          if (snapshot.hasError) {
+            return new Text('${snapshot.error}');
+          }
+          switch (snapshot.connectionState) {
+            case ConnectionState.waiting:
+              return new Center(
+                child: new Container(),
+              );
+            default:
+              return new ListView.builder(
+                shrinkWrap: true,
+                //padding: EdgeInsets.all(2.0),
+                itemCount: snapshot.data.documents.length,
+                itemBuilder: (context, index) {
+                  DocumentSnapshot ds = snapshot.data.documents[index];
+
+                  return ListTile(
+                    leading: Container(
+                      height: 40,
+                      child: CachedNetworkImage(
+                        key: new ValueKey<String>(
+                            DateTime.now().millisecondsSinceEpoch.toString()),
+                        imageUrl: ds['photoURL'],
+                        placeholder: (context, url) => new Container(),
+                      ),
+                    ),
+                    title: Text(
+                      ds['displayName'],
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(
+                        'Last seen: ${DateTime.fromMillisecondsSinceEpoch(ds['lastActiveTimestamp']).toString()}'),
+                    onTap: () {},
+                    trailing: ds['userID'] != userID
+                        ? IconButton(
+                            icon: Icon(Icons.chat),
+                            tooltip: 'Chat',
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => Chat(
+                                        myID: userID,
+                                        peerId: ds['userID'],
+                                        peerAvatar: ds['photoURL'],
+                                      ),
+                                ),
+                              );
+                            },
+                          )
+                        : null,
                   );
                 },
               );
