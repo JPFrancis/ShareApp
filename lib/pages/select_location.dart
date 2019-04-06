@@ -148,7 +148,7 @@ class SelectLocationState extends State<SelectLocation> {
         child: FloatingActionButton(
           onPressed: goToCurrLoc,
           child: Icon(Icons.my_location),
-          tooltip: 'Get Current Location',
+          tooltip: 'Get current location',
         ),
       ),
       bottomNavigationBar: BottomAppBar(

@@ -178,7 +178,7 @@ class ItemListState extends State<ItemList> {
         },
 
         // Help text when you hold down FAB
-        tooltip: 'Add New Item',
+        tooltip: 'Add new item',
 
         // Set FAB icon
         child: Icon(Icons.add),

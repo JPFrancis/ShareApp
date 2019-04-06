@@ -50,34 +50,54 @@ class ItemDetailState extends State<ItemDetail> {
       },
       child: Scaffold(
         appBar: AppBar(
-            title: Text(appBarTitle),
-            // back button
-            leading: IconButton(
-              icon: Icon(Icons.arrow_back),
+          title: Text(appBarTitle),
+          // back button
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back),
+            onPressed: () {
+              goToLastScreen();
+            },
+          ),
+          actions: <Widget>[
+            IconButton(
+              icon: Icon(Icons.refresh),
+              tooltip: 'Refresh item',
               onPressed: () {
-                goToLastScreen();
+                setState(
+                  () {
+                    setCamera();
+                  },
+                );
               },
             ),
-            actions: <Widget>[
-              IconButton(
-                icon: Icon(Icons.refresh),
-                tooltip: 'Refresh Item',
-                onPressed: () {
-                  setState(() {
-                    setCamera();
-                  });
-                },
-              ),
-              IconButton(
-                icon: Icon(Icons.edit),
-                tooltip: 'Edit Item',
-                onPressed: () {
-                  navigateToEdit();
-                },
-              ),
-            ]),
+            IconButton(
+              icon: Icon(Icons.add_shopping_cart),
+              tooltip: 'Request item',
+              onPressed: () {
+                setState(
+                  () {},///call set state to refresh first
+                );
+              },
+            ),
+          ],
+        ),
         body: showBody(),
+        floatingActionButton: showFAB(),
       ),
+    );
+  }
+
+  FloatingActionButton showFAB() {
+    return FloatingActionButton(
+      onPressed: () {
+        navigateToEdit();
+      },
+
+      // Help text when you hold down FAB
+      tooltip: 'Edit tem',
+
+      // Set FAB icon
+      child: Icon(Icons.edit),
     );
   }
 
