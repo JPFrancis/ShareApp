@@ -44,40 +44,41 @@ class ItemDetailState extends State<ItemDetail> {
   Widget build(BuildContext context) {
     textStyle = Theme.of(context).textTheme.title;
     return WillPopScope(
-        onWillPop: () {
-          // when user presses back button
-          goToLastScreen();
-        },
-        child: Scaffold(
-          appBar: AppBar(
-              title: Text(appBarTitle),
-              // back button
-              leading: IconButton(
-                icon: Icon(Icons.arrow_back),
+      onWillPop: () {
+        // when user presses back button
+        goToLastScreen();
+      },
+      child: Scaffold(
+        appBar: AppBar(
+            title: Text(appBarTitle),
+            // back button
+            leading: IconButton(
+              icon: Icon(Icons.arrow_back),
+              onPressed: () {
+                goToLastScreen();
+              },
+            ),
+            actions: <Widget>[
+              IconButton(
+                icon: Icon(Icons.refresh),
+                tooltip: 'Refresh Item',
                 onPressed: () {
-                  goToLastScreen();
+                  setState(() {
+                    setCamera();
+                  });
                 },
               ),
-              actions: <Widget>[
-                IconButton(
-                  icon: Icon(Icons.refresh),
-                  tooltip: 'Refresh Item',
-                  onPressed: () {
-                    setState(() {
-                      setCamera();
-                    });
-                  },
-                ),
-                IconButton(
-                  icon: Icon(Icons.edit),
-                  tooltip: 'Edit Item',
-                  onPressed: () {
-                    navigateToEdit();
-                  },
-                ),
-              ]),
-          body: showBody(),
-        ));
+              IconButton(
+                icon: Icon(Icons.edit),
+                tooltip: 'Edit Item',
+                onPressed: () {
+                  navigateToEdit();
+                },
+              ),
+            ]),
+        body: showBody(),
+      ),
+    );
   }
 
   Future<DocumentSnapshot> getItemFromFirestore() async {
@@ -137,7 +138,9 @@ class ItemDetailState extends State<ItemDetail> {
                       ? Row(
                           children: <Widget>[
                             CachedNetworkImage(
-                              key: new ValueKey<String>(DateTime.now().millisecondsSinceEpoch.toString()),
+                              key: new ValueKey<String>(DateTime.now()
+                                  .millisecondsSinceEpoch
+                                  .toString()),
                               imageUrl: ds['photoURL'],
                               placeholder: (context, url) =>
                                   new CircularProgressIndicator(),
@@ -351,7 +354,8 @@ class ItemDetailState extends State<ItemDetail> {
           width: 160.0,
           child: sizedContainer(
             new CachedNetworkImage(
-              key: new ValueKey<String>(DateTime.now().millisecondsSinceEpoch.toString()),
+              key: new ValueKey<String>(
+                  DateTime.now().millisecondsSinceEpoch.toString()),
               imageUrl: imagesList[index],
               placeholder: (context, url) => new CircularProgressIndicator(),
             ),
