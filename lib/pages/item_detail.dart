@@ -2,6 +2,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:shareapp/models/item.dart';
 import 'package:shareapp/pages/item_edit.dart';
+import 'package:shareapp/pages/request_item.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
@@ -31,8 +32,6 @@ class ItemDetailState extends State<ItemDetail> {
   TextStyle textStyle;
 
   DocumentSnapshot documentSnapshot;
-
-  //Item item;
 
   @override
   void initState() {
@@ -74,9 +73,7 @@ class ItemDetailState extends State<ItemDetail> {
               icon: Icon(Icons.add_shopping_cart),
               tooltip: 'Request item',
               onPressed: () {
-                setState(
-                  () {},///call set state to refresh first
-                );
+                handleRequestItemPressed();
               },
             ),
           ],
@@ -430,6 +427,22 @@ class ItemDetailState extends State<ItemDetail> {
       //updateParameters();
       setCamera();
     }
+  }
+
+  void handleRequestItemPressed() async {
+    setState(
+          () {},
+    );
+
+    Item result = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (BuildContext context) => RequestItem(
+            itemID: widget.itemID,
+            itemRequester: "",
+          ),
+          fullscreenDialog: true,
+        ));
   }
 
   setCamera() async {
