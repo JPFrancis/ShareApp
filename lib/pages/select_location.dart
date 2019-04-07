@@ -1,22 +1,12 @@
-import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:path/path.dart' as path;
-import 'dart:async';
-import 'package:flutter/services.dart';
-import 'dart:io';
-import 'package:multi_image_picker/multi_image_picker.dart';
-import 'package:shareapp/services/asset_view.dart';
-import 'dart:io';
-import 'dart:async';
-import 'package:google_maps_webservice/places.dart';
-import 'package:flutter_google_places/flutter_google_places.dart';
-import 'package:flutter/material.dart';
 import 'dart:math';
-import 'package:geolocator/geolocator.dart';
+import 'dart:async';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_webservice/places.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter_google_places/flutter_google_places.dart';
 
 final homeScaffoldKey = GlobalKey<ScaffoldState>();
 

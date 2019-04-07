@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shareapp/services/auth.dart';
-import 'package:shareapp/pages/login_page.dart';
 import 'package:shareapp/pages/item_list.dart';
+import 'package:shareapp/pages/login_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class RootPage extends StatefulWidget {

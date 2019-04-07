@@ -1,28 +1,10 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:shareapp/services/auth.dart';
-import 'dart:async';
-import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'dart:async';
-import 'package:flutter/material.dart';
-import 'package:flutter/material.dart';
-import 'package:shareapp/models/user.dart';
-import 'package:shareapp/models/user_edit.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-
-//import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:path/path.dart' as path;
-import 'package:firebase_core/firebase_core.dart';
 import 'dart:io';
 import 'dart:async';
-import 'package:multi_image_picker/multi_image_picker.dart';
-import 'package:flutter/services.dart';
-import 'package:shareapp/services/asset_view.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:shareapp/pages/select_location.dart';
+import 'package:intl/intl.dart';
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 enum DismissDialogAction {
   cancel,
@@ -45,6 +27,7 @@ class RequestItem extends StatefulWidget {
 /// We initially assume we are in editing mode
 class RequestItemState extends State<RequestItem> {
   final GlobalKey<FormState> formKey = new GlobalKey<FormState>();
+  SharedPreferences prefs;
 
   bool isUploading = false;
   String photoURL;
@@ -54,12 +37,17 @@ class RequestItemState extends State<RequestItem> {
   TextStyle textStyle;
   TextStyle inputTextStyle;
 
+  DocumentSnapshot documentSnapshot;
   ThemeData theme;
-
-  UserEdit userEditCopy;
+  double padding = 5.0;
+  String note;
+  TextEditingController noteController = TextEditingController();
 
   Future<File> selectedImage;
   File imageFile;
+
+  DateTime _fromDateTime = DateTime.now();
+  DateTime _toDateTime = DateTime.now();
 
   @override
   void initState() {
@@ -73,15 +61,14 @@ class RequestItemState extends State<RequestItem> {
     textStyle =
         Theme.of(context).textTheme.headline.merge(TextStyle(fontSize: 20));
     inputTextStyle = Theme.of(context).textTheme.subtitle;
-
-    displayNameController.text = userEditCopy.displayName;
+    note = '';
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Edit User Profile'),
+        title: Text('Item Request'),
         actions: <Widget>[
           FlatButton(
-            child: Text('SAVE',
+            child: Text('SEND',
                 textScaleFactor: 1.05,
                 style: theme.textTheme.body2.copyWith(color: Colors.white)),
             onPressed: () {},
@@ -102,45 +89,121 @@ class RequestItemState extends State<RequestItem> {
     );
   }
 
+  Future<DocumentSnapshot> getItemFromFirestore() async {
+    DocumentSnapshot ds = await Firestore.instance
+        .collection('items')
+        .document(widget.itemID)
+        .get();
+
+    return ds;
+  }
+
   Widget showBody() {
-    return Form(
-      key: formKey,
-      onWillPop: onWillPop,
-      child: ListView(
-        padding:
-            EdgeInsets.only(top: 10.0, bottom: 10.0, left: 18.0, right: 18.0),
-        children: <Widget>[
-          showUserID(),
-          showProfileOptions(),
-          showDisplayNameEditor(),
-        ].map<Widget>((Widget child) {
-          return Container(
-            padding: const EdgeInsets.symmetric(vertical: 11),
-            child: child,
+    return FutureBuilder(
+      future: getItemFromFirestore(),
+      builder: (BuildContext context, AsyncSnapshot snapshot) {
+        if (snapshot.hasData) {
+          documentSnapshot = snapshot.data;
+
+          /// usage: ds['name']
+          return Padding(
+            padding: EdgeInsets.all(15),
+            child: ListView(
+              children: <Widget>[
+                showItemName(),
+                showItemCreator(),
+                Container(
+                  height: 10,
+                ),
+                showStartTimePicker(),
+                showEndTimePicker(),
+                Container(
+                  height: 10,
+                ),
+                showNoteEdit(),
+
+              ],
+            ),
           );
-        }).toList(),
-      ),
+        } else {
+          return new Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+      },
     );
   }
 
-  Widget showUserID() {
-    return Container(
-        child: Text(
-      "Your user id: ${userEditCopy.id}",
-      style: TextStyle(fontSize: 16),
-    ));
+  Widget showItemName() {
+    return Padding(
+      padding: EdgeInsets.all(padding),
+      child: SizedBox(
+          height: 50.0,
+          child: Container(
+            color: Color(0x00000000),
+            child: Text(
+              'You\'re requesting a:\n${documentSnapshot['name']}',
+              //itemName,
+              style: TextStyle(color: Colors.black, fontSize: 20.0),
+              textAlign: TextAlign.left,
+            ),
+          )),
+    );
   }
 
-  Widget showDisplayNameEditor() {
-    return Container(
+  Widget showItemCreator() {
+    return FutureBuilder(
+      future: documentSnapshot['creator'].get(),
+      builder: (BuildContext context, AsyncSnapshot snapshot) {
+        DocumentSnapshot ds = snapshot.data;
+
+        return Padding(
+          padding: EdgeInsets.all(padding),
+          child: SizedBox(
+            height: 50.0,
+            child: Container(
+              color: Color(0x00000000),
+              child: snapshot.hasData
+                  ? Row(
+                      children: <Widget>[
+                        Text(
+                          'You\'re requesting from:\n${ds['displayName']}',
+                          style: TextStyle(color: Colors.black, fontSize: 20.0),
+                          textAlign: TextAlign.left,
+                        ),
+                        Expanded(
+                          child: CachedNetworkImage(
+                            key: new ValueKey<String>(DateTime.now()
+                                .millisecondsSinceEpoch
+                                .toString()),
+                            imageUrl: ds['photoURL'],
+                            placeholder: (context, url) =>
+                                new CircularProgressIndicator(),
+                          ),
+                        ),
+                      ],
+                    )
+                  : Container(),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget showNoteEdit() {
+    return Padding(
+      padding: EdgeInsets.all(padding),
       child: TextField(
-        controller: displayNameController,
+        //keyboardType: TextInputType.multiline,
+        maxLines: 3,
+        controller: noteController,
         style: textStyle,
         onChanged: (value) {
-          userEditCopy.displayName = displayNameController.text;
+          note = noteController.text;
         },
         decoration: InputDecoration(
-          labelText: 'Display name',
+          labelText: 'Add note (optional)',
           filled: true,
           //border: OutlineInputBorder(borderRadius: BorderRadius.circular(5.0)),
         ),
@@ -148,85 +211,44 @@ class RequestItemState extends State<RequestItem> {
     );
   }
 
-  Widget showProfileOptions() {
-    return Container(
-        child: Row(
-      children: <Widget>[
-        Container(
-          height: 120,
-          width: 120,
-          child: previewImage(),
-        ),
-        Container(
-          width: 15,
-        ),
-        Column(
-          children: <Widget>[
-            RaisedButton(
-              shape: new RoundedRectangleBorder(
-                  borderRadius: new BorderRadius.circular(5.0)),
-              color: Colors.red,
-              textColor: Colors.white,
-              child: Text(
-                "Take picture",
-                //addButton + " Images",
-                textScaleFactor: 1.25,
-              ),
-              onPressed: () {
-                onImageButtonPressed(ImageSource.camera);
-              },
-            ),
-            RaisedButton(
-              shape: new RoundedRectangleBorder(
-                  borderRadius: new BorderRadius.circular(5.0)),
-              color: Colors.red,
-              textColor: Colors.white,
-              child: Text(
-                "Pick from gallery",
-                textScaleFactor: 1.25,
-              ),
-              onPressed: () {
-                onImageButtonPressed(ImageSource.gallery);
-              },
-            ),
-          ],
-        ),
-      ],
-    ));
-  }
-
-  Widget showCurrentProfilePic() {
-    return CachedNetworkImage(
-      key: new ValueKey<String>(
-          DateTime.now().millisecondsSinceEpoch.toString()),
-      imageUrl: userEditCopy.photoUrl,
-      placeholder: (context, url) => new CircularProgressIndicator(),
+  Widget showStartTimePicker() {
+    return Padding(
+      padding: EdgeInsets.all(padding),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text('Start', style: theme.textTheme.caption),
+          DateTimeItem(
+            dateTime: _fromDateTime,
+            onChanged: (DateTime value) {
+              setState(() {
+                _fromDateTime = value;
+              });
+            },
+          ),
+        ],
+      ),
     );
   }
 
-  void onImageButtonPressed(ImageSource source) {
-    setState(() {
-      selectedImage = ImagePicker.pickImage(source: source);
-    });
-  }
-
-  Widget previewImage() {
-    return FutureBuilder<File>(
-        future: selectedImage,
-        builder: (BuildContext context, AsyncSnapshot<File> snapshot) {
-          if (snapshot.connectionState == ConnectionState.done &&
-              snapshot.data != null) {
-            imageFile = snapshot.data;
-            return Image.file(imageFile);
-          } else if (snapshot.error != null) {
-            return const Text(
-              'Error',
-              textAlign: TextAlign.center,
-            );
-          } else {
-            return showCurrentProfilePic();
-          }
-        });
+  Widget showEndTimePicker() {
+    return Padding(
+      padding: EdgeInsets.all(padding),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text('End', style: theme.textTheme.caption),
+          DateTimeItem(
+            dateTime: _toDateTime,
+            onChanged: (DateTime value) {
+              setState(() {
+                _toDateTime = value;
+              });
+            },
+          ),
+        ],
+      ),
+    );
   }
 
   Widget showCircularProgress() {
@@ -290,5 +312,83 @@ class RequestItemState extends State<RequestItem> {
           },
         ) ??
         false;
+  }
+}
+
+class DateTimeItem extends StatelessWidget {
+  DateTimeItem({Key key, DateTime dateTime, @required this.onChanged})
+      : assert(onChanged != null),
+        date = DateTime(dateTime.year, dateTime.month, dateTime.day),
+        time = TimeOfDay(hour: dateTime.hour, minute: dateTime.minute),
+        super(key: key);
+
+  final DateTime date;
+  final TimeOfDay time;
+  final ValueChanged<DateTime> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+
+    return DefaultTextStyle(
+      style: theme.textTheme.subhead,
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              decoration: BoxDecoration(
+                  border:
+                      Border(bottom: BorderSide(color: theme.dividerColor))),
+              child: InkWell(
+                onTap: () {
+                  showDatePicker(
+                    context: context,
+                    initialDate: date,
+                    firstDate: date.subtract(const Duration(days: 30)),
+                    lastDate: date.add(const Duration(days: 30)),
+                  ).then<void>((DateTime value) {
+                    if (value != null)
+                      onChanged(DateTime(value.year, value.month, value.day,
+                          time.hour, time.minute));
+                  });
+                },
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: <Widget>[
+                    Text(DateFormat('EEE, MMM d yyyy').format(date)),
+                    const Icon(Icons.arrow_drop_down, color: Colors.black54),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Container(
+            margin: const EdgeInsets.only(left: 8.0),
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            decoration: BoxDecoration(
+                border: Border(bottom: BorderSide(color: theme.dividerColor))),
+            child: InkWell(
+              onTap: () {
+                showTimePicker(
+                  context: context,
+                  initialTime: time,
+                ).then<void>((TimeOfDay value) {
+                  if (value != null)
+                    onChanged(DateTime(date.year, date.month, date.day,
+                        value.hour, value.minute));
+                });
+              },
+              child: Row(
+                children: <Widget>[
+                  Text('${time.format(context)}'),
+                  const Icon(Icons.arrow_drop_down, color: Colors.black54),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -1,19 +1,21 @@
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shareapp/models/item.dart';
 import 'package:shareapp/pages/item_edit.dart';
 import 'package:shareapp/pages/request_item.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/gestures.dart';
-import 'package:flutter/rendering.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class ItemDetail extends StatefulWidget {
   final String itemID;
+  final bool isMyItem;
 
-  ItemDetail(this.itemID);
+  //ItemDetail(this.itemID, this.isMyItem);
+  ItemDetail({Key key, this.itemID, this.isMyItem}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
@@ -32,16 +34,37 @@ class ItemDetailState extends State<ItemDetail> {
   TextStyle textStyle;
 
   DocumentSnapshot documentSnapshot;
+  SharedPreferences prefs;
+  String myUserID;
+  String itemCreator;
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+    getMyUserID();
+    getItemCreatorID();
+  }
+
+  void getMyUserID() async {
+    prefs = await SharedPreferences.getInstance();
+    myUserID = prefs.getString('userID') ?? '';
+  }
+
+  void getItemCreatorID() async {
+    Firestore.instance
+        .collection('items')
+        .document(widget.itemID)
+        .get()
+        .then((DocumentSnapshot ds) {
+      itemCreator = ds['creatorID'];
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     textStyle = Theme.of(context).textTheme.title;
+
     return WillPopScope(
       onWillPop: () {
         // when user presses back button
@@ -72,9 +95,11 @@ class ItemDetailState extends State<ItemDetail> {
             IconButton(
               icon: Icon(Icons.add_shopping_cart),
               tooltip: 'Request item',
-              onPressed: () {
-                handleRequestItemPressed();
-              },
+              onPressed: !widget.isMyItem
+                  ? () {
+                      handleRequestItemPressed();
+                    }
+                  : null,
             ),
           ],
         ),
@@ -116,7 +141,7 @@ class ItemDetailState extends State<ItemDetail> {
 
           /// usage: ds['name']
           return Padding(
-            padding: EdgeInsets.only(top: 15.0, left: 10.0, right: 10.0),
+            padding: EdgeInsets.all(15),
             child: ListView(
               children: <Widget>[
                 showItemCreator(),
@@ -145,6 +170,7 @@ class ItemDetailState extends State<ItemDetail> {
         future: documentSnapshot['creator'].get(),
         builder: (BuildContext context, AsyncSnapshot snapshot) {
           DocumentSnapshot ds = snapshot.data;
+
           return Padding(
             padding: EdgeInsets.all(padding),
             child: SizedBox(
@@ -431,16 +457,16 @@ class ItemDetailState extends State<ItemDetail> {
 
   void handleRequestItemPressed() async {
     setState(
-          () {},
+      () {},
     );
 
     Item result = await Navigator.push(
         context,
         MaterialPageRoute(
           builder: (BuildContext context) => RequestItem(
-            itemID: widget.itemID,
-            itemRequester: "",
-          ),
+                itemID: widget.itemID,
+                itemRequester: myUserID,
+              ),
           fullscreenDialog: true,
         ));
   }

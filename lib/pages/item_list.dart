@@ -1,18 +1,16 @@
-import 'dart:io';
-import 'package:async/async.dart';
 import 'package:flutter/material.dart';
+import 'package:shareapp/pages/chat.dart';
 import 'package:shareapp/models/item.dart';
-import 'package:shareapp/models/user.dart';
-import 'package:shareapp/models/user_edit.dart';
+import 'package:shareapp/services/auth.dart';
 import 'package:shareapp/pages/item_edit.dart';
+import 'package:shareapp/models/user_edit.dart';
 import 'package:shareapp/pages/item_detail.dart';
 import 'package:shareapp/pages/edit_profile.dart';
-import 'package:shareapp/services/auth.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:shareapp/pages/chat.dart';
 
 class ItemList extends StatefulWidget {
   BaseAuth auth;
@@ -28,6 +26,7 @@ class ItemList extends StatefulWidget {
 }
 
 class ItemListState extends State<ItemList> {
+  SharedPreferences prefs;
   List<Item> itemList;
   DocumentSnapshot currentUser;
 
@@ -47,6 +46,17 @@ class ItemListState extends State<ItemList> {
 
     userID = widget.firebaseUser.uid;
 
+    setPrefs();
+
+    handleInitUser();
+  }
+
+  void setPrefs() async {
+    prefs = await SharedPreferences.getInstance();
+    await prefs.setString('userID', userID);
+  }
+
+  void handleInitUser() async {
     // get user object from firestore
     Firestore.instance
         .collection('users')
@@ -434,7 +444,7 @@ class ItemListState extends State<ItemList> {
                     ),
                     subtitle: Text(ds['description']),
                     onTap: () {
-                      navigateToDetail(ds['id']);
+                      navigateToDetail(ds['id'], userID == ds['creatorID']);
                     },
                     trailing: IconButton(
                       icon: Icon(Icons.delete),
@@ -444,6 +454,8 @@ class ItemListState extends State<ItemList> {
                             .collection('items')
                             .document(ds['id'])
                             .delete();
+
+                        /// ====================== ADD DELETE CONFIRMATION !!!
                       },
                     ),
                   );
@@ -462,6 +474,7 @@ class ItemListState extends State<ItemList> {
       child: StreamBuilder<QuerySnapshot>(
         stream: collectionReference
             .where('lastActiveTimestamp', isGreaterThan: 0)
+            //.where('photoURL', isNull: false)
             .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
@@ -486,7 +499,7 @@ class ItemListState extends State<ItemList> {
                       child: CachedNetworkImage(
                         key: new ValueKey<String>(
                             DateTime.now().millisecondsSinceEpoch.toString()),
-                        imageUrl: ds['photoURL'],
+                        imageUrl: ds['photoURL'] ?? 'https://bit.ly/2FMVekl',
                         placeholder: (context, url) => new Container(),
                       ),
                     ),
@@ -541,16 +554,15 @@ class ItemListState extends State<ItemList> {
     */
   }
 
-  void navigateToDetail(String itemID) async {
-    bool result =
-        await Navigator.push(context, MaterialPageRoute(builder: (context) {
-      return ItemDetail(itemID);
-    }));
-
-    /*
-    Navigator.push(context, MaterialPageRoute(builder: (context) {
-      return ItemEdit(item, title);
-    }));*/
+  void navigateToDetail(String itemID, bool isMyItem) async {
+    UserEdit result = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (BuildContext context) => ItemDetail(
+            itemID: itemID,
+            isMyItem: isMyItem,
+          ),
+        ));
   }
 
   Future<UserEdit> getUserEdit() async {

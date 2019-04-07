@@ -1,20 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/material.dart';
-import 'package:shareapp/models/item.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:path/path.dart' as path;
-import 'package:firebase_core/firebase_core.dart';
-import 'dart:io';
-import 'dart:async';
-import 'package:multi_image_picker/multi_image_picker.dart';
 import 'package:flutter/services.dart';
-import 'package:shareapp/services/asset_view.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:shareapp/models/item.dart';
 import 'package:shareapp/pages/select_location.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:multi_image_picker/multi_image_picker.dart';
 
 enum DismissDialogAction {
   cancel,

@@ -1,28 +1,11 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:shareapp/services/auth.dart';
+import 'dart:io';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'dart:async';
-import 'package:flutter/material.dart';
-import 'package:flutter/material.dart';
-import 'package:shareapp/models/user.dart';
 import 'package:shareapp/models/user_edit.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
-//import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:path/path.dart' as path;
-import 'package:firebase_core/firebase_core.dart';
-import 'dart:io';
-import 'dart:async';
-import 'package:multi_image_picker/multi_image_picker.dart';
-import 'package:flutter/services.dart';
-import 'package:shareapp/services/asset_view.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:shareapp/pages/select_location.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 enum DismissDialogAction {
   cancel,
@@ -294,8 +277,9 @@ class EditProfileState extends State<EditProfile> {
   }
 
   Future<String> saveImage() async {
-    StorageReference ref =
-        FirebaseStorage.instance.ref().child('/profile_pics/${userEditCopy.id}');
+    StorageReference ref = FirebaseStorage.instance
+        .ref()
+        .child('/profile_pics/${userEditCopy.id}');
     StorageUploadTask uploadTask = ref.putFile(imageFile);
 
     return await (await uploadTask.onComplete).ref.getDownloadURL();
