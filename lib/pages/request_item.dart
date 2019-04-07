@@ -46,8 +46,8 @@ class RequestItemState extends State<RequestItem> {
   Future<File> selectedImage;
   File imageFile;
 
-  DateTime _fromDateTime = DateTime.now();
-  DateTime _toDateTime = DateTime.now();
+  DateTime startDateTime = DateTime.now().add(Duration(hours: 1));
+  DateTime endDateTime = DateTime.now().add(Duration(hours: 2));
 
   @override
   void initState() {
@@ -71,7 +71,11 @@ class RequestItemState extends State<RequestItem> {
             child: Text('SEND',
                 textScaleFactor: 1.05,
                 style: theme.textTheme.body2.copyWith(color: Colors.white)),
-            onPressed: () {},
+            onPressed: () {
+              setState(() {
+                /// refresh
+              });
+            },
           ),
         ],
       ),
@@ -117,11 +121,11 @@ class RequestItemState extends State<RequestItem> {
                 ),
                 showStartTimePicker(),
                 showEndTimePicker(),
+                showDuration(),
                 Container(
                   height: 10,
                 ),
                 showNoteEdit(),
-
               ],
             ),
           );
@@ -219,10 +223,10 @@ class RequestItemState extends State<RequestItem> {
         children: <Widget>[
           Text('Start', style: theme.textTheme.caption),
           DateTimeItem(
-            dateTime: _fromDateTime,
+            dateTime: startDateTime,
             onChanged: (DateTime value) {
               setState(() {
-                _fromDateTime = value;
+                startDateTime = value;
               });
             },
           ),
@@ -239,12 +243,30 @@ class RequestItemState extends State<RequestItem> {
         children: <Widget>[
           Text('End', style: theme.textTheme.caption),
           DateTimeItem(
-            dateTime: _toDateTime,
+            dateTime: endDateTime,
             onChanged: (DateTime value) {
               setState(() {
-                _toDateTime = value;
+                endDateTime = value;
               });
             },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget showDuration() {
+    Duration durationTime = endDateTime.difference(startDateTime);
+    String duration = durationTime.inHours.toString();
+
+    return Padding(
+      padding: EdgeInsets.all(padding),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            'Duration: ${duration} hours',
+            style: TextStyle(fontSize: 20),
           ),
         ],
       ),
