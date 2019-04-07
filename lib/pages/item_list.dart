@@ -72,7 +72,7 @@ class ItemListState extends State<ItemList> {
           'email': widget.firebaseUser.email,
           'lastActiveTimestamp': DateTime.now().millisecondsSinceEpoch,
           'accountCreationTimestamp':
-              widget.firebaseUser.metadata.creationTimestamp,
+          widget.firebaseUser.metadata.creationTimestamp,
         });
       }
 
@@ -99,7 +99,7 @@ class ItemListState extends State<ItemList> {
         'email': widget.firebaseUser.email,
 
         'accountCreationTimestamp':
-            widget.firebaseUser.metadata.creationTimestamp,
+        widget.firebaseUser.metadata.creationTimestamp,
       });
     });
 
@@ -396,7 +396,7 @@ class ItemListState extends State<ItemList> {
 
   Widget buildItemList() {
     CollectionReference collectionReference =
-        Firestore.instance.collection('items');
+    Firestore.instance.collection('items');
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
         stream: collectionReference.snapshots(),
@@ -469,12 +469,12 @@ class ItemListState extends State<ItemList> {
 
   Widget buildUserList() {
     CollectionReference collectionReference =
-        Firestore.instance.collection('users');
+    Firestore.instance.collection('users');
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
         stream: collectionReference
             .where('lastActiveTimestamp', isGreaterThan: 0)
-            //.where('photoURL', isNull: false)
+        //.where('photoURL', isNull: false)
             .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
@@ -512,21 +512,21 @@ class ItemListState extends State<ItemList> {
                     onTap: () {},
                     trailing: ds['userID'] != userID
                         ? IconButton(
-                            icon: Icon(Icons.chat),
-                            tooltip: 'Chat',
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => Chat(
-                                        myID: userID,
-                                        peerId: ds['userID'],
-                                        peerAvatar: ds['photoURL'],
-                                      ),
-                                ),
-                              );
-                            },
-                          )
+                      icon: Icon(Icons.chat),
+                      tooltip: 'Chat',
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => Chat(
+                              myID: userID,
+                              peerId: ds['userID'],
+                              peerAvatar: ds['photoURL'],
+                            ),
+                          ),
+                        );
+                      },
+                    )
                         : null,
                   );
                 },
@@ -542,8 +542,8 @@ class ItemListState extends State<ItemList> {
         context,
         MaterialPageRoute(
           builder: (BuildContext context) => ItemEdit(
-                item: newItem,
-              ),
+            item: newItem,
+          ),
           fullscreenDialog: true,
         ));
 /* old
@@ -568,7 +568,7 @@ class ItemListState extends State<ItemList> {
   Future<UserEdit> getUserEdit() async {
     UserEdit out;
     DocumentSnapshot ds =
-        await Firestore.instance.collection('users').document(userID).get();
+    await Firestore.instance.collection('users').document(userID).get();
     if (ds != null) {
       out = new UserEdit(
           id: userID, photoUrl: ds['photoURL'], displayName: ds['displayName']);
@@ -584,8 +584,8 @@ class ItemListState extends State<ItemList> {
         context,
         MaterialPageRoute(
           builder: (BuildContext context) => EditProfile(
-                userEdit: userEdit,
-              ),
+            userEdit: userEdit,
+          ),
           fullscreenDialog: true,
         ));
 
@@ -612,7 +612,7 @@ class ItemListState extends State<ItemList> {
 
   Future<DocumentSnapshot> getUserFromFirestore(String userID) async {
     DocumentSnapshot ds =
-        await Firestore.instance.collection('users').document(userID).get();
+    await Firestore.instance.collection('users').document(userID).get();
 
     return ds;
   }
