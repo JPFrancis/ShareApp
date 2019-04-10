@@ -1,6 +1,7 @@
+
 import 'package:flutter/material.dart';
-import 'package:shareapp/auth.dart';
-import 'package:shareapp/root_page.dart';
+import 'package:shareapp/services/auth.dart';
+import 'package:shareapp/pages/root_page.dart';
 
 void main() => runApp(MyApp());
 
@@ -19,3 +20,4 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
