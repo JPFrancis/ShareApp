@@ -86,7 +86,7 @@ class ItemDetailState extends State<ItemDetail> {
               tooltip: 'Refresh item',
               onPressed: () {
                 setState(
-                  () {
+                      () {
                     setCamera();
                   },
                 );
@@ -97,8 +97,8 @@ class ItemDetailState extends State<ItemDetail> {
               tooltip: 'Request item',
               onPressed: !widget.isMyItem
                   ? () {
-                      handleRequestItemPressed();
-                    }
+                handleRequestItemPressed();
+              }
                   : null,
             ),
           ],
@@ -179,24 +179,24 @@ class ItemDetailState extends State<ItemDetail> {
                   color: Color(0x00000000),
                   child: snapshot.hasData
                       ? Row(
-                          children: <Widget>[
-                            CachedNetworkImage(
-                              key: new ValueKey<String>(DateTime.now()
-                                  .millisecondsSinceEpoch
-                                  .toString()),
-                              imageUrl: ds['photoURL'],
-                              placeholder: (context, url) =>
-                                  new CircularProgressIndicator(),
-                            ),
-                            Container(width: 20),
-                            Text(
-                              'Item created by:\n${ds['displayName']}',
-                              style: TextStyle(
-                                  color: Colors.black, fontSize: 20.0),
-                              textAlign: TextAlign.left,
-                            )
-                          ],
-                        )
+                    children: <Widget>[
+                      CachedNetworkImage(
+                        key: new ValueKey<String>(DateTime.now()
+                            .millisecondsSinceEpoch
+                            .toString()),
+                        imageUrl: ds['photoURL'],
+                        placeholder: (context, url) =>
+                        new CircularProgressIndicator(),
+                      ),
+                      Container(width: 20),
+                      Text(
+                        'Item created by:\n${ds['displayName']}',
+                        style: TextStyle(
+                            color: Colors.black, fontSize: 20.0),
+                        textAlign: TextAlign.left,
+                      )
+                    ],
+                  )
                       : Container(),
                 )),
           );
@@ -306,9 +306,9 @@ class ItemDetailState extends State<ItemDetail> {
       padding: EdgeInsets.all(padding),
       child: imagesList.length > 0
           ? Container(
-              margin: EdgeInsets.symmetric(vertical: 20.0),
-              height: 200,
-              child: getImagesListView(context))
+          margin: EdgeInsets.symmetric(vertical: 20.0),
+          height: 200,
+          child: getImagesListView(context))
           : Text('No images yet\n'),
     );
   }
@@ -370,10 +370,10 @@ class ItemDetailState extends State<ItemDetail> {
                   ),
                   gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>[
                     Factory<OneSequenceGestureRecognizer>(
-                      () =>
-                          // to disable dragging, use ScaleGestureRecognizer()
-                          // to enable dragging, use EagerGestureRecognizer()
-                          EagerGestureRecognizer(),
+                          () =>
+                      // to disable dragging, use ScaleGestureRecognizer()
+                      // to enable dragging, use EagerGestureRecognizer()
+                      EagerGestureRecognizer(),
                       //ScaleGestureRecognizer(),
                     ),
                   ].toSet(),
@@ -444,8 +444,8 @@ class ItemDetailState extends State<ItemDetail> {
         context,
         MaterialPageRoute(
           builder: (BuildContext context) => ItemEdit(
-                item: editItem,
-              ),
+            item: editItem,
+          ),
           fullscreenDialog: true,
         ));
 
@@ -457,16 +457,16 @@ class ItemDetailState extends State<ItemDetail> {
 
   void handleRequestItemPressed() async {
     setState(
-      () {},
+          () {},
     );
 
     Item result = await Navigator.push(
         context,
         MaterialPageRoute(
           builder: (BuildContext context) => RequestItem(
-                itemID: widget.itemID,
-                itemRequester: myUserID,
-              ),
+            itemID: widget.itemID,
+            itemRequester: myUserID,
+          ),
           fullscreenDialog: true,
         ));
   }

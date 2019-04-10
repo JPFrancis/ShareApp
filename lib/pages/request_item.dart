@@ -49,10 +49,13 @@ class RequestItemState extends State<RequestItem> {
   DateTime startDateTime = DateTime.now().add(Duration(hours: 1));
   DateTime endDateTime = DateTime.now().add(Duration(hours: 2));
 
+  FocusNode focusNode;
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+    focusNode = FocusNode();
   }
 
   @override
@@ -72,9 +75,7 @@ class RequestItemState extends State<RequestItem> {
                 textScaleFactor: 1.05,
                 style: theme.textTheme.body2.copyWith(color: Colors.white)),
             onPressed: () {
-              setState(() {
-                /// refresh
-              });
+              sendItem();
             },
           ),
         ],
@@ -200,6 +201,7 @@ class RequestItemState extends State<RequestItem> {
       padding: EdgeInsets.all(padding),
       child: TextField(
         //keyboardType: TextInputType.multiline,
+        focusNode: focusNode,
         maxLines: 3,
         controller: noteController,
         style: textStyle,
@@ -299,6 +301,43 @@ class RequestItemState extends State<RequestItem> {
     );
   }
 
+  Future<bool> sendItem() async {
+    //if (widget.userEdit.displayName == userEditCopy.displayName) return true;
+
+    final ThemeData theme = Theme.of(context);
+    final TextStyle dialogTextStyle =
+    theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+
+    return await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: Text(
+            'Preview item',
+            style: dialogTextStyle,
+          ),
+          actions: <Widget>[
+            FlatButton(
+              child: const Text('Edit'),
+              onPressed: () {
+                Navigator.of(context).pop(
+                    false); // Pops the confirmation dialog but not the page.
+              },
+            ),
+            FlatButton(
+              child: const Text('Send'),
+              onPressed: () {
+                Navigator.of(context).pop(
+                    true); // Returning true to _onWillPop will pop again.
+              },
+            ),
+          ],
+        );
+      },
+    ) ??
+        false;
+  }
+
   Future<bool> onWillPop() async {
     //if (widget.userEdit.displayName == userEditCopy.displayName) return true;
 
@@ -354,9 +393,9 @@ class DateTimeItem extends StatelessWidget {
 
     return DefaultTextStyle(
       style: theme.textTheme.subhead,
-      child: Row(
+      child: Column(
         children: <Widget>[
-          Expanded(
+          Container(
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 8.0),
               decoration: BoxDecoration(
@@ -386,7 +425,7 @@ class DateTimeItem extends StatelessWidget {
             ),
           ),
           Container(
-            margin: const EdgeInsets.only(left: 8.0),
+            //margin: const EdgeInsets.only(left: 8.0),
             padding: const EdgeInsets.symmetric(vertical: 8.0),
             decoration: BoxDecoration(
                 border: Border(bottom: BorderSide(color: theme.dividerColor))),
