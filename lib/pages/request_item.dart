@@ -310,9 +310,9 @@ class RequestItemState extends State<RequestItem> {
     Firestore.instance.collection("rentals").add({
       'id': 'temp',
       'isRequest': true,
-      'item': null,
-      'owner': null,
-      'renter': null,
+      'item': Firestore.instance.collection('items').document(widget.itemID),
+      'owner': Firestore.instance.collection('users').document(itemSnapshot['creatorID']),
+      'renter': Firestore.instance.collection('users').document(widget.itemRequester),
       'start': startDateTime,
       'end': endDateTime,
       'chat': null,
@@ -330,7 +330,7 @@ class RequestItemState extends State<RequestItem> {
     });
 
     if (rentalID != null) {
-      x
+
     }
   }
 
