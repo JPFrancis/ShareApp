@@ -1,7 +1,3 @@
-
-
-
-
 /// ===================================
 
 /// below is a empty app, can be used to test anything
@@ -35,10 +31,9 @@ class MyApp extends StatelessWidget {
 /// ========================================================================
 /// Our actual app
 
-
-
 import 'package:flutter/material.dart';
 import 'package:shareapp/services/auth.dart';
+import 'package:shareapp/pages/item_list.dart';
 import 'package:shareapp/pages/root_page.dart';
 
 void main() => runApp(MyApp());
@@ -53,9 +48,14 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.red,
       ),
-      //home: ItemList(),
       home: new RootPage(auth: new Auth()),
+      //initialRoute: '/',
+      /*routes: <String, WidgetBuilder>{
+        '/': (context) => RootPage(auth: new Auth()),
+        '/ItemList': (context) => new ItemList(
+              auth: RootPage().auth,
+            ),
+      },*/
     );
   }
 }
-

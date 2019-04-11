@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shareapp/pages/chat.dart';
 
 enum DismissDialogAction {
   cancel,
@@ -37,7 +38,8 @@ class RequestItemState extends State<RequestItem> {
   TextStyle textStyle;
   TextStyle inputTextStyle;
 
-  DocumentSnapshot documentSnapshot;
+  DocumentSnapshot itemSnapshot;
+  DocumentSnapshot creatorSnapshot;
   ThemeData theme;
   double padding = 5.0;
   String note;
@@ -108,7 +110,7 @@ class RequestItemState extends State<RequestItem> {
       future: getItemFromFirestore(),
       builder: (BuildContext context, AsyncSnapshot snapshot) {
         if (snapshot.hasData) {
-          documentSnapshot = snapshot.data;
+          itemSnapshot = snapshot.data;
 
           /// usage: ds['name']
           return Padding(
@@ -147,7 +149,7 @@ class RequestItemState extends State<RequestItem> {
           child: Container(
             color: Color(0x00000000),
             child: Text(
-              'You\'re requesting a:\n${documentSnapshot['name']}',
+              'You\'re requesting a:\n${itemSnapshot['name']}',
               //itemName,
               style: TextStyle(color: Colors.black, fontSize: 20.0),
               textAlign: TextAlign.left,
@@ -158,40 +160,37 @@ class RequestItemState extends State<RequestItem> {
 
   Widget showItemCreator() {
     return FutureBuilder(
-      future: documentSnapshot['creator'].get(),
+      future: itemSnapshot['creator'].get(),
       builder: (BuildContext context, AsyncSnapshot snapshot) {
-        DocumentSnapshot ds = snapshot.data;
+        if (snapshot.hasData) {
+          creatorSnapshot = snapshot.data;
 
-        return Padding(
-          padding: EdgeInsets.all(padding),
-          child: SizedBox(
-            height: 50.0,
-            child: Container(
-              color: Color(0x00000000),
-              child: snapshot.hasData
-                  ? Row(
-                      children: <Widget>[
-                        Text(
-                          'You\'re requesting from:\n${ds['displayName']}',
-                          style: TextStyle(color: Colors.black, fontSize: 20.0),
-                          textAlign: TextAlign.left,
-                        ),
-                        Expanded(
-                          child: CachedNetworkImage(
-                            key: new ValueKey<String>(DateTime.now()
-                                .millisecondsSinceEpoch
-                                .toString()),
-                            imageUrl: ds['photoURL'],
-                            placeholder: (context, url) =>
-                                new CircularProgressIndicator(),
-                          ),
-                        ),
-                      ],
-                    )
-                  : Container(),
-            ),
-          ),
-        );
+          return Row(
+            children: <Widget>[
+              Text(
+                'You\'re requesting from:\n${creatorSnapshot['displayName']}',
+                style: TextStyle(color: Colors.black, fontSize: 20.0),
+                textAlign: TextAlign.left,
+              ),
+              Expanded(
+                child: Container(
+                  height: 50,
+                  child: CachedNetworkImage(
+                    key: new ValueKey<String>(
+                        DateTime.now().millisecondsSinceEpoch.toString()),
+                    imageUrl: creatorSnapshot['photoURL'],
+                    placeholder: (context, url) =>
+                        new CircularProgressIndicator(),
+                  ),
+                ),
+              ),
+            ],
+          );
+        } else {
+          return Container(
+            child: Text('\n\n'),
+          );
+        }
       },
     );
   }
@@ -301,40 +300,77 @@ class RequestItemState extends State<RequestItem> {
     );
   }
 
+  void navToItemRental() async {
+    setState(() {
+      isUploading = true;
+    });
+
+    String rentalID;
+
+    Firestore.instance.collection("rentals").add({
+      'id': 'temp',
+      'isRequest': true,
+      'item': null,
+      'owner': null,
+      'renter': null,
+      'start': startDateTime,
+      'end': endDateTime,
+      'chat': null,
+    }).then((DocumentReference documentReference) {
+      rentalID = documentReference.documentID;
+
+      Firestore.instance
+          .collection('rentals')
+          .document(rentalID)
+          .updateData({'id': rentalID});
+
+      setState(() {
+        isUploading = false;
+      });
+    });
+
+    if (rentalID != null) {
+      x
+    }
+  }
+
   Future<bool> sendItem() async {
     //if (widget.userEdit.displayName == userEditCopy.displayName) return true;
 
     final ThemeData theme = Theme.of(context);
     final TextStyle dialogTextStyle =
-    theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
 
     return await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          content: Text(
-            'Preview item',
-            style: dialogTextStyle,
-          ),
-          actions: <Widget>[
-            FlatButton(
-              child: const Text('Edit'),
-              onPressed: () {
-                Navigator.of(context).pop(
-                    false); // Pops the confirmation dialog but not the page.
-              },
-            ),
-            FlatButton(
-              child: const Text('Send'),
-              onPressed: () {
-                Navigator.of(context).pop(
-                    true); // Returning true to _onWillPop will pop again.
-              },
-            ),
-          ],
-        );
-      },
-    ) ??
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Preview message'),
+              content: Text(
+                'Hello ${creatorSnapshot['displayName']}, '
+                    'I am requesting your ${itemSnapshot['name']}. '
+                    'I would like to rent this item from '
+                    '${startDateTime} to ${endDateTime}',
+                style: dialogTextStyle,
+              ),
+              actions: <Widget>[
+                FlatButton(
+                  child: const Text('Go back'),
+                  onPressed: () {
+                    Navigator.of(context).pop(
+                        false); // Pops the confirmation dialog but not the page.
+                  },
+                ),
+                FlatButton(
+                  child: const Text('Send'),
+                  onPressed: () {
+                    navToItemRental();
+                  },
+                ),
+              ],
+            );
+          },
+        ) ??
         false;
   }
 

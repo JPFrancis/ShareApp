@@ -472,7 +472,7 @@ class ItemEditState extends State<ItemEdit> {
           await Firestore.instance.collection("items").add({
         'id': 'temp',
         'creator': itemCopy.creator,
-            'creatorID': itemCopy.creatorID,
+        'creatorID': itemCopy.creatorID,
         'name': itemCopy.name,
         'description': itemCopy.description,
         'type': itemCopy.type,
