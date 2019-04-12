@@ -14,6 +14,7 @@ enum DismissDialogAction {
 }
 
 class EditProfile extends StatefulWidget {
+  static const routeName = '/editProfile';
   final UserEdit userEdit;
 
   EditProfile({Key key, this.userEdit}) : super(key: key);

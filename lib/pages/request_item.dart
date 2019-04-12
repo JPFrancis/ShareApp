@@ -15,6 +15,7 @@ enum DismissDialogAction {
 }
 
 class RequestItem extends StatefulWidget {
+  static const routeName = '/requestItem';
   final String itemRequester;
   final String itemID;
 

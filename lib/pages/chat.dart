@@ -12,6 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class Chat extends StatelessWidget {
+  static const routeName = '/chat';
   final Item item;
   final String myID;
   final String peerId;

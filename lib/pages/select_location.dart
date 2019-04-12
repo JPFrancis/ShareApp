@@ -13,6 +13,7 @@ final homeScaffoldKey = GlobalKey<ScaffoldState>();
 GoogleMapsPlaces _places;
 
 class SelectLocation extends StatefulWidget {
+  static const routeName = '/selectLocation';
   GeoPoint geoPoint;
 
   SelectLocation(this.geoPoint);

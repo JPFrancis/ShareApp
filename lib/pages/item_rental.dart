@@ -20,6 +20,7 @@ enum Status {
 }
 
 class ItemRental extends StatefulWidget {
+  static const routeName = '/itemRental';
   final String rentalID;
 
   //ItemDetail(this.itemID, this.isMyItem);

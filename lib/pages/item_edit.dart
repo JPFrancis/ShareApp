@@ -14,6 +14,7 @@ enum DismissDialogAction {
 }
 
 class ItemEdit extends StatefulWidget {
+  static const routeName = '/itemEdit';
   final Item item;
 
   ItemEdit({Key key, this.item}) : super(key: key);

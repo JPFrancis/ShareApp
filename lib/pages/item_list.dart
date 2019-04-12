@@ -1,3 +1,4 @@
+import 'package:shareapp/main.dart';
 import 'package:flutter/material.dart';
 import 'package:shareapp/pages/chat.dart';
 import 'package:shareapp/models/item.dart';
@@ -13,6 +14,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class ItemList extends StatefulWidget {
+  static const routeName = '/itemList';
+
   BaseAuth auth;
   FirebaseUser firebaseUser;
   VoidCallback onSignOut;
@@ -184,14 +187,8 @@ class ItemListState extends State<ItemList> {
               rental: null,
             ),
           );
-          //navigateToEdit(Item({null, '', '', true}));
-          //navigateToDetail(Item('', '', 2), 'Add Item');
         },
-
-        // Help text when you hold down FAB
         tooltip: 'Add new item',
-
-        // Set FAB icon
         child: Icon(Icons.add),
       );
     }
@@ -396,8 +393,8 @@ class ItemListState extends State<ItemList> {
   }
 
   Widget buildItemList() {
-    CollectionReference collectionReference = Firestore.instance
-        .collection('items');
+    CollectionReference collectionReference =
+        Firestore.instance.collection('items');
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
         stream: collectionReference.snapshots(),
@@ -542,6 +539,14 @@ class ItemListState extends State<ItemList> {
   }
 
   void navigateToEdit(Item newItem) async {
+    Navigator.pushNamed(
+      context,
+      ItemEdit.routeName,
+      arguments: ItemEditArgs(
+        newItem,
+      ),
+    );
+/*
     Navigator.push(
         context,
         MaterialPageRoute(
@@ -550,22 +555,26 @@ class ItemListState extends State<ItemList> {
               ),
           fullscreenDialog: true,
         ));
-/* old
-    String result =
-    await Navigator.push(context, MaterialPageRoute(builder: (context) {
-      return ItemEdit(item);
-    }));
-    */
+        */
   }
 
   void navigateToDetail(String itemID) async {
-    UserEdit result = await Navigator.push(
+    Navigator.pushNamed(
+      context,
+      ItemDetail.routeName,
+      arguments: ItemDetailArgs(
+        itemID,
+      ),
+    );
+    /*
+    await Navigator.push(
         context,
         MaterialPageRoute(
           builder: (BuildContext context) => ItemDetail(
                 itemID: itemID,
               ),
         ));
+        */
   }
 
   Future<UserEdit> getUserEdit() async {

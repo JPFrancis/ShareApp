@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shareapp/services/auth.dart';
 
 class LoginPage extends StatefulWidget {
+  static const routeName = '/loginPage';
   LoginPage({Key key, this.title, this.auth, this.onSignIn}) : super(key: key);
 
   final String title;
