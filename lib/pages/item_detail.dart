@@ -1,3 +1,4 @@
+import 'package:shareapp/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
@@ -528,15 +529,23 @@ class ItemDetailState extends State<ItemDetail> {
     );
     */
 
+    Navigator.pushNamed(
+      context,
+      RequestItem.routeName,
+      arguments: RequestItemArgs(
+        widget.itemID,
+      ),
+    );
+/*
     Item result = await Navigator.push(
         context,
         MaterialPageRoute(
           builder: (BuildContext context) => RequestItem(
                 itemID: widget.itemID,
-                itemRequester: myUserID,
               ),
           fullscreenDialog: true,
         ));
+        */
   }
 
   setCamera() async {

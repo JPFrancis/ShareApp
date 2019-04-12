@@ -7,6 +7,7 @@ import 'package:shareapp/pages/item_rental.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shareapp/main.dart';
 
 enum DismissDialogAction {
   cancel,
@@ -16,10 +17,9 @@ enum DismissDialogAction {
 
 class RequestItem extends StatefulWidget {
   static const routeName = '/requestItem';
-  final String itemRequester;
   final String itemID;
 
-  RequestItem({Key key, this.itemRequester, this.itemID}) : super(key: key);
+  RequestItem({Key key, this.itemID}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
@@ -40,8 +40,8 @@ class RequestItemState extends State<RequestItem> {
   TextStyle textStyle;
   TextStyle inputTextStyle;
 
-  DocumentSnapshot itemSnapshot;
-  DocumentSnapshot creatorSnapshot;
+  DocumentSnapshot itemDS;
+  DocumentSnapshot creatorDS;
   ThemeData theme;
   double padding = 5.0;
   String note;
@@ -55,11 +55,48 @@ class RequestItemState extends State<RequestItem> {
 
   FocusNode focusNode;
 
+  String myUserID;
+  bool isLoading;
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     focusNode = FocusNode();
+    getMyUserID();
+    getSnapshots();
+  }
+
+  void getMyUserID() async {
+    prefs = await SharedPreferences.getInstance();
+    myUserID = prefs.getString('userID') ?? '';
+  }
+
+  void getSnapshots() async {
+    isLoading = true;
+    DocumentSnapshot ds = await Firestore.instance
+        .collection('items')
+        .document(widget.itemID)
+        .get();
+
+    if (ds != null) {
+      itemDS = ds;
+
+      DocumentReference dr = itemDS['creator'];
+      String str = dr.documentID;
+
+      ds = await Firestore.instance.collection('users').document(str).get();
+
+      if (ds != null) {
+        creatorDS = ds;
+      }
+
+      if (prefs != null && itemDS != null && creatorDS != null) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -86,10 +123,14 @@ class RequestItemState extends State<RequestItem> {
       ),
       body: Stack(
         children: <Widget>[
-          isUploading
+          isLoading
               ? Container(
-                  decoration:
-                      new BoxDecoration(color: Colors.white.withOpacity(0.0)),
+                  child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: <Widget>[
+                        Center(child: CircularProgressIndicator())
+                      ]),
                 )
               : showBody(),
           showCircularProgress(),
@@ -98,48 +139,25 @@ class RequestItemState extends State<RequestItem> {
     );
   }
 
-  Future<DocumentSnapshot> getItemFromFirestore() async {
-    DocumentSnapshot ds = await Firestore.instance
-        .collection('items')
-        .document(widget.itemID)
-        .get();
-
-    return ds;
-  }
-
   Widget showBody() {
-    return FutureBuilder(
-      future: getItemFromFirestore(),
-      builder: (BuildContext context, AsyncSnapshot snapshot) {
-        if (snapshot.hasData) {
-          itemSnapshot = snapshot.data;
-
-          /// usage: ds['name']
-          return Padding(
-            padding: EdgeInsets.all(15),
-            child: ListView(
-              children: <Widget>[
-                showItemName(),
-                showItemCreator(),
-                Container(
-                  height: 10,
-                ),
-                showStartTimePicker(),
-                showEndTimePicker(),
-                showDuration(),
-                Container(
-                  height: 10,
-                ),
-                showNoteEdit(),
-              ],
-            ),
-          );
-        } else {
-          return new Center(
-            child: CircularProgressIndicator(),
-          );
-        }
-      },
+    return Padding(
+      padding: EdgeInsets.all(15),
+      child: ListView(
+        children: <Widget>[
+          showItemName(),
+          showItemCreator(),
+          Container(
+            height: 10,
+          ),
+          showStartTimePicker(),
+          showEndTimePicker(),
+          showDuration(),
+          Container(
+            height: 10,
+          ),
+          showNoteEdit(),
+        ],
+      ),
     );
   }
 
@@ -151,7 +169,7 @@ class RequestItemState extends State<RequestItem> {
           child: Container(
             color: Color(0x00000000),
             child: Text(
-              'You\'re requesting a:\n${itemSnapshot['name']}',
+              'You\'re requesting a:\n${itemDS['name']}',
               //itemName,
               style: TextStyle(color: Colors.black, fontSize: 20.0),
               textAlign: TextAlign.left,
@@ -162,15 +180,15 @@ class RequestItemState extends State<RequestItem> {
 
   Widget showItemCreator() {
     return FutureBuilder(
-      future: itemSnapshot['creator'].get(),
+      future: itemDS['creator'].get(),
       builder: (BuildContext context, AsyncSnapshot snapshot) {
         if (snapshot.hasData) {
-          creatorSnapshot = snapshot.data;
+          creatorDS = snapshot.data;
 
           return Row(
             children: <Widget>[
               Text(
-                'You\'re requesting from:\n${creatorSnapshot['displayName']}',
+                'You\'re requesting from:\n${creatorDS['displayName']}',
                 style: TextStyle(color: Colors.black, fontSize: 20.0),
                 textAlign: TextAlign.left,
               ),
@@ -180,7 +198,7 @@ class RequestItemState extends State<RequestItem> {
                   child: CachedNetworkImage(
                     key: new ValueKey<String>(
                         DateTime.now().millisecondsSinceEpoch.toString()),
-                    imageUrl: creatorSnapshot['photoURL'],
+                    imageUrl: creatorDS['photoURL'],
                     placeholder: (context, url) =>
                         new CircularProgressIndicator(),
                   ),
@@ -295,11 +313,12 @@ class RequestItemState extends State<RequestItem> {
               Center(child: CircularProgressIndicator())
             ]),
       );
+    } else {
+      return Container(
+        height: 0.0,
+        width: 0.0,
+      );
     }
-    return Container(
-      height: 0.0,
-      width: 0.0,
-    );
   }
 
   void navToItemRental() async {
@@ -314,11 +333,9 @@ class RequestItemState extends State<RequestItem> {
       'id': 'temp',
       'status': 1, // set rental status to requested
       'item': Firestore.instance.collection('items').document(widget.itemID),
-      'owner': Firestore.instance
-          .collection('users')
-          .document(itemSnapshot['creatorID']),
-      'renter':
-          Firestore.instance.collection('users').document(widget.itemRequester),
+      'owner':
+          Firestore.instance.collection('users').document(itemDS['creatorID']),
+      'renter': Firestore.instance.collection('users').document(myUserID),
       'start': startDateTime,
       'end': endDateTime,
       'chat': null,
@@ -344,7 +361,15 @@ class RequestItemState extends State<RequestItem> {
       });
 
       if (rentalID != null) {
-        debugPrint('====================${rentalID}');
+
+        Navigator.pushNamed(
+          context,
+          ItemRental.routeName,
+          arguments: ItemRentalArgs(
+            rentalID,
+          ),
+        );
+/*
         ItemRental result = await Navigator.push(
             context,
             MaterialPageRoute(
@@ -352,6 +377,7 @@ class RequestItemState extends State<RequestItem> {
                     rentalID: rentalID,
                   ),
             ));
+            */
       }
     }
   }
@@ -369,8 +395,8 @@ class RequestItemState extends State<RequestItem> {
             return AlertDialog(
               title: Text('Preview message'),
               content: Text(
-                'Hello ${creatorSnapshot['displayName']}, '
-                    'I am requesting your ${itemSnapshot['name']}. '
+                'Hello ${creatorDS['displayName']}, '
+                    'I am requesting your ${itemDS['name']}. '
                     'I would like to rent this item from '
                     '${startDateTime} to ${endDateTime}',
                 style: dialogTextStyle,

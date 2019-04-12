@@ -31,6 +31,7 @@ class MyApp extends StatelessWidget {
 /// ========================================================================
 /// Our actual app
 
+import 'package:shareapp/pages/item_rental.dart';
 import 'package:shareapp/models/item.dart';
 import 'package:shareapp/pages/item_edit.dart';
 import 'package:flutter/material.dart';
@@ -39,6 +40,7 @@ import 'package:shareapp/pages/item_list.dart';
 import 'package:shareapp/pages/item_detail.dart';
 import 'package:shareapp/pages/root_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shareapp/pages/request_item.dart';
 
 void main() => runApp(MyApp());
 
@@ -53,6 +55,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.red,
       ),
       home: new RootPage(auth: new Auth()),
+      initialRoute: RootPage.routeName,
       onGenerateRoute: (settings) {
         switch (settings.name) {
           case ItemList.routeName:
@@ -96,6 +99,33 @@ class MyApp extends StatelessWidget {
                 fullscreenDialog: true,
               );
             }
+
+          case RequestItem.routeName:
+            {
+              final RequestItemArgs args = settings.arguments;
+
+              return MaterialPageRoute(
+                builder: (context) {
+                  return RequestItem(
+                    itemID: args.itemID,
+                  );
+                },
+                fullscreenDialog: true,
+              );
+            }
+
+          case ItemRental.routeName:
+            {
+              final ItemRentalArgs args = settings.arguments;
+
+              return MaterialPageRoute(
+                builder: (context) {
+                  return ItemRental(
+                    rentalID: args.rentalID,
+                  );
+                },
+              );
+            }
         }
       },
       //initialRoute: '/',
@@ -120,11 +150,31 @@ class ItemListArgs {
 class ItemDetailArgs {
   final String itemID;
 
-  ItemDetailArgs(this.itemID,);
+  ItemDetailArgs(
+    this.itemID,
+  );
 }
 
 class ItemEditArgs {
   final Item item;
 
-  ItemEditArgs(this.item,);
+  ItemEditArgs(
+    this.item,
+  );
+}
+
+class RequestItemArgs {
+  final String itemID;
+
+  RequestItemArgs(
+    this.itemID,
+  );
+}
+
+class ItemRentalArgs {
+  final String rentalID;
+
+  ItemRentalArgs(
+    this.rentalID,
+  );
 }

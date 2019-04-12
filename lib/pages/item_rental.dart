@@ -1,3 +1,4 @@
+import 'package:shareapp/pages/item_detail.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
@@ -5,6 +6,8 @@ import 'package:flutter/foundation.dart';
 import 'package:shareapp/models/item.dart';
 import 'package:shareapp/models/rental.dart';
 import 'package:shareapp/pages/item_edit.dart';
+import 'package:shareapp/pages/item_list.dart';
+import 'package:shareapp/pages/root_page.dart';
 import 'package:shareapp/pages/request_item.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -190,7 +193,7 @@ class ItemRentalState extends State<ItemRental> {
     return Container(
       child: Text(
         'Item name: ${itemDS['name']}\n'
-        'Item renter:',
+        'Item renter: ${renterDS['displayName']}',
         style: TextStyle(
           fontSize: 20,
         ),
@@ -296,7 +299,15 @@ class ItemRentalState extends State<ItemRental> {
         .document(itemDS['id'])
         .updateData({'rental': null});
 
-    Navigator.pop(context);
+    Navigator.of(context)
+        .pushNamedAndRemoveUntil('/', (Route<dynamic> route) => false);
+
+    /*
+    Navigator.popUntil(
+      context,
+      ModalRoute.withName('/'),
+    );
+    */
   }
 
   void goToLastScreen() {
