@@ -192,17 +192,15 @@ class ItemDetailState extends State<ItemDetail> {
             )));
   }
 
-  FloatingActionButton showFAB() {
-    return FloatingActionButton(
-      onPressed: () {
-        navigateToEdit();
-      },
-
-      // Help text when you hold down FAB
-      tooltip: 'Edit item',
-
-      // Set FAB icon
-      child: Icon(Icons.edit),
+  Widget showFAB() {
+    return Padding(
+      padding: const EdgeInsets.only(right: 10.0),
+      child: RaisedButton(
+        onPressed: () => navigateToEdit(),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5.0)),
+        color: Colors.red,
+        child: Icon(Icons.edit),
+      ),
     );
   }
 
@@ -234,61 +232,53 @@ class ItemDetailState extends State<ItemDetail> {
     );
   }
 
+  Widget divider() {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Divider(),
+    );
+  }
+
   Widget showItemCreator() {
     return Padding(
-      padding: EdgeInsets.all(padding),
+      padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 10.0),
       child: SizedBox(
-          height: 50.0,
           child: Container(
-            color: Color(0x00000000),
-            child: Row(
-              children: <Widget>[
-                CachedNetworkImage(
-                  key: new ValueKey<String>(
-                      DateTime.now().millisecondsSinceEpoch.toString()),
-                  imageUrl: creatorDS['photoURL'],
-                  placeholder: (context, url) =>
-                  new CircularProgressIndicator(),
-                ),
-                Container(width: 20),
-                Text(
-                  'Item created by:\n${creatorDS['displayName']}',
-                  style: TextStyle(color: Colors.black, fontSize: 20.0),
-                  textAlign: TextAlign.left,
-                )
-              ],
-            ),
-          )),
+              height: 50.0,
+              color: Color(0x00000000),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: <Widget>[
+                  Text(
+                    'Shared by ${creatorDS['displayName']}',
+                    style: TextStyle(color: Colors.black, fontSize: 17.0),
+                    textAlign: TextAlign.left,
+                  ),
+                  ClipOval(
+                    child: CachedNetworkImage(
+                      key: new ValueKey<String>(
+                          DateTime.now().millisecondsSinceEpoch.toString()),
+                      imageUrl: creatorDS['photoURL'],
+                      placeholder: (context, url) =>
+                      new CircularProgressIndicator(),
+                    ),
+                  ),
+                ],
+              ))),
     );
   }
 
   Widget showItemName() {
     return Padding(
-      padding: EdgeInsets.all(padding),
+      padding: const EdgeInsets.only(left: 20.0),
       child: SizedBox(
-          height: 50.0,
           child: Container(
             color: Color(0x00000000),
             child: Text(
-              'Name: ${itemDS['name']}',
+              '${itemDS['name']}',
               //itemName,
-              style: TextStyle(color: Colors.black, fontSize: 20.0),
-              textAlign: TextAlign.left,
-            ),
-          )),
-    );
-  }
-
-  Widget showItemDescription() {
-    return Padding(
-      padding: EdgeInsets.all(padding),
-      child: SizedBox(
-          height: 50.0,
-          child: Container(
-            color: Color(0x00000000),
-            child: Text(
-              'Description: ${itemDS['description']}',
-              style: TextStyle(color: Colors.black, fontSize: 20.0),
+              style: TextStyle(
+                  color: Colors.black, fontSize: 40.0, fontWeight: FontWeight.bold),
               textAlign: TextAlign.left,
             ),
           )),
@@ -297,14 +287,30 @@ class ItemDetailState extends State<ItemDetail> {
 
   Widget showItemPrice() {
     return Padding(
-      padding: EdgeInsets.all(padding),
+      padding: EdgeInsets.only(left: 20.0),
       child: SizedBox(
-          height: 50.0,
+        //height: 50.0,
           child: Container(
             color: Color(0x00000000),
             child: Text(
-              'Price: ${itemDS['price']}',
-              style: TextStyle(color: Colors.black, fontSize: 20.0),
+              '${itemDS['price']}',
+              style: TextStyle(
+                  color: Colors.black, fontSize: 30.0, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.left,
+            ),
+          )),
+    );
+  }
+
+  Widget showItemDescription() {
+    return Padding(
+      padding: EdgeInsets.only(top: 20.0, left: 20.0, right: 20.0),
+      child: SizedBox(
+          child: Container(
+            color: Color(0x00000000),
+            child: Text(
+              '${itemDS['description']}',
+              style: TextStyle(color: Colors.black, fontSize: 15.0),
               textAlign: TextAlign.left,
             ),
           )),
@@ -313,14 +319,16 @@ class ItemDetailState extends State<ItemDetail> {
 
   Widget showItemType() {
     return Padding(
-      padding: EdgeInsets.all(padding),
+      padding: EdgeInsets.only(left: 20.0, top: 20.0),
       child: SizedBox(
-          height: 50.0,
           child: Container(
             color: Color(0x00000000),
             child: Text(
-              'Type: ${itemDS['type']}',
-              style: TextStyle(color: Colors.black, fontSize: 20.0),
+              '${itemDS['type']}'.toUpperCase(),
+              style: TextStyle(
+                  color: Colors.black54,
+                  fontSize: 15.0,
+                  fontWeight: FontWeight.bold),
               textAlign: TextAlign.left,
             ),
           )),
@@ -329,9 +337,8 @@ class ItemDetailState extends State<ItemDetail> {
 
   Widget showItemCondition() {
     return Padding(
-      padding: EdgeInsets.all(padding),
+      padding: EdgeInsets.only(left: 20.0, top: 15.0),
       child: SizedBox(
-          height: 50.0,
           child: Container(
             color: Color(0x00000000),
             child: Text(
@@ -361,15 +368,12 @@ class ItemDetailState extends State<ItemDetail> {
 
   Widget showItemImages() {
     List imagesList = itemDS['images'];
-    return Padding(
-      padding: EdgeInsets.all(padding),
-      child: imagesList.length > 0
-          ? Container(
-          margin: EdgeInsets.symmetric(vertical: 20.0),
-          height: 200,
-          child: getImagesListView(context))
-          : Text('No images yet\n'),
-    );
+    return imagesList.length > 0
+        ? Container(
+      height: 350,
+      child: SizedBox.expand(child: getImagesListView(context)),
+    )
+        : Text('No images yet\n');
   }
 
   Widget showItemLocation() {

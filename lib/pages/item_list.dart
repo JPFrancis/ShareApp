@@ -12,6 +12,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shareapp/pages/item_rental.dart';
 
 class ItemList extends StatefulWidget {
   static const routeName = '/itemList';
@@ -117,8 +118,7 @@ class ItemListState extends State<ItemList> {
 
     final bottomTabPages = <Widget>[
       homeTabPage(),
-      //rentalsTabPage(),
-      usersTabPage(),
+      rentalsTabPage(),
       myListingsTabPage(),
       messagesTabPage(),
       profileTabPage(),
@@ -126,11 +126,8 @@ class ItemListState extends State<ItemList> {
 
     final bottomNavBarTiles = <BottomNavigationBarItem>[
       BottomNavigationBarItem(icon: Icon(Icons.search), title: Text('Search')),
-      BottomNavigationBarItem(icon: Icon(Icons.people), title: Text('Users')),
-      /*
       BottomNavigationBarItem(
           icon: Icon(Icons.shopping_cart), title: Text('Rentals')),
-      */
       BottomNavigationBarItem(
           icon: Icon(Icons.style), title: Text('My Listings')),
       BottomNavigationBarItem(icon: Icon(Icons.forum), title: Text('Messages')),
@@ -227,25 +224,13 @@ class ItemListState extends State<ItemList> {
     );
   }
 
-  Widget usersTabPage() {
+  Widget rentalsTabPage() {
     return Padding(
       padding: edgeInset,
       child: Column(
         children: <Widget>[
-          buildUserList(),
+          buildRentalsList(),
         ],
-      ),
-    );
-  }
-
-  Widget rentalsTabPage() {
-    return Padding(
-      padding: edgeInset,
-      child: Center(
-        child: Text(
-          'Rentals',
-          textScaleFactor: 2.5,
-        ),
       ),
     );
   }
@@ -468,15 +453,14 @@ class ItemListState extends State<ItemList> {
     );
   }
 
-  Widget buildUserList() {
+  Widget buildRentalsList() {
     CollectionReference collectionReference =
-        Firestore.instance.collection('users');
+    Firestore.instance.collection('rentals');
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
-        stream: collectionReference
-            .where('lastActiveTimestamp', isGreaterThan: 0)
-            //.where('photoURL', isNull: false)
-            .snapshots(),
+        stream: collectionReference.snapshots(),
+        // to show all items created by you
+        //where('creator', isEqualTo: Firestore.instance.collection('users').document(userID)),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
             return new Text('${snapshot.error}');
@@ -495,40 +479,37 @@ class ItemListState extends State<ItemList> {
                   DocumentSnapshot ds = snapshot.data.documents[index];
 
                   return ListTile(
-                    leading: Container(
-                      height: 40,
-                      child: CachedNetworkImage(
-                        key: new ValueKey<String>(
-                            DateTime.now().millisecondsSinceEpoch.toString()),
-                        imageUrl: ds['photoURL'] ?? 'https://bit.ly/2FMVekl',
-                        placeholder: (context, url) => new Container(),
-                      ),
-                    ),
+                    leading: Icon(Icons.shopping_cart),
+                    //leading: Icon(Icons.build),
                     title: Text(
-                      ds['displayName'],
+                      ds['id'],
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    subtitle: Text(
-                        'Last seen: ${DateTime.fromMillisecondsSinceEpoch(ds['lastActiveTimestamp']).toString()}'),
-                    onTap: () {},
-                    trailing: ds['userID'] != userID
-                        ? IconButton(
-                            icon: Icon(Icons.chat),
-                            tooltip: 'Chat',
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => Chat(
-                                        myID: userID,
-                                        peerId: ds['userID'],
-                                        peerAvatar: ds['photoURL'],
-                                      ),
-                                ),
-                              );
-                            },
-                          )
-                        : null,
+                    subtitle: Text(ds['start'].toString()),
+                    onTap: () {
+                      Navigator.pushNamed(
+                        context,
+                        ItemRental.routeName,
+                        arguments: ItemRentalArgs(
+                          ds['id'],
+                        ),
+                      );
+                    },
+                    trailing: IconButton(
+                      icon: Icon(Icons.delete),
+                      onPressed: () {
+                        DocumentReference dr = ds['item'];
+
+                        Firestore.instance
+                            .collection('items')
+                            .document(dr.documentID)
+                            .updateData({'rental': null});
+
+                        Firestore.instance.collection('rentals').document(ds['id']).delete();
+
+                        /// ====================== ADD DELETE CONFIRMATION !!!
+                      },
+                    ),
                   );
                 },
               );

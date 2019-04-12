@@ -334,7 +334,7 @@ class RequestItemState extends State<RequestItem> {
       'status': 1, // set rental status to requested
       'item': Firestore.instance.collection('items').document(widget.itemID),
       'owner':
-          Firestore.instance.collection('users').document(itemDS['creatorID']),
+          Firestore.instance.collection('users').document(creatorDS['userID']),
       'renter': Firestore.instance.collection('users').document(myUserID),
       'start': startDateTime,
       'end': endDateTime,

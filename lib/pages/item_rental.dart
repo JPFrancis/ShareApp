@@ -128,7 +128,8 @@ class ItemRentalState extends State<ItemRental> {
     return WillPopScope(
       onWillPop: () {
         // when user presses back button
-        goToLastScreen();
+        Navigator.of(context)
+            .pushNamedAndRemoveUntil('/', (Route<dynamic> route) => false);
       },
       child: Scaffold(
         appBar: AppBar(
@@ -164,7 +165,22 @@ class ItemRentalState extends State<ItemRental> {
                     ]),
               )
             : showBody(),
+        floatingActionButton: showFAB(),
       ),
+    );
+  }
+
+  FloatingActionButton showFAB() {
+    return FloatingActionButton(
+      onPressed: () {
+
+      },
+
+      // Help text when you hold down FAB
+      tooltip: 'Chat',
+
+      // Set FAB icon
+      child: Icon(Icons.message),
     );
   }
 
@@ -193,6 +209,7 @@ class ItemRentalState extends State<ItemRental> {
     return Container(
       child: Text(
         'Item name: ${itemDS['name']}\n'
+        'Item owner: ${ownerDS['displayName']}\n'
         'Item renter: ${renterDS['displayName']}',
         style: TextStyle(
           fontSize: 20,
