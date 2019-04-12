@@ -298,11 +298,19 @@ class ItemRentalState extends State<ItemRental> {
         .collection('items')
         .document(itemDS['id'])
         .updateData({'rental': null});
-
+/*
+    Navigator.popUntil(context, (Route<dynamic> route){
+      bool shouldPop = false;
+      if (route.settings.name == ItemDetail.routeName){
+        shouldPop = true;
+      }
+      return shouldPop;
+    });
+*/
     Navigator.of(context)
         .pushNamedAndRemoveUntil('/', (Route<dynamic> route) => false);
 
-    /*
+/*
     Navigator.popUntil(
       context,
       ModalRoute.withName('/'),
