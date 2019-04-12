@@ -64,6 +64,7 @@ class ItemRentalState extends State<ItemRental> {
 
   void getSnapshots() async {
     isLoading = true;
+    DocumentReference dr;
     DocumentSnapshot ds = await Firestore.instance
         .collection('rentals')
         .document(widget.rentalID)
@@ -72,27 +73,33 @@ class ItemRentalState extends State<ItemRental> {
     if (ds != null) {
       rentalDS = ds;
 
+      dr = rentalDS['item'];
+
       ds = await Firestore.instance
           .collection('items')
-          .document(rentalDS['item'])
+          .document(dr.documentID)
           .get();
 
       if (ds != null) {
         itemDS = ds;
       }
 
+      dr = rentalDS['owner'];
+
       ds = await Firestore.instance
           .collection('users')
-          .document(rentalDS['owner'])
+          .document(dr.documentID)
           .get();
 
       if (ds != null) {
         ownerDS = ds;
       }
 
+      dr = rentalDS['renter'];
+
       ds = await Firestore.instance
           .collection('users')
-          .document(rentalDS['renter'])
+          .document(dr.documentID)
           .get();
 
       if (ds != null) {
@@ -171,10 +178,46 @@ class ItemRentalState extends State<ItemRental> {
       padding: EdgeInsets.all(15),
       child: ListView(
         children: <Widget>[
-          showItemCreator(),
           showItemName(),
+          showCancelRequest(),
         ],
       ),
+    );
+  }
+
+  Widget showItemName() {
+    return Container(
+      child: Text(
+        'Item name: ${itemDS['name']}\n'
+        'Item renter:',
+        style: TextStyle(
+          fontSize: 20,
+        ),
+      ),
+    );
+  }
+
+  Widget showItemOwner() {
+    return Row(
+      children: <Widget>[
+        Text(
+          'Item owner:\n${ownerDS['displayName']}',
+          style: TextStyle(color: Colors.black, fontSize: 20.0),
+          textAlign: TextAlign.left,
+        ),
+        Expanded(
+          child: Container(
+            height: 50,
+            child: CachedNetworkImage(
+              key: new ValueKey<String>(
+                  DateTime.now().millisecondsSinceEpoch.toString()),
+              imageUrl: ownerDS['photoURL'],
+              placeholder: (context, url) =>
+              new CircularProgressIndicator(),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -224,59 +267,35 @@ class ItemRentalState extends State<ItemRental> {
     );
   }
 
-  Widget showItemCreator() {
-    return FutureBuilder(
-        future: rentalDS['creator'].get(),
-        builder: (BuildContext context, AsyncSnapshot snapshot) {
-          DocumentSnapshot ds = snapshot.data;
-
-          return Padding(
-            padding: EdgeInsets.all(padding),
-            child: SizedBox(
-                height: 50.0,
-                child: Container(
-                  color: Color(0x00000000),
-                  child: snapshot.hasData
-                      ? Row(
-                          children: <Widget>[
-                            CachedNetworkImage(
-                              key: new ValueKey<String>(DateTime.now()
-                                  .millisecondsSinceEpoch
-                                  .toString()),
-                              imageUrl: ds['photoURL'],
-                              placeholder: (context, url) =>
-                                  new CircularProgressIndicator(),
-                            ),
-                            Container(width: 20),
-                            Text(
-                              'Item created by:\n${ds['displayName']}',
-                              style: TextStyle(
-                                  color: Colors.black, fontSize: 20.0),
-                              textAlign: TextAlign.left,
-                            )
-                          ],
-                        )
-                      : Container(),
-                )),
-          );
-        });
+  Widget showCancelRequest() {
+    return Container(
+      child: RaisedButton(
+        shape: new RoundedRectangleBorder(
+            borderRadius: new BorderRadius.circular(5.0)),
+        color: Colors.red,
+        textColor: Colors.white,
+        child: Text(
+          "Cancel",
+          textScaleFactor: 1.25,
+        ),
+        onPressed: () {
+          setState(() {
+            cancelRequest();
+          });
+        },
+      ),
+    );
   }
 
-  Widget showItemName() {
-    return Padding(
-      padding: EdgeInsets.all(padding),
-      child: SizedBox(
-          height: 50.0,
-          child: Container(
-            color: Color(0x00000000),
-            child: Text(
-              'Name: ${rentalDS['name']}',
-              //itemName,
-              style: TextStyle(color: Colors.black, fontSize: 20.0),
-              textAlign: TextAlign.left,
-            ),
-          )),
-    );
+  void cancelRequest() async {
+    Firestore.instance.collection('rentals').document(widget.rentalID).delete();
+
+    Firestore.instance
+        .collection('items')
+        .document(itemDS['id'])
+        .updateData({'rental': null});
+
+    Navigator.pop(context);
   }
 
   void goToLastScreen() {

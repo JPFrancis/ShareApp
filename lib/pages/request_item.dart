@@ -308,7 +308,8 @@ class RequestItemState extends State<RequestItem> {
 
     String rentalID;
 
-    Firestore.instance.collection("rentals").add({
+    DocumentReference documentReference =
+        await Firestore.instance.collection("rentals").add({
       'id': 'temp',
       'status': 1, // set rental status to requested
       'item': Firestore.instance.collection('items').document(widget.itemID),
@@ -320,7 +321,9 @@ class RequestItemState extends State<RequestItem> {
       'start': startDateTime,
       'end': endDateTime,
       'chat': null,
-    }).then((DocumentReference documentReference) {
+    });
+
+    if (documentReference != null) {
       rentalID = documentReference.documentID;
 
       Firestore.instance
@@ -338,16 +341,17 @@ class RequestItemState extends State<RequestItem> {
       setState(() {
         isUploading = false;
       });
-    });
 
-    if (rentalID != null) {
-      ItemRental result = await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (BuildContext context) => ItemRental(
-                  rentalID: rentalID,
-                ),
-          ));
+      if (rentalID != null) {
+        debugPrint('====================${rentalID}');
+        ItemRental result = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (BuildContext context) => ItemRental(
+                    rentalID: rentalID,
+                  ),
+            ));
+      }
     }
   }
 
@@ -381,7 +385,9 @@ class RequestItemState extends State<RequestItem> {
                 FlatButton(
                   child: const Text('Send'),
                   onPressed: () {
+                    Navigator.of(context).pop(false);
                     navToItemRental();
+                    // Pops the confirmation dialog but not the page.
                   },
                 ),
               ],
