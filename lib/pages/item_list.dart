@@ -171,8 +171,8 @@ class ItemListState extends State<ItemList> {
           navigateToEdit(
             Item(
               id: null,
+              status: true,
               creator: Firestore.instance.collection('users').document(userID),
-              creatorID: userID,
               name: '',
               description: '',
               type: null,
@@ -181,6 +181,7 @@ class ItemListState extends State<ItemList> {
               numImages: 0,
               images: new List(),
               location: null,
+              rental: null,
             ),
           );
           //navigateToEdit(Item({null, '', '', true}));
@@ -447,12 +448,12 @@ class ItemListState extends State<ItemList> {
                     subtitle: Text(ds['description']),
                     onTap: () {
                       DocumentReference dr = ds['creator'];
-                      navigateToDetail(ds['id'], userID == dr.documentID);
+                      navigateToDetail(ds['id']);
                     },
                     trailing: IconButton(
                       icon: Icon(Icons.delete),
                       onPressed: () {
-                        deleteImages(Item.fromMap(ds.data, ds['id']));
+                        deleteImages(ds['id'], ds['numImages']);
                         Firestore.instance
                             .collection('items')
                             .document(ds['id'])
@@ -557,13 +558,12 @@ class ItemListState extends State<ItemList> {
     */
   }
 
-  void navigateToDetail(String itemID, bool isMyItem) async {
+  void navigateToDetail(String itemID) async {
     UserEdit result = await Navigator.push(
         context,
         MaterialPageRoute(
           builder: (BuildContext context) => ItemDetail(
                 itemID: itemID,
-                isMyItem: isMyItem,
               ),
         ));
   }
@@ -600,9 +600,8 @@ class ItemListState extends State<ItemList> {
     }
   }
 
-  void deleteImages(Item item) async {
-    String id = item.id;
-    for (int i = 0; i < item.numImages; i++) {
+  void deleteImages(String id, int numImages) async {
+    for (int i = 0; i < numImages; i++) {
       FirebaseStorage.instance.ref().child('$id/$i').delete();
     }
 

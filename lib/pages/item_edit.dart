@@ -471,8 +471,8 @@ class ItemEditState extends State<ItemEdit> {
       final DocumentReference documentReference =
           await Firestore.instance.collection("items").add({
         'id': 'temp',
+        'status': itemCopy.status,
         'creator': itemCopy.creator,
-        'creatorID': itemCopy.creatorID,
         'name': itemCopy.name,
         'description': itemCopy.description,
         'type': itemCopy.type,
@@ -480,6 +480,7 @@ class ItemEditState extends State<ItemEdit> {
         'price': itemCopy.price,
         'numImages': itemCopy.numImages,
         'location': itemCopy.location,
+        'rental': itemCopy.rental,
       });
 
       // update the newly added item with the updated doc id

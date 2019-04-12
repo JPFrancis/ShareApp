@@ -12,10 +12,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 
 class ItemDetail extends StatefulWidget {
   final String itemID;
-  final bool isMyItem;
 
   //ItemDetail(this.itemID, this.isMyItem);
-  ItemDetail({Key key, this.itemID, this.isMyItem}) : super(key: key);
+  ItemDetail({Key key, this.itemID}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
@@ -33,17 +32,23 @@ class ItemDetailState extends State<ItemDetail> {
 
   TextStyle textStyle;
 
-  DocumentSnapshot documentSnapshot;
+  DocumentSnapshot itemDS;
+  DocumentSnapshot creatorDS;
   SharedPreferences prefs;
   String myUserID;
   String itemCreator;
+
+  bool isLoading;
+  bool isMyItem = false;
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     getMyUserID();
-    getItemCreatorID();
+    //getItemCreatorID();
+
+    getSnapshots();
   }
 
   void getMyUserID() async {
@@ -59,6 +64,37 @@ class ItemDetailState extends State<ItemDetail> {
         .then((DocumentSnapshot ds) {
       itemCreator = ds['creatorID'];
     });
+  }
+
+  void getSnapshots() async {
+    isLoading = true;
+    DocumentSnapshot ds = await Firestore.instance
+        .collection('items')
+        .document(widget.itemID)
+        .get();
+
+    if (ds != null) {
+      itemDS = ds;
+
+      DocumentReference dr = itemDS['creator'];
+      String str = dr.documentID;
+
+      if (myUserID == str) {
+        isMyItem = true;
+      }
+
+      ds = await Firestore.instance.collection('users').document(str).get();
+
+      if (ds != null) {
+        creatorDS = ds;
+      }
+
+      if (prefs != null && itemDS != null && creatorDS != null) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -86,27 +122,72 @@ class ItemDetailState extends State<ItemDetail> {
               tooltip: 'Refresh item',
               onPressed: () {
                 setState(
-                      () {
-                    setCamera();
+                  () {
+                    getSnapshots();
+                    //setCamera();
                   },
                 );
               },
             ),
-            IconButton(
-              icon: Icon(Icons.add_shopping_cart),
-              tooltip: 'Request item',
-              onPressed: !widget.isMyItem
-                  ? () {
-                handleRequestItemPressed();
-              }
-                  : null,
-            ),
           ],
         ),
-        body: showBody(),
+        body: isLoading
+            ? Container(
+                child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      Center(child: CircularProgressIndicator())
+                    ]),
+              )
+            : showBody(),
         floatingActionButton: showFAB(),
+        bottomNavigationBar: isLoading
+            ? Container(
+                height: 0,
+              )
+            : bottomDetails(),
       ),
     );
+  }
+
+  Container bottomDetails() {
+    return Container(
+      height: 100.0,
+      decoration: BoxDecoration(color: Colors.white, boxShadow: [
+        BoxShadow(
+            color: Colors.black12,
+            offset: new Offset(0, -10.0),
+            blurRadius: 200.0)
+      ]),
+      child: Row(
+        children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.only(left: 30.0),
+            child: Text(
+              "\$${itemDS['price']}",
+              style: TextStyle(fontSize: 25.0, fontWeight: FontWeight.bold),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 30.0),
+            child: requestButton(),
+          )
+        ],
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      ),
+    );
+  }
+
+  RaisedButton requestButton() {
+    return RaisedButton(
+        onPressed: isMyItem ? null : () => handleRequestItemPressed(),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5.0)),
+        color: Colors.red,
+        child: Text("Check Availability",
+            style: TextStyle(
+              color: Colors.white,
+            )));
   }
 
   FloatingActionButton showFAB() {
@@ -133,74 +214,50 @@ class ItemDetailState extends State<ItemDetail> {
   }
 
   Widget showBody() {
-    return FutureBuilder(
-      future: getItemFromFirestore(),
-      builder: (BuildContext context, AsyncSnapshot snapshot) {
-        if (snapshot.hasData) {
-          documentSnapshot = snapshot.data;
-
-          /// usage: ds['name']
-          return Padding(
-            padding: EdgeInsets.all(15),
-            child: ListView(
-              children: <Widget>[
-                showItemCreator(),
-                showItemName(),
-                showItemDescription(),
-                showItemPrice(),
-                showItemType(),
-                showItemCondition(),
-                showNumImages(),
-                showItemImages(),
-                showItemLocation(),
-              ],
-            ),
-          );
-        } else {
-          return new Center(
-            child: CircularProgressIndicator(),
-          );
-        }
-      },
+    return Padding(
+      padding: EdgeInsets.all(15),
+      child: ListView(
+        children: <Widget>[
+          showItemCreator(),
+          showItemName(),
+          showItemDescription(),
+          showItemPrice(),
+          showItemType(),
+          showItemCondition(),
+          showNumImages(),
+          showItemImages(),
+          showItemLocation(),
+        ],
+      ),
     );
   }
 
   Widget showItemCreator() {
-    return FutureBuilder(
-        future: documentSnapshot['creator'].get(),
-        builder: (BuildContext context, AsyncSnapshot snapshot) {
-          DocumentSnapshot ds = snapshot.data;
-
-          return Padding(
-            padding: EdgeInsets.all(padding),
-            child: SizedBox(
-                height: 50.0,
-                child: Container(
-                  color: Color(0x00000000),
-                  child: snapshot.hasData
-                      ? Row(
-                    children: <Widget>[
-                      CachedNetworkImage(
-                        key: new ValueKey<String>(DateTime.now()
-                            .millisecondsSinceEpoch
-                            .toString()),
-                        imageUrl: ds['photoURL'],
-                        placeholder: (context, url) =>
-                        new CircularProgressIndicator(),
-                      ),
-                      Container(width: 20),
-                      Text(
-                        'Item created by:\n${ds['displayName']}',
-                        style: TextStyle(
-                            color: Colors.black, fontSize: 20.0),
-                        textAlign: TextAlign.left,
-                      )
-                    ],
-                  )
-                      : Container(),
-                )),
-          );
-        });
+    return Padding(
+      padding: EdgeInsets.all(padding),
+      child: SizedBox(
+          height: 50.0,
+          child: Container(
+            color: Color(0x00000000),
+            child: Row(
+              children: <Widget>[
+                CachedNetworkImage(
+                  key: new ValueKey<String>(
+                      DateTime.now().millisecondsSinceEpoch.toString()),
+                  imageUrl: creatorDS['photoURL'],
+                  placeholder: (context, url) =>
+                      new CircularProgressIndicator(),
+                ),
+                Container(width: 20),
+                Text(
+                  'Item created by:\n${creatorDS['displayName']}',
+                  style: TextStyle(color: Colors.black, fontSize: 20.0),
+                  textAlign: TextAlign.left,
+                )
+              ],
+            ),
+          )),
+    );
   }
 
   Widget showItemName() {
@@ -211,7 +268,7 @@ class ItemDetailState extends State<ItemDetail> {
           child: Container(
             color: Color(0x00000000),
             child: Text(
-              'Name: ${documentSnapshot['name']}',
+              'Name: ${itemDS['name']}',
               //itemName,
               style: TextStyle(color: Colors.black, fontSize: 20.0),
               textAlign: TextAlign.left,
@@ -228,7 +285,7 @@ class ItemDetailState extends State<ItemDetail> {
           child: Container(
             color: Color(0x00000000),
             child: Text(
-              'Description: ${documentSnapshot['description']}',
+              'Description: ${itemDS['description']}',
               style: TextStyle(color: Colors.black, fontSize: 20.0),
               textAlign: TextAlign.left,
             ),
@@ -244,7 +301,7 @@ class ItemDetailState extends State<ItemDetail> {
           child: Container(
             color: Color(0x00000000),
             child: Text(
-              'Price: ${documentSnapshot['price']}',
+              'Price: ${itemDS['price']}',
               style: TextStyle(color: Colors.black, fontSize: 20.0),
               textAlign: TextAlign.left,
             ),
@@ -260,7 +317,7 @@ class ItemDetailState extends State<ItemDetail> {
           child: Container(
             color: Color(0x00000000),
             child: Text(
-              'Type: ${documentSnapshot['type']}',
+              'Type: ${itemDS['type']}',
               style: TextStyle(color: Colors.black, fontSize: 20.0),
               textAlign: TextAlign.left,
             ),
@@ -276,7 +333,7 @@ class ItemDetailState extends State<ItemDetail> {
           child: Container(
             color: Color(0x00000000),
             child: Text(
-              'Condition: ${documentSnapshot['condition']}',
+              'Condition: ${itemDS['condition']}',
               style: TextStyle(color: Colors.black, fontSize: 20.0),
               textAlign: TextAlign.left,
             ),
@@ -292,7 +349,7 @@ class ItemDetailState extends State<ItemDetail> {
           child: Container(
             color: Color(0x00000000),
             child: Text(
-              'Num images: ${documentSnapshot['numImages']}',
+              'Num images: ${itemDS['numImages']}',
               style: TextStyle(color: Colors.black, fontSize: 20.0),
               textAlign: TextAlign.left,
             ),
@@ -301,20 +358,20 @@ class ItemDetailState extends State<ItemDetail> {
   }
 
   Widget showItemImages() {
-    List imagesList = documentSnapshot['images'];
+    List imagesList = itemDS['images'];
     return Padding(
       padding: EdgeInsets.all(padding),
       child: imagesList.length > 0
           ? Container(
-          margin: EdgeInsets.symmetric(vertical: 20.0),
-          height: 200,
-          child: getImagesListView(context))
+              margin: EdgeInsets.symmetric(vertical: 20.0),
+              height: 200,
+              child: getImagesListView(context))
           : Text('No images yet\n'),
     );
   }
 
   Widget showItemLocation() {
-    GeoPoint gp = documentSnapshot['location'];
+    GeoPoint gp = itemDS['location'];
     double lat = gp.latitude;
     double long = gp.longitude;
     setCamera();
@@ -370,10 +427,10 @@ class ItemDetailState extends State<ItemDetail> {
                   ),
                   gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>[
                     Factory<OneSequenceGestureRecognizer>(
-                          () =>
-                      // to disable dragging, use ScaleGestureRecognizer()
-                      // to enable dragging, use EagerGestureRecognizer()
-                      EagerGestureRecognizer(),
+                      () =>
+                          // to disable dragging, use ScaleGestureRecognizer()
+                          // to enable dragging, use EagerGestureRecognizer()
+                          EagerGestureRecognizer(),
                       //ScaleGestureRecognizer(),
                     ),
                   ].toSet(),
@@ -387,7 +444,7 @@ class ItemDetailState extends State<ItemDetail> {
   }
 
   getImagesListView(BuildContext context) {
-    List imagesList = documentSnapshot['images'];
+    List imagesList = itemDS['images'];
     return ListView.builder(
       shrinkWrap: true,
       scrollDirection: Axis.horizontal,
@@ -438,41 +495,51 @@ class ItemDetailState extends State<ItemDetail> {
   }
 
   void navigateToEdit() async {
-    Item editItem = Item.fromMapNoID(documentSnapshot.data);
+    Item editItem = Item.fromMapNoID(itemDS.data);
 
     Item result = await Navigator.push(
         context,
         MaterialPageRoute(
           builder: (BuildContext context) => ItemEdit(
-            item: editItem,
-          ),
+                item: editItem,
+              ),
           fullscreenDialog: true,
         ));
 
     if (result != null) {
       //updateParameters();
-      setCamera();
+      //setCamera();
+      setState(
+        () {
+          getSnapshots();
+          //setCamera();
+        },
+      );
     }
   }
 
   void handleRequestItemPressed() async {
+    /*
     setState(
-          () {},
+      () {
+        getSnapshots();
+      },
     );
+    */
 
     Item result = await Navigator.push(
         context,
         MaterialPageRoute(
           builder: (BuildContext context) => RequestItem(
-            itemID: widget.itemID,
-            itemRequester: myUserID,
-          ),
+                itemID: widget.itemID,
+                itemRequester: myUserID,
+              ),
           fullscreenDialog: true,
         ));
   }
 
   setCamera() async {
-    GeoPoint gp = documentSnapshot['location'];
+    GeoPoint gp = itemDS['location'];
     double lat = gp.latitude;
     double long = gp.longitude;
 

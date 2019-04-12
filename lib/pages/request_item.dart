@@ -2,10 +2,11 @@ import 'dart:io';
 import 'dart:async';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
+import 'package:shareapp/pages/chat.dart';
+import 'package:shareapp/pages/item_rental.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:shareapp/pages/chat.dart';
 
 enum DismissDialogAction {
   cancel,
@@ -309,10 +310,13 @@ class RequestItemState extends State<RequestItem> {
 
     Firestore.instance.collection("rentals").add({
       'id': 'temp',
-      'isRequest': true,
+      'status': 1, // set rental status to requested
       'item': Firestore.instance.collection('items').document(widget.itemID),
-      'owner': Firestore.instance.collection('users').document(itemSnapshot['creatorID']),
-      'renter': Firestore.instance.collection('users').document(widget.itemRequester),
+      'owner': Firestore.instance
+          .collection('users')
+          .document(itemSnapshot['creatorID']),
+      'renter':
+          Firestore.instance.collection('users').document(widget.itemRequester),
       'start': startDateTime,
       'end': endDateTime,
       'chat': null,
@@ -324,13 +328,26 @@ class RequestItemState extends State<RequestItem> {
           .document(rentalID)
           .updateData({'id': rentalID});
 
+      Firestore.instance
+          .collection('items')
+          .document(widget.itemID)
+          .updateData({
+        'rental': Firestore.instance.collection('rentals').document(rentalID)
+      });
+
       setState(() {
         isUploading = false;
       });
     });
 
     if (rentalID != null) {
-
+      ItemRental result = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (BuildContext context) => ItemRental(
+                  rentalID: rentalID,
+                ),
+          ));
     }
   }
 
