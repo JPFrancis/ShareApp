@@ -467,13 +467,7 @@ class ItemListState extends State<ItemList> {
                     trailing: IconButton(
                       icon: Icon(Icons.delete),
                       onPressed: () {
-                        deleteImages(ds['id'], ds['numImages']);
-                        Firestore.instance
-                            .collection('items')
-                            .document(ds['id'])
-                            .delete();
-
-                        /// ====================== ADD DELETE CONFIRMATION !!!
+                        deleteItemDialog(ds);
                       },
                     ),
                   );
@@ -509,6 +503,13 @@ class ItemListState extends State<ItemList> {
                 itemCount: snapshot.data.documents.length,
                 itemBuilder: (context, index) {
                   DocumentSnapshot ds = snapshot.data.documents[index];
+                  bool showChat = false;
+
+                  DocumentReference doc = ds['renter'];
+
+                  if (userID == doc.documentID) {
+                    showChat = true;
+                  }
 
                   return ListTile(
                     leading: Icon(Icons.shopping_cart),
@@ -527,37 +528,18 @@ class ItemListState extends State<ItemList> {
                         ),
                       );
                     },
-                    trailing: IconButton(
-                      icon: Icon(Icons.delete),
+                    trailing: showChat ? IconButton(
+                      icon: Icon(Icons.message),
                       onPressed: () {
-                        DocumentReference dr = ds['item'];
-
-                        Firestore.instance
-                            .collection('items')
-                            .document(dr.documentID)
-                            .updateData({'rental': null});
-
-                        //Firestore.instance.collection('messages').document(ds['id']).delete();
-
-                        Firestore.instance
-                            .collection('messages')
-                            .document(ds['id'])
-                            .collection(ds['id'])
-                            .getDocuments()
-                            .then((snapshot) {
-                          for (DocumentSnapshot ds in snapshot.documents) {
-                            ds.reference.delete();
-                          }
-                        });
-
-                        Firestore.instance
-                            .collection('rentals')
-                            .document(ds['id'])
-                            .delete();
-
-                        /// ====================== ADD DELETE CONFIRMATION !!!
+                        Navigator.pushNamed(
+                          context,
+                          Chat.routeName,
+                          arguments: ChatArgs(
+                            ds['id'],
+                          ),
+                        );
                       },
-                    ),
+                    ) : null,
                   );
                 },
               );
@@ -627,11 +609,7 @@ class ItemListState extends State<ItemList> {
                     trailing: IconButton(
                       icon: Icon(Icons.delete),
                       onPressed: () {
-                        deleteImages(ds['id'], ds['numImages']);
-                        Firestore.instance
-                            .collection('items')
-                            .document(ds['id'])
-                            .delete();
+                        deleteItemDialog(ds);
 
                         /// ====================== ADD DELETE CONFIRMATION !!!
                       },
@@ -714,6 +692,50 @@ class ItemListState extends State<ItemList> {
         'photoURL': result.photoUrl,
       });
     }
+  }
+
+  Future<bool> deleteItemDialog(DocumentSnapshot ds) async {
+    //if (widget.userEdit.displayName == userEditCopy.displayName) return true;
+
+    final ThemeData theme = Theme.of(context);
+    final TextStyle dialogTextStyle =
+    theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+
+    return await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Delete item?'),
+          content: Text('${ds['name']}'),
+          actions: <Widget>[
+            FlatButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop(
+                    false); // Pops the confirmation dialog but not the page.
+              },
+            ),
+            FlatButton(
+              child: const Text('Delete'),
+              onPressed: () {
+                Navigator.of(context).pop(false);
+                deleteItem(ds);
+                // Pops the confirmation dialog but not the page.
+              },
+            ),
+          ],
+        );
+      },
+    ) ??
+        false;
+  }
+
+  void deleteItem(DocumentSnapshot ds) {
+    deleteImages(ds['id'], ds['numImages']);
+    Firestore.instance
+        .collection('items')
+        .document(ds['id'])
+        .delete();
   }
 
   void deleteImages(String id, int numImages) async {

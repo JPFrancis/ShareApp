@@ -129,8 +129,7 @@ class ItemRentalState extends State<ItemRental> {
 
     return WillPopScope(
       onWillPop: () {
-        // when user presses back button
-        Navigator.of(context).pushNamedAndRemoveUntil('/', (_) => false);
+        goToLastScreen();
       },
       child: Scaffold(
         appBar: AppBar(
@@ -139,7 +138,7 @@ class ItemRentalState extends State<ItemRental> {
           leading: IconButton(
             icon: Icon(Icons.arrow_back),
             onPressed: () {
-              Navigator.of(context).pushNamedAndRemoveUntil('/', (_) => false);
+              goToLastScreen();
             },
           ),
           actions: <Widget>[
@@ -307,11 +306,46 @@ class ItemRentalState extends State<ItemRental> {
         ),
         onPressed: () {
           setState(() {
-            deleteRental();
+            deleteRentalDialog();
           });
         },
       ),
     );
+  }
+
+  Future<bool> deleteRentalDialog() async {
+    //if (widget.userEdit.displayName == userEditCopy.displayName) return true;
+
+    final ThemeData theme = Theme.of(context);
+    final TextStyle dialogTextStyle =
+    theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+
+    return await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Delete rental?'),
+          actions: <Widget>[
+            FlatButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop(
+                    false); // Pops the confirmation dialog but not the page.
+              },
+            ),
+            FlatButton(
+              child: const Text('Delete'),
+              onPressed: () {
+                Navigator.of(context).pop(false);
+                deleteRental();
+                // Pops the confirmation dialog but not the page.
+              },
+            ),
+          ],
+        );
+      },
+    ) ??
+        false;
   }
 
   void deleteRental() async {
@@ -346,19 +380,14 @@ class ItemRentalState extends State<ItemRental> {
       return shouldPop;
     });
 */
+  }
 
-    Navigator.of(context)
-        .pushNamedAndRemoveUntil('/', (_) => false);
+  void goToLastScreen() {
+    //Navigator.of(context).pushNamedAndRemoveUntil('/', (_) => false);
 
-/*
     Navigator.popUntil(
       context,
       ModalRoute.withName('/'),
     );
-    */
-  }
-
-  void goToLastScreen() {
-    Navigator.pop(context);
   }
 }
