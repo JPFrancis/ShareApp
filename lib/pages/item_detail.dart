@@ -186,7 +186,7 @@ class ItemDetailState extends State<ItemDetail> {
         onPressed: canRequest ? () => handleRequestItemPressed() : null,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5.0)),
         color: Colors.red,
-        child: Text("Check Availability",
+        child: Text(/*'Check Availability'*/'Request Item',
             style: TextStyle(
               color: Colors.white,
             )));

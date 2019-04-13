@@ -36,7 +36,7 @@ class ItemListState extends State<ItemList> {
   DocumentSnapshot currentUser;
 
   String userID;
-  int currentTabIndex = 0;
+  int currentTabIndex;
 
   EdgeInsets edgeInset;
   double padding;
@@ -45,6 +45,8 @@ class ItemListState extends State<ItemList> {
   void initState() {
     // TODO: implement initState
     super.initState();
+
+    currentTabIndex = 0;
 
     padding = 12;
     edgeInset = EdgeInsets.all(padding);
@@ -213,12 +215,19 @@ class ItemListState extends State<ItemList> {
       padding: edgeInset,
       child: Column(
         children: <Widget>[
-          /*
-      Container(child: showSignedInAs()),
           Container(
-            height: padding,
+            child: showSignedInAs(),
           ),
-          */
+          Container(
+            alignment: Alignment.centerLeft,
+            padding: EdgeInsets.symmetric(vertical: 10),
+            child: Text(
+              'Showing all items:',
+              style: TextStyle(
+                fontSize: 20,
+              ),
+            ),
+          ),
           buildItemList(),
         ],
       ),
@@ -230,6 +239,16 @@ class ItemListState extends State<ItemList> {
       padding: edgeInset,
       child: Column(
         children: <Widget>[
+          Container(
+            alignment: Alignment.centerLeft,
+            padding: EdgeInsets.symmetric(vertical: 10),
+            child: Text(
+              'Showing all rentals:',
+              style: TextStyle(
+                fontSize: 20,
+              ),
+            ),
+          ),
           buildRentalsList(),
         ],
       ),
@@ -241,6 +260,16 @@ class ItemListState extends State<ItemList> {
       padding: edgeInset,
       child: Column(
         children: <Widget>[
+          Container(
+            alignment: Alignment.centerLeft,
+            padding: EdgeInsets.symmetric(vertical: 10),
+            child: Text(
+              'Items I\'ve created:',
+              style: TextStyle(
+                fontSize: 20,
+              ),
+            ),
+          ),
           buildMyListingsList(),
         ],
       ),
@@ -369,7 +398,10 @@ class ItemListState extends State<ItemList> {
         if (snapshot.hasData) {
           DocumentSnapshot ds = snapshot.data;
 
-          return new Text('Signed in as: ${ds['displayName']}');
+          return new Text(
+            'Signed in as: ${ds['displayName']}',
+            style: TextStyle(fontStyle: FontStyle.italic),
+          );
         } else {
           return new Text('');
         }
@@ -504,6 +536,19 @@ class ItemListState extends State<ItemList> {
                             .collection('items')
                             .document(dr.documentID)
                             .updateData({'rental': null});
+
+                        //Firestore.instance.collection('messages').document(ds['id']).delete();
+
+                        Firestore.instance
+                            .collection('messages')
+                            .document(ds['id'])
+                            .collection(ds['id'])
+                            .getDocuments()
+                            .then((snapshot) {
+                          for (DocumentSnapshot ds in snapshot.documents) {
+                            ds.reference.delete();
+                          }
+                        });
 
                         Firestore.instance
                             .collection('rentals')

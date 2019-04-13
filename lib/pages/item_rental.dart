@@ -13,6 +13,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shareapp/pages/chat.dart';
+import 'package:shareapp/main.dart';
 
 enum Status {
   requested,
@@ -128,8 +130,7 @@ class ItemRentalState extends State<ItemRental> {
     return WillPopScope(
       onWillPop: () {
         // when user presses back button
-        Navigator.of(context)
-            .pushNamedAndRemoveUntil('/', (Route<dynamic> route) => false);
+        Navigator.of(context).pushNamedAndRemoveUntil('/', (_) => false);
       },
       child: Scaffold(
         appBar: AppBar(
@@ -138,7 +139,7 @@ class ItemRentalState extends State<ItemRental> {
           leading: IconButton(
             icon: Icon(Icons.arrow_back),
             onPressed: () {
-              goToLastScreen();
+              Navigator.of(context).pushNamedAndRemoveUntil('/', (_) => false);
             },
           ),
           actions: <Widget>[
@@ -173,7 +174,13 @@ class ItemRentalState extends State<ItemRental> {
   FloatingActionButton showFAB() {
     return FloatingActionButton(
       onPressed: () {
-
+        Navigator.pushNamed(
+          context,
+          Chat.routeName,
+          arguments: ChatArgs(
+            widget.rentalID,
+          ),
+        );
       },
 
       // Help text when you hold down FAB
@@ -209,8 +216,8 @@ class ItemRentalState extends State<ItemRental> {
     return Container(
       child: Text(
         'Item name: ${itemDS['name']}\n'
-        'Item owner: ${ownerDS['displayName']}\n'
-        'Item renter: ${renterDS['displayName']}',
+            'Item owner: ${ownerDS['displayName']}\n'
+            'Item renter: ${renterDS['displayName']}',
         style: TextStyle(
           fontSize: 20,
         ),
@@ -233,8 +240,7 @@ class ItemRentalState extends State<ItemRental> {
               key: new ValueKey<String>(
                   DateTime.now().millisecondsSinceEpoch.toString()),
               imageUrl: ownerDS['photoURL'],
-              placeholder: (context, url) =>
-              new CircularProgressIndicator(),
+              placeholder: (context, url) => new CircularProgressIndicator(),
             ),
           ),
         ),
@@ -296,20 +302,36 @@ class ItemRentalState extends State<ItemRental> {
         color: Colors.red,
         textColor: Colors.white,
         child: Text(
-          "Cancel",
+          'Delete Rental',
           textScaleFactor: 1.25,
         ),
         onPressed: () {
           setState(() {
-            cancelRequest();
+            deleteRental();
           });
         },
       ),
     );
   }
 
-  void cancelRequest() async {
+  void deleteRental() async {
     Firestore.instance.collection('rentals').document(widget.rentalID).delete();
+
+    Firestore.instance
+        .collection('messages')
+        .document(widget.rentalID)
+        .delete();
+
+    Firestore.instance
+        .collection('messages')
+        .document(widget.rentalID)
+        .collection(widget.rentalID)
+        .getDocuments()
+        .then((snapshot) {
+      for (DocumentSnapshot ds in snapshot.documents) {
+        ds.reference.delete();
+      }
+    });
 
     Firestore.instance
         .collection('items')
@@ -324,8 +346,9 @@ class ItemRentalState extends State<ItemRental> {
       return shouldPop;
     });
 */
+
     Navigator.of(context)
-        .pushNamedAndRemoveUntil('/', (Route<dynamic> route) => false);
+        .pushNamedAndRemoveUntil('/', (_) => false);
 
 /*
     Navigator.popUntil(
