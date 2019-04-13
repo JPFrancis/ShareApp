@@ -13,6 +13,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shareapp/pages/item_rental.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class ItemList extends StatefulWidget {
   static const routeName = '/itemList';
@@ -238,11 +239,10 @@ class ItemListState extends State<ItemList> {
   Widget myListingsTabPage() {
     return Padding(
       padding: edgeInset,
-      child: Center(
-        child: Text(
-          'My Listings',
-          textScaleFactor: 2.5,
-        ),
+      child: Column(
+        children: <Widget>[
+          buildMyListingsList(),
+        ],
       ),
     );
   }
@@ -455,7 +455,7 @@ class ItemListState extends State<ItemList> {
 
   Widget buildRentalsList() {
     CollectionReference collectionReference =
-    Firestore.instance.collection('rentals');
+        Firestore.instance.collection('rentals');
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
         stream: collectionReference.snapshots(),
@@ -505,7 +505,88 @@ class ItemListState extends State<ItemList> {
                             .document(dr.documentID)
                             .updateData({'rental': null});
 
-                        Firestore.instance.collection('rentals').document(ds['id']).delete();
+                        Firestore.instance
+                            .collection('rentals')
+                            .document(ds['id'])
+                            .delete();
+
+                        /// ====================== ADD DELETE CONFIRMATION !!!
+                      },
+                    ),
+                  );
+                },
+              );
+          }
+        },
+      ),
+    );
+  }
+
+  Widget buildMyListingsList() {
+    CollectionReference collectionReference =
+        Firestore.instance.collection('items');
+    return Expanded(
+      child: StreamBuilder<QuerySnapshot>(
+        stream: collectionReference
+            .where('creator',
+                isEqualTo:
+                    Firestore.instance.collection('users').document(userID))
+            .snapshots(),
+        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          if (snapshot.hasError) {
+            return new Text('${snapshot.error}');
+          }
+          switch (snapshot.connectionState) {
+            case ConnectionState.waiting:
+              return new Center(
+                child: new Container(),
+              );
+            default:
+              return new ListView.builder(
+                shrinkWrap: true,
+                //padding: EdgeInsets.all(2.0),
+                itemCount: snapshot.data.documents.length,
+                itemBuilder: (context, index) {
+                  DocumentSnapshot ds = snapshot.data.documents[index];
+
+                  Icon tileIcon;
+                  String itemType = ds['type'];
+
+                  switch (itemType) {
+                    case 'tool':
+                      tileIcon = Icon(Icons.build);
+                      break;
+                    case 'leisure':
+                      tileIcon = Icon(Icons.golf_course);
+                      break;
+                    case 'home':
+                      tileIcon = Icon(Icons.home);
+                      break;
+                    case 'other':
+                      tileIcon = Icon(Icons.device_unknown);
+                      break;
+                  }
+
+                  return ListTile(
+                    leading: tileIcon,
+                    //leading: Icon(Icons.build),
+                    title: Text(
+                      ds['name'],
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(ds['description']),
+                    onTap: () {
+                      DocumentReference dr = ds['creator'];
+                      navigateToDetail(ds['id']);
+                    },
+                    trailing: IconButton(
+                      icon: Icon(Icons.delete),
+                      onPressed: () {
+                        deleteImages(ds['id'], ds['numImages']);
+                        Firestore.instance
+                            .collection('items')
+                            .document(ds['id'])
+                            .delete();
 
                         /// ====================== ADD DELETE CONFIRMATION !!!
                       },

@@ -41,7 +41,7 @@ class ItemDetailState extends State<ItemDetail> {
   String itemCreator;
 
   bool isLoading;
-  bool isMyItem = false;
+  bool canRequest = true;
 
   @override
   void initState() {
@@ -81,8 +81,8 @@ class ItemDetailState extends State<ItemDetail> {
       DocumentReference dr = itemDS['creator'];
       String str = dr.documentID;
 
-      if (myUserID == str) {
-        isMyItem = true;
+      if (myUserID == str || itemDS['rental'] != null) {
+        canRequest = false;
       }
 
       ds = await Firestore.instance.collection('users').document(str).get();
@@ -183,7 +183,7 @@ class ItemDetailState extends State<ItemDetail> {
 
   RaisedButton requestButton() {
     return RaisedButton(
-        onPressed: isMyItem ? null : () => handleRequestItemPressed(),
+        onPressed: canRequest ? () => handleRequestItemPressed() : null,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5.0)),
         color: Colors.red,
         child: Text("Check Availability",
