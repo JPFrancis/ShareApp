@@ -58,6 +58,8 @@ class RequestItemState extends State<RequestItem> {
   String myUserID;
   bool isLoading;
 
+  String message;
+
   @override
   void initState() {
     // TODO: implement initState
@@ -334,7 +336,7 @@ class RequestItemState extends State<RequestItem> {
       'status': 1, // set rental status to requested
       'item': Firestore.instance.collection('items').document(widget.itemID),
       'owner':
-          Firestore.instance.collection('users').document(itemDS['creatorID']),
+          Firestore.instance.collection('users').document(creatorDS['userID']),
       'renter': Firestore.instance.collection('users').document(myUserID),
       'start': startDateTime,
       'end': endDateTime,
@@ -356,6 +358,32 @@ class RequestItemState extends State<RequestItem> {
         'rental': Firestore.instance.collection('rentals').document(rentalID)
       });
 
+      var dr = Firestore.instance
+          .collection('messages')
+          .document(rentalID)
+          .collection(rentalID)
+          .document(DateTime.now().millisecondsSinceEpoch.toString());
+
+      Firestore.instance.runTransaction((transaction) async {
+        await transaction.set(
+          dr,
+          {
+            'idFrom': myUserID,
+            'idTo': creatorDS['userID'],
+            'timestamp': DateTime.now().millisecondsSinceEpoch.toString(),
+            'content': message,
+            'type': 0,
+          },
+        );
+      });
+
+      Firestore.instance
+          .collection('rentals')
+          .document(rentalID)
+          .updateData({
+        'chat': Firestore.instance.collection('messages').document(rentalID)
+      });
+
       setState(() {
         isUploading = false;
       });
@@ -369,15 +397,6 @@ class RequestItemState extends State<RequestItem> {
             rentalID,
           ),
         );
-/*
-        ItemRental result = await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (BuildContext context) => ItemRental(
-                    rentalID: rentalID,
-                  ),
-            ));
-            */
       }
     }
   }
@@ -389,16 +408,18 @@ class RequestItemState extends State<RequestItem> {
     final TextStyle dialogTextStyle =
         theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
 
+    message = 'Hello ${creatorDS['displayName']}, '
+        'I am requesting your ${itemDS['name']}. '
+        'I would like to rent this item from '
+        '${startDateTime} to ${endDateTime}';
+
     return await showDialog<bool>(
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
               title: Text('Preview message'),
               content: Text(
-                'Hello ${creatorDS['displayName']}, '
-                    'I am requesting your ${itemDS['name']}. '
-                    'I would like to rent this item from '
-                    '${startDateTime} to ${endDateTime}',
+                message,
                 style: dialogTextStyle,
               ),
               actions: <Widget>[

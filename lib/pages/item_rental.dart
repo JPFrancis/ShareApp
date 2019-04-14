@@ -13,6 +13,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shareapp/pages/chat.dart';
+import 'package:shareapp/main.dart';
 
 enum Status {
   requested,
@@ -127,7 +129,6 @@ class ItemRentalState extends State<ItemRental> {
 
     return WillPopScope(
       onWillPop: () {
-        // when user presses back button
         goToLastScreen();
       },
       child: Scaffold(
@@ -164,7 +165,28 @@ class ItemRentalState extends State<ItemRental> {
                     ]),
               )
             : showBody(),
+        floatingActionButton: showFAB(),
       ),
+    );
+  }
+
+  FloatingActionButton showFAB() {
+    return FloatingActionButton(
+      onPressed: () {
+        Navigator.pushNamed(
+          context,
+          Chat.routeName,
+          arguments: ChatArgs(
+            widget.rentalID,
+          ),
+        );
+      },
+
+      // Help text when you hold down FAB
+      tooltip: 'Chat',
+
+      // Set FAB icon
+      child: Icon(Icons.message),
     );
   }
 
@@ -193,7 +215,8 @@ class ItemRentalState extends State<ItemRental> {
     return Container(
       child: Text(
         'Item name: ${itemDS['name']}\n'
-        'Item renter: ${renterDS['displayName']}',
+            'Item owner: ${ownerDS['displayName']}\n'
+            'Item renter: ${renterDS['displayName']}',
         style: TextStyle(
           fontSize: 20,
         ),
@@ -216,8 +239,7 @@ class ItemRentalState extends State<ItemRental> {
               key: new ValueKey<String>(
                   DateTime.now().millisecondsSinceEpoch.toString()),
               imageUrl: ownerDS['photoURL'],
-              placeholder: (context, url) =>
-              new CircularProgressIndicator(),
+              placeholder: (context, url) => new CircularProgressIndicator(),
             ),
           ),
         ),
@@ -279,38 +301,93 @@ class ItemRentalState extends State<ItemRental> {
         color: Colors.red,
         textColor: Colors.white,
         child: Text(
-          "Cancel",
+          'Delete Rental',
           textScaleFactor: 1.25,
         ),
         onPressed: () {
           setState(() {
-            cancelRequest();
+            deleteRentalDialog();
           });
         },
       ),
     );
   }
 
-  void cancelRequest() async {
+  Future<bool> deleteRentalDialog() async {
+    //if (widget.userEdit.displayName == userEditCopy.displayName) return true;
+
+    final ThemeData theme = Theme.of(context);
+    final TextStyle dialogTextStyle =
+    theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+
+    return await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Delete rental?'),
+          actions: <Widget>[
+            FlatButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop(
+                    false); // Pops the confirmation dialog but not the page.
+              },
+            ),
+            FlatButton(
+              child: const Text('Delete'),
+              onPressed: () {
+                Navigator.of(context).pop(false);
+                deleteRental();
+                // Pops the confirmation dialog but not the page.
+              },
+            ),
+          ],
+        );
+      },
+    ) ??
+        false;
+  }
+
+  void deleteRental() async {
     Firestore.instance.collection('rentals').document(widget.rentalID).delete();
+
+    Firestore.instance
+        .collection('messages')
+        .document(widget.rentalID)
+        .delete();
+
+    Firestore.instance
+        .collection('messages')
+        .document(widget.rentalID)
+        .collection(widget.rentalID)
+        .getDocuments()
+        .then((snapshot) {
+      for (DocumentSnapshot ds in snapshot.documents) {
+        ds.reference.delete();
+      }
+    });
 
     Firestore.instance
         .collection('items')
         .document(itemDS['id'])
         .updateData({'rental': null});
+/*
+    Navigator.popUntil(context, (Route<dynamic> route){
+      bool shouldPop = false;
+      if (route.settings.name == ItemDetail.routeName){
+        shouldPop = true;
+      }
+      return shouldPop;
+    });
+*/
+  }
 
-    Navigator.of(context)
-        .pushNamedAndRemoveUntil('/', (Route<dynamic> route) => false);
+  void goToLastScreen() {
+    //Navigator.of(context).pushNamedAndRemoveUntil('/', (_) => false);
 
-    /*
     Navigator.popUntil(
       context,
       ModalRoute.withName('/'),
     );
-    */
-  }
-
-  void goToLastScreen() {
-    Navigator.pop(context);
   }
 }

@@ -32,7 +32,7 @@ class ItemDetailState extends State<ItemDetail> {
   String url;
   double padding = 5.0;
 
-  TextStyle textStyle;
+  //TextStyle textStyle;
 
   DocumentSnapshot itemDS;
   DocumentSnapshot creatorDS;
@@ -101,40 +101,13 @@ class ItemDetailState extends State<ItemDetail> {
 
   @override
   Widget build(BuildContext context) {
-    textStyle = Theme.of(context).textTheme.title;
+    //textStyle = Theme.of(context).textTheme.title;
 
     return WillPopScope(
       onWillPop: () {
-        // when user presses back button
         goToLastScreen();
       },
       child: Scaffold(
-        /*
-        appBar: AppBar(
-          title: Text(appBarTitle),
-          // back button
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back),
-            onPressed: () {
-              goToLastScreen();
-            },
-          ),
-          actions: <Widget>[
-            IconButton(
-              icon: Icon(Icons.refresh),
-              tooltip: 'Refresh item',
-              onPressed: () {
-                setState(
-                  () {
-                    getSnapshots();
-                    //setCamera();
-                  },
-                );
-              },
-            ),
-          ],
-        ),
-        */
         body: isLoading
             ? Container(
                 child: Column(
@@ -145,7 +118,7 @@ class ItemDetailState extends State<ItemDetail> {
                     ]),
               )
             : showBody(),
-        floatingActionButton: showFAB(),
+        //floatingActionButton: showFAB(),
         bottomNavigationBar: isLoading
             ? Container(
                 height: 0,
@@ -157,21 +130,18 @@ class ItemDetailState extends State<ItemDetail> {
 
   Container bottomDetails() {
     return Container(
-      height: 100.0,
+      height: 70.0,
       decoration: BoxDecoration(color: Colors.white, boxShadow: [
         BoxShadow(
             color: Colors.black12,
-            offset: new Offset(0, -10.0),
-            blurRadius: 200.0)
+            offset: new Offset(0, -0.5),
+           )
       ]),
       child: Row(
         children: <Widget>[
           Padding(
             padding: const EdgeInsets.only(left: 30.0),
-            child: Text(
-              "\$${itemDS['price']}",
-              style: TextStyle(fontSize: 25.0, fontWeight: FontWeight.bold),
-            ),
+            child: showItemPrice(),
           ),
           Padding(
             padding: const EdgeInsets.only(right: 30.0),
@@ -221,9 +191,9 @@ class ItemDetailState extends State<ItemDetail> {
         Stack(children: <Widget> [showItemImages(), IconButton(icon: Icon(Icons.arrow_back), onPressed: () { goToLastScreen(); },)]),
         showItemType(),
         showItemName(),
+        showItemCondition(),
         showItemCreator(),
         showItemDescription(),
-        showItemCondition(),
         divider(),
         showItemLocation(),
       ],
@@ -241,28 +211,28 @@ class ItemDetailState extends State<ItemDetail> {
     return Padding(
       padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 10.0),
       child: SizedBox(
-          child: Container(
-              height: 50.0,
-              color: Color(0x00000000),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  Text(
-                    'Shared by ${creatorDS['displayName']}',
-                    style: TextStyle(color: Colors.black, fontSize: 17.0),
-                    textAlign: TextAlign.left,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Text(
+                'Shared by ${creatorDS['displayName']}',
+                style: TextStyle(color: Colors.black, fontSize: 15.0),
+                textAlign: TextAlign.left,
+              ),
+              Container(
+                height: 50.0,
+                child: ClipOval(
+                  child: CachedNetworkImage(
+                    key: new ValueKey<String>(
+                        DateTime.now().millisecondsSinceEpoch.toString()),
+                    imageUrl: creatorDS['photoURL'],
+                    placeholder: (context, url) =>
+                        new CircularProgressIndicator(),
                   ),
-                  ClipOval(
-                    child: CachedNetworkImage(
-                      key: new ValueKey<String>(
-                          DateTime.now().millisecondsSinceEpoch.toString()),
-                      imageUrl: creatorDS['photoURL'],
-                      placeholder: (context, url) =>
-                          new CircularProgressIndicator(),
-                    ),
-                  ),
-                ],
-              ))),
+                ),
+              ),
+            ],
+          )),
     );
   }
 
@@ -284,20 +254,23 @@ class ItemDetailState extends State<ItemDetail> {
   }
 
   Widget showItemPrice() {
-    return Padding(
-      padding: EdgeInsets.only(left: 20.0),
-      child: SizedBox(
-          //height: 50.0,
-          child: Container(
-        color: Color(0x00000000),
-        child: Text(
-          '${itemDS['price']}',
-          style: TextStyle(
-              color: Colors.black, fontSize: 30.0, fontWeight: FontWeight.bold),
-          textAlign: TextAlign.left,
-        ),
-      )),
-    );
+    return SizedBox(
+        //height: 50.0,
+        child: Container(
+      color: Color(0x00000000),
+      child: Row(
+        children: <Widget>[
+          Text(
+            '\$${itemDS['price']}',
+            style: TextStyle(color: Colors.black, fontSize: 25.0, fontWeight: FontWeight.bold),
+          ),
+          Text(
+            ' / HOUR',
+            style: TextStyle( color: Colors.black, fontSize: 12.0,),
+         )
+        ],
+      ),
+    ));
   }
 
   Widget showItemDescription() {
@@ -308,7 +281,7 @@ class ItemDetailState extends State<ItemDetail> {
         color: Color(0x00000000),
         child: Text(
           '${itemDS['description']}',
-          style: TextStyle(color: Colors.black, fontSize: 15.0),
+          style: TextStyle(color: Colors.black, fontSize: 15.0, fontFamily: 'Quicksand'),
           textAlign: TextAlign.left,
         ),
       )),
@@ -325,8 +298,9 @@ class ItemDetailState extends State<ItemDetail> {
           '${itemDS['type']}'.toUpperCase(),
           style: TextStyle(
               color: Colors.black54,
-              fontSize: 15.0,
-              fontWeight: FontWeight.bold),
+              fontSize: 12.0,
+              fontWeight: FontWeight.bold,
+              ),
           textAlign: TextAlign.left,
         ),
       )),
@@ -335,14 +309,23 @@ class ItemDetailState extends State<ItemDetail> {
 
   Widget showItemCondition() {
     return Padding(
-      padding: EdgeInsets.only(left: 20.0, top: 15.0),
+      padding: EdgeInsets.only(left: 20.0, top: 5.0),
       child: SizedBox(
           child: Container(
         color: Color(0x00000000),
-        child: Text(
-          'Condition: ${itemDS['condition']}',
-          style: TextStyle(color: Colors.black, fontSize: 20.0),
-          textAlign: TextAlign.left,
+        child: Row(
+          children: <Widget>[
+            Text(
+              'Condition: ',
+              style: TextStyle(color: Colors.black54, fontSize: 13.0, fontStyle: FontStyle.italic),
+              textAlign: TextAlign.left,
+            ),
+            Text(
+              '${itemDS['condition']}',
+              style: TextStyle(color: Colors.black, fontSize: 14.0, fontStyle: FontStyle.italic, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.left,
+            ),
+          ],
         ),
       )),
     );
@@ -376,74 +359,79 @@ class ItemDetailState extends State<ItemDetail> {
   }
 
   Widget showItemLocation() {
+    double widthOfScreen = MediaQuery.of(context).size.width;
     GeoPoint gp = itemDS['location'];
     double lat = gp.latitude;
     double long = gp.longitude;
     setCamera();
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 30.0),
-        child: Column(
-          children: <Widget>[
-            Padding(
+    return Padding(
+      padding: const EdgeInsets.only(left: 20.0, right: 20.0),
+      child: Column(
+        children: <Widget>[
+          Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
               padding: EdgeInsets.only(bottom: 12.0),
               child: Text(
-                'Click the marker to open options',
-                textScaleFactor: 1.2,
+                'The Location',
+                style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.bold, color: Colors.black87)
+                //textScaleFactor: 1.2,
               ),
             ),
-            FlatButton(
-              //materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              onPressed: setCamera,
-              child: Text(
-                'Reset camera',
-                textScaleFactor: 1,
-                textAlign: TextAlign.center,
-              ),
+          ),
+          /*
+          FlatButton(
+            //materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            onPressed: setCamera,
+            child: Text(
+              'Reset camera',
+              textScaleFactor: 1,
+              textAlign: TextAlign.center,
             ),
-            Center(
-              child: SizedBox(
-                width: 300.0,
-                height: 300.0,
-                child: GoogleMap(
-                  mapType: MapType.normal,
-                  rotateGesturesEnabled: false,
-                  initialCameraPosition: CameraPosition(
-                    target: LatLng(lat, long),
-                    zoom: 11.5,
-                  ),
-                  onMapCreated: (GoogleMapController controller) {
-                    googleMapController = controller;
-                  },
-                  markers: Set<Marker>.of(
-                    <Marker>[
-                      Marker(
-                        markerId: MarkerId("test_marker_id"),
-                        position: LatLng(
-                          lat,
-                          long,
-                        ),
-                        infoWindow: InfoWindow(
-                          title: 'Item Location',
-                          snippet: '${lat}, ${long}',
-                        ),
-                      )
-                    ],
-                  ),
-                  gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>[
-                    Factory<OneSequenceGestureRecognizer>(
-                      () =>
-                          // to disable dragging, use ScaleGestureRecognizer()
-                          // to enable dragging, use EagerGestureRecognizer()
-                          EagerGestureRecognizer(),
-                      //ScaleGestureRecognizer(),
-                    ),
-                  ].toSet(),
+          ),
+          */
+          Center(
+            child: SizedBox(
+              width: widthOfScreen,
+              height: 200.0,
+              child: GoogleMap(
+                mapType: MapType.normal,
+                rotateGesturesEnabled: false,
+                initialCameraPosition: CameraPosition(
+                  target: LatLng(lat, long),
+                  zoom: 11.5,
                 ),
+                onMapCreated: (GoogleMapController controller) {
+                  googleMapController = controller;
+                },
+                markers: Set<Marker>.of(
+                  <Marker>[
+                    Marker(
+                      markerId: MarkerId("test_marker_id"),
+                      position: LatLng(
+                        lat,
+                        long,
+                      ),
+                      infoWindow: InfoWindow(
+                        title: 'Item Location',
+                        snippet: '${lat}, ${long}',
+                      ),
+                    )
+                  ],
+                ),
+                gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>[
+                  Factory<OneSequenceGestureRecognizer>(
+                    () =>
+                        // to disable dragging, use ScaleGestureRecognizer()
+                        // to enable dragging, use EagerGestureRecognizer()
+                        EagerGestureRecognizer(),
+                    //ScaleGestureRecognizer(),
+                  ),
+                ].toSet(),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

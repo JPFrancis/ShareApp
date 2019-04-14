@@ -41,6 +41,7 @@ import 'package:shareapp/pages/item_detail.dart';
 import 'package:shareapp/pages/root_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shareapp/pages/request_item.dart';
+import 'package:shareapp/pages/chat.dart';
 
 void main() => runApp(MyApp());
 
@@ -126,6 +127,19 @@ class MyApp extends StatelessWidget {
                 },
               );
             }
+
+          case Chat.routeName:
+            {
+              final ChatArgs args = settings.arguments;
+
+              return MaterialPageRoute(
+                builder: (context) {
+                  return Chat(
+                    rentalID: args.rentalID,
+                  );
+                },
+              );
+            }
         }
       },
       //initialRoute: '/',
@@ -150,31 +164,29 @@ class ItemListArgs {
 class ItemDetailArgs {
   final String itemID;
 
-  ItemDetailArgs(
-    this.itemID,
-  );
+  ItemDetailArgs(this.itemID,);
 }
 
 class ItemEditArgs {
   final Item item;
 
-  ItemEditArgs(
-    this.item,
-  );
+  ItemEditArgs(this.item,);
 }
 
 class RequestItemArgs {
   final String itemID;
 
-  RequestItemArgs(
-    this.itemID,
-  );
+  RequestItemArgs(this.itemID,);
 }
 
 class ItemRentalArgs {
   final String rentalID;
 
-  ItemRentalArgs(
-    this.rentalID,
-  );
+  ItemRentalArgs(this.rentalID,);
+}
+
+class ChatArgs {
+  final String rentalID;
+
+  ChatArgs(this.rentalID,);
 }
