@@ -1,21 +1,24 @@
-import 'dart:async';
 import 'dart:io';
-
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'dart:async';
+import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:shareapp/services/const.dart';
+import 'package:shareapp/models/item.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class Chat extends StatelessWidget {
+  static const routeName = '/chat';
+  final Item item;
   final String myID;
   final String peerId;
   final String peerAvatar;
 
-  Chat({Key key, this.myID, this.peerId, this.peerAvatar}) : super(key: key);
+  Chat({Key key, this.item, this.myID, this.peerId, this.peerAvatar}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -39,11 +42,12 @@ class Chat extends StatelessWidget {
 }
 
 class ChatScreen extends StatefulWidget {
+  final Item item;
   final String myID;
   final String peerId;
   final String peerAvatar;
 
-  ChatScreen({Key key, this.myID, this.peerId, this.peerAvatar})
+  ChatScreen({Key key, this.item, this.myID, this.peerId, this.peerAvatar})
       : super(key: key);
 
   @override
@@ -52,8 +56,9 @@ class ChatScreen extends StatefulWidget {
 }
 
 class ChatScreenState extends State<ChatScreen> {
-  ChatScreenState({Key key, this.myID, this.peerId, this.peerAvatar});
+  ChatScreenState({Key key, this.item, this.myID, this.peerId, this.peerAvatar});
 
+  Item item;
   String peerId;
   String peerAvatar;
   String myID;

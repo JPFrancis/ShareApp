@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shareapp/services/auth.dart';
-import 'dart:convert';
-import 'package:flutter_facebook_login/flutter_facebook_login.dart';
-import 'package:http/http.dart' as http;
 
 class LoginPage extends StatefulWidget {
+  static const routeName = '/loginPage';
   LoginPage({Key key, this.title, this.auth, this.onSignIn}) : super(key: key);
 
   final String title;

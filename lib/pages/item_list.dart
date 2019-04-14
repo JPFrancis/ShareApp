@@ -1,20 +1,21 @@
-import 'dart:io';
-import 'package:async/async.dart';
+import 'package:shareapp/main.dart';
 import 'package:flutter/material.dart';
+import 'package:shareapp/pages/chat.dart';
 import 'package:shareapp/models/item.dart';
-import 'package:shareapp/models/user.dart';
-import 'package:shareapp/models/user_edit.dart';
+import 'package:shareapp/services/auth.dart';
 import 'package:shareapp/pages/item_edit.dart';
+import 'package:shareapp/models/user_edit.dart';
 import 'package:shareapp/pages/item_detail.dart';
 import 'package:shareapp/pages/edit_profile.dart';
-import 'package:shareapp/services/auth.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:shareapp/pages/chat.dart';
 
 class ItemList extends StatefulWidget {
+  static const routeName = '/itemList';
+
   BaseAuth auth;
   FirebaseUser firebaseUser;
   VoidCallback onSignOut;
@@ -28,6 +29,7 @@ class ItemList extends StatefulWidget {
 }
 
 class ItemListState extends State<ItemList> {
+  SharedPreferences prefs;
   List<Item> itemList;
   DocumentSnapshot currentUser;
 
@@ -47,6 +49,17 @@ class ItemListState extends State<ItemList> {
 
     userID = widget.firebaseUser.uid;
 
+    setPrefs();
+
+    handleInitUser();
+  }
+
+  void setPrefs() async {
+    prefs = await SharedPreferences.getInstance();
+    await prefs.setString('userID', userID);
+  }
+
+  void handleInitUser() async {
     // get user object from firestore
     Firestore.instance
         .collection('users')
@@ -161,8 +174,8 @@ class ItemListState extends State<ItemList> {
           navigateToEdit(
             Item(
               id: null,
+              status: true,
               creator: Firestore.instance.collection('users').document(userID),
-              creatorID: userID,
               name: '',
               description: '',
               type: null,
@@ -171,16 +184,11 @@ class ItemListState extends State<ItemList> {
               numImages: 0,
               images: new List(),
               location: null,
+              rental: null,
             ),
           );
-          //navigateToEdit(Item({null, '', '', true}));
-          //navigateToDetail(Item('', '', 2), 'Add Item');
         },
-
-        // Help text when you hold down FAB
         tooltip: 'Add new item',
-
-        // Set FAB icon
         child: Icon(Icons.add),
       );
     }
@@ -390,6 +398,8 @@ class ItemListState extends State<ItemList> {
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
         stream: collectionReference.snapshots(),
+        // to show all items created by you
+        //where('creator', isEqualTo: Firestore.instance.collection('users').document(userID)),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
             return new Text('${snapshot.error}');
@@ -434,16 +444,19 @@ class ItemListState extends State<ItemList> {
                     ),
                     subtitle: Text(ds['description']),
                     onTap: () {
+                      DocumentReference dr = ds['creator'];
                       navigateToDetail(ds['id']);
                     },
                     trailing: IconButton(
                       icon: Icon(Icons.delete),
                       onPressed: () {
-                        deleteImages(Item.fromMap(ds.data, ds['id']));
+                        deleteImages(ds['id'], ds['numImages']);
                         Firestore.instance
                             .collection('items')
                             .document(ds['id'])
                             .delete();
+
+                        /// ====================== ADD DELETE CONFIRMATION !!!
                       },
                     ),
                   );
@@ -462,6 +475,7 @@ class ItemListState extends State<ItemList> {
       child: StreamBuilder<QuerySnapshot>(
         stream: collectionReference
             .where('lastActiveTimestamp', isGreaterThan: 0)
+            //.where('photoURL', isNull: false)
             .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
@@ -486,7 +500,7 @@ class ItemListState extends State<ItemList> {
                       child: CachedNetworkImage(
                         key: new ValueKey<String>(
                             DateTime.now().millisecondsSinceEpoch.toString()),
-                        imageUrl: ds['photoURL'],
+                        imageUrl: ds['photoURL'] ?? 'https://bit.ly/2FMVekl',
                         placeholder: (context, url) => new Container(),
                       ),
                     ),
@@ -525,6 +539,14 @@ class ItemListState extends State<ItemList> {
   }
 
   void navigateToEdit(Item newItem) async {
+    Navigator.pushNamed(
+      context,
+      ItemEdit.routeName,
+      arguments: ItemEditArgs(
+        newItem,
+      ),
+    );
+/*
     Navigator.push(
         context,
         MaterialPageRoute(
@@ -533,24 +555,26 @@ class ItemListState extends State<ItemList> {
               ),
           fullscreenDialog: true,
         ));
-/* old
-    String result =
-    await Navigator.push(context, MaterialPageRoute(builder: (context) {
-      return ItemEdit(item);
-    }));
-    */
+        */
   }
 
   void navigateToDetail(String itemID) async {
-    bool result =
-        await Navigator.push(context, MaterialPageRoute(builder: (context) {
-      return ItemDetail(itemID);
-    }));
-
+    Navigator.pushNamed(
+      context,
+      ItemDetail.routeName,
+      arguments: ItemDetailArgs(
+        itemID,
+      ),
+    );
     /*
-    Navigator.push(context, MaterialPageRoute(builder: (context) {
-      return ItemEdit(item, title);
-    }));*/
+    await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (BuildContext context) => ItemDetail(
+                itemID: itemID,
+              ),
+        ));
+        */
   }
 
   Future<UserEdit> getUserEdit() async {
@@ -585,9 +609,8 @@ class ItemListState extends State<ItemList> {
     }
   }
 
-  void deleteImages(Item item) async {
-    String id = item.id;
-    for (int i = 0; i < item.numImages; i++) {
+  void deleteImages(String id, int numImages) async {
+    for (int i = 0; i < numImages; i++) {
       FirebaseStorage.instance.ref().child('$id/$i').delete();
     }
 

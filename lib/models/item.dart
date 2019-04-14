@@ -1,9 +1,31 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+/*
+int type
+1 = tool
+2 = leisure
+3 = home
+4 = other
+ */
+
+/*
+int condition
+1 = lightly used
+2 = good
+3 = fair
+4 = has character
+ */
+
+/*
+bool status
+true = active
+false = inactive
+ */
+
 class Item {
   String id; // doc id for firestore
+  bool status;
   DocumentReference creator; // user ID of user who created the item
-  String creatorID;
   String name;
   String description;
   String type;
@@ -12,11 +34,12 @@ class Item {
   int numImages;
   List images;
   GeoPoint location;
+  DocumentReference rental;
 
   Item({
     this.id,
+    this.status,
     this.creator,
-    this.creatorID,
     this.name,
     this.description,
     this.type,
@@ -25,52 +48,56 @@ class Item {
     this.numImages,
     this.images,
     this.location,
+    this.rental,
   });
 
   Item.fromMap(Map<String, dynamic> data, String id)
       : this(
-          id: id,
-          creator: data['creator'],
-          creatorID: data['creatorID'],
-          name: data['name'],
-          description: data['description'],
-          type: data['type'],
-          condition: data['condition'],
-          price: data['price'],
-          numImages: data['numImages'],
-          images: data['images'],
-          location: data['location'],
-        );
+    id: id,
+    status: data['status'],
+    creator: data['creator'],
+    name: data['name'],
+    description: data['description'],
+    type: data['type'],
+    condition: data['condition'],
+    price: data['price'],
+    numImages: data['numImages'],
+    images: data['images'],
+    location: data['location'],
+    rental: data['rental'],
+  );
 
   Item.fromMapNoID(Map<String, dynamic> data)
       : this(
-          id: data['id'],
-          creator: data['creator'],
-          creatorID: data['creatorID'],
-          name: data['name'],
-          description: data['description'],
-          type: data['type'],
-          condition: data['condition'],
-          price: data['price'],
-          numImages: data['numImages'],
-          images: data['images'],
-          location: data['location'],
-        );
+    id: data['id'],
+    status: data['status'],
+    creator: data['creator'],
+    name: data['name'],
+    description: data['description'],
+    type: data['type'],
+    condition: data['condition'],
+    price: data['price'],
+    numImages: data['numImages'],
+    images: data['images'],
+    location: data['location'],
+    rental: data['rental'],
+  );
 
   Item.copy(Item other)
       : this(
-          id: other.id,
-          creator: other.creator,
-          creatorID: other.creatorID,
-          name: other.name,
-          description: other.description,
-          type: other.type,
-          condition: other.condition,
-          price: other.price,
-          numImages: other.numImages,
-          images: other.images.toList(),
-          location: other.location,
-        );
+    id: other.id,
+    status: other.status,
+    creator: other.creator,
+    name: other.name,
+    description: other.description,
+    type: other.type,
+    condition: other.condition,
+    price: other.price,
+    numImages: other.numImages,
+    images: other.images.toList(),
+    location: other.location,
+    rental: other.rental,
+  );
 
   bool compare(Item other) {
     return this.name == other.name &&
@@ -84,8 +111,8 @@ class Item {
   Item fromItem(Item other) {
     return new Item(
       id: other.id,
+      status: other.status,
       creator: other.creator,
-      creatorID: other.creatorID,
       name: other.name,
       description: other.description,
       type: other.type,
@@ -94,6 +121,7 @@ class Item {
       numImages: other.numImages,
       images: other.images.toList(),
       location: other.location,
+      rental: other.rental,
     );
   }
 }
