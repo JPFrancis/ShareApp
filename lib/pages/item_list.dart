@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:shareapp/main.dart';
 import 'package:flutter/material.dart';
 import 'package:shareapp/pages/chat.dart';
@@ -152,15 +154,16 @@ class ItemListState extends State<ItemList> {
     );
 
     return Scaffold(
+			/*t
       appBar: AppBar(title: Text('ShareApp'), actions: <Widget>[
-        IconButton(
-          icon: Icon(Icons.exit_to_app),
-          tooltip: 'Sign out',
-          onPressed: () {
-            signOut();
-          },
-        ),
-      ]),
+				IconButton(
+					icon: Icon(Icons.exit_to_app),
+					tooltip: 'Sign out',
+					onPressed: () {
+						signOut();
+					},
+				),
+			]),*/
       body: bottomTabPages[currentTabIndex],
       floatingActionButton: showFAB(),
       bottomNavigationBar: bottomNavBar,
@@ -192,21 +195,6 @@ class ItemListState extends State<ItemList> {
         child: Icon(Icons.add),
       );
     }
-
-    if (currentTabIndex == 4) {
-      return FloatingActionButton(
-        onPressed: () {
-          navToProfileEdit();
-        },
-
-        // Help text when you hold down FAB
-        tooltip: 'Edit profile',
-
-        // Set FAB icon
-        child: Icon(Icons.edit),
-      );
-    }
-
     return null;
   }
 
@@ -293,8 +281,67 @@ class ItemListState extends State<ItemList> {
       padding: edgeInset,
       child: Column(
         children: <Widget>[
-          showProfile(),
-          getProfileDetails(),
+          Padding(
+            padding: EdgeInsets.all(10.0),
+          ),
+          profileIntro(),
+          Divider(),
+          profileTabAfterIntro(),
+        ],
+      ),
+    );
+  }
+
+  Widget reusableFlatButton(text, icon, action) {
+    return Column(
+      children: <Widget>[
+        Container(
+          child: FlatButton(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                Text(text, style: TextStyle(fontFamily: 'Quicksand')),
+                Icon(icon)
+              ],
+            ),
+            onPressed: () => action,
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(
+            left: 15.0,
+            right: 15.0,
+          ),
+          child: Divider(),
+        )
+      ],
+    );
+  }
+
+  Widget reusableCategory(text) {
+    return Container(
+			padding: EdgeInsets.only(left: 15.0, top: 10.0),
+			alignment: Alignment.centerLeft,
+			child: Text(text, style: TextStyle(fontSize: 11.0, fontWeight: FontWeight.w100))
+		);
+  }
+
+  Widget profileTabAfterIntro() {
+		// [TEMPORARY SOLUTION]
+		double height = (MediaQuery.of(context).size.height) - 310;
+    return Container(
+			height: height,
+      child: ListView(
+        children: <Widget>[
+          reusableCategory("ACCOUNT SETTINGS"),
+          reusableFlatButton("Personal information", Icons.person_outline, null),
+          reusableFlatButton("Payments and payouts", Icons.payment, null),
+          reusableFlatButton("Notifications", Icons.notifications, null),
+          reusableCategory("SUPPORT"),
+          reusableFlatButton("Get help", Icons.help_outline, null),
+          reusableFlatButton("Give us feedback", Icons.feedback, null),
+					reusableFlatButton("Log out", null, null),
+					getProfileDetails()
         ],
       ),
     );
@@ -321,31 +368,27 @@ class ItemListState extends State<ItemList> {
               Container(
                 height: 15,
               ),
-              Text(
-                'User ID: ${details[0]}',
-                textScaleFactor: 1,
-              ),
+              Text('User ID: ${details[0]}',
+                  style: TextStyle(
+                      color: Colors.black54,
+                      fontFamily: 'Quicksand',
+                      fontSize: 13.0)),
               Container(
                 height: 15,
               ),
-              Text(
-                'Email: ${details[1]}',
-                textScaleFactor: 1,
-              ),
+              Text('Account creation: ${details[2]}',
+                  style: TextStyle(
+                      color: Colors.black54,
+                      fontFamily: 'Quicksand',
+                      fontSize: 13.0)),
               Container(
                 height: 15,
               ),
-              Text(
-                'Account creation: ${details[2]}',
-                textScaleFactor: 1,
-              ),
-              Container(
-                height: 15,
-              ),
-              Text(
-                'Last active: ${details[3]}',
-                textScaleFactor: 1,
-              ),
+              Text('Last active: ${details[3]}',
+                  style: TextStyle(
+                      color: Colors.black54,
+                      fontFamily: 'Quicksand',
+                      fontSize: 13.0)),
             ],
           );
         } else {
@@ -355,7 +398,7 @@ class ItemListState extends State<ItemList> {
     );
   }
 
-  Widget showProfile() {
+  Widget profileIntro() {
     return FutureBuilder(
       future: Firestore.instance.collection('users').document(userID).get(),
       builder: (BuildContext context, AsyncSnapshot snapshot) {
@@ -364,23 +407,46 @@ class ItemListState extends State<ItemList> {
           return new Container(
             child: Column(
               children: <Widget>[
-                SizedBox(
-                  height: 120,
-                  width: 120,
-                  child: CachedNetworkImage(
-                    key: new ValueKey<String>(
-                        DateTime.now().millisecondsSinceEpoch.toString()),
-                    imageUrl: ds['photoURL'],
-                    placeholder: (context, url) => new Container(),
+                // User Icon
+                Container(
+                  padding: EdgeInsets.only(left: 15.0),
+                  alignment: Alignment.topLeft,
+                  height: 60.0,
+                  child: ClipOval(
+                    child: CachedNetworkImage(
+                      key: new ValueKey<String>(
+                          DateTime.now().millisecondsSinceEpoch.toString()),
+                      imageUrl: ds['photoURL'],
+                      placeholder: (context, url) => new Container(),
+                    ),
                   ),
                 ),
+                // username
                 Container(
-                  height: 10,
-                ),
-                Text(
-                  '${ds['displayName']}',
-                  textScaleFactor: 1.5,
-                ),
+                    padding: const EdgeInsets.only(top: 8.0, left: 15.0),
+                    alignment: Alignment.centerLeft,
+                    child: Text('${ds['displayName']}',
+                        style: TextStyle(
+                            fontSize: 20.0,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Quicksand'))),
+                // email
+                Container(
+                    padding: const EdgeInsets.only(top: 4.0, left: 15.0),
+                    alignment: Alignment.centerLeft,
+                    child: Text('${ds['email']}',
+                        style: TextStyle(
+                            fontSize: 15.0, fontFamily: 'Quicksand'))),
+                //
+                Container(
+                    alignment: Alignment.centerLeft,
+                    child: FlatButton(
+                      child: Text("Edit Profile",
+                          style: TextStyle(
+                              color: Color(0xff007f6e),
+                              fontFamily: 'Quicksand')),
+                      onPressed: () => navToProfileEdit(),
+                    )),
               ],
             ),
           );
@@ -528,18 +594,20 @@ class ItemListState extends State<ItemList> {
                         ),
                       );
                     },
-                    trailing: showChat ? IconButton(
-                      icon: Icon(Icons.message),
-                      onPressed: () {
-                        Navigator.pushNamed(
-                          context,
-                          Chat.routeName,
-                          arguments: ChatArgs(
-                            ds['id'],
-                          ),
-                        );
-                      },
-                    ) : null,
+                    trailing: showChat
+                        ? IconButton(
+                            icon: Icon(Icons.message),
+                            onPressed: () {
+                              Navigator.pushNamed(
+                                context,
+                                Chat.routeName,
+                                arguments: ChatArgs(
+                                  ds['id'],
+                                ),
+                              );
+                            },
+                          )
+                        : null,
                   );
                 },
               );
@@ -632,15 +700,15 @@ class ItemListState extends State<ItemList> {
       ),
     );
 /*
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (BuildContext context) => ItemEdit(
-                item: newItem,
-              ),
-          fullscreenDialog: true,
-        ));
-        */
+		Navigator.push(
+				context,
+				MaterialPageRoute(
+					builder: (BuildContext context) => ItemEdit(
+								item: newItem,
+							),
+					fullscreenDialog: true,
+				));
+				*/
   }
 
   void navigateToDetail(String itemID) async {
@@ -652,14 +720,14 @@ class ItemListState extends State<ItemList> {
       ),
     );
     /*
-    await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (BuildContext context) => ItemDetail(
-                itemID: itemID,
-              ),
-        ));
-        */
+		await Navigator.push(
+				context,
+				MaterialPageRoute(
+					builder: (BuildContext context) => ItemDetail(
+								itemID: itemID,
+							),
+				));
+				*/
   }
 
   Future<UserEdit> getUserEdit() async {
@@ -699,43 +767,40 @@ class ItemListState extends State<ItemList> {
 
     final ThemeData theme = Theme.of(context);
     final TextStyle dialogTextStyle =
-    theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
 
     return await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Delete item?'),
-          content: Text('${ds['name']}'),
-          actions: <Widget>[
-            FlatButton(
-              child: const Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop(
-                    false); // Pops the confirmation dialog but not the page.
-              },
-            ),
-            FlatButton(
-              child: const Text('Delete'),
-              onPressed: () {
-                Navigator.of(context).pop(false);
-                deleteItem(ds);
-                // Pops the confirmation dialog but not the page.
-              },
-            ),
-          ],
-        );
-      },
-    ) ??
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Delete item?'),
+              content: Text('${ds['name']}'),
+              actions: <Widget>[
+                FlatButton(
+                  child: const Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(context).pop(
+                        false); // Pops the confirmation dialog but not the page.
+                  },
+                ),
+                FlatButton(
+                  child: const Text('Delete'),
+                  onPressed: () {
+                    Navigator.of(context).pop(false);
+                    deleteItem(ds);
+                    // Pops the confirmation dialog but not the page.
+                  },
+                ),
+              ],
+            );
+          },
+        ) ??
         false;
   }
 
   void deleteItem(DocumentSnapshot ds) {
     deleteImages(ds['id'], ds['numImages']);
-    Firestore.instance
-        .collection('items')
-        .document(ds['id'])
-        .delete();
+    Firestore.instance.collection('items').document(ds['id']).delete();
   }
 
   void deleteImages(String id, int numImages) async {

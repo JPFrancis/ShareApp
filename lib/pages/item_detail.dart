@@ -158,10 +158,8 @@ class ItemDetailState extends State<ItemDetail> {
         onPressed: isMyItem ? null : () => handleRequestItemPressed(),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5.0)),
         color: Colors.red,
-        child: Text("Check Availability",
-            style: TextStyle(
-              color: Colors.white,
-            )));
+        child: Text("Check Availability", style: TextStyle( color: Colors.white, fontFamily: 'Quicksand'))
+    );
   }
 
   Widget showFAB() {
@@ -216,7 +214,7 @@ class ItemDetailState extends State<ItemDetail> {
             children: <Widget>[
               Text(
                 'Shared by ${creatorDS['displayName']}',
-                style: TextStyle(color: Colors.black, fontSize: 15.0),
+                style: TextStyle(color: Colors.black, fontSize: 15.0, fontFamily: 'Quicksand'),
                 textAlign: TextAlign.left,
               ),
               Container(
@@ -246,7 +244,7 @@ class ItemDetailState extends State<ItemDetail> {
           '${itemDS['name']}',
           //itemName,
           style: TextStyle(
-              color: Colors.black, fontSize: 40.0, fontWeight: FontWeight.bold),
+              color: Colors.black, fontSize: 40.0, fontWeight: FontWeight.bold, fontFamily: 'Quicksand'),
           textAlign: TextAlign.left,
         ),
       )),
@@ -262,11 +260,11 @@ class ItemDetailState extends State<ItemDetail> {
         children: <Widget>[
           Text(
             '\$${itemDS['price']}',
-            style: TextStyle(color: Colors.black, fontSize: 25.0, fontWeight: FontWeight.bold),
+            style: TextStyle(color: Colors.black, fontSize: 25.0, fontWeight: FontWeight.bold, fontFamily: 'Quicksand'),
           ),
           Text(
             ' / HOUR',
-            style: TextStyle( color: Colors.black, fontSize: 12.0,),
+            style: TextStyle( color: Colors.black, fontSize: 12.0, fontFamily: 'Quicksand'),
          )
         ],
       ),
@@ -296,11 +294,7 @@ class ItemDetailState extends State<ItemDetail> {
         color: Color(0x00000000),
         child: Text(
           '${itemDS['type']}'.toUpperCase(),
-          style: TextStyle(
-              color: Colors.black54,
-              fontSize: 12.0,
-              fontWeight: FontWeight.bold,
-              ),
+          style: TextStyle( color: Colors.black54, fontSize: 12.0, fontWeight: FontWeight.bold, fontFamily: 'Quicksand'),
           textAlign: TextAlign.left,
         ),
       )),
@@ -317,12 +311,12 @@ class ItemDetailState extends State<ItemDetail> {
           children: <Widget>[
             Text(
               'Condition: ',
-              style: TextStyle(color: Colors.black54, fontSize: 13.0, fontStyle: FontStyle.italic),
+              style: TextStyle(color: Colors.black54, fontSize: 13.0, fontStyle: FontStyle.italic, fontFamily: 'Quicksand'),
               textAlign: TextAlign.left,
             ),
             Text(
               '${itemDS['condition']}',
-              style: TextStyle(color: Colors.black, fontSize: 14.0, fontStyle: FontStyle.italic, fontWeight: FontWeight.bold),
+              style: TextStyle(color: Colors.black, fontSize: 14.0, fontStyle: FontStyle.italic, fontWeight: FontWeight.bold, fontFamily: 'Quicksand'),
               textAlign: TextAlign.left,
             ),
           ],
@@ -374,7 +368,7 @@ class ItemDetailState extends State<ItemDetail> {
               padding: EdgeInsets.only(bottom: 12.0),
               child: Text(
                 'The Location',
-                style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.bold, color: Colors.black87)
+                style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.bold, color: Colors.black87, fontFamily: 'Quicksand')
                 //textScaleFactor: 1.2,
               ),
             ),
