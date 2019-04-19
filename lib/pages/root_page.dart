@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shareapp/services/auth.dart';
-import 'package:shareapp/pages/item_list.dart';
+import 'package:shareapp/pages/home_page.dart';
 import 'package:shareapp/pages/login_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -47,7 +47,7 @@ class _RootPageState extends State<RootPage> {
             if (snapshot.hasData) {
               FirebaseUser user = snapshot.data;
 
-              return new ItemList(
+              return new HomePage(
                 auth: widget.auth,
                 firebaseUser: user,
                 onSignOut: () => _updateAuthStatus(AuthStatus.notSignedIn),

@@ -1,36 +1,36 @@
 import 'package:shareapp/main.dart';
 import 'package:flutter/material.dart';
-import 'package:shareapp/pages/chat.dart';
+import 'package:shareapp/rentals/chat.dart';
 import 'package:shareapp/models/item.dart';
 import 'package:shareapp/services/auth.dart';
 import 'package:shareapp/pages/item_edit.dart';
 import 'package:shareapp/models/user_edit.dart';
 import 'package:shareapp/pages/item_detail.dart';
-import 'package:shareapp/pages/edit_profile.dart';
+import 'package:shareapp/pages/profile_edit.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:shareapp/pages/item_rental.dart';
+import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
-class ItemList extends StatefulWidget {
+class HomePage extends StatefulWidget {
   static const routeName = '/itemList';
 
   BaseAuth auth;
   FirebaseUser firebaseUser;
   VoidCallback onSignOut;
 
-  ItemList({this.auth, this.firebaseUser, this.onSignOut});
+  HomePage({this.auth, this.firebaseUser, this.onSignOut});
 
   @override
   State<StatefulWidget> createState() {
-    return ItemListState();
+    return HomePageState();
   }
 }
 
-class ItemListState extends State<ItemList> {
+class HomePageState extends State<HomePage> {
   SharedPreferences prefs;
   List<Item> itemList;
   DocumentSnapshot currentUser;
@@ -522,7 +522,7 @@ class ItemListState extends State<ItemList> {
                     onTap: () {
                       Navigator.pushNamed(
                         context,
-                        ItemRental.routeName,
+                        RentalDetail.routeName,
                         arguments: ItemRentalArgs(
                           ds['id'],
                         ),
@@ -680,7 +680,7 @@ class ItemListState extends State<ItemList> {
     UserEdit result = await Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (BuildContext context) => EditProfile(
+          builder: (BuildContext context) => ProfileEdit(
                 userEdit: userEdit,
               ),
           fullscreenDialog: true,

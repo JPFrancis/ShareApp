@@ -2,8 +2,8 @@ import 'dart:io';
 import 'dart:async';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
-import 'package:shareapp/pages/chat.dart';
-import 'package:shareapp/pages/item_rental.dart';
+import 'package:shareapp/rentals/chat.dart';
+import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -19,7 +19,7 @@ class RequestItem extends StatefulWidget {
   static const routeName = '/requestItem';
   final String itemID;
 
-  RequestItem({Key key, this.itemID}) : super(key: key);
+  RequestItem.ItemRequest({Key key, this.itemID}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
@@ -127,13 +127,9 @@ class RequestItemState extends State<RequestItem> {
         children: <Widget>[
           isLoading
               ? Container(
-                  child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: <Widget>[
-                        Center(child: CircularProgressIndicator())
-                      ]),
-                )
+            decoration:
+            new BoxDecoration(color: Colors.white.withOpacity(0.0)),
+          )
               : showBody(),
           showCircularProgress(),
         ],
@@ -392,7 +388,7 @@ class RequestItemState extends State<RequestItem> {
 
         Navigator.pushNamed(
           context,
-          ItemRental.routeName,
+          RentalDetail.routeName,
           arguments: ItemRentalArgs(
             rentalID,
           ),

@@ -31,17 +31,17 @@ class MyApp extends StatelessWidget {
 /// ========================================================================
 /// Our actual app
 
-import 'package:shareapp/pages/item_rental.dart';
+import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/models/item.dart';
 import 'package:shareapp/pages/item_edit.dart';
 import 'package:flutter/material.dart';
 import 'package:shareapp/services/auth.dart';
-import 'package:shareapp/pages/item_list.dart';
+import 'package:shareapp/pages/home_page.dart';
 import 'package:shareapp/pages/item_detail.dart';
 import 'package:shareapp/pages/root_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:shareapp/pages/request_item.dart';
-import 'package:shareapp/pages/chat.dart';
+import 'package:shareapp/rentals/item_request.dart';
+import 'package:shareapp/rentals/chat.dart';
 
 void main() => runApp(MyApp());
 
@@ -59,13 +59,13 @@ class MyApp extends StatelessWidget {
       initialRoute: RootPage.routeName,
       onGenerateRoute: (settings) {
         switch (settings.name) {
-          case ItemList.routeName:
+          case HomePage.routeName:
             {
               final ItemListArgs args = settings.arguments;
 
               return MaterialPageRoute(
                 builder: (context) {
-                  return ItemList(
+                  return HomePage(
                     auth: args.auth,
                     firebaseUser: args.firebaseUser,
                     onSignOut: args.onSignOut,
@@ -107,7 +107,7 @@ class MyApp extends StatelessWidget {
 
               return MaterialPageRoute(
                 builder: (context) {
-                  return RequestItem(
+                  return RequestItem.ItemRequest(
                     itemID: args.itemID,
                   );
                 },
@@ -115,13 +115,13 @@ class MyApp extends StatelessWidget {
               );
             }
 
-          case ItemRental.routeName:
+          case RentalDetail.routeName:
             {
               final ItemRentalArgs args = settings.arguments;
 
               return MaterialPageRoute(
                 builder: (context) {
-                  return ItemRental(
+                  return RentalDetail(
                     rentalID: args.rentalID,
                   );
                 },
