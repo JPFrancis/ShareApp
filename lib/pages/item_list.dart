@@ -171,7 +171,7 @@ class ItemListState extends State<ItemList> {
   }
 
   FloatingActionButton showFAB() {
-    if (currentTabIndex == 0) {
+    if (currentTabIndex == 2) {
       return FloatingActionButton(
         onPressed: () {
           navigateToEdit(
@@ -277,22 +277,18 @@ class ItemListState extends State<ItemList> {
   }
 
   Widget profileTabPage() {
-    return Padding(
-      padding: edgeInset,
-      child: Column(
-        children: <Widget>[
-          Padding(
-            padding: EdgeInsets.all(10.0),
-          ),
-          profileIntro(),
-          Divider(),
-          profileTabAfterIntro(),
-        ],
-      ),
+    return ListView(  
+      padding: EdgeInsets.fromLTRB(10.0, 30.0, 10.0, 20.0),
+      shrinkWrap: true,
+      children: <Widget>[
+        profileIntro(),
+        Divider(),
+        profileTabAfterIntro(),
+      ],
     );
   }
 
-  Widget reusableFlatButton(text, icon, action) {
+  Widget reusableFlatButton(text, icon, action, color) {
     return Column(
       children: <Widget>[
         Container(
@@ -300,7 +296,7 @@ class ItemListState extends State<ItemList> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
-                Text(text, style: TextStyle(fontFamily: 'Quicksand')),
+                Text(text, style: TextStyle(fontFamily: 'Quicksand', fontWeight: FontWeight.w400, color: color != null? color : Colors.black)),
                 Icon(icon)
               ],
             ),
@@ -327,23 +323,20 @@ class ItemListState extends State<ItemList> {
   }
 
   Widget profileTabAfterIntro() {
-		// [TEMPORARY SOLUTION]
-		double height = (MediaQuery.of(context).size.height) - 310;
-    return Container(
-			height: height,
-      child: ListView(
-        children: <Widget>[
-          reusableCategory("ACCOUNT SETTINGS"),
-          reusableFlatButton("Personal information", Icons.person_outline, null),
-          reusableFlatButton("Payments and payouts", Icons.payment, null),
-          reusableFlatButton("Notifications", Icons.notifications, null),
-          reusableCategory("SUPPORT"),
-          reusableFlatButton("Get help", Icons.help_outline, null),
-          reusableFlatButton("Give us feedback", Icons.feedback, null),
-					reusableFlatButton("Log out", null, null),
-					getProfileDetails()
-        ],
-      ),
+    return Column(
+      children: <Widget>[
+        reusableCategory("ACCOUNT SETTINGS"),
+        reusableFlatButton("Personal information", Icons.person_outline, null, null),
+        reusableFlatButton("Payments and payouts", Icons.payment, null, null),
+        reusableFlatButton("Notifications", Icons.notifications, null, null),
+        reusableCategory("SUPPORT"),
+        reusableFlatButton("Get help", Icons.help_outline, null, null),
+        reusableFlatButton("Give us feedback", Icons.feedback, null, null),
+        reusableCategory("LEGAL"),
+        reusableFlatButton("Terms of Service", Icons.assignment, null, null),
+        reusableFlatButton("Log out", null, null, Color(0xff007f6e)),
+        getProfileDetails()
+      ],
     );
   }
 

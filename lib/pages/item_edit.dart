@@ -87,10 +87,10 @@ class ItemEditState extends State<ItemEdit> {
     }
 
     const itemType = <String>[
-      'tool',
-      'leisure',
-      'home',
-      'other',
+      'Tool',
+      'Leisure',
+      'Home',
+      'Other',
     ];
     dropDownItemType = itemType
         .map(
@@ -102,10 +102,10 @@ class ItemEditState extends State<ItemEdit> {
         .toList();
 
     const itemCondition = <String>[
-      'lightly used',
-      'good',
-      'fair',
-      'has character',
+      'Lightly Used',
+      'Good',
+      'Fair',
+      'Has Character',
     ];
     dropDownItemCondition = itemCondition
         .map(
@@ -117,20 +117,7 @@ class ItemEditState extends State<ItemEdit> {
         .toList();
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(appBarText + ' Item'),
-        actions: <Widget>[
-          FlatButton(
-            child: Text('SAVE',
-                textScaleFactor: 1.05,
-                style: theme.textTheme.body2.copyWith(color: Colors.white)),
-            onPressed: () {
-              saveWarning();
-              //Navigator.pop(context, DismissDialogAction.save);
-            },
-          ),
-        ],
-      ),
+      resizeToAvoidBottomPadding: true,
       body: Stack(
         children: <Widget>[
           isUploading
@@ -142,39 +129,98 @@ class ItemEditState extends State<ItemEdit> {
           showCircularProgress(),
         ],
       ),
+      floatingActionButton: RaisedButton(
+        color: Color(0xff007f6e),
+        child: Text('Next ＞',
+            style: TextStyle(color: Colors.white, fontFamily: 'Quicksand')),
+        onPressed: () {
+          saveWarning();
+          //Navigator.pop(context, DismissDialogAction.save);
+        },
+      ),
     );
   }
 
   Widget showBody() {
+    double height = MediaQuery.of(context).size.height;
     return Form(
       key: formKey,
       onWillPop: onWillPop,
       child: ListView(
-        padding:
-            EdgeInsets.only(top: 10.0, bottom: 10.0, left: 18.0, right: 18.0),
-        children: <Widget>[
-          //showItemCreator(),
-          Column(
-            children: <Widget>[
-              showTypeSelector(),
-              showConditionSelector(),
-            ],
+          shrinkWrap: true,
+          padding:
+              EdgeInsets.only(top: 10.0, bottom: 10.0, left: 18.0, right: 18.0),
+          children: <Widget>[
+            Container(
+              alignment: Alignment.topLeft,
+              child: FloatingActionButton(
+                child: BackButton(),
+                onPressed: () => Navigator.pop(context),
+                backgroundColor: Colors.transparent,
+                elevation: 0.0,
+                foregroundColor: Colors.black,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 60, bottom: 60.0),
+              child: Center(child: Text("[ add image thumbnails here ]")),
+            ),
+            showImageButtons(),
+            Divider(),
+            reusableCategory("DETAILS"),
+            reusableTextEntry("What are you selling? (required)", true, nameController, 'name'),
+            reusableTextEntry("Describe it... (required)", true, descriptionController, 'description'),
+            Divider(),
+            reusableCategory("SPECIFICS"),
+            showTypeSelector(),
+            showConditionSelector(),
+            Divider(),
+            reusableCategory("PRICE"),
+            reusableTextEntry( "Price", true, priceController, 'price', TextInputType.number),
+            showImageCount(),
+            showSelectedLocation(),
+            reusableTextEntry( "Price", true, priceController, 'price', TextInputType.number),
+            showLocationButtons(),
+          ]),
+    );
+  }
+
+  Widget reusableTextEntry(placeholder, required, controller, saveTo,
+      [keyboard = TextInputType.text]) {
+    return Container(
+      child: TextField(
+        keyboardType: keyboard,
+        controller: controller,
+        onChanged: (value) {
+          switch (saveTo) {
+            case 'name':
+              itemCopy.name = controller.text;
+              break;
+            case 'description':
+              itemCopy.description = controller.text;
+              break;
+            case 'price':
+              itemCopy.price = int.parse(controller.text);
+              break;
+            default:
+          }
+        },
+        decoration: InputDecoration(
+          labelStyle: TextStyle(
+            color: required ? Colors.black54 : Colors.black26,
           ),
-          showNameEditor(),
-          showDescriptionEditor(),
-          showPriceEditor(),
-          showImageCount(),
-          showImageButtons(),
-          showSelectedLocation(),
-          showLocationButtons(),
-        ].map<Widget>((Widget child) {
-          return Container(
-            padding: const EdgeInsets.symmetric(vertical: 11),
-            child: child,
-          );
-        }).toList(),
+          labelText: placeholder,
+          //border: OutlineInputBorder(borderRadius: BorderRadius.circular(5.0)),
+        ),
       ),
     );
+  }
+
+  Widget reusableCategory(text) {
+    return Container(
+        alignment: Alignment.centerLeft,
+        child: Text(text,
+            style: TextStyle(fontSize: 11.0, fontWeight: FontWeight.w100)));
   }
 
   Widget showItemCreator() {
@@ -188,102 +234,31 @@ class ItemEditState extends State<ItemEdit> {
   Widget showTypeSelector() {
     return Container(
       padding: EdgeInsets.only(left: 15.0, right: 15.0),
-      child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            Text(
-              'Select Item Type:',
-              textScaleFactor: 1.15,
-            ),
-            DropdownButton<String>(
-              value: itemCopy.type,
-              hint: Text('Choose'),
-              onChanged: (String newValue) {
-                setState(() {
-                  itemCopy.type = newValue;
-                });
-              },
-              items: dropDownItemType,
-            ),
-          ]),
+      child: DropdownButton<String>(
+        value: itemCopy.type,
+        hint: Text('Category'),
+        onChanged: (String newValue) {
+          setState(() {
+            itemCopy.type = newValue;
+          });
+        },
+        items: dropDownItemType,
+      ),
     );
   }
 
   Widget showConditionSelector() {
     return Container(
       padding: EdgeInsets.only(left: 15.0, right: 15.0),
-      child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            Text(
-              'Select Item Condition:',
-              textScaleFactor: 1.15,
-            ),
-            DropdownButton<String>(
-              value: itemCopy.condition,
-              hint: Text('Choose'),
-              onChanged: (String newValue) {
-                setState(() {
-                  itemCopy.condition = newValue;
-                });
-              },
-              items: dropDownItemCondition,
-            ),
-          ]),
-    );
-  }
-
-  Widget showNameEditor() {
-    return Container(
-      //padding: EdgeInsets.only(left: 5.0, right: 5.0),
-      child: TextField(
-        controller: nameController,
-        style: textStyle,
-        onChanged: (value) {
-          itemCopy.name = nameController.text;
+      child: DropdownButton<String>(
+        value: itemCopy.condition,
+        hint: Text('Condition'),
+        onChanged: (String newValue) {
+          setState(() {
+            itemCopy.condition = newValue;
+          });
         },
-        decoration: InputDecoration(
-          labelText: 'Name',
-          filled: true,
-          //border: OutlineInputBorder(borderRadius: BorderRadius.circular(5.0)),
-        ),
-      ),
-    );
-  }
-
-  Widget showDescriptionEditor() {
-    return Container(
-      child: TextField(
-        keyboardType: TextInputType.multiline,
-        maxLines: null,
-        controller: descriptionController,
-        style: textStyle,
-        onChanged: (value) {
-          itemCopy.description = descriptionController.text;
-        },
-        decoration: InputDecoration(
-          labelText: 'Description',
-          filled: true,
-          //border: OutlineInputBorder(borderRadius: BorderRadius.circular(5.0)),
-        ),
-      ),
-    );
-  }
-
-  Widget showPriceEditor() {
-    return Container(
-      child: TextField(
-        keyboardType: TextInputType.number,
-        controller: priceController,
-        style: textStyle,
-        onChanged: (value) {
-          itemCopy.price = int.parse(priceController.text);
-        },
-        decoration: InputDecoration(
-          labelText: 'Price',
-          hintText: 'Hourly rate',
-          filled: true,
-        ),
+        items: dropDownItemCondition,
       ),
     );
   }
@@ -302,14 +277,10 @@ class ItemEditState extends State<ItemEdit> {
         children: <Widget>[
           Expanded(
             child: RaisedButton(
-              shape: new RoundedRectangleBorder(
-                  borderRadius: new BorderRadius.circular(5.0)),
-              color: Colors.red,
-              textColor: Colors.white,
+              color: Colors.white,
+              textColor: Colors.black,
               child: Text(
-                "Add Images",
-                //addButton + " Images",
-                textScaleFactor: 1.25,
+                "Add More Photos",
               ),
               onPressed: imageButton
                   ? () {
@@ -320,9 +291,7 @@ class ItemEditState extends State<ItemEdit> {
                   : null,
             ),
           ),
-          Container(
-            width: 15.0,
-          ),
+          /*
           Expanded(
             child: RaisedButton(
               shape: new RoundedRectangleBorder(
@@ -339,7 +308,7 @@ class ItemEditState extends State<ItemEdit> {
                       deleteImagesWarning();
                     },
             ),
-          ),
+          ),*/
         ],
       ),
     );
@@ -632,7 +601,7 @@ class ItemEditState extends State<ItemEdit> {
     StorageUploadTask uploadTask = ref.putData(imageData);
 
     // Release the image data
-    asset.releaseOriginal();
+    //asset.releaseOriginal();
 
     return await (await uploadTask.onComplete).ref.getDownloadURL();
   }

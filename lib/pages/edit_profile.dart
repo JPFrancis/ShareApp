@@ -95,10 +95,9 @@ class EditProfileState extends State<EditProfile> {
       key: formKey,
       onWillPop: onWillPop,
       child: ListView(
-        padding:
-            EdgeInsets.only(top: 10.0, bottom: 10.0, left: 18.0, right: 18.0),
+        padding: EdgeInsets.only(top: 00.0, bottom: 10.0, left: 18.0, right: 18.0),
         children: <Widget>[
-          showUserID(),
+          previewImage(),
           showProfileOptions(),
           showDisplayNameEditor(),
         ].map<Widget>((Widget child) {
@@ -110,7 +109,7 @@ class EditProfileState extends State<EditProfile> {
       ),
     );
   }
-
+  
   Widget showUserID() {
     return Container(
         child: Text(
@@ -184,11 +183,15 @@ class EditProfileState extends State<EditProfile> {
   }
 
   Widget showCurrentProfilePic() {
-    return CachedNetworkImage(
+    return Container(
+      height: MediaQuery.of(context).size.height / 4,
+      width: MediaQuery.of(context).size.height / 4,
+      child: CachedNetworkImage(
       key: new ValueKey<String>(
           DateTime.now().millisecondsSinceEpoch.toString()),
       imageUrl: userEditCopy.photoUrl,
       placeholder: (context, url) => new CircularProgressIndicator(),
+        ),
     );
   }
 
@@ -199,22 +202,24 @@ class EditProfileState extends State<EditProfile> {
   }
 
   Widget previewImage() {
-    return FutureBuilder<File>(
-        future: selectedImage,
-        builder: (BuildContext context, AsyncSnapshot<File> snapshot) {
-          if (snapshot.connectionState == ConnectionState.done &&
-              snapshot.data != null) {
-            imageFile = snapshot.data;
-            return Image.file(imageFile);
-          } else if (snapshot.error != null) {
-            return const Text(
-              'Error',
-              textAlign: TextAlign.center,
-            );
-          } else {
-            return showCurrentProfilePic();
-          }
-        });
+    return Container(
+      child: FutureBuilder<File>(
+          future: selectedImage,
+          builder: (BuildContext context, AsyncSnapshot<File> snapshot) {
+            if (snapshot.connectionState == ConnectionState.done &&
+                snapshot.data != null) {
+              imageFile = snapshot.data;
+              return Image.file(imageFile);
+            } else if (snapshot.error != null) {
+              return const Text(
+                'Error',
+                textAlign: TextAlign.center,
+              );
+            } else {
+              return showCurrentProfilePic();
+            }
+          }),
+    );
   }
 
   Widget showCircularProgress() {

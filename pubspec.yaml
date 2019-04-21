@@ -28,7 +28,7 @@ dependencies:
 
   flutter_google_places: #^0.2.0
 
-  permission_handler:
+  #permission_handler:
 
   google_maps_webservice:
 
@@ -50,7 +50,7 @@ dependencies:
 
   http:
 
-  multi_image_picker: #^3.0.22
+  multi_image_picker: ^4.2.0
 
   google_sign_in: #^4.0.1+1
 
