@@ -756,7 +756,15 @@ class HomePageState extends State<HomePage> {
                                             fontWeight: FontWeight.bold),
                                       ),
                                       subtitle: Text('chat'),
-                                      onTap: () {},
+                                      onTap: () {
+                                        Navigator.pushNamed(
+                                          context,
+                                          Chat.routeName,
+                                          arguments: ChatArgs(
+                                            rentalDS.documentID,
+                                          ),
+                                        );
+                                      },
                                     );
                                   } else {
                                     return Container();
