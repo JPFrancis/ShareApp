@@ -471,7 +471,6 @@ class ItemEditState extends State<ItemEdit> {
     if (itemCopy.id == null) {
       final DocumentReference documentReference =
           await Firestore.instance.collection("items").add({
-        'id': 'temp',
         'status': itemCopy.status,
         'creator': itemCopy.creator,
         'name': itemCopy.name,
@@ -490,9 +489,11 @@ class ItemEditState extends State<ItemEdit> {
       itemCopy.id = returnedID;
 
       Firestore.instance
-          .collection('items')
-          .document(returnedID)
-          .updateData({'id': returnedID});
+          .collection('users')
+          .document(widget.item.creator.documentID)
+          .updateData({
+        'items': FieldValue.arrayUnion([documentReference])
+      });
 
       if (imageAssets.length == 0) {
         Firestore.instance
@@ -630,9 +631,6 @@ class ItemEditState extends State<ItemEdit> {
     StorageReference ref =
         FirebaseStorage.instance.ref().child('$fileName/$index');
     StorageUploadTask uploadTask = ref.putData(imageData);
-
-    // Release the image data
-    asset.releaseOriginal();
 
     return await (await uploadTask.onComplete).ref.getDownloadURL();
   }

@@ -16,7 +16,7 @@ import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
 class HomePage extends StatefulWidget {
-  static const routeName = '/itemList';
+  static const routeName = '/homePage';
 
   BaseAuth auth;
   FirebaseUser firebaseUser;
@@ -33,7 +33,6 @@ class HomePage extends StatefulWidget {
 class HomePageState extends State<HomePage> {
   SharedPreferences prefs;
   List<Item> itemList;
-  DocumentSnapshot currentUser;
 
   String userID;
   int currentTabIndex;
@@ -74,7 +73,6 @@ class HomePageState extends State<HomePage> {
       if (!ds.exists) {
         Firestore.instance.collection('users').document(userID).setData({
           'displayName': widget.firebaseUser.displayName,
-          'userID': widget.firebaseUser.uid,
           'photoURL': widget.firebaseUser.photoUrl,
           'email': widget.firebaseUser.email,
           'lastActiveTimestamp': DateTime.now().millisecondsSinceEpoch,
@@ -279,11 +277,20 @@ class HomePageState extends State<HomePage> {
   Widget messagesTabPage() {
     return Padding(
       padding: edgeInset,
-      child: Center(
-        child: Text(
-          'Messages',
-          textScaleFactor: 2.5,
-        ),
+      child: Column(
+        children: <Widget>[
+          Container(
+            alignment: Alignment.centerLeft,
+            padding: EdgeInsets.symmetric(vertical: 10),
+            child: Text(
+              'My chats:',
+              style: TextStyle(
+                fontSize: 20,
+              ),
+            ),
+          ),
+          buildMessagesList()
+        ],
       ),
     );
   }
@@ -307,7 +314,7 @@ class HomePageState extends State<HomePage> {
         if (snapshot.hasData) {
           DocumentSnapshot ds = snapshot.data;
           List<String> details = new List();
-          details.add(ds['userID'].toString());
+          details.add(ds.documentID.toString());
           details.add(ds['email']);
           var date1 = new DateTime.fromMillisecondsSinceEpoch(
               ds['accountCreationTimestamp']);
@@ -462,7 +469,7 @@ class HomePageState extends State<HomePage> {
                     subtitle: Text(ds['description']),
                     onTap: () {
                       DocumentReference dr = ds['creator'];
-                      navigateToDetail(ds['id']);
+                      navigateToDetail(ds.documentID);
                     },
                     trailing: IconButton(
                       icon: Icon(Icons.delete),
@@ -505,9 +512,11 @@ class HomePageState extends State<HomePage> {
                   DocumentSnapshot ds = snapshot.data.documents[index];
                   bool showChat = false;
 
-                  DocumentReference doc = ds['renter'];
+                  DocumentReference renterDR = ds['renter'];
+                  DocumentReference ownerDR = ds['owner'];
 
-                  if (userID == doc.documentID) {
+                  if (userID == renterDR.documentID ||
+                      userID == ownerDR.documentID) {
                     showChat = true;
                   }
 
@@ -515,31 +524,33 @@ class HomePageState extends State<HomePage> {
                     leading: Icon(Icons.shopping_cart),
                     //leading: Icon(Icons.build),
                     title: Text(
-                      ds['id'],
+                      ds.documentID,
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    subtitle: Text(ds['start'].toString()),
+                    subtitle: Text('${ds['start'].toString()}'),
                     onTap: () {
                       Navigator.pushNamed(
                         context,
                         RentalDetail.routeName,
                         arguments: ItemRentalArgs(
-                          ds['id'],
+                          ds.documentID,
                         ),
                       );
                     },
-                    trailing: showChat ? IconButton(
-                      icon: Icon(Icons.message),
-                      onPressed: () {
-                        Navigator.pushNamed(
-                          context,
-                          Chat.routeName,
-                          arguments: ChatArgs(
-                            ds['id'],
-                          ),
-                        );
-                      },
-                    ) : null,
+                    trailing: showChat
+                        ? IconButton(
+                            icon: Icon(Icons.message),
+                            onPressed: () {
+                              Navigator.pushNamed(
+                                context,
+                                Chat.routeName,
+                                arguments: ChatArgs(
+                                  ds.documentID,
+                                ),
+                              );
+                            },
+                          )
+                        : null,
                   );
                 },
               );
@@ -604,7 +615,7 @@ class HomePageState extends State<HomePage> {
                     subtitle: Text(ds['description']),
                     onTap: () {
                       DocumentReference dr = ds['creator'];
-                      navigateToDetail(ds['id']);
+                      navigateToDetail(ds.documentID);
                     },
                     trailing: IconButton(
                       icon: Icon(Icons.delete),
@@ -621,6 +632,145 @@ class HomePageState extends State<HomePage> {
         },
       ),
     );
+  }
+
+  Widget buildMessagesList() {
+    CollectionReference collectionReference =
+        Firestore.instance.collection('users');
+    return Expanded(
+      child: StreamBuilder<QuerySnapshot>(
+        stream: collectionReference
+            .document(userID)
+            .collection('rentals')
+            .snapshots(),
+        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          if (snapshot.hasError) {
+            return new Text('${snapshot.error}');
+          }
+          switch (snapshot.connectionState) {
+            case ConnectionState.waiting:
+              return new Center(
+                child: new Container(),
+              );
+            default:
+              return new ListView.builder(
+                shrinkWrap: true,
+                //padding: EdgeInsets.all(2.0),
+                itemCount: snapshot.data.documents.length,
+                itemBuilder: (context, index) {
+                  DocumentSnapshot userRentalDS =
+                      snapshot.data.documents[index];
+                  DocumentReference rentalDR = userRentalDS['rental'];
+
+                  return FutureBuilder(
+                    future: rentalDR.get(),
+                    builder: (BuildContext context, AsyncSnapshot snapshot) {
+                      if (snapshot.hasData) {
+                        DocumentSnapshot rentalDS = snapshot.data;
+                        DocumentReference itemDR = rentalDS['item'];
+                        DocumentReference ownerDR = rentalDS['owner'];
+                        DocumentReference renterDR = rentalDS['renter'];
+
+                        return FutureBuilder(
+                          future: ownerDR.get(),
+                          builder:
+                              (BuildContext context, AsyncSnapshot snapshot) {
+                            if (snapshot.hasData) {
+                              DocumentSnapshot ownerDS = snapshot.data;
+
+                              return FutureBuilder(
+                                future: renterDR.get(),
+                                builder: (BuildContext context,
+                                    AsyncSnapshot snapshot) {
+                                  if (snapshot.hasData) {
+                                    DocumentSnapshot renterDS = snapshot.data;
+
+                                    bool isRenter = userRentalDS['isRenter'];
+
+                                    String title = isRenter
+                                        ? ownerDS['displayName']
+                                        : renterDS['displayName'];
+
+                                    return ListTile(
+                                      leading: Icon(Icons.chat_bubble),
+                                      //leading: Icon(Icons.build),
+                                      title: Text(
+                                        title,
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      subtitle: Text('chat'),
+                                      onTap: () {},
+                                    );
+                                  } else {
+                                    return Container();
+                                  }
+                                },
+                              );
+                            } else {
+                              return Container();
+                            }
+                          },
+                        );
+                      } else {
+                        return Container();
+                      }
+                    },
+                  );
+                },
+              );
+          }
+        },
+      ),
+    );
+
+    /*
+    return FutureBuilder(
+      future: Firestore.instance.collection('users').document(userID).get(),
+      builder: (BuildContext context, AsyncSnapshot snapshot) {
+        if (snapshot.hasData) {
+          DocumentSnapshot userDS = snapshot.data;
+          List<DocumentReference> rentals = List.from(userDS['rentals']);
+
+          return new ListView.builder(
+            shrinkWrap: true,
+            //padding: EdgeInsets.all(2.0),
+            itemCount: rentals.length,
+            itemBuilder: (context, index) {
+              debugPrint('*********${rentals[index].documentID}');
+              rentals[index].get().then((DocumentSnapshot rentalDS) {
+
+                return ListTile(
+                  leading: Icon(Icons.chat_bubble),
+                  //leading: Icon(Icons.build),
+                  title: Text(
+                    rentalDS.documentID,
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(rentalDS['start'].toString()),
+                  onTap: () {
+                    Navigator.pushNamed(
+                      context,
+                      Chat.routeName,
+                      arguments: ChatArgs(
+                        rentalDS.documentID,
+                      ),
+                    );
+                  },
+                );
+              });
+            },
+          );
+        } else {
+          return Container(
+            child: Center(
+              child: Text('error'),
+            ),
+          );
+        }
+      },
+    );
+    */
   }
 
   void navigateToEdit(Item newItem) async {
@@ -699,43 +849,45 @@ class HomePageState extends State<HomePage> {
 
     final ThemeData theme = Theme.of(context);
     final TextStyle dialogTextStyle =
-    theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
 
     return await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Delete item?'),
-          content: Text('${ds['name']}'),
-          actions: <Widget>[
-            FlatButton(
-              child: const Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop(
-                    false); // Pops the confirmation dialog but not the page.
-              },
-            ),
-            FlatButton(
-              child: const Text('Delete'),
-              onPressed: () {
-                Navigator.of(context).pop(false);
-                deleteItem(ds);
-                // Pops the confirmation dialog but not the page.
-              },
-            ),
-          ],
-        );
-      },
-    ) ??
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Delete item?'),
+              content: Text('${ds['name']}'),
+              actions: <Widget>[
+                FlatButton(
+                  child: const Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(context).pop(
+                        false); // Pops the confirmation dialog but not the page.
+                  },
+                ),
+                FlatButton(
+                  child: const Text('Delete'),
+                  onPressed: () {
+                    Navigator.of(context).pop(false);
+                    deleteItem(ds);
+                    // Pops the confirmation dialog but not the page.
+                  },
+                ),
+              ],
+            );
+          },
+        ) ??
         false;
   }
 
   void deleteItem(DocumentSnapshot ds) {
-    deleteImages(ds['id'], ds['numImages']);
-    Firestore.instance
-        .collection('items')
-        .document(ds['id'])
-        .delete();
+    DocumentReference documentReference = ds.reference;
+    Firestore.instance.collection('users').document(userID).updateData({
+      'items': FieldValue.arrayRemove([documentReference])
+    });
+
+    deleteImages(ds.documentID, ds['numImages']);
+    Firestore.instance.collection('items').document(ds.documentID).delete();
   }
 
   void deleteImages(String id, int numImages) async {

@@ -484,7 +484,6 @@ class ItemDetailState extends State<ItemDetail> {
     output.description = old.description;
     output.type = old.type;
     output.numImages = old.numImages;
-    output.id = old.id;
     output.price = old.price;
     output.location = old.location;
     output.images = List();
@@ -497,7 +496,7 @@ class ItemDetailState extends State<ItemDetail> {
   }
 
   void navigateToEdit() async {
-    Item editItem = Item.fromMapNoID(itemDS.data);
+    Item editItem = Item.fromMap(itemDS.data);
 
     Item result = await Navigator.push(
         context,
@@ -531,8 +530,8 @@ class ItemDetailState extends State<ItemDetail> {
 
     Navigator.pushNamed(
       context,
-      RequestItem.routeName,
-      arguments: RequestItemArgs(
+      ItemRequest.routeName,
+      arguments: ItemRequestArgs(
         widget.itemID,
       ),
     );

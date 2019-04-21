@@ -56,12 +56,12 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.red,
       ),
       home: new RootPage(auth: new Auth()),
-      initialRoute: RootPage.routeName,
+      //initialRoute: RootPage.routeName,
       onGenerateRoute: (settings) {
         switch (settings.name) {
           case HomePage.routeName:
             {
-              final ItemListArgs args = settings.arguments;
+              final HomePageArgs args = settings.arguments;
 
               return MaterialPageRoute(
                 builder: (context) {
@@ -101,13 +101,13 @@ class MyApp extends StatelessWidget {
               );
             }
 
-          case RequestItem.routeName:
+          case ItemRequest.routeName:
             {
-              final RequestItemArgs args = settings.arguments;
+              final ItemRequestArgs args = settings.arguments;
 
               return MaterialPageRoute(
                 builder: (context) {
-                  return RequestItem.ItemRequest(
+                  return ItemRequest(
                     itemID: args.itemID,
                   );
                 },
@@ -153,12 +153,12 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class ItemListArgs {
+class HomePageArgs {
   final BaseAuth auth;
   final FirebaseUser firebaseUser;
   final VoidCallback onSignOut;
 
-  ItemListArgs(this.auth, this.firebaseUser, this.onSignOut);
+  HomePageArgs(this.auth, this.firebaseUser, this.onSignOut);
 }
 
 class ItemDetailArgs {
@@ -173,10 +173,10 @@ class ItemEditArgs {
   ItemEditArgs(this.item,);
 }
 
-class RequestItemArgs {
+class ItemRequestArgs {
   final String itemID;
 
-  RequestItemArgs(this.itemID,);
+  ItemRequestArgs(this.itemID,);
 }
 
 class ItemRentalArgs {

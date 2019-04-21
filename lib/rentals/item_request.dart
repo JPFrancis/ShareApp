@@ -15,20 +15,20 @@ enum DismissDialogAction {
   save,
 }
 
-class RequestItem extends StatefulWidget {
+class ItemRequest extends StatefulWidget {
   static const routeName = '/requestItem';
   final String itemID;
 
-  RequestItem.ItemRequest({Key key, this.itemID}) : super(key: key);
+  ItemRequest({Key key, this.itemID}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
-    return RequestItemState();
+    return ItemRequestState();
   }
 }
 
 /// We initially assume we are in editing mode
-class RequestItemState extends State<RequestItem> {
+class ItemRequestState extends State<ItemRequest> {
   final GlobalKey<FormState> formKey = new GlobalKey<FormState>();
   SharedPreferences prefs;
 
@@ -127,9 +127,9 @@ class RequestItemState extends State<RequestItem> {
         children: <Widget>[
           isLoading
               ? Container(
-            decoration:
-            new BoxDecoration(color: Colors.white.withOpacity(0.0)),
-          )
+                  decoration:
+                      new BoxDecoration(color: Colors.white.withOpacity(0.0)),
+                )
               : showBody(),
           showCircularProgress(),
         ],
@@ -326,26 +326,62 @@ class RequestItemState extends State<RequestItem> {
 
     String rentalID;
 
-    DocumentReference documentReference =
+    DocumentReference rentalDR =
         await Firestore.instance.collection("rentals").add({
-      'id': 'temp',
       'status': 1, // set rental status to requested
       'item': Firestore.instance.collection('items').document(widget.itemID),
       'owner':
-          Firestore.instance.collection('users').document(creatorDS['userID']),
+          Firestore.instance.collection('users').document(creatorDS.documentID),
       'renter': Firestore.instance.collection('users').document(myUserID),
       'start': startDateTime,
       'end': endDateTime,
       'chat': null,
     });
 
-    if (documentReference != null) {
-      rentalID = documentReference.documentID;
+    if (rentalDR != null) {
+      rentalID = rentalDR.documentID;
+
+      var myUserDR = Firestore.instance
+          .collection('users')
+          .document(myUserID)
+          .collection('rentals')
+          .document(rentalDR.documentID);
+
+      Firestore.instance.runTransaction((transaction) async {
+        await transaction.set(
+          myUserDR,
+          {
+            'rental': rentalDR,
+            'isRenter': true,
+          },
+        );
+      });
+
+      var creatorDR = Firestore.instance
+          .collection('users')
+          .document(creatorDS.documentID)
+          .collection('rentals')
+          .document(rentalDR.documentID);
+
+      Firestore.instance.runTransaction((transaction) async {
+        await transaction.set(
+          creatorDR,
+          {
+            'rental': rentalDR,
+            'isRenter': false,
+          },
+        );
+      });
 
       Firestore.instance
-          .collection('rentals')
-          .document(rentalID)
-          .updateData({'id': rentalID});
+          .collection('users')
+          .document(myUserID)
+          .updateData({'rentals': FieldValue.arrayUnion([rentalDR])});
+
+      Firestore.instance
+          .collection('users')
+          .document(creatorDS.documentID)
+          .updateData({'rentals': FieldValue.arrayUnion([rentalDR])});
 
       Firestore.instance
           .collection('items')
@@ -365,7 +401,7 @@ class RequestItemState extends State<RequestItem> {
           dr,
           {
             'idFrom': myUserID,
-            'idTo': creatorDS['userID'],
+            'idTo': creatorDS.documentID,
             'timestamp': DateTime.now().millisecondsSinceEpoch.toString(),
             'content': message,
             'type': 0,
@@ -373,10 +409,7 @@ class RequestItemState extends State<RequestItem> {
         );
       });
 
-      Firestore.instance
-          .collection('rentals')
-          .document(rentalID)
-          .updateData({
+      Firestore.instance.collection('rentals').document(rentalID).updateData({
         'chat': Firestore.instance.collection('messages').document(rentalID)
       });
 
@@ -385,7 +418,6 @@ class RequestItemState extends State<RequestItem> {
       });
 
       if (rentalID != null) {
-
         Navigator.pushNamed(
           context,
           RentalDetail.routeName,

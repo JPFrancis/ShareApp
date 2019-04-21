@@ -318,37 +318,61 @@ class RentalDetailState extends State<RentalDetail> {
 
     final ThemeData theme = Theme.of(context);
     final TextStyle dialogTextStyle =
-    theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
 
     return await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Delete rental?'),
-          actions: <Widget>[
-            FlatButton(
-              child: const Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop(
-                    false); // Pops the confirmation dialog but not the page.
-              },
-            ),
-            FlatButton(
-              child: const Text('Delete'),
-              onPressed: () {
-                Navigator.of(context).pop(false);
-                deleteRental();
-                // Pops the confirmation dialog but not the page.
-              },
-            ),
-          ],
-        );
-      },
-    ) ??
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Delete rental?'),
+              actions: <Widget>[
+                FlatButton(
+                  child: const Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(context).pop(
+                        false); // Pops the confirmation dialog but not the page.
+                  },
+                ),
+                FlatButton(
+                  child: const Text('Delete'),
+                  onPressed: () {
+                    Navigator.of(context).pop(false);
+                    deleteRental();
+                    // Pops the confirmation dialog but not the page.
+                  },
+                ),
+              ],
+            );
+          },
+        ) ??
         false;
   }
 
   void deleteRental() async {
+    Firestore.instance
+        .collection('users')
+        .document(myUserID)
+        .collection('rentals')
+        .document(rentalDS.documentID)
+        .delete();
+
+    Firestore.instance
+        .collection('users')
+        .document(ownerDS.documentID)
+        .collection('rentals')
+        .document(rentalDS.documentID)
+        .delete();
+
+    DocumentReference documentReference = rentalDS.reference;
+    
+    Firestore.instance.collection('users').document(myUserID).updateData({
+      'rentals': FieldValue.arrayRemove([documentReference])
+    });
+
+    Firestore.instance.collection('users').document(ownerDS.documentID).updateData({
+      'rentals': FieldValue.arrayRemove([documentReference])
+    });
+
     Firestore.instance.collection('rentals').document(widget.rentalID).delete();
 
     Firestore.instance
@@ -369,7 +393,7 @@ class RentalDetailState extends State<RentalDetail> {
 
     Firestore.instance
         .collection('items')
-        .document(itemDS['id'])
+        .document(itemDS.documentID)
         .updateData({'rental': null});
 
     goToLastScreen();
