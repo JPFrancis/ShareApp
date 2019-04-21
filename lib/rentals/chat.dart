@@ -187,7 +187,7 @@ class ChatScreenState extends State<ChatScreen> {
           documentReference,
           {
             'idFrom': myUserID,
-            'idTo': ownerDS['userID'],
+            'idTo': ownerDS.documentID,
             'timestamp': DateTime.now().millisecondsSinceEpoch.toString(),
             'content': content,
             'type': type

@@ -5,7 +5,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shareapp/models/item.dart';
 import 'package:shareapp/pages/item_edit.dart';
-import 'package:shareapp/pages/request_item.dart';
+import 'package:shareapp/rentals/item_request.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -41,7 +41,7 @@ class ItemDetailState extends State<ItemDetail> {
   String itemCreator;
 
   bool isLoading;
-  bool isMyItem = false;
+  bool canRequest = false;
 
   @override
   void initState() {
@@ -80,9 +80,8 @@ class ItemDetailState extends State<ItemDetail> {
 
       DocumentReference dr = itemDS['creator'];
       String str = dr.documentID;
-
-      if (myUserID == str) {
-        isMyItem = true;
+      if (myUserID == str || itemDS['rental'] != null) {
+        canRequest = false;
       }
 
       ds = await Firestore.instance.collection('users').document(str).get();
@@ -155,7 +154,7 @@ class ItemDetailState extends State<ItemDetail> {
 
   RaisedButton requestButton() {
     return RaisedButton(
-        onPressed: isMyItem ? null : () => handleRequestItemPressed(),
+        onPressed: canRequest ? () => handleRequestItemPressed() : null,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5.0)),
         color: Colors.red,
         child: Text("Check Availability", style: TextStyle( color: Colors.white, fontFamily: 'Quicksand'))
@@ -483,7 +482,7 @@ class ItemDetailState extends State<ItemDetail> {
   }
 
   void navigateToEdit() async {
-    Item editItem = Item.fromMapNoID(itemDS.data);
+    Item editItem = Item.fromMap(itemDS.data);
 
     Item result = await Navigator.push(
         context,
@@ -517,8 +516,8 @@ class ItemDetailState extends State<ItemDetail> {
 
     Navigator.pushNamed(
       context,
-      RequestItem.routeName,
-      arguments: RequestItemArgs(
+      ItemRequest.routeName,
+      arguments: ItemRequestArgs(
         widget.itemID,
       ),
     );

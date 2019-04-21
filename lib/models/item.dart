@@ -51,25 +51,8 @@ class Item {
     this.rental,
   });
 
-  Item.fromMap(Map<String, dynamic> data, String id)
+  Item.fromMap(Map<String, dynamic> data)
       : this(
-    id: id,
-    status: data['status'],
-    creator: data['creator'],
-    name: data['name'],
-    description: data['description'],
-    type: data['type'],
-    condition: data['condition'],
-    price: data['price'],
-    numImages: data['numImages'],
-    images: data['images'],
-    location: data['location'],
-    rental: data['rental'],
-  );
-
-  Item.fromMapNoID(Map<String, dynamic> data)
-      : this(
-    id: data['id'],
     status: data['status'],
     creator: data['creator'],
     name: data['name'],

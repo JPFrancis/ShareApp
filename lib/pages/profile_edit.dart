@@ -13,20 +13,20 @@ enum DismissDialogAction {
   save,
 }
 
-class EditProfile extends StatefulWidget {
+class ProfileEdit extends StatefulWidget {
   static const routeName = '/editProfile';
   final UserEdit userEdit;
 
-  EditProfile({Key key, this.userEdit}) : super(key: key);
+  ProfileEdit({Key key, this.userEdit}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
-    return EditProfileState();
+    return ProfileEditState();
   }
 }
 
 /// We initially assume we are in editing mode
-class EditProfileState extends State<EditProfile> {
+class ProfileEditState extends State<ProfileEdit> {
   final GlobalKey<FormState> formKey = new GlobalKey<FormState>();
 
   bool isUploading = false;

@@ -6,14 +6,14 @@ import 'package:flutter/foundation.dart';
 import 'package:shareapp/models/item.dart';
 import 'package:shareapp/models/rental.dart';
 import 'package:shareapp/pages/item_edit.dart';
-import 'package:shareapp/pages/item_list.dart';
+import 'package:shareapp/pages/home_page.dart';
 import 'package:shareapp/pages/root_page.dart';
-import 'package:shareapp/pages/request_item.dart';
+import 'package:shareapp/rentals/item_request.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:shareapp/pages/chat.dart';
+import 'package:shareapp/rentals/chat.dart';
 import 'package:shareapp/main.dart';
 
 enum Status {
@@ -24,20 +24,20 @@ enum Status {
   completed,
 }
 
-class ItemRental extends StatefulWidget {
+class RentalDetail extends StatefulWidget {
   static const routeName = '/itemRental';
   final String rentalID;
 
   //ItemDetail(this.itemID, this.isMyItem);
-  ItemRental({Key key, this.rentalID}) : super(key: key);
+  RentalDetail({Key key, this.rentalID}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
-    return ItemRentalState();
+    return RentalDetailState();
   }
 }
 
-class ItemRentalState extends State<ItemRental> {
+class RentalDetailState extends State<RentalDetail> {
   GoogleMapController googleMapController;
 
   //List<String> imageURLs = List();
@@ -318,37 +318,61 @@ class ItemRentalState extends State<ItemRental> {
 
     final ThemeData theme = Theme.of(context);
     final TextStyle dialogTextStyle =
-    theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
 
     return await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Delete rental?'),
-          actions: <Widget>[
-            FlatButton(
-              child: const Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop(
-                    false); // Pops the confirmation dialog but not the page.
-              },
-            ),
-            FlatButton(
-              child: const Text('Delete'),
-              onPressed: () {
-                Navigator.of(context).pop(false);
-                deleteRental();
-                // Pops the confirmation dialog but not the page.
-              },
-            ),
-          ],
-        );
-      },
-    ) ??
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Delete rental?'),
+              actions: <Widget>[
+                FlatButton(
+                  child: const Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(context).pop(
+                        false); // Pops the confirmation dialog but not the page.
+                  },
+                ),
+                FlatButton(
+                  child: const Text('Delete'),
+                  onPressed: () {
+                    Navigator.of(context).pop(false);
+                    deleteRental();
+                    // Pops the confirmation dialog but not the page.
+                  },
+                ),
+              ],
+            );
+          },
+        ) ??
         false;
   }
 
   void deleteRental() async {
+    Firestore.instance
+        .collection('users')
+        .document(myUserID)
+        .collection('rentals')
+        .document(rentalDS.documentID)
+        .delete();
+
+    Firestore.instance
+        .collection('users')
+        .document(ownerDS.documentID)
+        .collection('rentals')
+        .document(rentalDS.documentID)
+        .delete();
+
+    DocumentReference documentReference = rentalDS.reference;
+    
+    Firestore.instance.collection('users').document(myUserID).updateData({
+      'rentals': FieldValue.arrayRemove([documentReference])
+    });
+
+    Firestore.instance.collection('users').document(ownerDS.documentID).updateData({
+      'rentals': FieldValue.arrayRemove([documentReference])
+    });
+
     Firestore.instance.collection('rentals').document(widget.rentalID).delete();
 
     Firestore.instance
@@ -369,8 +393,10 @@ class ItemRentalState extends State<ItemRental> {
 
     Firestore.instance
         .collection('items')
-        .document(itemDS['id'])
+        .document(itemDS.documentID)
         .updateData({'rental': null});
+
+    goToLastScreen();
 /*
     Navigator.popUntil(context, (Route<dynamic> route){
       bool shouldPop = false;

@@ -2,40 +2,39 @@ import 'dart:async';
 
 import 'package:shareapp/main.dart';
 import 'package:flutter/material.dart';
-import 'package:shareapp/pages/chat.dart';
+import 'package:shareapp/rentals/chat.dart';
 import 'package:shareapp/models/item.dart';
 import 'package:shareapp/services/auth.dart';
 import 'package:shareapp/pages/item_edit.dart';
 import 'package:shareapp/models/user_edit.dart';
 import 'package:shareapp/pages/item_detail.dart';
-import 'package:shareapp/pages/edit_profile.dart';
+import 'package:shareapp/pages/profile_edit.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:shareapp/pages/item_rental.dart';
+import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
-class ItemList extends StatefulWidget {
-  static const routeName = '/itemList';
+class HomePage extends StatefulWidget {
+  static const routeName = '/homePage';
 
   BaseAuth auth;
   FirebaseUser firebaseUser;
   VoidCallback onSignOut;
 
-  ItemList({this.auth, this.firebaseUser, this.onSignOut});
+  HomePage({this.auth, this.firebaseUser, this.onSignOut});
 
   @override
   State<StatefulWidget> createState() {
-    return ItemListState();
+    return HomePageState();
   }
 }
 
-class ItemListState extends State<ItemList> {
+class HomePageState extends State<HomePage> {
   SharedPreferences prefs;
   List<Item> itemList;
-  DocumentSnapshot currentUser;
 
   String userID;
   int currentTabIndex;
@@ -76,7 +75,6 @@ class ItemListState extends State<ItemList> {
       if (!ds.exists) {
         Firestore.instance.collection('users').document(userID).setData({
           'displayName': widget.firebaseUser.displayName,
-          'userID': widget.firebaseUser.uid,
           'photoURL': widget.firebaseUser.photoUrl,
           'email': widget.firebaseUser.email,
           'lastActiveTimestamp': DateTime.now().millisecondsSinceEpoch,
@@ -112,15 +110,6 @@ class ItemListState extends State<ItemList> {
       });
     });
 
-    void signOut() async {
-      try {
-        await widget.auth.signOut();
-        widget.onSignOut();
-      } catch (e) {
-        print(e);
-      }
-    }
-
     final bottomTabPages = <Widget>[
       homeTabPage(),
       rentalsTabPage(),
@@ -154,16 +143,15 @@ class ItemListState extends State<ItemList> {
     );
 
     return Scaffold(
-			/*t
-      appBar: AppBar(title: Text('ShareApp'), actions: <Widget>[
-				IconButton(
-					icon: Icon(Icons.exit_to_app),
-					tooltip: 'Sign out',
-					onPressed: () {
-						signOut();
-					},
-				),
-			]),*/
+      /*appBar: AppBar(title: Text('ShareApp'), actions: <Widget>[
+        IconButton(
+          icon: Icon(Icons.exit_to_app),
+          tooltip: 'Sign out',
+          onPressed: () {
+            logout();
+          },
+        ),
+      ]),*/
       body: bottomTabPages[currentTabIndex],
       floatingActionButton: showFAB(),
       bottomNavigationBar: bottomNavBar,
@@ -267,127 +255,37 @@ class ItemListState extends State<ItemList> {
   Widget messagesTabPage() {
     return Padding(
       padding: edgeInset,
-      child: Center(
-        child: Text(
-          'Messages',
-          textScaleFactor: 2.5,
-        ),
+      child: Column(
+        children: <Widget>[
+          Container(
+            alignment: Alignment.centerLeft,
+            padding: EdgeInsets.symmetric(vertical: 10),
+            child: Text(
+              'My chats:',
+              style: TextStyle(
+                fontSize: 20,
+              ),
+            ),
+          ),
+          buildMessagesList()
+        ],
       ),
     );
   }
 
   Widget profileTabPage() {
-    return ListView(  
-      padding: EdgeInsets.fromLTRB(10.0, 30.0, 10.0, 20.0),
-      shrinkWrap: true,
-      children: <Widget>[
-        profileIntro(),
-        Divider(),
-        profileTabAfterIntro(),
-      ],
-    );
-  }
-
-  Widget reusableFlatButton(text, icon, action, color) {
-    return Column(
-      children: <Widget>[
-        Container(
-          child: FlatButton(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                Text(text, style: TextStyle(fontFamily: 'Quicksand', fontWeight: FontWeight.w400, color: color != null? color : Colors.black)),
-                Icon(icon)
-              ],
-            ),
-            onPressed: () => action,
+    return Padding(
+      padding: edgeInset,
+      child: Column(
+        children: <Widget>[
+          Padding(
+            padding: EdgeInsets.all(10.0),
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(
-            left: 15.0,
-            right: 15.0,
-          ),
-          child: Divider(),
-        )
-      ],
-    );
-  }
-
-  Widget reusableCategory(text) {
-    return Container(
-			padding: EdgeInsets.only(left: 15.0, top: 10.0),
-			alignment: Alignment.centerLeft,
-			child: Text(text, style: TextStyle(fontSize: 11.0, fontWeight: FontWeight.w100))
-		);
-  }
-
-  Widget profileTabAfterIntro() {
-    return Column(
-      children: <Widget>[
-        reusableCategory("ACCOUNT SETTINGS"),
-        reusableFlatButton("Personal information", Icons.person_outline, null, null),
-        reusableFlatButton("Payments and payouts", Icons.payment, null, null),
-        reusableFlatButton("Notifications", Icons.notifications, null, null),
-        reusableCategory("SUPPORT"),
-        reusableFlatButton("Get help", Icons.help_outline, null, null),
-        reusableFlatButton("Give us feedback", Icons.feedback, null, null),
-        reusableCategory("LEGAL"),
-        reusableFlatButton("Terms of Service", Icons.assignment, null, null),
-        reusableFlatButton("Log out", null, null, Color(0xff007f6e)),
-        getProfileDetails()
-      ],
-    );
-  }
-
-  Widget getProfileDetails() {
-    return FutureBuilder(
-      future: Firestore.instance.collection('users').document(userID).get(),
-      builder: (BuildContext context, AsyncSnapshot snapshot) {
-        if (snapshot.hasData) {
-          DocumentSnapshot ds = snapshot.data;
-          List<String> details = new List();
-          details.add(ds['userID'].toString());
-          details.add(ds['email']);
-          var date1 = new DateTime.fromMillisecondsSinceEpoch(
-              ds['accountCreationTimestamp']);
-          details.add(date1.toString());
-
-          var date2 = new DateTime.fromMillisecondsSinceEpoch(
-              ds['lastActiveTimestamp']);
-          details.add(date2.toString());
-          return Column(
-            children: <Widget>[
-              Container(
-                height: 15,
-              ),
-              Text('User ID: ${details[0]}',
-                  style: TextStyle(
-                      color: Colors.black54,
-                      fontFamily: 'Quicksand',
-                      fontSize: 13.0)),
-              Container(
-                height: 15,
-              ),
-              Text('Account creation: ${details[2]}',
-                  style: TextStyle(
-                      color: Colors.black54,
-                      fontFamily: 'Quicksand',
-                      fontSize: 13.0)),
-              Container(
-                height: 15,
-              ),
-              Text('Last active: ${details[3]}',
-                  style: TextStyle(
-                      color: Colors.black54,
-                      fontFamily: 'Quicksand',
-                      fontSize: 13.0)),
-            ],
-          );
-        } else {
-          return Container();
-        }
-      },
+          profileIntro(),
+          Divider(),
+          profileTabAfterIntro(),
+        ],
+      ),
     );
   }
 
@@ -442,6 +340,113 @@ class ItemListState extends State<ItemList> {
                     )),
               ],
             ),
+          );
+        } else {
+          return Container();
+        }
+      },
+    );
+  }
+
+  Widget profileTabAfterIntro() {
+    // [TEMPORARY SOLUTION]
+    double height = (MediaQuery.of(context).size.height) - 310;
+    return Container(
+      height: height,
+      child: ListView(
+        children: <Widget>[
+          reusableCategory("ACCOUNT SETTINGS"),
+          reusableFlatButton(
+              "Personal information", Icons.person_outline, null),
+          reusableFlatButton("Payments and payouts", Icons.payment, null),
+          reusableFlatButton("Notifications", Icons.notifications, null),
+          reusableCategory("SUPPORT"),
+          reusableFlatButton("Get help", Icons.help_outline, null),
+          reusableFlatButton("Give us feedback", Icons.feedback, null),
+          reusableFlatButton("Log out", null, logout),
+          getProfileDetails()
+        ],
+      ),
+    );
+  }
+
+  Widget reusableCategory(text) {
+    return Container(
+        padding: EdgeInsets.only(left: 15.0, top: 10.0),
+        alignment: Alignment.centerLeft,
+        child: Text(text,
+            style: TextStyle(fontSize: 11.0, fontWeight: FontWeight.w100)));
+  }
+
+  Widget reusableFlatButton(text, icon, action) {
+    return Column(
+      children: <Widget>[
+        Container(
+          child: FlatButton(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                Text(text, style: TextStyle(fontFamily: 'Quicksand')),
+                Icon(icon)
+              ],
+            ),
+            onPressed: () => action(),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(
+            left: 15.0,
+            right: 15.0,
+          ),
+          child: Divider(),
+        )
+      ],
+    );
+  }
+
+  Widget getProfileDetails() {
+    return FutureBuilder(
+      future: Firestore.instance.collection('users').document(userID).get(),
+      builder: (BuildContext context, AsyncSnapshot snapshot) {
+        if (snapshot.hasData) {
+          DocumentSnapshot ds = snapshot.data;
+          List<String> details = new List();
+          details.add(ds.documentID);
+          details.add(ds['email']);
+          var date1 = new DateTime.fromMillisecondsSinceEpoch(
+              ds['accountCreationTimestamp']);
+          details.add(date1.toString());
+
+          var date2 = new DateTime.fromMillisecondsSinceEpoch(
+              ds['lastActiveTimestamp']);
+          details.add(date2.toString());
+          return Column(
+            children: <Widget>[
+              Container(
+                height: 15,
+              ),
+              Text('User ID: ${details[0]}',
+                  style: TextStyle(
+                      color: Colors.black54,
+                      fontFamily: 'Quicksand',
+                      fontSize: 13.0)),
+              Container(
+                height: 15,
+              ),
+              Text('Account creation: ${details[2]}',
+                  style: TextStyle(
+                      color: Colors.black54,
+                      fontFamily: 'Quicksand',
+                      fontSize: 13.0)),
+              Container(
+                height: 15,
+              ),
+              Text('Last active: ${details[3]}',
+                  style: TextStyle(
+                      color: Colors.black54,
+                      fontFamily: 'Quicksand',
+                      fontSize: 13.0)),
+            ],
           );
         } else {
           return Container();
@@ -521,7 +526,7 @@ class ItemListState extends State<ItemList> {
                     subtitle: Text(ds['description']),
                     onTap: () {
                       DocumentReference dr = ds['creator'];
-                      navigateToDetail(ds['id']);
+                      navigateToDetail(ds.documentID);
                     },
                     trailing: IconButton(
                       icon: Icon(Icons.delete),
@@ -564,9 +569,11 @@ class ItemListState extends State<ItemList> {
                   DocumentSnapshot ds = snapshot.data.documents[index];
                   bool showChat = false;
 
-                  DocumentReference doc = ds['renter'];
+                  DocumentReference renterDR = ds['renter'];
+                  DocumentReference ownerDR = ds['owner'];
 
-                  if (userID == doc.documentID) {
+                  if (userID == renterDR.documentID ||
+                      userID == ownerDR.documentID) {
                     showChat = true;
                   }
 
@@ -574,16 +581,16 @@ class ItemListState extends State<ItemList> {
                     leading: Icon(Icons.shopping_cart),
                     //leading: Icon(Icons.build),
                     title: Text(
-                      ds['id'],
+                      ds.documentID,
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    subtitle: Text(ds['start'].toString()),
+                    subtitle: Text('${ds['start'].toString()}'),
                     onTap: () {
                       Navigator.pushNamed(
                         context,
-                        ItemRental.routeName,
+                        RentalDetail.routeName,
                         arguments: ItemRentalArgs(
-                          ds['id'],
+                          ds.documentID,
                         ),
                       );
                     },
@@ -595,7 +602,7 @@ class ItemListState extends State<ItemList> {
                                 context,
                                 Chat.routeName,
                                 arguments: ChatArgs(
-                                  ds['id'],
+                                  ds.documentID,
                                 ),
                               );
                             },
@@ -665,7 +672,7 @@ class ItemListState extends State<ItemList> {
                     subtitle: Text(ds['description']),
                     onTap: () {
                       DocumentReference dr = ds['creator'];
-                      navigateToDetail(ds['id']);
+                      navigateToDetail(ds.documentID);
                     },
                     trailing: IconButton(
                       icon: Icon(Icons.delete),
@@ -682,6 +689,153 @@ class ItemListState extends State<ItemList> {
         },
       ),
     );
+  }
+
+  Widget buildMessagesList() {
+    CollectionReference collectionReference =
+        Firestore.instance.collection('users');
+    return Expanded(
+      child: StreamBuilder<QuerySnapshot>(
+        stream: collectionReference
+            .document(userID)
+            .collection('rentals')
+            .snapshots(),
+        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          if (snapshot.hasError) {
+            return new Text('${snapshot.error}');
+          }
+          switch (snapshot.connectionState) {
+            case ConnectionState.waiting:
+              return new Center(
+                child: new Container(),
+              );
+            default:
+              return new ListView.builder(
+                shrinkWrap: true,
+                //padding: EdgeInsets.all(2.0),
+                itemCount: snapshot.data.documents.length,
+                itemBuilder: (context, index) {
+                  DocumentSnapshot userRentalDS =
+                      snapshot.data.documents[index];
+                  DocumentReference rentalDR = userRentalDS['rental'];
+
+                  return FutureBuilder(
+                    future: rentalDR.get(),
+                    builder: (BuildContext context, AsyncSnapshot snapshot) {
+                      if (snapshot.hasData) {
+                        DocumentSnapshot rentalDS = snapshot.data;
+                        DocumentReference itemDR = rentalDS['item'];
+                        DocumentReference ownerDR = rentalDS['owner'];
+                        DocumentReference renterDR = rentalDS['renter'];
+
+                        return FutureBuilder(
+                          future: ownerDR.get(),
+                          builder:
+                              (BuildContext context, AsyncSnapshot snapshot) {
+                            if (snapshot.hasData) {
+                              DocumentSnapshot ownerDS = snapshot.data;
+
+                              return FutureBuilder(
+                                future: renterDR.get(),
+                                builder: (BuildContext context,
+                                    AsyncSnapshot snapshot) {
+                                  if (snapshot.hasData) {
+                                    DocumentSnapshot renterDS = snapshot.data;
+
+                                    bool isRenter = userRentalDS['isRenter'];
+
+                                    String title = isRenter
+                                        ? ownerDS['displayName']
+                                        : renterDS['displayName'];
+
+                                    return ListTile(
+                                      leading: Icon(Icons.chat_bubble),
+                                      //leading: Icon(Icons.build),
+                                      title: Text(
+                                        title,
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      subtitle: Text('chat'),
+                                      onTap: () {
+                                        Navigator.pushNamed(
+                                          context,
+                                          Chat.routeName,
+                                          arguments: ChatArgs(
+                                            rentalDS.documentID,
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  } else {
+                                    return Container();
+                                  }
+                                },
+                              );
+                            } else {
+                              return Container();
+                            }
+                          },
+                        );
+                      } else {
+                        return Container();
+                      }
+                    },
+                  );
+                },
+              );
+          }
+        },
+      ),
+    );
+
+    /*
+    return FutureBuilder(
+      future: Firestore.instance.collection('users').document(userID).get(),
+      builder: (BuildContext context, AsyncSnapshot snapshot) {
+        if (snapshot.hasData) {
+          DocumentSnapshot userDS = snapshot.data;
+          List<DocumentReference> rentals = List.from(userDS['rentals']);
+
+          return new ListView.builder(
+            shrinkWrap: true,
+            //padding: EdgeInsets.all(2.0),
+            itemCount: rentals.length,
+            itemBuilder: (context, index) {
+              debugPrint('*********${rentals[index].documentID}');
+              rentals[index].get().then((DocumentSnapshot rentalDS) {
+
+                return ListTile(
+                  leading: Icon(Icons.chat_bubble),
+                  //leading: Icon(Icons.build),
+                  title: Text(
+                    rentalDS.documentID,
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(rentalDS['start'].toString()),
+                  onTap: () {
+                    Navigator.pushNamed(
+                      context,
+                      Chat.routeName,
+                      arguments: ChatArgs(
+                        rentalDS.documentID,
+                      ),
+                    );
+                  },
+                );
+              });
+            },
+          );
+        } else {
+          return Container(
+            child: Center(
+              child: Text('error'),
+            ),
+          );
+        }
+      },
+    );
+    */
   }
 
   void navigateToEdit(Item newItem) async {
@@ -741,7 +895,7 @@ class ItemListState extends State<ItemList> {
     UserEdit result = await Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (BuildContext context) => EditProfile(
+          builder: (BuildContext context) => ProfileEdit(
                 userEdit: userEdit,
               ),
           fullscreenDialog: true,
@@ -792,8 +946,13 @@ class ItemListState extends State<ItemList> {
   }
 
   void deleteItem(DocumentSnapshot ds) {
-    deleteImages(ds['id'], ds['numImages']);
-    Firestore.instance.collection('items').document(ds['id']).delete();
+    DocumentReference documentReference = ds.reference;
+    Firestore.instance.collection('users').document(userID).updateData({
+      'items': FieldValue.arrayRemove([documentReference])
+    });
+
+    deleteImages(ds.documentID, ds['numImages']);
+    Firestore.instance.collection('items').document(ds.documentID).delete();
   }
 
   void deleteImages(String id, int numImages) async {
@@ -813,6 +972,15 @@ class ItemListState extends State<ItemList> {
         await Firestore.instance.collection('users').document(userID).get();
 
     return ds;
+  }
+
+  void logout() async {
+    try {
+      await widget.auth.signOut();
+      widget.onSignOut();
+    } catch (e) {
+      print(e);
+    }
   }
 }
 

@@ -1,20 +1,20 @@
-import 'package:shareapp/models/item.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class User {
   String id;
   String photoUrl;
   String displayName;
   String email;
-  List<Item> myListings;
-  List<Item> myRentals;
+  List<DocumentReference> items;
+  List<DocumentReference> rentals;
 
   User({
     this.id,
     this.photoUrl,
     this.displayName,
     this.email,
-    this.myListings,
-    this.myRentals,
+    this.items,
+    this.rentals,
   });
 
   User.fromMap(Map<String, dynamic> data, String id)
@@ -23,8 +23,8 @@ class User {
           photoUrl: data['imageURL'],
           displayName: data['displayName'],
           email: data['email'],
-          myListings: data['myListings'],
-          myRentals: data['myRentals'],
+          items: data['myListings'],
+          rentals: data['myRentals'],
         );
 
   User.copy(User other)
@@ -33,8 +33,8 @@ class User {
           photoUrl: other.photoUrl,
           displayName: other.displayName,
           email: other.email,
-          myListings: other.myListings.toList(),
-          myRentals: other.myRentals.toList(),
+          items: other.items.toList(),
+          rentals: other.rentals.toList(),
         );
 
   User fromUser(User other) {
@@ -43,8 +43,8 @@ class User {
       photoUrl: other.photoUrl,
       displayName: other.displayName,
       email: other.email,
-      myListings: other.myListings.toList(),
-      myRentals: other.myRentals.toList(),
+      items: other.items.toList(),
+      rentals: other.rentals.toList(),
     );
   }
 }
