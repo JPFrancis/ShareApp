@@ -108,15 +108,6 @@ class HomePageState extends State<HomePage> {
       });
     });
 
-    void signOut() async {
-      try {
-        await widget.auth.signOut();
-        widget.onSignOut();
-      } catch (e) {
-        print(e);
-      }
-    }
-
     final bottomTabPages = <Widget>[
       homeTabPage(),
       rentalsTabPage(),
@@ -150,15 +141,15 @@ class HomePageState extends State<HomePage> {
     );
 
     return Scaffold(
-      appBar: AppBar(title: Text('ShareApp'), actions: <Widget>[
+      /*appBar: AppBar(title: Text('ShareApp'), actions: <Widget>[
         IconButton(
           icon: Icon(Icons.exit_to_app),
           tooltip: 'Sign out',
           onPressed: () {
-            signOut();
+            logout();
           },
         ),
-      ]),
+      ]),*/
       body: bottomTabPages[currentTabIndex],
       floatingActionButton: showFAB(),
       bottomNavigationBar: bottomNavBar,
@@ -188,20 +179,6 @@ class HomePageState extends State<HomePage> {
         },
         tooltip: 'Add new item',
         child: Icon(Icons.add),
-      );
-    }
-
-    if (currentTabIndex == 4) {
-      return FloatingActionButton(
-        onPressed: () {
-          navToProfileEdit();
-        },
-
-        // Help text when you hold down FAB
-        tooltip: 'Edit profile',
-
-        // Set FAB icon
-        child: Icon(Icons.edit),
       );
     }
 
@@ -300,10 +277,129 @@ class HomePageState extends State<HomePage> {
       padding: edgeInset,
       child: Column(
         children: <Widget>[
-          showProfile(),
-          getProfileDetails(),
+          Padding(
+            padding: EdgeInsets.all(10.0),
+          ),
+          profileIntro(),
+          Divider(),
+          profileTabAfterIntro(),
         ],
       ),
+    );
+  }
+
+  Widget profileIntro() {
+    return FutureBuilder(
+      future: Firestore.instance.collection('users').document(userID).get(),
+      builder: (BuildContext context, AsyncSnapshot snapshot) {
+        if (snapshot.hasData) {
+          DocumentSnapshot ds = snapshot.data;
+          return new Container(
+            child: Column(
+              children: <Widget>[
+                // User Icon
+                Container(
+                  padding: EdgeInsets.only(left: 15.0),
+                  alignment: Alignment.topLeft,
+                  height: 60.0,
+                  child: ClipOval(
+                    child: CachedNetworkImage(
+                      key: new ValueKey<String>(
+                          DateTime.now().millisecondsSinceEpoch.toString()),
+                      imageUrl: ds['photoURL'],
+                      placeholder: (context, url) => new Container(),
+                    ),
+                  ),
+                ),
+                // username
+                Container(
+                    padding: const EdgeInsets.only(top: 8.0, left: 15.0),
+                    alignment: Alignment.centerLeft,
+                    child: Text('${ds['displayName']}',
+                        style: TextStyle(
+                            fontSize: 20.0,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Quicksand'))),
+                // email
+                Container(
+                    padding: const EdgeInsets.only(top: 4.0, left: 15.0),
+                    alignment: Alignment.centerLeft,
+                    child: Text('${ds['email']}',
+                        style: TextStyle(
+                            fontSize: 15.0, fontFamily: 'Quicksand'))),
+                //
+                Container(
+                    alignment: Alignment.centerLeft,
+                    child: FlatButton(
+                      child: Text("Edit Profile",
+                          style: TextStyle(
+                              color: Color(0xff007f6e),
+                              fontFamily: 'Quicksand')),
+                      onPressed: () => navToProfileEdit(),
+                    )),
+              ],
+            ),
+          );
+        } else {
+          return Container();
+        }
+      },
+    );
+  }
+
+  Widget profileTabAfterIntro() {
+    // [TEMPORARY SOLUTION]
+    double height = (MediaQuery.of(context).size.height) - 310;
+    return Container(
+      height: height,
+      child: ListView(
+        children: <Widget>[
+          reusableCategory("ACCOUNT SETTINGS"),
+          reusableFlatButton(
+              "Personal information", Icons.person_outline, null),
+          reusableFlatButton("Payments and payouts", Icons.payment, null),
+          reusableFlatButton("Notifications", Icons.notifications, null),
+          reusableCategory("SUPPORT"),
+          reusableFlatButton("Get help", Icons.help_outline, null),
+          reusableFlatButton("Give us feedback", Icons.feedback, null),
+          reusableFlatButton("Log out", null, logout),
+          getProfileDetails()
+        ],
+      ),
+    );
+  }
+
+  Widget reusableCategory(text) {
+    return Container(
+        padding: EdgeInsets.only(left: 15.0, top: 10.0),
+        alignment: Alignment.centerLeft,
+        child: Text(text,
+            style: TextStyle(fontSize: 11.0, fontWeight: FontWeight.w100)));
+  }
+
+  Widget reusableFlatButton(text, icon, action) {
+    return Column(
+      children: <Widget>[
+        Container(
+          child: FlatButton(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                Text(text, style: TextStyle(fontFamily: 'Quicksand')),
+                Icon(icon)
+              ],
+            ),
+            onPressed: () => action(),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(
+            left: 15.0,
+            right: 15.0,
+          ),
+          child: Divider(),
+        )
+      ],
     );
   }
 
@@ -314,7 +410,7 @@ class HomePageState extends State<HomePage> {
         if (snapshot.hasData) {
           DocumentSnapshot ds = snapshot.data;
           List<String> details = new List();
-          details.add(ds.documentID.toString());
+          details.add(ds.documentID);
           details.add(ds['email']);
           var date1 = new DateTime.fromMillisecondsSinceEpoch(
               ds['accountCreationTimestamp']);
@@ -328,68 +424,28 @@ class HomePageState extends State<HomePage> {
               Container(
                 height: 15,
               ),
-              Text(
-                'User ID: ${details[0]}',
-                textScaleFactor: 1,
-              ),
+              Text('User ID: ${details[0]}',
+                  style: TextStyle(
+                      color: Colors.black54,
+                      fontFamily: 'Quicksand',
+                      fontSize: 13.0)),
               Container(
                 height: 15,
               ),
-              Text(
-                'Email: ${details[1]}',
-                textScaleFactor: 1,
-              ),
+              Text('Account creation: ${details[2]}',
+                  style: TextStyle(
+                      color: Colors.black54,
+                      fontFamily: 'Quicksand',
+                      fontSize: 13.0)),
               Container(
                 height: 15,
               ),
-              Text(
-                'Account creation: ${details[2]}',
-                textScaleFactor: 1,
-              ),
-              Container(
-                height: 15,
-              ),
-              Text(
-                'Last active: ${details[3]}',
-                textScaleFactor: 1,
-              ),
+              Text('Last active: ${details[3]}',
+                  style: TextStyle(
+                      color: Colors.black54,
+                      fontFamily: 'Quicksand',
+                      fontSize: 13.0)),
             ],
-          );
-        } else {
-          return Container();
-        }
-      },
-    );
-  }
-
-  Widget showProfile() {
-    return FutureBuilder(
-      future: Firestore.instance.collection('users').document(userID).get(),
-      builder: (BuildContext context, AsyncSnapshot snapshot) {
-        if (snapshot.hasData) {
-          DocumentSnapshot ds = snapshot.data;
-          return new Container(
-            child: Column(
-              children: <Widget>[
-                SizedBox(
-                  height: 120,
-                  width: 120,
-                  child: CachedNetworkImage(
-                    key: new ValueKey<String>(
-                        DateTime.now().millisecondsSinceEpoch.toString()),
-                    imageUrl: ds['photoURL'],
-                    placeholder: (context, url) => new Container(),
-                  ),
-                ),
-                Container(
-                  height: 10,
-                ),
-                Text(
-                  '${ds['displayName']}',
-                  textScaleFactor: 1.5,
-                ),
-              ],
-            ),
           );
         } else {
           return Container();
@@ -907,6 +963,15 @@ class HomePageState extends State<HomePage> {
         await Firestore.instance.collection('users').document(userID).get();
 
     return ds;
+  }
+
+  void logout() async {
+    try {
+      await widget.auth.signOut();
+      widget.onSignOut();
+    } catch (e) {
+      print(e);
+    }
   }
 }
 
