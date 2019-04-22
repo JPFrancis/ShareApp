@@ -87,203 +87,186 @@ class ItemEditState extends State<ItemEdit> {
     }
 
     const itemType = <String>[
-      'tool',
-      'leisure',
-      'home',
-      'other',
+      'Tool',
+      'Leisure',
+      'Home',
+      'Other',
     ];
     dropDownItemType = itemType
         .map(
           (String value) => DropdownMenuItem<String>(
-                value: value,
-                child: Text(value),
-              ),
-        )
+        value: value,
+        child: Text(value),
+      ),
+    )
         .toList();
 
     const itemCondition = <String>[
-      'lightly used',
-      'good',
-      'fair',
-      'has character',
+      'Lightly Used',
+      'Good',
+      'Fair',
+      'Has Character',
     ];
     dropDownItemCondition = itemCondition
         .map(
           (String value) => DropdownMenuItem<String>(
-                value: value,
-                child: Text(value),
-              ),
-        )
+        value: value,
+        child: Text(value),
+      ),
+    )
         .toList();
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(appBarText + ' Item'),
-        actions: <Widget>[
-          FlatButton(
-            child: Text('SAVE',
-                textScaleFactor: 1.05,
-                style: theme.textTheme.body2.copyWith(color: Colors.white)),
-            onPressed: () {
-              saveWarning();
-              //Navigator.pop(context, DismissDialogAction.save);
-            },
-          ),
-        ],
-      ),
+      resizeToAvoidBottomPadding: true,
       body: Stack(
         children: <Widget>[
           isUploading
               ? Container(
-                  decoration:
-                      new BoxDecoration(color: Colors.white.withOpacity(0.0)),
-                )
+            decoration:
+            new BoxDecoration(color: Colors.white.withOpacity(0.0)),
+          )
               : showBody(),
           showCircularProgress(),
         ],
+      ),
+      floatingActionButton: RaisedButton(
+        color: Color(0xff007f6e),
+        child: Text('Next ＞',
+            style: TextStyle(color: Colors.white, fontFamily: 'Quicksand')),
+        onPressed: () {
+          saveWarning();
+          //Navigator.pop(context, DismissDialogAction.save);
+        },
       ),
     );
   }
 
   Widget showBody() {
+    double height = MediaQuery.of(context).size.height;
     return Form(
       key: formKey,
       onWillPop: onWillPop,
       child: ListView(
-        padding:
-            EdgeInsets.only(top: 10.0, bottom: 10.0, left: 18.0, right: 18.0),
-        children: <Widget>[
-          //showItemCreator(),
-          Column(
-            children: <Widget>[
-              showTypeSelector(),
-              showConditionSelector(),
-            ],
-          ),
-          showNameEditor(),
-          showDescriptionEditor(),
-          showPriceEditor(),
-          showImageCount(),
-          showImageButtons(),
-          showSelectedLocation(),
-          showLocationButtons(),
-        ].map<Widget>((Widget child) {
-          return Container(
-            padding: const EdgeInsets.symmetric(vertical: 11),
-            child: child,
-          );
-        }).toList(),
+          shrinkWrap: true,
+          padding:
+          EdgeInsets.only(top: 10.0, bottom: 10.0, left: 18.0, right: 18.0),
+          children: <Widget>[
+            backButton(),
+            Padding(
+              padding: const EdgeInsets.only(top: 60, bottom: 60.0),
+              child: Center(child: Text("[ add image thumbnails here ]")),
+            ),
+            showImageButtons(),
+            Divider(),
+            reusableCategory("DETAILS"),
+            reusableTextEntry("What are you selling? (required)", true,
+                nameController, 'name'),
+            reusableTextEntry("Describe it... (required)", true,
+                descriptionController, 'description'),
+            Divider(),
+            reusableCategory("SPECIFICS"),
+            showTypeSelector(),
+            showConditionSelector(),
+            Divider(),
+            reusableCategory("PRICE"),
+            reusableTextEntry(
+                "Price", true, priceController, 'price', TextInputType.number),
+            showImageCount(),
+            showSelectedLocation(),
+            reusableTextEntry(
+                "Price", true, priceController, 'price', TextInputType.number),
+            showLocationButtons(),
+          ]),
+    );
+  }
+
+  Widget backButton() {
+    return Container(
+      alignment: Alignment.topLeft,
+      child: FloatingActionButton(
+        child: BackButton(),
+        onPressed: () => Navigator.pop(context),
+        backgroundColor: Colors.transparent,
+        elevation: 0.0,
+        foregroundColor: Colors.black,
       ),
     );
+  }
+
+  Widget reusableTextEntry(placeholder, required, controller, saveTo,
+      [keyboard = TextInputType.text]) {
+    return Container(
+      child: TextField(
+        keyboardType: keyboard,
+        controller: controller,
+        onChanged: (value) {
+          switch (saveTo) {
+            case 'name':
+              itemCopy.name = controller.text;
+              break;
+            case 'description':
+              itemCopy.description = controller.text;
+              break;
+            case 'price':
+              itemCopy.price = int.parse(controller.text);
+              break;
+            default:
+          }
+        },
+        decoration: InputDecoration(
+          labelStyle: TextStyle(
+            color: required ? Colors.black54 : Colors.black26,
+          ),
+          labelText: placeholder,
+          //border: OutlineInputBorder(borderRadius: BorderRadius.circular(5.0)),
+        ),
+      ),
+    );
+  }
+
+  Widget reusableCategory(text) {
+    return Container(
+        alignment: Alignment.centerLeft,
+        child: Text(text,
+            style: TextStyle(fontSize: 11.0, fontWeight: FontWeight.w100)));
   }
 
   Widget showItemCreator() {
     return Container(
         child: Text(
-      "Item created by: ${itemCopy.creator}",
-      style: TextStyle(fontSize: 16),
-    ));
+          "Item created by: ${itemCopy.creator}",
+          style: TextStyle(fontSize: 16),
+        ));
   }
 
   Widget showTypeSelector() {
     return Container(
       padding: EdgeInsets.only(left: 15.0, right: 15.0),
-      child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            Text(
-              'Select Item Type:',
-              textScaleFactor: 1.15,
-            ),
-            DropdownButton<String>(
-              value: itemCopy.type,
-              hint: Text('Choose'),
-              onChanged: (String newValue) {
-                setState(() {
-                  itemCopy.type = newValue;
-                });
-              },
-              items: dropDownItemType,
-            ),
-          ]),
+      child: DropdownButton<String>(
+        value: itemCopy.type,
+        hint: Text('Category'),
+        onChanged: (String newValue) {
+          setState(() {
+            itemCopy.type = newValue;
+          });
+        },
+        items: dropDownItemType,
+      ),
     );
   }
 
   Widget showConditionSelector() {
     return Container(
       padding: EdgeInsets.only(left: 15.0, right: 15.0),
-      child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            Text(
-              'Select Item Condition:',
-              textScaleFactor: 1.15,
-            ),
-            DropdownButton<String>(
-              value: itemCopy.condition,
-              hint: Text('Choose'),
-              onChanged: (String newValue) {
-                setState(() {
-                  itemCopy.condition = newValue;
-                });
-              },
-              items: dropDownItemCondition,
-            ),
-          ]),
-    );
-  }
-
-  Widget showNameEditor() {
-    return Container(
-      //padding: EdgeInsets.only(left: 5.0, right: 5.0),
-      child: TextField(
-        controller: nameController,
-        style: textStyle,
-        onChanged: (value) {
-          itemCopy.name = nameController.text;
+      child: DropdownButton<String>(
+        value: itemCopy.condition,
+        hint: Text('Condition'),
+        onChanged: (String newValue) {
+          setState(() {
+            itemCopy.condition = newValue;
+          });
         },
-        decoration: InputDecoration(
-          labelText: 'Name',
-          filled: true,
-          //border: OutlineInputBorder(borderRadius: BorderRadius.circular(5.0)),
-        ),
-      ),
-    );
-  }
-
-  Widget showDescriptionEditor() {
-    return Container(
-      child: TextField(
-        keyboardType: TextInputType.multiline,
-        maxLines: null,
-        controller: descriptionController,
-        style: textStyle,
-        onChanged: (value) {
-          itemCopy.description = descriptionController.text;
-        },
-        decoration: InputDecoration(
-          labelText: 'Description',
-          filled: true,
-          //border: OutlineInputBorder(borderRadius: BorderRadius.circular(5.0)),
-        ),
-      ),
-    );
-  }
-
-  Widget showPriceEditor() {
-    return Container(
-      child: TextField(
-        keyboardType: TextInputType.number,
-        controller: priceController,
-        style: textStyle,
-        onChanged: (value) {
-          itemCopy.price = int.parse(priceController.text);
-        },
-        decoration: InputDecoration(
-          labelText: 'Price',
-          hintText: 'Hourly rate',
-          filled: true,
-        ),
+        items: dropDownItemCondition,
       ),
     );
   }
@@ -291,9 +274,9 @@ class ItemEditState extends State<ItemEdit> {
   Widget showImageCount() {
     return Container(
         child: Text(
-      "Num images selected: ${itemCopy.numImages}",
-      style: TextStyle(fontSize: 16),
-    ));
+          "Num images selected: ${itemCopy.numImages}",
+          style: TextStyle(fontSize: 16),
+        ));
   }
 
   Widget showImageButtons() {
@@ -302,27 +285,21 @@ class ItemEditState extends State<ItemEdit> {
         children: <Widget>[
           Expanded(
             child: RaisedButton(
-              shape: new RoundedRectangleBorder(
-                  borderRadius: new BorderRadius.circular(5.0)),
-              color: Colors.red,
-              textColor: Colors.white,
+              color: Colors.white,
+              textColor: Colors.black,
               child: Text(
-                "Add Images",
-                //addButton + " Images",
-                textScaleFactor: 1.25,
+                "Add More Photos",
               ),
               onPressed: imageButton
                   ? () {
-                      setState(() {
-                        loadAssets();
-                      });
-                    }
+                setState(() {
+                  loadAssets();
+                });
+              }
                   : null,
             ),
           ),
-          Container(
-            width: 15.0,
-          ),
+          /*
           Expanded(
             child: RaisedButton(
               shape: new RoundedRectangleBorder(
@@ -339,7 +316,7 @@ class ItemEditState extends State<ItemEdit> {
                       deleteImagesWarning();
                     },
             ),
-          ),
+          ),*/
         ],
       ),
     );
@@ -349,13 +326,13 @@ class ItemEditState extends State<ItemEdit> {
     return Container(
       child: itemCopy.location != null
           ? Text(
-              "Selected location: ${itemCopy.location.latitude}, ${itemCopy.location.longitude}",
-              style: TextStyle(fontSize: 16),
-            )
+        "Selected location: ${itemCopy.location.latitude}, ${itemCopy.location.longitude}",
+        style: TextStyle(fontSize: 16),
+      )
           : Text(
-              "No location yet",
-              style: TextStyle(fontSize: 16),
-            ),
+        "No location yet",
+        style: TextStyle(fontSize: 16),
+      ),
     );
   }
 
@@ -371,13 +348,13 @@ class ItemEditState extends State<ItemEdit> {
               textColor: Colors.white,
               child: itemCopy.location == null
                   ? Text(
-                      "Add Location",
-                      textScaleFactor: 1.25,
-                    )
+                "Add Location",
+                textScaleFactor: 1.25,
+              )
                   : Text(
-                      "Edit Location",
-                      textScaleFactor: 1.25,
-                    ),
+                "Edit Location",
+                textScaleFactor: 1.25,
+              ),
               onPressed: () {
                 setState(() {
                   navToLocation();
@@ -401,8 +378,8 @@ class ItemEditState extends State<ItemEdit> {
               onPressed: itemCopy.location == null
                   ? null
                   : () {
-                      resetLocation();
-                    },
+                resetLocation();
+              },
             ),
           ),
         ],
@@ -470,7 +447,7 @@ class ItemEditState extends State<ItemEdit> {
     // new item
     if (itemCopy.id == null) {
       final DocumentReference documentReference =
-          await Firestore.instance.collection("items").add({
+      await Firestore.instance.collection("items").add({
         'status': itemCopy.status,
         'creator': itemCopy.creator,
         'name': itemCopy.name,
@@ -629,7 +606,7 @@ class ItemEditState extends State<ItemEdit> {
     ByteData byteData = await asset.requestOriginal();
     List<int> imageData = byteData.buffer.asUint8List();
     StorageReference ref =
-        FirebaseStorage.instance.ref().child('$fileName/$index');
+    FirebaseStorage.instance.ref().child('$fileName/$index');
     StorageUploadTask uploadTask = ref.putData(imageData);
 
     return await (await uploadTask.onComplete).ref.getDownloadURL();
@@ -642,8 +619,8 @@ class ItemEditState extends State<ItemEdit> {
   void navToLocation() async {
     GeoPoint returnLoc = await Navigator.push(context,
         MaterialPageRoute<GeoPoint>(builder: (BuildContext context) {
-      return SelectLocation(itemCopy.location);
-    }));
+          return SelectLocation(itemCopy.location);
+        }));
 
     if (returnLoc != null) {
       setState(() {
@@ -663,35 +640,35 @@ class ItemEditState extends State<ItemEdit> {
 
     final ThemeData theme = Theme.of(context);
     final TextStyle dialogTextStyle =
-        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+    theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
 
     return await showDialog<bool>(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              content: Text(
-                'Discard changes?',
-                style: dialogTextStyle,
-              ),
-              actions: <Widget>[
-                FlatButton(
-                  child: const Text('Cancel'),
-                  onPressed: () {
-                    Navigator.of(context).pop(
-                        false); // Pops the confirmation dialog but not the page.
-                  },
-                ),
-                FlatButton(
-                  child: const Text('Discard'),
-                  onPressed: () {
-                    Navigator.of(context).pop(
-                        true); // Returning true to _onWillPop will pop again.
-                  },
-                ),
-              ],
-            );
-          },
-        ) ??
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: Text(
+            'Discard changes?',
+            style: dialogTextStyle,
+          ),
+          actions: <Widget>[
+            FlatButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop(
+                    false); // Pops the confirmation dialog but not the page.
+              },
+            ),
+            FlatButton(
+              child: const Text('Discard'),
+              onPressed: () {
+                Navigator.of(context).pop(
+                    true); // Returning true to _onWillPop will pop again.
+              },
+            ),
+          ],
+        );
+      },
+    ) ??
         false;
   }
 
@@ -704,40 +681,40 @@ class ItemEditState extends State<ItemEdit> {
 
     final ThemeData theme = Theme.of(context);
     final TextStyle dialogTextStyle =
-        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+    theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
 
     return await showDialog<bool>(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text('Warning!'),
-              content: Text(
-                'You are currently editing an item. '
-                    'Deleting its images will delete '
-                    'the images in the database, even '
-                    'if you don\'t press save',
-                style: dialogTextStyle,
-              ),
-              actions: <Widget>[
-                FlatButton(
-                  child: const Text('Cancel'),
-                  onPressed: () {
-                    Navigator.of(context).pop(
-                        false); // Pops the confirmation dialog but not the page.
-                  },
-                ),
-                FlatButton(
-                  child: const Text('Continue'),
-                  onPressed: () {
-                    deleteAssets();
-                    Navigator.of(context).pop(
-                        false); // Pops the confirmation dialog but not the page.
-                  },
-                ),
-              ],
-            );
-          },
-        ) ??
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Warning!'),
+          content: Text(
+            'You are currently editing an item. '
+                'Deleting its images will delete '
+                'the images in the database, even '
+                'if you don\'t press save',
+            style: dialogTextStyle,
+          ),
+          actions: <Widget>[
+            FlatButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop(
+                    false); // Pops the confirmation dialog but not the page.
+              },
+            ),
+            FlatButton(
+              child: const Text('Continue'),
+              onPressed: () {
+                deleteAssets();
+                Navigator.of(context).pop(
+                    false); // Pops the confirmation dialog but not the page.
+              },
+            ),
+          ],
+        );
+      },
+    ) ??
         false;
   }
 
@@ -749,29 +726,29 @@ class ItemEditState extends State<ItemEdit> {
 
     final ThemeData theme = Theme.of(context);
     final TextStyle dialogTextStyle =
-        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+    theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
 
     return await showDialog<bool>(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text('Error!'),
-              content: Text(
-                'Please add images and location',
-                style: dialogTextStyle,
-              ),
-              actions: <Widget>[
-                FlatButton(
-                  child: const Text('Ok'),
-                  onPressed: () {
-                    Navigator.of(context).pop(
-                        false); // Pops the confirmation dialog but not the page.
-                  },
-                ),
-              ],
-            );
-          },
-        ) ??
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Error!'),
+          content: Text(
+            'Please add images and location',
+            style: dialogTextStyle,
+          ),
+          actions: <Widget>[
+            FlatButton(
+              child: const Text('Ok'),
+              onPressed: () {
+                Navigator.of(context).pop(
+                    false); // Pops the confirmation dialog but not the page.
+              },
+            ),
+          ],
+        );
+      },
+    ) ??
         false;
   }
 }

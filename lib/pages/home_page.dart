@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:shareapp/main.dart';
 import 'package:flutter/material.dart';
 import 'package:shareapp/rentals/chat.dart';
@@ -48,7 +49,7 @@ class HomePageState extends State<HomePage> {
 
     currentTabIndex = 0;
 
-    padding = 15;
+    padding = 12;
     edgeInset = EdgeInsets.all(padding);
 
     userID = widget.firebaseUser.uid;
@@ -158,7 +159,7 @@ class HomePageState extends State<HomePage> {
   }
 
   FloatingActionButton showFAB() {
-    if (currentTabIndex == 0) {
+    if (currentTabIndex == 2) {
       return FloatingActionButton(
         onPressed: () {
           navigateToEdit(
@@ -1211,16 +1212,6 @@ class HomePageState extends State<HomePage> {
         newItem,
       ),
     );
-/*
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (BuildContext context) => ItemEdit(
-                item: newItem,
-              ),
-          fullscreenDialog: true,
-        ));
-        */
   }
 
   void navigateToDetail(String itemID) async {
@@ -1231,15 +1222,6 @@ class HomePageState extends State<HomePage> {
         itemID,
       ),
     );
-    /*
-    await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (BuildContext context) => ItemDetail(
-                itemID: itemID,
-              ),
-        ));
-        */
   }
 
   Future<UserEdit> getUserEdit() async {
