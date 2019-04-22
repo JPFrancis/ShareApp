@@ -335,7 +335,7 @@ class ItemRequestState extends State<ItemRequest> {
       'renter': Firestore.instance.collection('users').document(myUserID),
       'start': startDateTime,
       'end': endDateTime,
-      'chat': null,
+      'created': DateTime.now().millisecondsSinceEpoch,
     });
 
     if (rentalDR != null) {
@@ -373,6 +373,7 @@ class ItemRequestState extends State<ItemRequest> {
         );
       });
 
+      /*
       Firestore.instance
           .collection('users')
           .document(myUserID)
@@ -382,6 +383,7 @@ class ItemRequestState extends State<ItemRequest> {
           .collection('users')
           .document(creatorDS.documentID)
           .updateData({'rentals': FieldValue.arrayUnion([rentalDR])});
+          */
 
       Firestore.instance
           .collection('items')
@@ -391,9 +393,9 @@ class ItemRequestState extends State<ItemRequest> {
       });
 
       var dr = Firestore.instance
-          .collection('messages')
+          .collection('rentals')
           .document(rentalID)
-          .collection(rentalID)
+          .collection('chat')
           .document(DateTime.now().millisecondsSinceEpoch.toString());
 
       Firestore.instance.runTransaction((transaction) async {
@@ -409,9 +411,11 @@ class ItemRequestState extends State<ItemRequest> {
         );
       });
 
+      /*
       Firestore.instance.collection('rentals').document(rentalID).updateData({
         'chat': Firestore.instance.collection('messages').document(rentalID)
       });
+      */
 
       setState(() {
         isUploading = false;

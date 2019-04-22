@@ -177,9 +177,9 @@ class ChatScreenState extends State<ChatScreen> {
       textEditingController.clear();
 
       var documentReference = Firestore.instance
-          .collection('messages')
+          .collection('rentals')
           .document(widget.rentalID)
-          .collection(widget.rentalID)
+          .collection('chat')
           .document(DateTime.now().millisecondsSinceEpoch.toString());
 
       Firestore.instance.runTransaction((transaction) async {
@@ -686,9 +686,9 @@ class ChatScreenState extends State<ChatScreen> {
                   valueColor: AlwaysStoppedAnimation<Color>(themeColor)))
           : StreamBuilder(
               stream: Firestore.instance
-                  .collection('messages')
+                  .collection('rentals')
                   .document(widget.rentalID)
-                  .collection(widget.rentalID)
+                  .collection('chat')
                   .orderBy('timestamp', descending: true)
                   .limit(20)
                   .snapshots(),
