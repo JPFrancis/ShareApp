@@ -151,16 +151,7 @@ class ItemEditState extends State<ItemEdit> {
           padding:
               EdgeInsets.only(top: 10.0, bottom: 10.0, left: 18.0, right: 18.0),
           children: <Widget>[
-            Container(
-              alignment: Alignment.topLeft,
-              child: FloatingActionButton(
-                child: BackButton(),
-                onPressed: () => Navigator.pop(context),
-                backgroundColor: Colors.transparent,
-                elevation: 0.0,
-                foregroundColor: Colors.black,
-              ),
-            ),
+            backButton(),
             Padding(
               padding: const EdgeInsets.only(top: 60, bottom: 60.0),
               child: Center(child: Text("[ add image thumbnails here ]")),
@@ -168,20 +159,37 @@ class ItemEditState extends State<ItemEdit> {
             showImageButtons(),
             Divider(),
             reusableCategory("DETAILS"),
-            reusableTextEntry("What are you selling? (required)", true, nameController, 'name'),
-            reusableTextEntry("Describe it... (required)", true, descriptionController, 'description'),
+            reusableTextEntry("What are you selling? (required)", true,
+                nameController, 'name'),
+            reusableTextEntry("Describe it... (required)", true,
+                descriptionController, 'description'),
             Divider(),
             reusableCategory("SPECIFICS"),
             showTypeSelector(),
             showConditionSelector(),
             Divider(),
             reusableCategory("PRICE"),
-            reusableTextEntry( "Price", true, priceController, 'price', TextInputType.number),
+            reusableTextEntry(
+                "Price", true, priceController, 'price', TextInputType.number),
             showImageCount(),
             showSelectedLocation(),
-            reusableTextEntry( "Price", true, priceController, 'price', TextInputType.number),
+            reusableTextEntry(
+                "Price", true, priceController, 'price', TextInputType.number),
             showLocationButtons(),
           ]),
+    );
+  }
+
+  Widget backButton() {
+    return Container(
+      alignment: Alignment.topLeft,
+      child: FloatingActionButton(
+        child: BackButton(),
+        onPressed: () => Navigator.pop(context),
+        backgroundColor: Colors.transparent,
+        elevation: 0.0,
+        foregroundColor: Colors.black,
+      ),
     );
   }
 

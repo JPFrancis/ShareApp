@@ -41,7 +41,7 @@ class ItemDetailState extends State<ItemDetail> {
   String itemCreator;
 
   bool isLoading;
-  bool canRequest = false;
+  bool canRequest = true;
 
   @override
   void initState() {
@@ -132,9 +132,9 @@ class ItemDetailState extends State<ItemDetail> {
       height: 70.0,
       decoration: BoxDecoration(color: Colors.white, boxShadow: [
         BoxShadow(
-            color: Colors.black12,
-            offset: new Offset(0, -0.5),
-           )
+          color: Colors.black12,
+          offset: new Offset(0, -0.5),
+        )
       ]),
       child: Row(
         children: <Widget>[
@@ -157,8 +157,8 @@ class ItemDetailState extends State<ItemDetail> {
         onPressed: canRequest ? () => handleRequestItemPressed() : null,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5.0)),
         color: Colors.red,
-        child: Text("Check Availability", style: TextStyle( color: Colors.white, fontFamily: 'Quicksand'))
-    );
+        child: Text("Check Availability",
+            style: TextStyle(color: Colors.white, fontFamily: 'Quicksand')));
   }
 
   Widget showFAB() {
@@ -185,7 +185,10 @@ class ItemDetailState extends State<ItemDetail> {
   Widget showBody() {
     return ListView(
       children: <Widget>[
-        Stack(children: <Widget> [showItemImages(), IconButton(icon: Icon(Icons.arrow_back), onPressed: () { goToLastScreen(); },)]),
+        Stack(children: <Widget>[
+          showItemImages(),
+          backButton(), 
+        ]),
         showItemType(),
         showItemName(),
         showItemCondition(),
@@ -194,6 +197,19 @@ class ItemDetailState extends State<ItemDetail> {
         divider(),
         showItemLocation(),
       ],
+    );
+  }
+
+    Widget backButton() {
+    return Container(
+      alignment: Alignment.topLeft,
+      child: FloatingActionButton(
+        child: BackButton(),
+        onPressed: () => goToLastScreen(),
+        backgroundColor: Colors.transparent,
+        elevation: 0.0,
+        foregroundColor: Colors.black,
+      ),
     );
   }
 
@@ -209,27 +225,27 @@ class ItemDetailState extends State<ItemDetail> {
       padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 10.0),
       child: SizedBox(
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              Text(
-                'Shared by ${creatorDS['displayName']}',
-                style: TextStyle(color: Colors.black, fontSize: 15.0, fontFamily: 'Quicksand'),
-                textAlign: TextAlign.left,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          Text(
+            'Shared by ${creatorDS['displayName']}',
+            style: TextStyle(
+                color: Colors.black, fontSize: 15.0, fontFamily: 'Quicksand'),
+            textAlign: TextAlign.left,
+          ),
+          Container(
+            height: 50.0,
+            child: ClipOval(
+              child: CachedNetworkImage(
+                key: new ValueKey<String>(
+                    DateTime.now().millisecondsSinceEpoch.toString()),
+                imageUrl: creatorDS['photoURL'],
+                placeholder: (context, url) => new CircularProgressIndicator(),
               ),
-              Container(
-                height: 50.0,
-                child: ClipOval(
-                  child: CachedNetworkImage(
-                    key: new ValueKey<String>(
-                        DateTime.now().millisecondsSinceEpoch.toString()),
-                    imageUrl: creatorDS['photoURL'],
-                    placeholder: (context, url) =>
-                        new CircularProgressIndicator(),
-                  ),
-                ),
-              ),
-            ],
-          )),
+            ),
+          ),
+        ],
+      )),
     );
   }
 
@@ -243,7 +259,10 @@ class ItemDetailState extends State<ItemDetail> {
           '${itemDS['name']}',
           //itemName,
           style: TextStyle(
-              color: Colors.black, fontSize: 40.0, fontWeight: FontWeight.bold, fontFamily: 'Quicksand'),
+              color: Colors.black,
+              fontSize: 40.0,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Quicksand'),
           textAlign: TextAlign.left,
         ),
       )),
@@ -259,12 +278,17 @@ class ItemDetailState extends State<ItemDetail> {
         children: <Widget>[
           Text(
             '\$${itemDS['price']}',
-            style: TextStyle(color: Colors.black, fontSize: 25.0, fontWeight: FontWeight.bold, fontFamily: 'Quicksand'),
+            style: TextStyle(
+                color: Colors.black,
+                fontSize: 25.0,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Quicksand'),
           ),
           Text(
             ' / HOUR',
-            style: TextStyle( color: Colors.black, fontSize: 12.0, fontFamily: 'Quicksand'),
-         )
+            style: TextStyle(
+                color: Colors.black, fontSize: 12.0, fontFamily: 'Quicksand'),
+          )
         ],
       ),
     ));
@@ -278,7 +302,8 @@ class ItemDetailState extends State<ItemDetail> {
         color: Color(0x00000000),
         child: Text(
           '${itemDS['description']}',
-          style: TextStyle(color: Colors.black, fontSize: 15.0, fontFamily: 'Quicksand'),
+          style: TextStyle(
+              color: Colors.black, fontSize: 15.0, fontFamily: 'Quicksand'),
           textAlign: TextAlign.left,
         ),
       )),
@@ -293,7 +318,11 @@ class ItemDetailState extends State<ItemDetail> {
         color: Color(0x00000000),
         child: Text(
           '${itemDS['type']}'.toUpperCase(),
-          style: TextStyle( color: Colors.black54, fontSize: 12.0, fontWeight: FontWeight.bold, fontFamily: 'Quicksand'),
+          style: TextStyle(
+              color: Colors.black54,
+              fontSize: 12.0,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Quicksand'),
           textAlign: TextAlign.left,
         ),
       )),
@@ -310,12 +339,21 @@ class ItemDetailState extends State<ItemDetail> {
           children: <Widget>[
             Text(
               'Condition: ',
-              style: TextStyle(color: Colors.black54, fontSize: 13.0, fontStyle: FontStyle.italic, fontFamily: 'Quicksand'),
+              style: TextStyle(
+                  color: Colors.black54,
+                  fontSize: 13.0,
+                  fontStyle: FontStyle.italic,
+                  fontFamily: 'Quicksand'),
               textAlign: TextAlign.left,
             ),
             Text(
               '${itemDS['condition']}',
-              style: TextStyle(color: Colors.black, fontSize: 14.0, fontStyle: FontStyle.italic, fontWeight: FontWeight.bold, fontFamily: 'Quicksand'),
+              style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 14.0,
+                  fontStyle: FontStyle.italic,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Quicksand'),
               textAlign: TextAlign.left,
             ),
           ],
@@ -362,14 +400,17 @@ class ItemDetailState extends State<ItemDetail> {
       child: Column(
         children: <Widget>[
           Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
+            alignment: Alignment.centerLeft,
+            child: Padding(
               padding: EdgeInsets.only(bottom: 12.0),
-              child: Text(
-                'The Location',
-                style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.bold, color: Colors.black87, fontFamily: 'Quicksand')
-                //textScaleFactor: 1.2,
-              ),
+              child: Text('The Location',
+                  style: TextStyle(
+                      fontSize: 15.0,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                      fontFamily: 'Quicksand')
+                  //textScaleFactor: 1.2,
+                  ),
             ),
           ),
           /*

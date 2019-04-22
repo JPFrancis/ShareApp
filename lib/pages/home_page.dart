@@ -491,13 +491,21 @@ class HomePageState extends State<HomePage> {
                 child: new Container(),
               );
             default:
-              return new ListView.builder(
+              return new GridView.builder(
                 shrinkWrap: true,
-                //padding: EdgeInsets.all(2.0),
                 itemCount: snapshot.data.documents.length,
+                gridDelegate: new SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2),
                 itemBuilder: (context, index) {
                   DocumentSnapshot ds = snapshot.data.documents[index];
-
+                  Widget preview = new CachedNetworkImage(
+                    height: 150.0,
+                    key: new ValueKey<String>(
+                        DateTime.now().millisecondsSinceEpoch.toString()),
+                    imageUrl: ds['images'][0],
+                    placeholder: (context, url) =>
+                        new CircularProgressIndicator(),
+                  );
                   Icon tileIcon;
                   String itemType = ds['type'];
 
@@ -515,6 +523,24 @@ class HomePageState extends State<HomePage> {
                       tileIcon = Icon(Icons.device_unknown);
                       break;
                   }
+
+                  return InkWell(
+                    onTap: () {
+                      DocumentReference dr = ds['creator'];
+                      navigateToDetail(ds.documentID);
+                    },
+                    child: Card(
+                      child: Container(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: <Widget>[
+                            preview, 
+                            Text(ds['name']),
+                            ],
+                        ),
+                      ),
+                    ),
+                  );
 
                   return ListTile(
                     leading: tileIcon,
