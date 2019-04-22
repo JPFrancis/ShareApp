@@ -109,19 +109,19 @@ class ItemDetailState extends State<ItemDetail> {
       child: Scaffold(
         body: isLoading
             ? Container(
-                child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      Center(child: CircularProgressIndicator())
-                    ]),
-              )
+          child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                Center(child: CircularProgressIndicator())
+              ]),
+        )
             : showBody(),
         //floatingActionButton: showFAB(),
         bottomNavigationBar: isLoading
             ? Container(
-                height: 0,
-              )
+          height: 0,
+        )
             : bottomDetails(),
       ),
     );
@@ -187,7 +187,11 @@ class ItemDetailState extends State<ItemDetail> {
       children: <Widget>[
         Stack(children: <Widget>[
           showItemImages(),
+<<<<<<< HEAD
           backButton(), 
+=======
+          backButton(),
+>>>>>>> 51d0bd23372807b163c314870c0f4f941e1112c9
         ]),
         showItemType(),
         showItemName(),
@@ -200,7 +204,11 @@ class ItemDetailState extends State<ItemDetail> {
     );
   }
 
+<<<<<<< HEAD
     Widget backButton() {
+=======
+  Widget backButton() {
+>>>>>>> 51d0bd23372807b163c314870c0f4f941e1112c9
     return Container(
       alignment: Alignment.topLeft,
       child: FloatingActionButton(
@@ -210,6 +218,7 @@ class ItemDetailState extends State<ItemDetail> {
         elevation: 0.0,
         foregroundColor: Colors.black,
       ),
+<<<<<<< HEAD
     );
   }
 
@@ -249,49 +258,90 @@ class ItemDetailState extends State<ItemDetail> {
     );
   }
 
+=======
+    );
+  }
+
+  Widget divider() {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Divider(),
+    );
+  }
+
+  Widget showItemCreator() {
+    return Padding(
+      padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 10.0),
+      child: SizedBox(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Text(
+                'Shared by ${creatorDS['displayName']}',
+                style: TextStyle(
+                    color: Colors.black, fontSize: 15.0, fontFamily: 'Quicksand'),
+                textAlign: TextAlign.left,
+              ),
+              Container(
+                height: 50.0,
+                child: ClipOval(
+                  child: CachedNetworkImage(
+                    key: new ValueKey<String>(
+                        DateTime.now().millisecondsSinceEpoch.toString()),
+                    imageUrl: creatorDS['photoURL'],
+                    placeholder: (context, url) => new CircularProgressIndicator(),
+                  ),
+                ),
+              ),
+            ],
+          )),
+    );
+  }
+
+>>>>>>> 51d0bd23372807b163c314870c0f4f941e1112c9
   Widget showItemName() {
     return Padding(
       padding: const EdgeInsets.only(left: 20.0),
       child: SizedBox(
           child: Container(
-        color: Color(0x00000000),
-        child: Text(
-          '${itemDS['name']}',
-          //itemName,
-          style: TextStyle(
-              color: Colors.black,
-              fontSize: 40.0,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Quicksand'),
-          textAlign: TextAlign.left,
-        ),
-      )),
+            color: Color(0x00000000),
+            child: Text(
+              '${itemDS['name']}',
+              //itemName,
+              style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 40.0,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Quicksand'),
+              textAlign: TextAlign.left,
+            ),
+          )),
     );
   }
 
   Widget showItemPrice() {
     return SizedBox(
-        //height: 50.0,
+      //height: 50.0,
         child: Container(
-      color: Color(0x00000000),
-      child: Row(
-        children: <Widget>[
-          Text(
-            '\$${itemDS['price']}',
-            style: TextStyle(
-                color: Colors.black,
-                fontSize: 25.0,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Quicksand'),
+          color: Color(0x00000000),
+          child: Row(
+            children: <Widget>[
+              Text(
+                '\$${itemDS['price']}',
+                style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 25.0,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Quicksand'),
+              ),
+              Text(
+                ' / HOUR',
+                style: TextStyle(
+                    color: Colors.black, fontSize: 12.0, fontFamily: 'Quicksand'),
+              )
+            ],
           ),
-          Text(
-            ' / HOUR',
-            style: TextStyle(
-                color: Colors.black, fontSize: 12.0, fontFamily: 'Quicksand'),
-          )
-        ],
-      ),
-    ));
+        ));
   }
 
   Widget showItemDescription() {
@@ -299,14 +349,14 @@ class ItemDetailState extends State<ItemDetail> {
       padding: EdgeInsets.only(top: 20.0, left: 20.0, right: 20.0),
       child: SizedBox(
           child: Container(
-        color: Color(0x00000000),
-        child: Text(
-          '${itemDS['description']}',
-          style: TextStyle(
-              color: Colors.black, fontSize: 15.0, fontFamily: 'Quicksand'),
-          textAlign: TextAlign.left,
-        ),
-      )),
+            color: Color(0x00000000),
+            child: Text(
+              '${itemDS['description']}',
+              style: TextStyle(
+                  color: Colors.black, fontSize: 15.0, fontFamily: 'Quicksand'),
+              textAlign: TextAlign.left,
+            ),
+          )),
     );
   }
 
@@ -315,17 +365,17 @@ class ItemDetailState extends State<ItemDetail> {
       padding: EdgeInsets.only(left: 20.0, top: 20.0),
       child: SizedBox(
           child: Container(
-        color: Color(0x00000000),
-        child: Text(
-          '${itemDS['type']}'.toUpperCase(),
-          style: TextStyle(
-              color: Colors.black54,
-              fontSize: 12.0,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Quicksand'),
-          textAlign: TextAlign.left,
-        ),
-      )),
+            color: Color(0x00000000),
+            child: Text(
+              '${itemDS['type']}'.toUpperCase(),
+              style: TextStyle(
+                  color: Colors.black54,
+                  fontSize: 12.0,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Quicksand'),
+              textAlign: TextAlign.left,
+            ),
+          )),
     );
   }
 
@@ -334,31 +384,31 @@ class ItemDetailState extends State<ItemDetail> {
       padding: EdgeInsets.only(left: 20.0, top: 5.0),
       child: SizedBox(
           child: Container(
-        color: Color(0x00000000),
-        child: Row(
-          children: <Widget>[
-            Text(
-              'Condition: ',
-              style: TextStyle(
-                  color: Colors.black54,
-                  fontSize: 13.0,
-                  fontStyle: FontStyle.italic,
-                  fontFamily: 'Quicksand'),
-              textAlign: TextAlign.left,
+            color: Color(0x00000000),
+            child: Row(
+              children: <Widget>[
+                Text(
+                  'Condition: ',
+                  style: TextStyle(
+                      color: Colors.black54,
+                      fontSize: 13.0,
+                      fontStyle: FontStyle.italic,
+                      fontFamily: 'Quicksand'),
+                  textAlign: TextAlign.left,
+                ),
+                Text(
+                  '${itemDS['condition']}',
+                  style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 14.0,
+                      fontStyle: FontStyle.italic,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Quicksand'),
+                  textAlign: TextAlign.left,
+                ),
+              ],
             ),
-            Text(
-              '${itemDS['condition']}',
-              style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 14.0,
-                  fontStyle: FontStyle.italic,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Quicksand'),
-              textAlign: TextAlign.left,
-            ),
-          ],
-        ),
-      )),
+          )),
     );
   }
 
@@ -383,9 +433,9 @@ class ItemDetailState extends State<ItemDetail> {
     List imagesList = itemDS['images'];
     return imagesList.length > 0
         ? Container(
-            height: widthOfScreen,
-            child: SizedBox.expand(child: getImagesListView(context)),
-          )
+      height: widthOfScreen,
+      child: SizedBox.expand(child: getImagesListView(context)),
+    )
         : Text('No images yet\n');
   }
 
@@ -409,8 +459,8 @@ class ItemDetailState extends State<ItemDetail> {
                       fontWeight: FontWeight.bold,
                       color: Colors.black87,
                       fontFamily: 'Quicksand')
-                  //textScaleFactor: 1.2,
-                  ),
+                //textScaleFactor: 1.2,
+              ),
             ),
           ),
           /*
@@ -455,10 +505,10 @@ class ItemDetailState extends State<ItemDetail> {
                 ),
                 gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>[
                   Factory<OneSequenceGestureRecognizer>(
-                    () =>
-                        // to disable dragging, use ScaleGestureRecognizer()
-                        // to enable dragging, use EagerGestureRecognizer()
-                        EagerGestureRecognizer(),
+                        () =>
+                    // to disable dragging, use ScaleGestureRecognizer()
+                    // to enable dragging, use EagerGestureRecognizer()
+                    EagerGestureRecognizer(),
                     //ScaleGestureRecognizer(),
                   ),
                 ].toSet(),
@@ -529,8 +579,8 @@ class ItemDetailState extends State<ItemDetail> {
         context,
         MaterialPageRoute(
           builder: (BuildContext context) => ItemEdit(
-                item: editItem,
-              ),
+            item: editItem,
+          ),
           fullscreenDialog: true,
         ));
 
@@ -538,7 +588,7 @@ class ItemDetailState extends State<ItemDetail> {
       //updateParameters();
       //setCamera();
       setState(
-        () {
+            () {
           getSnapshots();
           //setCamera();
         },

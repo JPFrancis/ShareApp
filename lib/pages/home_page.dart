@@ -1,5 +1,8 @@
 import 'dart:async';
+<<<<<<< HEAD
 
+=======
+>>>>>>> 51d0bd23372807b163c314870c0f4f941e1112c9
 import 'package:shareapp/main.dart';
 import 'package:flutter/material.dart';
 import 'package:shareapp/rentals/chat.dart';
@@ -16,6 +19,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
 class HomePage extends StatefulWidget {
   static const routeName = '/homePage';
@@ -42,6 +46,8 @@ class HomePageState extends State<HomePage> {
   EdgeInsets edgeInset;
   double padding;
 
+  bool isLoading;
+
   @override
   void initState() {
     // TODO: implement initState
@@ -49,7 +55,7 @@ class HomePageState extends State<HomePage> {
 
     currentTabIndex = 0;
 
-    padding = 12;
+    padding = 18;
     edgeInset = EdgeInsets.all(padding);
 
     userID = widget.firebaseUser.uid;
@@ -65,6 +71,7 @@ class HomePageState extends State<HomePage> {
   }
 
   void handleInitUser() async {
+    isLoading = true;
     // get user object from firestore
     Firestore.instance
         .collection('users')
@@ -74,8 +81,8 @@ class HomePageState extends State<HomePage> {
       // if user is not in database, create user
       if (!ds.exists) {
         Firestore.instance.collection('users').document(userID).setData({
-          'displayName': widget.firebaseUser.displayName,
-          'photoURL': widget.firebaseUser.photoUrl,
+          'displayName': widget.firebaseUser.displayName ?? 'new user $userID',
+          'photoURL': widget.firebaseUser.photoUrl ?? 'https://bit.ly/2vcmALY',
           'email': widget.firebaseUser.email,
           'lastActiveTimestamp': DateTime.now().millisecondsSinceEpoch,
           'accountCreationTimestamp':
@@ -89,7 +96,9 @@ class HomePageState extends State<HomePage> {
       }
     });
 
-    //sleep(const Duration(seconds:1));
+    setState(() {
+      isLoading = false;
+    });
   }
 
   @override
@@ -152,7 +161,16 @@ class HomePageState extends State<HomePage> {
           },
         ),
       ]),*/
-      body: bottomTabPages[currentTabIndex],
+      body: isLoading
+          ? Container(
+              child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: <Widget>[
+                    Center(child: CircularProgressIndicator())
+                  ]),
+            )
+          : bottomTabPages[currentTabIndex],
       floatingActionButton: showFAB(),
       bottomNavigationBar: bottomNavBar,
     );
@@ -191,20 +209,15 @@ class HomePageState extends State<HomePage> {
       padding: edgeInset,
       child: Column(
         children: <Widget>[
+          /*
           Container(
             child: showSignedInAs(),
           ),
           Container(
-            alignment: Alignment.centerLeft,
-            padding: EdgeInsets.symmetric(vertical: 10),
-            child: Text(
-              'Showing all items:',
-              style: TextStyle(
-                fontSize: 20,
-              ),
-            ),
+            height: 10,
           ),
-          buildItemList(),
+          */
+          reusableObjList('All items', buildItemList()),
         ],
       ),
     );
@@ -212,20 +225,46 @@ class HomePageState extends State<HomePage> {
 
   Widget rentalsTabPage() {
     return Padding(
-      padding: edgeInset,
+      padding: EdgeInsets.all(padding),
+      child: Column(
+        children: <Widget>[
+          reusableObjList(
+              'Items I\'m currently renting', buildRentalsListCurrent()),
+          Container(
+            height: padding,
+          ),
+          reusableObjList(
+              'Items I have requested to rent', buildRentalsListRequested()),
+        ],
+      ),
+    );
+  }
+
+  Widget reusableObjList(String heading, displayList) {
+    return Expanded(
       child: Column(
         children: <Widget>[
           Container(
             alignment: Alignment.centerLeft,
-            padding: EdgeInsets.symmetric(vertical: 10),
+            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             child: Text(
-              'Showing all rentals:',
+              heading,
               style: TextStyle(
-                fontSize: 20,
+                fontSize: 16,
+              ),
+            ),
+            decoration: BoxDecoration(
+              color: Colors.grey[350],
+              border: Border.all(
+                color: Colors.black,
+                width: 2,
               ),
             ),
           ),
-          buildRentalsList(),
+          Container(
+            height: 12,
+          ),
+          displayList,
         ],
       ),
     );
@@ -233,20 +272,20 @@ class HomePageState extends State<HomePage> {
 
   Widget myListingsTabPage() {
     return Padding(
-      padding: edgeInset,
+      padding: EdgeInsets.all(padding),
       child: Column(
         children: <Widget>[
-          Container(
-            alignment: Alignment.centerLeft,
-            padding: EdgeInsets.symmetric(vertical: 10),
-            child: Text(
-              'Items I\'ve created:',
-              style: TextStyle(
-                fontSize: 20,
-              ),
-            ),
+          reusableObjList(
+            'My items that are available to rent',
+            buildMyListingsListAvailable(),
           ),
-          buildMyListingsList(),
+          Container(
+            height: padding,
+          ),
+          reusableObjList(
+            'My items that are currently being rented',
+            buildMyListingsListRented(),
+          ),
         ],
       ),
     );
@@ -257,17 +296,10 @@ class HomePageState extends State<HomePage> {
       padding: edgeInset,
       child: Column(
         children: <Widget>[
-          Container(
-            alignment: Alignment.centerLeft,
-            padding: EdgeInsets.symmetric(vertical: 10),
-            child: Text(
-              'My chats:',
-              style: TextStyle(
-                fontSize: 20,
-              ),
-            ),
+          reusableObjList(
+            'My messages',
+            buildMessagesList(),
           ),
-          buildMessagesList()
         ],
       ),
     );
@@ -510,16 +542,16 @@ class HomePageState extends State<HomePage> {
                   String itemType = ds['type'];
 
                   switch (itemType) {
-                    case 'tool':
+                    case 'Tool':
                       tileIcon = Icon(Icons.build);
                       break;
-                    case 'leisure':
+                    case 'Leisure':
                       tileIcon = Icon(Icons.golf_course);
                       break;
-                    case 'home':
+                    case 'Home':
                       tileIcon = Icon(Icons.home);
                       break;
-                    case 'other':
+                    case 'Other':
                       tileIcon = Icon(Icons.device_unknown);
                       break;
                   }
@@ -643,6 +675,198 @@ class HomePageState extends State<HomePage> {
     );
   }
 
+  Widget buildRentalsListCurrent() {
+    CollectionReference collectionReference =
+        Firestore.instance.collection('rentals');
+    return Expanded(
+      child: StreamBuilder<QuerySnapshot>(
+        stream: collectionReference.snapshots(),
+        // to show all items created by you
+        //where('creator', isEqualTo: Firestore.instance.collection('users').document(userID)),
+        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          if (snapshot.hasError) {
+            return new Text('${snapshot.error}');
+          }
+          switch (snapshot.connectionState) {
+            case ConnectionState.waiting:
+              return new Center(
+                child: new Container(),
+              );
+            default:
+              return new ListView.builder(
+                shrinkWrap: true,
+                //padding: EdgeInsets.all(2.0),
+                itemCount: snapshot.data.documents.length,
+                itemBuilder: (context, index) {
+                  DocumentSnapshot ds = snapshot.data.documents[index];
+                  DocumentReference itemDR = ds['item'];
+
+                  return FutureBuilder(
+                    future: itemDR.get(),
+                    builder: (BuildContext context, AsyncSnapshot snapshot) {
+                      if (snapshot.hasData) {
+                        DocumentSnapshot itemDS = snapshot.data;
+
+                        if (ds['status'] != 1) {
+                          bool showChat = false;
+
+                          DocumentReference renterDR = ds['renter'];
+                          DocumentReference ownerDR = ds['owner'];
+
+                          if (userID == renterDR.documentID ||
+                              userID == ownerDR.documentID) {
+                            showChat = true;
+                          }
+
+                          String created = 'Created: ' +
+                              timeago.format(
+                                  DateTime.fromMillisecondsSinceEpoch(
+                                      ds['created']));
+
+                          return ListTile(
+                            leading: Icon(Icons.shopping_cart),
+                            //leading: Icon(Icons.build),
+                            title: Text(
+                              itemDS['name'],
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: Text(created),
+                            onTap: () {
+                              Navigator.pushNamed(
+                                context,
+                                RentalDetail.routeName,
+                                arguments: ItemRentalArgs(
+                                  ds.documentID,
+                                ),
+                              );
+                            },
+                            trailing: showChat
+                                ? IconButton(
+                                    icon: Icon(Icons.message),
+                                    onPressed: () {
+                                      Navigator.pushNamed(
+                                        context,
+                                        Chat.routeName,
+                                        arguments: ChatArgs(
+                                          ds.documentID,
+                                        ),
+                                      );
+                                    },
+                                  )
+                                : null,
+                          );
+                        } else {
+                          return Container();
+                        }
+                      } else {
+                        return Container();
+                      }
+                    },
+                  );
+                },
+              );
+          }
+        },
+      ),
+    );
+  }
+
+  Widget buildRentalsListRequested() {
+    CollectionReference collectionReference =
+        Firestore.instance.collection('rentals');
+    return Expanded(
+      child: StreamBuilder<QuerySnapshot>(
+        stream: collectionReference.snapshots(),
+        // to show all items created by you
+        //where('creator', isEqualTo: Firestore.instance.collection('users').document(userID)),
+        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          if (snapshot.hasError) {
+            return new Text('${snapshot.error}');
+          }
+          switch (snapshot.connectionState) {
+            case ConnectionState.waiting:
+              return new Center(
+                child: new Container(),
+              );
+            default:
+              return new ListView.builder(
+                shrinkWrap: true,
+                //padding: EdgeInsets.all(2.0),
+                itemCount: snapshot.data.documents.length,
+                itemBuilder: (context, index) {
+                  DocumentSnapshot ds = snapshot.data.documents[index];
+                  DocumentReference itemDR = ds['item'];
+
+                  return FutureBuilder(
+                    future: itemDR.get(),
+                    builder: (BuildContext context, AsyncSnapshot snapshot) {
+                      if (snapshot.hasData) {
+                        DocumentSnapshot itemDS = snapshot.data;
+
+                        if (ds['status'] == 1) {
+                          bool showChat = false;
+
+                          DocumentReference renterDR = ds['renter'];
+                          DocumentReference ownerDR = ds['owner'];
+
+                          if (userID == renterDR.documentID ||
+                              userID == ownerDR.documentID) {
+                            showChat = true;
+                          }
+
+                          String created = 'Created: ' +
+                              timeago.format(
+                                  DateTime.fromMillisecondsSinceEpoch(
+                                      ds['created']));
+
+                          return ListTile(
+                            leading: Icon(Icons.shopping_cart),
+                            //leading: Icon(Icons.build),
+                            title: Text(
+                              itemDS['name'],
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: Text(created),
+                            onTap: () {
+                              Navigator.pushNamed(
+                                context,
+                                RentalDetail.routeName,
+                                arguments: ItemRentalArgs(
+                                  ds.documentID,
+                                ),
+                              );
+                            },
+                            trailing: showChat
+                                ? IconButton(
+                                    icon: Icon(Icons.message),
+                                    onPressed: () {
+                                      Navigator.pushNamed(
+                                        context,
+                                        Chat.routeName,
+                                        arguments: ChatArgs(
+                                          ds.documentID,
+                                        ),
+                                      );
+                                    },
+                                  )
+                                : null,
+                          );
+                        } else {
+                          return Container();
+                        }
+                      } else {
+                        return Container();
+                      }
+                    },
+                  );
+                },
+              );
+          }
+        },
+      ),
+    );
+  }
+
   Widget buildMyListingsList() {
     CollectionReference collectionReference =
         Firestore.instance.collection('items');
@@ -717,6 +941,162 @@ class HomePageState extends State<HomePage> {
     );
   }
 
+  Widget buildMyListingsListAvailable() {
+    CollectionReference collectionReference =
+        Firestore.instance.collection('items');
+    return Expanded(
+      child: StreamBuilder<QuerySnapshot>(
+        stream: collectionReference
+            .where('creator',
+                isEqualTo:
+                    Firestore.instance.collection('users').document(userID))
+            .snapshots(),
+        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          if (snapshot.hasError) {
+            return new Text('${snapshot.error}');
+          }
+          switch (snapshot.connectionState) {
+            case ConnectionState.waiting:
+              return new Center(
+                child: new Container(),
+              );
+            default:
+              return new ListView.builder(
+                shrinkWrap: true,
+                //padding: EdgeInsets.all(2.0),
+                itemCount: snapshot.data.documents.length,
+                itemBuilder: (context, index) {
+                  DocumentSnapshot ds = snapshot.data.documents[index];
+
+                  if (ds['rental'] == null) {
+                    Icon tileIcon;
+                    String itemType = ds['type'];
+
+                    switch (itemType) {
+                      case 'tool':
+                        tileIcon = Icon(Icons.build);
+                        break;
+                      case 'leisure':
+                        tileIcon = Icon(Icons.golf_course);
+                        break;
+                      case 'home':
+                        tileIcon = Icon(Icons.home);
+                        break;
+                      case 'other':
+                        tileIcon = Icon(Icons.device_unknown);
+                        break;
+                    }
+
+                    return ListTile(
+                      leading: tileIcon,
+                      //leading: Icon(Icons.build),
+                      title: Text(
+                        ds['name'],
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: Text(ds['description']),
+                      onTap: () {
+                        DocumentReference dr = ds['creator'];
+                        navigateToDetail(ds.documentID);
+                      },
+                      trailing: IconButton(
+                        icon: Icon(Icons.delete),
+                        onPressed: () {
+                          deleteItemDialog(ds);
+
+                          /// ====================== ADD DELETE CONFIRMATION !!!
+                        },
+                      ),
+                    );
+                  } else {
+                    return Container();
+                  }
+                },
+              );
+          }
+        },
+      ),
+    );
+  }
+
+  Widget buildMyListingsListRented() {
+    CollectionReference collectionReference =
+        Firestore.instance.collection('items');
+    return Expanded(
+      child: StreamBuilder<QuerySnapshot>(
+        stream: collectionReference
+            .where('creator',
+                isEqualTo:
+                    Firestore.instance.collection('users').document(userID))
+            .snapshots(),
+        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          if (snapshot.hasError) {
+            return new Text('${snapshot.error}');
+          }
+          switch (snapshot.connectionState) {
+            case ConnectionState.waiting:
+              return new Center(
+                child: new Container(),
+              );
+            default:
+              return new ListView.builder(
+                shrinkWrap: true,
+                //padding: EdgeInsets.all(2.0),
+                itemCount: snapshot.data.documents.length,
+                itemBuilder: (context, index) {
+                  DocumentSnapshot ds = snapshot.data.documents[index];
+
+                  if (ds['rental'] != null) {
+                    Icon tileIcon;
+                    String itemType = ds['type'];
+
+                    switch (itemType) {
+                      case 'tool':
+                        tileIcon = Icon(Icons.build);
+                        break;
+                      case 'leisure':
+                        tileIcon = Icon(Icons.golf_course);
+                        break;
+                      case 'home':
+                        tileIcon = Icon(Icons.home);
+                        break;
+                      case 'other':
+                        tileIcon = Icon(Icons.device_unknown);
+                        break;
+                    }
+
+                    return ListTile(
+                      leading: tileIcon,
+                      //leading: Icon(Icons.build),
+                      title: Text(
+                        ds['name'],
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: Text(ds['description']),
+                      onTap: () {
+                        DocumentReference dr = ds['creator'];
+                        navigateToDetail(ds.documentID);
+                      },
+                      trailing: IconButton(
+                        icon: Icon(Icons.delete),
+                        onPressed: () {
+                          deleteItemDialog(ds);
+
+                          /// ====================== ADD DELETE CONFIRMATION !!!
+                        },
+                      ),
+                    );
+                  } else {
+                    return Container();
+                  }
+                },
+              );
+          }
+        },
+      ),
+    );
+  }
+
   Widget buildMessagesList() {
     CollectionReference collectionReference =
         Firestore.instance.collection('users');
@@ -754,48 +1134,53 @@ class HomePageState extends State<HomePage> {
                         DocumentReference ownerDR = rentalDS['owner'];
                         DocumentReference renterDR = rentalDS['renter'];
 
+                        bool isRenter = userRentalDS['isRenter'];
+
+                        Future<DocumentSnapshot> future =
+                            isRenter ? ownerDR.get() : renterDR.get();
+
                         return FutureBuilder(
-                          future: ownerDR.get(),
+                          future: future,
                           builder:
                               (BuildContext context, AsyncSnapshot snapshot) {
                             if (snapshot.hasData) {
-                              DocumentSnapshot ownerDS = snapshot.data;
+                              DocumentSnapshot otherUserDS = snapshot.data;
 
-                              return FutureBuilder(
-                                future: renterDR.get(),
-                                builder: (BuildContext context,
-                                    AsyncSnapshot snapshot) {
-                                  if (snapshot.hasData) {
-                                    DocumentSnapshot renterDS = snapshot.data;
+                              String title = otherUserDS['displayName'];
+                              String imageURL = otherUserDS['photoURL'];
+                              String lastActive = 'Last seen: ' +
+                                  timeago.format(
+                                      DateTime.fromMillisecondsSinceEpoch(
+                                          otherUserDS['lastActiveTimestamp']));
 
-                                    bool isRenter = userRentalDS['isRenter'];
-
-                                    String title = isRenter
-                                        ? ownerDS['displayName']
-                                        : renterDS['displayName'];
-
-                                    return ListTile(
-                                      leading: Icon(Icons.chat_bubble),
-                                      //leading: Icon(Icons.build),
-                                      title: Text(
-                                        title,
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      subtitle: Text('chat'),
-                                      onTap: () {
-                                        Navigator.pushNamed(
-                                          context,
-                                          Chat.routeName,
-                                          arguments: ChatArgs(
-                                            rentalDS.documentID,
-                                          ),
-                                        );
-                                      },
-                                    );
-                                  } else {
-                                    return Container();
-                                  }
+                              return ListTile(
+                                leading: Container(
+                                  height: 50,
+                                  child: ClipOval(
+                                    child: CachedNetworkImage(
+                                      key: new ValueKey<String>(DateTime.now()
+                                          .millisecondsSinceEpoch
+                                          .toString()),
+                                      imageUrl: imageURL,
+                                      placeholder: (context, url) =>
+                                          new Container(),
+                                    ),
+                                  ),
+                                ),
+                                //leading: Icon(Icons.build),
+                                title: Text(
+                                  title,
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                subtitle: Text(lastActive),
+                                onTap: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    Chat.routeName,
+                                    arguments: ChatArgs(
+                                      rentalDS.documentID,
+                                    ),
+                                  );
                                 },
                               );
                             } else {
@@ -872,6 +1257,7 @@ class HomePageState extends State<HomePage> {
         newItem,
       ),
     );
+<<<<<<< HEAD
 /*
 		Navigator.push(
 				context,
@@ -882,6 +1268,8 @@ class HomePageState extends State<HomePage> {
 					fullscreenDialog: true,
 				));
 				*/
+=======
+>>>>>>> 51d0bd23372807b163c314870c0f4f941e1112c9
   }
 
   void navigateToDetail(String itemID) async {
@@ -892,6 +1280,7 @@ class HomePageState extends State<HomePage> {
         itemID,
       ),
     );
+<<<<<<< HEAD
     /*
 		await Navigator.push(
 				context,
@@ -901,6 +1290,8 @@ class HomePageState extends State<HomePage> {
 							),
 				));
 				*/
+=======
+>>>>>>> 51d0bd23372807b163c314870c0f4f941e1112c9
   }
 
   Future<UserEdit> getUserEdit() async {

@@ -363,6 +363,7 @@ class RentalDetailState extends State<RentalDetail> {
         .document(rentalDS.documentID)
         .delete();
 
+    /*
     DocumentReference documentReference = rentalDS.reference;
     
     Firestore.instance.collection('users').document(myUserID).updateData({
@@ -372,18 +373,14 @@ class RentalDetailState extends State<RentalDetail> {
     Firestore.instance.collection('users').document(ownerDS.documentID).updateData({
       'rentals': FieldValue.arrayRemove([documentReference])
     });
+    */
 
     Firestore.instance.collection('rentals').document(widget.rentalID).delete();
 
     Firestore.instance
-        .collection('messages')
+        .collection('rentals')
         .document(widget.rentalID)
-        .delete();
-
-    Firestore.instance
-        .collection('messages')
-        .document(widget.rentalID)
-        .collection(widget.rentalID)
+        .collection('chat')
         .getDocuments()
         .then((snapshot) {
       for (DocumentSnapshot ds in snapshot.documents) {
