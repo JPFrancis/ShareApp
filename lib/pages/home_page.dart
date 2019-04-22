@@ -42,6 +42,8 @@ class HomePageState extends State<HomePage> {
   EdgeInsets edgeInset;
   double padding;
 
+  bool isLoading;
+
   @override
   void initState() {
     // TODO: implement initState
@@ -49,7 +51,7 @@ class HomePageState extends State<HomePage> {
 
     currentTabIndex = 0;
 
-    padding = 12;
+    padding = 18;
     edgeInset = EdgeInsets.all(padding);
 
     userID = widget.firebaseUser.uid;
@@ -65,6 +67,7 @@ class HomePageState extends State<HomePage> {
   }
 
   void handleInitUser() async {
+    isLoading = true;
     // get user object from firestore
     Firestore.instance
         .collection('users')
@@ -74,8 +77,8 @@ class HomePageState extends State<HomePage> {
       // if user is not in database, create user
       if (!ds.exists) {
         Firestore.instance.collection('users').document(userID).setData({
-          'displayName': widget.firebaseUser.displayName,
-          'photoURL': widget.firebaseUser.photoUrl,
+          'displayName': widget.firebaseUser.displayName ?? 'new user $userID',
+          'photoURL': widget.firebaseUser.photoUrl ?? 'https://bit.ly/2vcmALY',
           'email': widget.firebaseUser.email,
           'lastActiveTimestamp': DateTime.now().millisecondsSinceEpoch,
           'accountCreationTimestamp':
@@ -89,7 +92,9 @@ class HomePageState extends State<HomePage> {
       }
     });
 
-    //sleep(const Duration(seconds:1));
+    setState(() {
+      isLoading = false;
+    });
   }
 
   @override
@@ -152,14 +157,23 @@ class HomePageState extends State<HomePage> {
           },
         ),
       ]),*/
-      body: bottomTabPages[currentTabIndex],
+      body: isLoading
+          ? Container(
+              child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: <Widget>[
+                    Center(child: CircularProgressIndicator())
+                  ]),
+            )
+          : bottomTabPages[currentTabIndex],
       floatingActionButton: showFAB(),
       bottomNavigationBar: bottomNavBar,
     );
   }
 
   FloatingActionButton showFAB() {
-    if (currentTabIndex == 2) {
+    if (currentTabIndex == 0) {
       return FloatingActionButton(
         onPressed: () {
           navigateToEdit(
@@ -192,12 +206,14 @@ class HomePageState extends State<HomePage> {
       padding: edgeInset,
       child: Column(
         children: <Widget>[
+          /*
           Container(
             child: showSignedInAs(),
           ),
           Container(
             height: 10,
           ),
+          */
           reusableObjList('All items', buildItemList()),
         ],
       ),
@@ -515,16 +531,16 @@ class HomePageState extends State<HomePage> {
                   String itemType = ds['type'];
 
                   switch (itemType) {
-                    case 'tool':
+                    case 'Tool':
                       tileIcon = Icon(Icons.build);
                       break;
-                    case 'leisure':
+                    case 'Leisure':
                       tileIcon = Icon(Icons.golf_course);
                       break;
-                    case 'home':
+                    case 'Home':
                       tileIcon = Icon(Icons.home);
                       break;
-                    case 'other':
+                    case 'Other':
                       tileIcon = Icon(Icons.device_unknown);
                       break;
                   }
