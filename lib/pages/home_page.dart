@@ -1,21 +1,21 @@
 import 'dart:async';
 import 'package:shareapp/main.dart';
 import 'package:flutter/material.dart';
-import 'package:shareapp/rentals/chat.dart';
 import 'package:shareapp/models/item.dart';
+import 'package:shareapp/rentals/chat.dart';
 import 'package:shareapp/services/auth.dart';
 import 'package:shareapp/pages/item_edit.dart';
 import 'package:shareapp/models/user_edit.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shareapp/pages/item_detail.dart';
+import 'package:timeago/timeago.dart' as timeago;
 import 'package:shareapp/pages/profile_edit.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:shareapp/rentals/rental_detail.dart';
-import 'package:fluttertoast/fluttertoast.dart';
-import 'package:timeago/timeago.dart' as timeago;
 
 class HomePage extends StatefulWidget {
   static const routeName = '/homePage';
@@ -175,7 +175,7 @@ class HomePageState extends State<HomePage> {
   }
 
   FloatingActionButton showFAB() {
-    if (currentTabIndex == 0) {
+    if (currentTabIndex == 2) {
       return FloatingActionButton(
         onPressed: () {
           navigateToEdit(
@@ -452,7 +452,7 @@ class HomePageState extends State<HomePage> {
 
   Widget profileTabAfterIntro() {
     // [TEMPORARY SOLUTION]
-    double height = (MediaQuery.of(context).size.height) - 310;
+    double height = (MediaQuery.of(context).size.height) - 320;
     return Container(
       height: height,
       child: ListView(
@@ -575,6 +575,46 @@ class HomePageState extends State<HomePage> {
     );
   }
 
+  Widget cardItem(DocumentSnapshot ds) {
+    CachedNetworkImage image = CachedNetworkImage(
+      key: new ValueKey<String>(
+          DateTime.now().millisecondsSinceEpoch.toString()),
+      imageUrl: ds['images'][0],
+      placeholder: (context, url) => new CircularProgressIndicator(),
+    );
+    return InkWell(onTap: () {
+      navigateToDetail(ds.documentID);
+    }, child: new Card(child: new LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+      double h = constraints.maxHeight;
+      double w = constraints.maxWidth;
+      return Column(
+        children: <Widget>[
+          Container(
+              height: 3 * h / 4,
+              width: w,
+              child: FittedBox(fit: BoxFit.cover, child: image)),
+          Container(
+              height: h / 4,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Row(
+                    children: <Widget>[
+                      Text(ds['description']),
+                      Icon(Icons.alarm)
+                    ],
+                  ),
+                  Text(ds['name']),
+                  Text("\$${ds['price']} per hour"),
+                  Text("[rating goes here]")
+                ],
+              )),
+        ],
+      );
+    })));
+  }
+
   Widget buildItemList() {
     CollectionReference collectionReference =
         Firestore.instance.collection('items');
@@ -593,13 +633,24 @@ class HomePageState extends State<HomePage> {
                 child: new Container(),
               );
             default:
-              return new ListView.builder(
+              List<DocumentSnapshot> items = snapshot.data.documents.toList();
+              return GridView.count(
+                  crossAxisCount: 2,
+                  childAspectRatio: (3 / 4),
+                  padding: const EdgeInsets.all(15.0),
+                  mainAxisSpacing: 4.0,
+                  crossAxisSpacing: 4.0,
+                  children: items
+                      .map((DocumentSnapshot ds) => cardItem(ds))
+                      .toList());
+            /*
+              return new GridView.builder(
                 shrinkWrap: true,
-                //padding: EdgeInsets.all(2.0),
                 itemCount: snapshot.data.documents.length,
+                gridDelegate: new SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2),
                 itemBuilder: (context, index) {
                   DocumentSnapshot ds = snapshot.data.documents[index];
-
                   Icon tileIcon;
                   String itemType = ds['type'];
 
@@ -617,28 +668,33 @@ class HomePageState extends State<HomePage> {
                       tileIcon = Icon(Icons.device_unknown);
                       break;
                   }
-
-                  return ListTile(
-                    leading: tileIcon,
-                    //leading: Icon(Icons.build),
-                    title: Text(
-                      ds['name'],
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Text(ds['description']),
+                  return InkWell(
                     onTap: () {
                       DocumentReference dr = ds['creator'];
                       navigateToDetail(ds.documentID);
                     },
-                    trailing: IconButton(
-                      icon: Icon(Icons.delete),
-                      onPressed: () {
-                        deleteItemDialog(ds);
-                      },
+                    child: Column(
+                      children: <Widget>[
+                        GridTile(
+                          child: FittedBox(
+                            fit: BoxFit.cover,
+                            child: CachedNetworkImage(
+                              key: new ValueKey<String>(DateTime.now()
+                                  .millisecondsSinceEpoch
+                                  .toString()),
+                              imageUrl: ds['images'][0],
+                              placeholder: (context, url) =>
+                                  new CircularProgressIndicator(),
+                            ),
+                          ),
+                        ),
+                        Text(ds['name']),
+                      ],
                     ),
                   );
                 },
               );
+              */
           }
         },
       ),
