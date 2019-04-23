@@ -52,7 +52,9 @@ class HomePageState extends State<HomePage> {
     currentTabIndex = 0;
 
     padding = 18;
-    edgeInset = EdgeInsets.all(padding);
+    //edgeInset = EdgeInsets.all(padding);
+    edgeInset = EdgeInsets.only(
+        left: padding, right: padding, bottom: padding, top: 30);
 
     userID = widget.firebaseUser.uid;
 
@@ -222,7 +224,7 @@ class HomePageState extends State<HomePage> {
 
   Widget rentalsTabPage() {
     return Padding(
-      padding: EdgeInsets.all(padding),
+      padding: edgeInset,
       child: Column(
         children: <Widget>[
           reusableObjList(
@@ -269,7 +271,7 @@ class HomePageState extends State<HomePage> {
 
   Widget myListingsTabPage() {
     return Padding(
-      padding: EdgeInsets.all(padding),
+      padding: edgeInset,
       child: Column(
         children: <Widget>[
           reusableObjList(
@@ -310,11 +312,82 @@ class HomePageState extends State<HomePage> {
           Padding(
             padding: EdgeInsets.all(10.0),
           ),
-          profileIntro(),
+          profileIntroStream(),
           Divider(),
           profileTabAfterIntro(),
         ],
       ),
+    );
+  }
+
+  Widget profileIntroStream() {
+    return StreamBuilder<DocumentSnapshot>(
+      stream:
+          Firestore.instance.collection('users').document(userID).snapshots(),
+      builder:
+          (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+        if (snapshot.hasError) {
+          return new Text('${snapshot.error}');
+        }
+        switch (snapshot.connectionState) {
+          case ConnectionState.waiting:
+            return Center(
+              child: new Container(),
+            );
+          default:
+            if (snapshot.hasData) {
+              DocumentSnapshot ds = snapshot.data;
+              return new Container(
+                child: Column(
+                  children: <Widget>[
+                    // User Icon
+                    Container(
+                      padding: EdgeInsets.only(left: 15.0),
+                      alignment: Alignment.topLeft,
+                      height: 60.0,
+                      child: ClipOval(
+                        child: CachedNetworkImage(
+                          key: new ValueKey<String>(
+                              DateTime.now().millisecondsSinceEpoch.toString()),
+                          imageUrl: ds['photoURL'],
+                          placeholder: (context, url) => new Container(),
+                        ),
+                      ),
+                    ),
+                    // username
+                    Container(
+                        padding: const EdgeInsets.only(top: 8.0, left: 15.0),
+                        alignment: Alignment.centerLeft,
+                        child: Text('${ds['displayName']}',
+                            style: TextStyle(
+                                fontSize: 20.0,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Quicksand'))),
+                    // email
+                    Container(
+                        padding: const EdgeInsets.only(top: 4.0, left: 15.0),
+                        alignment: Alignment.centerLeft,
+                        child: Text('${ds['email']}',
+                            style: TextStyle(
+                                fontSize: 15.0, fontFamily: 'Quicksand'))),
+                    //
+                    Container(
+                        alignment: Alignment.centerLeft,
+                        child: FlatButton(
+                          child: Text("Edit Profile",
+                              style: TextStyle(
+                                  color: Color(0xff007f6e),
+                                  fontFamily: 'Quicksand')),
+                          onPressed: () => navToProfileEdit(),
+                        )),
+                  ],
+                ),
+              );
+            } else {
+              return Container();
+            }
+        }
+      },
     );
   }
 
@@ -672,65 +745,76 @@ class HomePageState extends State<HomePage> {
                   DocumentSnapshot ds = snapshot.data.documents[index];
                   DocumentReference itemDR = ds['item'];
 
-                  return FutureBuilder(
-                    future: itemDR.get(),
-                    builder: (BuildContext context, AsyncSnapshot snapshot) {
-                      if (snapshot.hasData) {
-                        DocumentSnapshot itemDS = snapshot.data;
-
-                        if (ds['status'] != 1) {
-                          bool showChat = false;
-
-                          DocumentReference renterDR = ds['renter'];
-                          DocumentReference ownerDR = ds['owner'];
-
-                          if (userID == renterDR.documentID ||
-                              userID == ownerDR.documentID) {
-                            showChat = true;
-                          }
-
-                          String created = 'Created: ' +
-                              timeago.format(
-                                  DateTime.fromMillisecondsSinceEpoch(
-                                      ds['created']));
-
-                          return ListTile(
-                            leading: Icon(Icons.shopping_cart),
-                            //leading: Icon(Icons.build),
-                            title: Text(
-                              itemDS['name'],
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            subtitle: Text(created),
-                            onTap: () {
-                              Navigator.pushNamed(
-                                context,
-                                RentalDetail.routeName,
-                                arguments: ItemRentalArgs(
-                                  ds.documentID,
-                                ),
-                              );
-                            },
-                            trailing: showChat
-                                ? IconButton(
-                                    icon: Icon(Icons.message),
-                                    onPressed: () {
-                                      Navigator.pushNamed(
-                                        context,
-                                        Chat.routeName,
-                                        arguments: ChatArgs(
-                                          ds.documentID,
-                                        ),
-                                      );
-                                    },
-                                  )
-                                : null,
+                  return StreamBuilder<DocumentSnapshot>(
+                    stream: itemDR.snapshots(),
+                    builder: (BuildContext context,
+                        AsyncSnapshot<DocumentSnapshot> snapshot) {
+                      if (snapshot.hasError) {
+                        return new Text('${snapshot.error}');
+                      }
+                      switch (snapshot.connectionState) {
+                        case ConnectionState.waiting:
+                          return Center(
+                            child: new Container(),
                           );
-                        } else {
-                          return Container();
-                        }
-                      } else {
-                        return Container();
+                        default:
+                          if (snapshot.hasData) {
+                            DocumentSnapshot itemDS = snapshot.data;
+
+                            if (ds['status'] != 1) {
+                              bool showChat = false;
+
+                              DocumentReference renterDR = ds['renter'];
+                              DocumentReference ownerDR = ds['owner'];
+
+                              if (userID == renterDR.documentID ||
+                                  userID == ownerDR.documentID) {
+                                showChat = true;
+                              }
+
+                              String created = 'Created: ' +
+                                  timeago.format(
+                                      DateTime.fromMillisecondsSinceEpoch(
+                                          ds['created']));
+
+                              return ListTile(
+                                leading: Icon(Icons.shopping_cart),
+                                //leading: Icon(Icons.build),
+                                title: Text(
+                                  itemDS['name'],
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                subtitle: Text(created),
+                                onTap: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    RentalDetail.routeName,
+                                    arguments: ItemRentalArgs(
+                                      ds.documentID,
+                                    ),
+                                  );
+                                },
+                                trailing: showChat
+                                    ? IconButton(
+                                        icon: Icon(Icons.message),
+                                        onPressed: () {
+                                          Navigator.pushNamed(
+                                            context,
+                                            Chat.routeName,
+                                            arguments: ChatArgs(
+                                              ds.documentID,
+                                            ),
+                                          );
+                                        },
+                                      )
+                                    : null,
+                              );
+                            } else {
+                              return Container();
+                            }
+                          } else {
+                            return Container();
+                          }
                       }
                     },
                   );
@@ -768,65 +852,76 @@ class HomePageState extends State<HomePage> {
                   DocumentSnapshot ds = snapshot.data.documents[index];
                   DocumentReference itemDR = ds['item'];
 
-                  return FutureBuilder(
-                    future: itemDR.get(),
-                    builder: (BuildContext context, AsyncSnapshot snapshot) {
-                      if (snapshot.hasData) {
-                        DocumentSnapshot itemDS = snapshot.data;
-
-                        if (ds['status'] == 1) {
-                          bool showChat = false;
-
-                          DocumentReference renterDR = ds['renter'];
-                          DocumentReference ownerDR = ds['owner'];
-
-                          if (userID == renterDR.documentID ||
-                              userID == ownerDR.documentID) {
-                            showChat = true;
-                          }
-
-                          String created = 'Created: ' +
-                              timeago.format(
-                                  DateTime.fromMillisecondsSinceEpoch(
-                                      ds['created']));
-
-                          return ListTile(
-                            leading: Icon(Icons.shopping_cart),
-                            //leading: Icon(Icons.build),
-                            title: Text(
-                              itemDS['name'],
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            subtitle: Text(created),
-                            onTap: () {
-                              Navigator.pushNamed(
-                                context,
-                                RentalDetail.routeName,
-                                arguments: ItemRentalArgs(
-                                  ds.documentID,
-                                ),
-                              );
-                            },
-                            trailing: showChat
-                                ? IconButton(
-                                    icon: Icon(Icons.message),
-                                    onPressed: () {
-                                      Navigator.pushNamed(
-                                        context,
-                                        Chat.routeName,
-                                        arguments: ChatArgs(
-                                          ds.documentID,
-                                        ),
-                                      );
-                                    },
-                                  )
-                                : null,
+                  return StreamBuilder<DocumentSnapshot>(
+                    stream: itemDR.snapshots(),
+                    builder: (BuildContext context,
+                        AsyncSnapshot<DocumentSnapshot> snapshot) {
+                      if (snapshot.hasError) {
+                        return new Text('${snapshot.error}');
+                      }
+                      switch (snapshot.connectionState) {
+                        case ConnectionState.waiting:
+                          return Center(
+                            child: new Container(),
                           );
-                        } else {
-                          return Container();
-                        }
-                      } else {
-                        return Container();
+                        default:
+                          if (snapshot.hasData) {
+                            DocumentSnapshot itemDS = snapshot.data;
+
+                            if (ds['status'] == 1) {
+                              bool showChat = false;
+
+                              DocumentReference renterDR = ds['renter'];
+                              DocumentReference ownerDR = ds['owner'];
+
+                              if (userID == renterDR.documentID ||
+                                  userID == ownerDR.documentID) {
+                                showChat = true;
+                              }
+
+                              String created = 'Created: ' +
+                                  timeago.format(
+                                      DateTime.fromMillisecondsSinceEpoch(
+                                          ds['created']));
+
+                              return ListTile(
+                                leading: Icon(Icons.shopping_cart),
+                                //leading: Icon(Icons.build),
+                                title: Text(
+                                  itemDS['name'],
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                subtitle: Text(created),
+                                onTap: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    RentalDetail.routeName,
+                                    arguments: ItemRentalArgs(
+                                      ds.documentID,
+                                    ),
+                                  );
+                                },
+                                trailing: showChat
+                                    ? IconButton(
+                                        icon: Icon(Icons.message),
+                                        onPressed: () {
+                                          Navigator.pushNamed(
+                                            context,
+                                            Chat.routeName,
+                                            arguments: ChatArgs(
+                                              ds.documentID,
+                                            ),
+                                          );
+                                        },
+                                      )
+                                    : null,
+                              );
+                            } else {
+                              return Container();
+                            }
+                          } else {
+                            return Container();
+                          }
                       }
                     },
                   );
@@ -1083,7 +1178,7 @@ class HomePageState extends State<HomePage> {
           }
           switch (snapshot.connectionState) {
             case ConnectionState.waiting:
-              return new Center(
+              return Center(
                 child: new Container(),
               );
             default:
@@ -1094,73 +1189,127 @@ class HomePageState extends State<HomePage> {
                 itemBuilder: (context, index) {
                   DocumentSnapshot userRentalDS =
                       snapshot.data.documents[index];
+                  DocumentReference otherUserDR = userRentalDS['otherUser'];
                   DocumentReference rentalDR = userRentalDS['rental'];
 
-                  return FutureBuilder(
-                    future: rentalDR.get(),
-                    builder: (BuildContext context, AsyncSnapshot snapshot) {
-                      if (snapshot.hasData) {
-                        DocumentSnapshot rentalDS = snapshot.data;
-                        DocumentReference itemDR = rentalDS['item'];
-                        DocumentReference ownerDR = rentalDS['owner'];
-                        DocumentReference renterDR = rentalDS['renter'];
+                  return StreamBuilder<DocumentSnapshot>(
+                    stream: otherUserDR.snapshots(),
+                    builder: (BuildContext context,
+                        AsyncSnapshot<DocumentSnapshot> snapshot) {
+                      if (snapshot.hasError) {
+                        return new Text('${snapshot.error}');
+                      }
+                      switch (snapshot.connectionState) {
+                        case ConnectionState.waiting:
+                          return Center(
+                            child: new Container(),
+                          );
+                        default:
+                          if (snapshot.hasData) {
+                            DocumentSnapshot otherUserDS = snapshot.data;
 
-                        bool isRenter = userRentalDS['isRenter'];
+                            return StreamBuilder<DocumentSnapshot>(
+                              stream: rentalDR.snapshots(),
+                              builder: (BuildContext context,
+                                  AsyncSnapshot<DocumentSnapshot> snapshot) {
+                                if (snapshot.hasError) {
+                                  return new Text('${snapshot.error}');
+                                }
+                                switch (snapshot.connectionState) {
+                                  case ConnectionState.waiting:
+                                    return Center(
+                                      child: new Container(),
+                                    );
+                                  default:
+                                    if (snapshot.hasData) {
+                                      DocumentSnapshot rentalDS = snapshot.data;
+                                      DocumentReference itemDR =
+                                          rentalDS['item'];
 
-                        Future<DocumentSnapshot> future =
-                            isRenter ? ownerDR.get() : renterDR.get();
+                                      return StreamBuilder<DocumentSnapshot>(
+                                        stream: itemDR.snapshots(),
+                                        builder: (BuildContext context,
+                                            AsyncSnapshot<DocumentSnapshot>
+                                                snapshot) {
+                                          if (snapshot.hasError) {
+                                            return new Text(
+                                                '${snapshot.error}');
+                                          }
+                                          switch (snapshot.connectionState) {
+                                            case ConnectionState.waiting:
+                                              return Center(
+                                                child: new Container(),
+                                              );
+                                            default:
+                                              if (snapshot.hasData) {
+                                                DocumentSnapshot itemDS =
+                                                    snapshot.data;
 
-                        return FutureBuilder(
-                          future: future,
-                          builder:
-                              (BuildContext context, AsyncSnapshot snapshot) {
-                            if (snapshot.hasData) {
-                              DocumentSnapshot otherUserDS = snapshot.data;
+                                                String title =
+                                                    otherUserDS['displayName'];
+                                                String imageURL =
+                                                    otherUserDS['photoURL'];
+                                                String lastActive = 'Last seen: ' +
+                                                    timeago.format(DateTime
+                                                        .fromMillisecondsSinceEpoch(
+                                                            otherUserDS[
+                                                                'lastActiveTimestamp']));
+                                                String itemName =
+                                                    'Item: ${itemDS['name']}';
+                                                String lastMessage =
+                                                    '<last message snippet here>';
 
-                              String title = otherUserDS['displayName'];
-                              String imageURL = otherUserDS['photoURL'];
-                              String lastActive = 'Last seen: ' +
-                                  timeago.format(
-                                      DateTime.fromMillisecondsSinceEpoch(
-                                          otherUserDS['lastActiveTimestamp']));
-
-                              return ListTile(
-                                leading: Container(
-                                  height: 50,
-                                  child: ClipOval(
-                                    child: CachedNetworkImage(
-                                      key: new ValueKey<String>(DateTime.now()
-                                          .millisecondsSinceEpoch
-                                          .toString()),
-                                      imageUrl: imageURL,
-                                      placeholder: (context, url) =>
-                                          new Container(),
-                                    ),
-                                  ),
-                                ),
-                                //leading: Icon(Icons.build),
-                                title: Text(
-                                  title,
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                                subtitle: Text(lastActive),
-                                onTap: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    Chat.routeName,
-                                    arguments: ChatArgs(
-                                      rentalDS.documentID,
-                                    ),
-                                  );
-                                },
-                              );
-                            } else {
-                              return Container();
-                            }
-                          },
-                        );
-                      } else {
-                        return Container();
+                                                return ListTile(
+                                                  leading: Container(
+                                                    height: 50,
+                                                    child: ClipOval(
+                                                      child: CachedNetworkImage(
+                                                        key: new ValueKey<
+                                                            String>(DateTime
+                                                                .now()
+                                                            .millisecondsSinceEpoch
+                                                            .toString()),
+                                                        imageUrl: imageURL,
+                                                        placeholder:
+                                                            (context, url) =>
+                                                                new Container(),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  //leading: Icon(Icons.build),
+                                                  title: Text(
+                                                    title,
+                                                    style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold),
+                                                  ),
+                                                  subtitle: Text(
+                                                      '$lastActive\n$itemName'),
+                                                  onTap: () {
+                                                    Navigator.pushNamed(
+                                                      context,
+                                                      Chat.routeName,
+                                                      arguments: ChatArgs(
+                                                        userRentalDS.documentID,
+                                                      ),
+                                                    );
+                                                  },
+                                                );
+                                              } else {
+                                                return Container();
+                                              }
+                                          }
+                                        },
+                                      );
+                                    } else {
+                                      return Container();
+                                    }
+                                }
+                              },
+                            );
+                          } else {
+                            return Container();
+                          }
                       }
                     },
                   );
@@ -1170,54 +1319,6 @@ class HomePageState extends State<HomePage> {
         },
       ),
     );
-
-    /*
-    return FutureBuilder(
-      future: Firestore.instance.collection('users').document(userID).get(),
-      builder: (BuildContext context, AsyncSnapshot snapshot) {
-        if (snapshot.hasData) {
-          DocumentSnapshot userDS = snapshot.data;
-          List<DocumentReference> rentals = List.from(userDS['rentals']);
-
-          return new ListView.builder(
-            shrinkWrap: true,
-            //padding: EdgeInsets.all(2.0),
-            itemCount: rentals.length,
-            itemBuilder: (context, index) {
-              debugPrint('*********${rentals[index].documentID}');
-              rentals[index].get().then((DocumentSnapshot rentalDS) {
-
-                return ListTile(
-                  leading: Icon(Icons.chat_bubble),
-                  //leading: Icon(Icons.build),
-                  title: Text(
-                    rentalDS.documentID,
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Text(rentalDS['start'].toString()),
-                  onTap: () {
-                    Navigator.pushNamed(
-                      context,
-                      Chat.routeName,
-                      arguments: ChatArgs(
-                        rentalDS.documentID,
-                      ),
-                    );
-                  },
-                );
-              });
-            },
-          );
-        } else {
-          return Container(
-            child: Center(
-              child: Text('error'),
-            ),
-          );
-        }
-      },
-    );
-    */
   }
 
   void navigateToEdit(Item newItem) async {
@@ -1358,4 +1459,27 @@ void showSnackBar(BuildContext context, String item) {
   );
 
   Scaffold.of(context).showSnackBar(message);
+}
+
+Widget template() {
+  return StreamBuilder<DocumentSnapshot>(
+    stream: null,
+    builder: (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+      if (snapshot.hasError) {
+        return new Text('${snapshot.error}');
+      }
+      switch (snapshot.connectionState) {
+        case ConnectionState.waiting:
+          return Center(
+            child: new Container(),
+          );
+        default:
+          if (snapshot.hasData) {
+            DocumentSnapshot ds = snapshot.data;
+          } else {
+            return Container();
+          }
+      }
+    },
+  );
 }

@@ -353,6 +353,9 @@ class ItemRequestState extends State<ItemRequest> {
           {
             'rental': rentalDR,
             'isRenter': true,
+            'otherUser': Firestore.instance
+                .collection('users')
+                .document(creatorDS.documentID),
           },
         );
       });
