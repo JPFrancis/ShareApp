@@ -448,6 +448,7 @@ class ItemEditState extends State<ItemEdit> {
     if (itemCopy.id == null) {
       final DocumentReference documentReference =
       await Firestore.instance.collection("items").add({
+        'id': null,
         'status': itemCopy.status,
         'creator': itemCopy.creator,
         'name': itemCopy.name,
@@ -464,6 +465,11 @@ class ItemEditState extends State<ItemEdit> {
       final String returnedID = documentReference.documentID;
 
       itemCopy.id = returnedID;
+
+      Firestore.instance
+          .collection('items')
+          .document(returnedID)
+          .updateData({'id': returnedID});
 
       Firestore.instance
           .collection('users')
