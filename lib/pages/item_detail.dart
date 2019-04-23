@@ -28,6 +28,9 @@ class ItemDetailState extends State<ItemDetail> {
   String appBarTitle = "Item Details";
   GoogleMapController googleMapController;
 
+  final GlobalKey<RefreshIndicatorState> refreshIndicatorKey =
+      new GlobalKey<RefreshIndicatorState>();
+
   //List<String> imageURLs = List();
   String url;
   double padding = 5.0;
@@ -41,12 +44,15 @@ class ItemDetailState extends State<ItemDetail> {
   String itemCreator;
 
   bool isLoading;
-  bool canRequest = true;
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => refreshIndicatorKey.currentState.show());
+
     getMyUserID();
     //getItemCreatorID();
 
@@ -68,7 +74,7 @@ class ItemDetailState extends State<ItemDetail> {
     });
   }
 
-  void getSnapshots() async {
+  Future<Null> getSnapshots() async {
     isLoading = true;
     DocumentSnapshot ds = await Firestore.instance
         .collection('items')
@@ -80,9 +86,6 @@ class ItemDetailState extends State<ItemDetail> {
 
       DocumentReference dr = itemDS['creator'];
       String str = dr.documentID;
-      if (myUserID == str || itemDS['rental'] != null) {
-        canRequest = false;
-      }
 
       ds = await Firestore.instance.collection('users').document(str).get();
 
@@ -107,21 +110,26 @@ class ItemDetailState extends State<ItemDetail> {
         goToLastScreen();
       },
       child: Scaffold(
-        body: isLoading
-            ? Container(
-          child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: <Widget>[
-                Center(child: CircularProgressIndicator())
-              ]),
-        )
-            : showBody(),
-        //floatingActionButton: showFAB(),
+        body: RefreshIndicator(
+          key: refreshIndicatorKey,
+          onRefresh: getSnapshots,
+          child: isLoading
+              ? Container(
+                  child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: <Widget>[
+                        Center(child: CircularProgressIndicator())
+                      ]),
+                )
+              : showBody(),
+        ),
+
+        floatingActionButton: showFAB(),
         bottomNavigationBar: isLoading
             ? Container(
-          height: 0,
-        )
+                height: 0,
+              )
             : bottomDetails(),
       ),
     );
@@ -154,7 +162,10 @@ class ItemDetailState extends State<ItemDetail> {
 
   RaisedButton requestButton() {
     return RaisedButton(
-        onPressed: canRequest ? () => handleRequestItemPressed() : null,
+        onPressed:
+            myUserID == itemDS['creator'].documentID || itemDS['rental'] != null
+                ? null
+                : () => handleRequestItemPressed(),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5.0)),
         color: Colors.red,
         child: Text("Check Availability",
@@ -225,27 +236,27 @@ class ItemDetailState extends State<ItemDetail> {
       padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 10.0),
       child: SizedBox(
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              Text(
-                'Shared by ${creatorDS['displayName']}',
-                style: TextStyle(
-                    color: Colors.black, fontSize: 15.0, fontFamily: 'Quicksand'),
-                textAlign: TextAlign.left,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          Text(
+            'Shared by ${creatorDS['displayName']}',
+            style: TextStyle(
+                color: Colors.black, fontSize: 15.0, fontFamily: 'Quicksand'),
+            textAlign: TextAlign.left,
+          ),
+          Container(
+            height: 50.0,
+            child: ClipOval(
+              child: CachedNetworkImage(
+                key: new ValueKey<String>(
+                    DateTime.now().millisecondsSinceEpoch.toString()),
+                imageUrl: creatorDS['photoURL'],
+                placeholder: (context, url) => new CircularProgressIndicator(),
               ),
-              Container(
-                height: 50.0,
-                child: ClipOval(
-                  child: CachedNetworkImage(
-                    key: new ValueKey<String>(
-                        DateTime.now().millisecondsSinceEpoch.toString()),
-                    imageUrl: creatorDS['photoURL'],
-                    placeholder: (context, url) => new CircularProgressIndicator(),
-                  ),
-                ),
-              ),
-            ],
-          )),
+            ),
+          ),
+        ],
+      )),
     );
   }
 
@@ -254,44 +265,44 @@ class ItemDetailState extends State<ItemDetail> {
       padding: const EdgeInsets.only(left: 20.0),
       child: SizedBox(
           child: Container(
-            color: Color(0x00000000),
-            child: Text(
-              '${itemDS['name']}',
-              //itemName,
-              style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 40.0,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Quicksand'),
-              textAlign: TextAlign.left,
-            ),
-          )),
+        color: Color(0x00000000),
+        child: Text(
+          '${itemDS['name']}',
+          //itemName,
+          style: TextStyle(
+              color: Colors.black,
+              fontSize: 40.0,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Quicksand'),
+          textAlign: TextAlign.left,
+        ),
+      )),
     );
   }
 
   Widget showItemPrice() {
     return SizedBox(
-      //height: 50.0,
+        //height: 50.0,
         child: Container(
-          color: Color(0x00000000),
-          child: Row(
-            children: <Widget>[
-              Text(
-                '\$${itemDS['price']}',
-                style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 25.0,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Quicksand'),
-              ),
-              Text(
-                ' / HOUR',
-                style: TextStyle(
-                    color: Colors.black, fontSize: 12.0, fontFamily: 'Quicksand'),
-              )
-            ],
+      color: Color(0x00000000),
+      child: Row(
+        children: <Widget>[
+          Text(
+            '\$${itemDS['price']}',
+            style: TextStyle(
+                color: Colors.black,
+                fontSize: 25.0,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Quicksand'),
           ),
-        ));
+          Text(
+            ' / HOUR',
+            style: TextStyle(
+                color: Colors.black, fontSize: 12.0, fontFamily: 'Quicksand'),
+          )
+        ],
+      ),
+    ));
   }
 
   Widget showItemDescription() {
@@ -299,14 +310,14 @@ class ItemDetailState extends State<ItemDetail> {
       padding: EdgeInsets.only(top: 20.0, left: 20.0, right: 20.0),
       child: SizedBox(
           child: Container(
-            color: Color(0x00000000),
-            child: Text(
-              '${itemDS['description']}',
-              style: TextStyle(
-                  color: Colors.black, fontSize: 15.0, fontFamily: 'Quicksand'),
-              textAlign: TextAlign.left,
-            ),
-          )),
+        color: Color(0x00000000),
+        child: Text(
+          '${itemDS['description']}',
+          style: TextStyle(
+              color: Colors.black, fontSize: 15.0, fontFamily: 'Quicksand'),
+          textAlign: TextAlign.left,
+        ),
+      )),
     );
   }
 
@@ -315,17 +326,17 @@ class ItemDetailState extends State<ItemDetail> {
       padding: EdgeInsets.only(left: 20.0, top: 20.0),
       child: SizedBox(
           child: Container(
-            color: Color(0x00000000),
-            child: Text(
-              '${itemDS['type']}'.toUpperCase(),
-              style: TextStyle(
-                  color: Colors.black54,
-                  fontSize: 12.0,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Quicksand'),
-              textAlign: TextAlign.left,
-            ),
-          )),
+        color: Color(0x00000000),
+        child: Text(
+          '${itemDS['type']}'.toUpperCase(),
+          style: TextStyle(
+              color: Colors.black54,
+              fontSize: 12.0,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Quicksand'),
+          textAlign: TextAlign.left,
+        ),
+      )),
     );
   }
 
@@ -334,31 +345,31 @@ class ItemDetailState extends State<ItemDetail> {
       padding: EdgeInsets.only(left: 20.0, top: 5.0),
       child: SizedBox(
           child: Container(
-            color: Color(0x00000000),
-            child: Row(
-              children: <Widget>[
-                Text(
-                  'Condition: ',
-                  style: TextStyle(
-                      color: Colors.black54,
-                      fontSize: 13.0,
-                      fontStyle: FontStyle.italic,
-                      fontFamily: 'Quicksand'),
-                  textAlign: TextAlign.left,
-                ),
-                Text(
-                  '${itemDS['condition']}',
-                  style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 14.0,
-                      fontStyle: FontStyle.italic,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Quicksand'),
-                  textAlign: TextAlign.left,
-                ),
-              ],
+        color: Color(0x00000000),
+        child: Row(
+          children: <Widget>[
+            Text(
+              'Condition: ',
+              style: TextStyle(
+                  color: Colors.black54,
+                  fontSize: 13.0,
+                  fontStyle: FontStyle.italic,
+                  fontFamily: 'Quicksand'),
+              textAlign: TextAlign.left,
             ),
-          )),
+            Text(
+              '${itemDS['condition']}',
+              style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 14.0,
+                  fontStyle: FontStyle.italic,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Quicksand'),
+              textAlign: TextAlign.left,
+            ),
+          ],
+        ),
+      )),
     );
   }
 
@@ -383,9 +394,9 @@ class ItemDetailState extends State<ItemDetail> {
     List imagesList = itemDS['images'];
     return imagesList.length > 0
         ? Container(
-      height: widthOfScreen,
-      child: SizedBox.expand(child: getImagesListView(context)),
-    )
+            height: widthOfScreen,
+            child: SizedBox.expand(child: getImagesListView(context)),
+          )
         : Text('No images yet\n');
   }
 
@@ -394,7 +405,7 @@ class ItemDetailState extends State<ItemDetail> {
     GeoPoint gp = itemDS['location'];
     double lat = gp.latitude;
     double long = gp.longitude;
-    setCamera();
+    //setCamera();
     return Padding(
       padding: const EdgeInsets.only(left: 20.0, right: 20.0),
       child: Column(
@@ -409,8 +420,8 @@ class ItemDetailState extends State<ItemDetail> {
                       fontWeight: FontWeight.bold,
                       color: Colors.black87,
                       fontFamily: 'Quicksand')
-                //textScaleFactor: 1.2,
-              ),
+                  //textScaleFactor: 1.2,
+                  ),
             ),
           ),
           /*
@@ -455,10 +466,10 @@ class ItemDetailState extends State<ItemDetail> {
                 ),
                 gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>[
                   Factory<OneSequenceGestureRecognizer>(
-                        () =>
-                    // to disable dragging, use ScaleGestureRecognizer()
-                    // to enable dragging, use EagerGestureRecognizer()
-                    EagerGestureRecognizer(),
+                    () =>
+                        // to disable dragging, use ScaleGestureRecognizer()
+                        // to enable dragging, use EagerGestureRecognizer()
+                        EagerGestureRecognizer(),
                     //ScaleGestureRecognizer(),
                   ),
                 ].toSet(),
@@ -503,25 +514,6 @@ class ItemDetailState extends State<ItemDetail> {
     );
   }
 
-  Item makeCopy(Item old) {
-    Item output = Item();
-
-    output.name = old.name;
-    output.description = old.description;
-    output.type = old.type;
-    output.numImages = old.numImages;
-    output.id = old.id;
-    output.price = old.price;
-    output.location = old.location;
-    output.images = List();
-
-    for (int i = 0; i < old.numImages; i++) {
-      output.images.add(old.images[i]);
-    }
-
-    return output;
-  }
-
   void navigateToEdit() async {
     Item editItem = Item.fromMap(itemDS.data);
 
@@ -547,31 +539,50 @@ class ItemDetailState extends State<ItemDetail> {
   }
 
   void handleRequestItemPressed() async {
-    /*
-    setState(
-      () {
-        getSnapshots();
-      },
-    );
-    */
-
-    Navigator.pushNamed(
-      context,
-      ItemRequest.routeName,
-      arguments: ItemRequestArgs(
-        widget.itemID,
-      ),
-    );
-/*
-    Item result = await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (BuildContext context) => RequestItem(
-                itemID: widget.itemID,
+    getSnapshots().then((_) {
+      itemDS['rental'] != null
+          ? showRequestErrorDialog()
+          : Navigator.pushNamed(
+              context,
+              ItemRequest.routeName,
+              arguments: ItemRequestArgs(
+                widget.itemID,
               ),
-          fullscreenDialog: true,
-        ));
-        */
+            );
+    });
+  }
+
+  Future<bool> showRequestErrorDialog() async {
+    //if (widget.userEdit.displayName == userEditCopy.displayName) return true;
+
+    final ThemeData theme = Theme.of(context);
+    final TextStyle dialogTextStyle =
+        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+
+    String message = 'Someone has already requested this item!';
+
+    return await showDialog<bool>(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Error'),
+              content: Text(
+                message,
+                style: dialogTextStyle,
+              ),
+              actions: <Widget>[
+                FlatButton(
+                  child: const Text('Ok'),
+                  onPressed: () {
+                    Navigator.of(context).pop(
+                        false); // Pops the confirmation dialog but not the page.
+                  },
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
   }
 
   setCamera() async {

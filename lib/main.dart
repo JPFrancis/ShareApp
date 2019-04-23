@@ -31,17 +31,17 @@ class MyApp extends StatelessWidget {
 /// ========================================================================
 /// Our actual app
 
-import 'package:shareapp/rentals/rental_detail.dart';
-import 'package:shareapp/models/item.dart';
-import 'package:shareapp/pages/item_edit.dart';
 import 'package:flutter/material.dart';
+import 'package:shareapp/models/item.dart';
+import 'package:shareapp/rentals/chat.dart';
 import 'package:shareapp/services/auth.dart';
+import 'package:shareapp/pages/item_edit.dart';
 import 'package:shareapp/pages/home_page.dart';
-import 'package:shareapp/pages/item_detail.dart';
 import 'package:shareapp/pages/root_page.dart';
+import 'package:shareapp/pages/item_detail.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shareapp/rentals/item_request.dart';
-import 'package:shareapp/rentals/chat.dart';
+import 'package:shareapp/rentals/rental_detail.dart';
 
 void main() => runApp(MyApp());
 

@@ -53,6 +53,7 @@ class Item {
 
   Item.fromMap(Map<String, dynamic> data)
       : this(
+    id: data['id'],
     status: data['status'],
     creator: data['creator'],
     name: data['name'],
