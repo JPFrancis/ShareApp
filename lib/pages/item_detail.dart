@@ -187,11 +187,7 @@ class ItemDetailState extends State<ItemDetail> {
       children: <Widget>[
         Stack(children: <Widget>[
           showItemImages(),
-<<<<<<< HEAD
-          backButton(), 
-=======
           backButton(),
->>>>>>> 51d0bd23372807b163c314870c0f4f941e1112c9
         ]),
         showItemType(),
         showItemName(),
@@ -204,11 +200,7 @@ class ItemDetailState extends State<ItemDetail> {
     );
   }
 
-<<<<<<< HEAD
-    Widget backButton() {
-=======
   Widget backButton() {
->>>>>>> 51d0bd23372807b163c314870c0f4f941e1112c9
     return Container(
       alignment: Alignment.topLeft,
       child: FloatingActionButton(
@@ -218,47 +210,6 @@ class ItemDetailState extends State<ItemDetail> {
         elevation: 0.0,
         foregroundColor: Colors.black,
       ),
-<<<<<<< HEAD
-    );
-  }
-
-  Widget divider() {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Divider(),
-    );
-  }
-
-  Widget showItemCreator() {
-    return Padding(
-      padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 10.0),
-      child: SizedBox(
-          child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: <Widget>[
-          Text(
-            'Shared by ${creatorDS['displayName']}',
-            style: TextStyle(
-                color: Colors.black, fontSize: 15.0, fontFamily: 'Quicksand'),
-            textAlign: TextAlign.left,
-          ),
-          Container(
-            height: 50.0,
-            child: ClipOval(
-              child: CachedNetworkImage(
-                key: new ValueKey<String>(
-                    DateTime.now().millisecondsSinceEpoch.toString()),
-                imageUrl: creatorDS['photoURL'],
-                placeholder: (context, url) => new CircularProgressIndicator(),
-              ),
-            ),
-          ),
-        ],
-      )),
-    );
-  }
-
-=======
     );
   }
 
@@ -298,7 +249,6 @@ class ItemDetailState extends State<ItemDetail> {
     );
   }
 
->>>>>>> 51d0bd23372807b163c314870c0f4f941e1112c9
   Widget showItemName() {
     return Padding(
       padding: const EdgeInsets.only(left: 20.0),

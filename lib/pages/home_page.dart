@@ -1,8 +1,4 @@
 import 'dart:async';
-<<<<<<< HEAD
-
-=======
->>>>>>> 51d0bd23372807b163c314870c0f4f941e1112c9
 import 'package:shareapp/main.dart';
 import 'package:flutter/material.dart';
 import 'package:shareapp/rentals/chat.dart';
@@ -209,14 +205,6 @@ class HomePageState extends State<HomePage> {
       padding: edgeInset,
       child: Column(
         children: <Widget>[
-          /*
-          Container(
-            child: showSignedInAs(),
-          ),
-          Container(
-            height: 10,
-          ),
-          */
           reusableObjList('All items', buildItemList()),
         ],
       ),
@@ -382,7 +370,7 @@ class HomePageState extends State<HomePage> {
 
   Widget profileTabAfterIntro() {
     // [TEMPORARY SOLUTION]
-    double height = (MediaQuery.of(context).size.height) - 310;
+    double height = (MediaQuery.of(context).size.height) - 320;
     return Container(
       height: height,
       child: ListView(
@@ -505,6 +493,47 @@ class HomePageState extends State<HomePage> {
     );
   }
 
+  Widget cardItem(DocumentSnapshot ds) {
+    CachedNetworkImage image = CachedNetworkImage(
+      key: new ValueKey<String>(
+          DateTime.now().millisecondsSinceEpoch.toString()),
+      imageUrl: ds['images'][0],
+      placeholder: (context, url) => new CircularProgressIndicator(),
+    );
+
+    return InkWell(onTap: () {
+      navigateToDetail(ds.documentID);
+    }, child: new Card(child: new LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+      double h = constraints.maxHeight;
+      double w = constraints.maxWidth;
+      return Column(
+        children: <Widget>[
+          Container(
+              height: 3 * h / 4,
+              width: w,
+              child: FittedBox(fit: BoxFit.cover, child: image)),
+          Container(
+              height: h / 4,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Row(
+                    children: <Widget>[
+                      Text(ds['description']),
+                      Icon(Icons.alarm)
+                    ],
+                  ),
+                  Text(ds['name']),
+                  Text("\$${ds['price']} per hour"),
+                  Text("[rating goes here]")
+                ],
+              )),
+        ],
+      );
+    })));
+  }
+
   Widget buildItemList() {
     CollectionReference collectionReference =
         Firestore.instance.collection('items');
@@ -523,6 +552,17 @@ class HomePageState extends State<HomePage> {
                 child: new Container(),
               );
             default:
+              List<DocumentSnapshot> items = snapshot.data.documents.toList();
+              return GridView.count(
+                  crossAxisCount: 2,
+                  childAspectRatio: (3 / 4),
+                  padding: const EdgeInsets.all(15.0),
+                  mainAxisSpacing: 4.0,
+                  crossAxisSpacing: 4.0,
+                  children: items
+                      .map((DocumentSnapshot ds) => cardItem(ds))
+                      .toList());
+            /*
               return new GridView.builder(
                 shrinkWrap: true,
                 itemCount: snapshot.data.documents.length,
@@ -530,14 +570,6 @@ class HomePageState extends State<HomePage> {
                     crossAxisCount: 2),
                 itemBuilder: (context, index) {
                   DocumentSnapshot ds = snapshot.data.documents[index];
-                  Widget preview = new CachedNetworkImage(
-                    height: 150.0,
-                    key: new ValueKey<String>(
-                        DateTime.now().millisecondsSinceEpoch.toString()),
-                    imageUrl: ds['images'][0],
-                    placeholder: (context, url) =>
-                        new CircularProgressIndicator(),
-                  );
                   Icon tileIcon;
                   String itemType = ds['type'];
 
@@ -555,46 +587,33 @@ class HomePageState extends State<HomePage> {
                       tileIcon = Icon(Icons.device_unknown);
                       break;
                   }
-
                   return InkWell(
                     onTap: () {
                       DocumentReference dr = ds['creator'];
                       navigateToDetail(ds.documentID);
                     },
-                    child: Card(
-                      child: Container(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: <Widget>[
-                            preview, 
-                            Text(ds['name']),
-                            ],
+                    child: Column(
+                      children: <Widget>[
+                        GridTile(
+                          child: FittedBox(
+                            fit: BoxFit.cover,
+                            child: CachedNetworkImage(
+                              key: new ValueKey<String>(DateTime.now()
+                                  .millisecondsSinceEpoch
+                                  .toString()),
+                              imageUrl: ds['images'][0],
+                              placeholder: (context, url) =>
+                                  new CircularProgressIndicator(),
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                  );
-
-                  return ListTile(
-                    leading: tileIcon,
-                    //leading: Icon(Icons.build),
-                    title: Text(
-                      ds['name'],
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Text(ds['description']),
-                    onTap: () {
-                      DocumentReference dr = ds['creator'];
-                      navigateToDetail(ds.documentID);
-                    },
-                    trailing: IconButton(
-                      icon: Icon(Icons.delete),
-                      onPressed: () {
-                        deleteItemDialog(ds);
-                      },
+                        Text(ds['name']),
+                      ],
                     ),
                   );
                 },
               );
+              */
           }
         },
       ),
@@ -928,8 +947,6 @@ class HomePageState extends State<HomePage> {
                       icon: Icon(Icons.delete),
                       onPressed: () {
                         deleteItemDialog(ds);
-
-                        /// ====================== ADD DELETE CONFIRMATION !!!
                       },
                     ),
                   );
@@ -1003,8 +1020,6 @@ class HomePageState extends State<HomePage> {
                         icon: Icon(Icons.delete),
                         onPressed: () {
                           deleteItemDialog(ds);
-
-                          /// ====================== ADD DELETE CONFIRMATION !!!
                         },
                       ),
                     );
@@ -1081,8 +1096,6 @@ class HomePageState extends State<HomePage> {
                         icon: Icon(Icons.delete),
                         onPressed: () {
                           deleteItemDialog(ds);
-
-                          /// ====================== ADD DELETE CONFIRMATION !!!
                         },
                       ),
                     );
@@ -1257,19 +1270,6 @@ class HomePageState extends State<HomePage> {
         newItem,
       ),
     );
-<<<<<<< HEAD
-/*
-		Navigator.push(
-				context,
-				MaterialPageRoute(
-					builder: (BuildContext context) => ItemEdit(
-								item: newItem,
-							),
-					fullscreenDialog: true,
-				));
-				*/
-=======
->>>>>>> 51d0bd23372807b163c314870c0f4f941e1112c9
   }
 
   void navigateToDetail(String itemID) async {
@@ -1280,18 +1280,6 @@ class HomePageState extends State<HomePage> {
         itemID,
       ),
     );
-<<<<<<< HEAD
-    /*
-		await Navigator.push(
-				context,
-				MaterialPageRoute(
-					builder: (BuildContext context) => ItemDetail(
-								itemID: itemID,
-							),
-				));
-				*/
-=======
->>>>>>> 51d0bd23372807b163c314870c0f4f941e1112c9
   }
 
   Future<UserEdit> getUserEdit() async {
