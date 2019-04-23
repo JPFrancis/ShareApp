@@ -84,7 +84,7 @@ class HomePageState extends State<HomePage> {
           'email': widget.firebaseUser.email,
           'lastActiveTimestamp': DateTime.now().millisecondsSinceEpoch,
           'accountCreationTimestamp':
-          widget.firebaseUser.metadata.creationTimestamp,
+              widget.firebaseUser.metadata.creationTimestamp,
         });
       }
 
@@ -113,7 +113,7 @@ class HomePageState extends State<HomePage> {
         'email': widget.firebaseUser.email,
 
         'accountCreationTimestamp':
-        widget.firebaseUser.metadata.creationTimestamp,
+            widget.firebaseUser.metadata.creationTimestamp,
       });
     });
 
@@ -150,24 +150,15 @@ class HomePageState extends State<HomePage> {
     );
 
     return Scaffold(
-      /*appBar: AppBar(title: Text('ShareApp'), actions: <Widget>[
-        IconButton(
-          icon: Icon(Icons.exit_to_app),
-          tooltip: 'Sign out',
-          onPressed: () {
-            logout();
-          },
-        ),
-      ]),*/
       body: isLoading
           ? Container(
-        child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
-              Center(child: CircularProgressIndicator())
-            ]),
-      )
+              child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: <Widget>[
+                    Center(child: CircularProgressIndicator())
+                  ]),
+            )
           : bottomTabPages[currentTabIndex],
       floatingActionButton: showFAB(),
       bottomNavigationBar: bottomNavBar,
@@ -203,14 +194,39 @@ class HomePageState extends State<HomePage> {
   }
 
   Widget homeTabPage() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        searchField(),
+               Padding(
+                      padding: const EdgeInsets.only(left: 20.0),
+                      child: Text("Items near you", style: TextStyle(fontFamily: 'Quicksand', fontWeight: FontWeight.bold, fontSize: 30.0)),
+                    ),
+        buildItemList(),
+      ],
+    );
+  }
+
+  Widget searchField() {
+    double width = MediaQuery.of(context).size.width;
+    double height = MediaQuery.of(context).size.height;
     return Padding(
-      padding: edgeInset,
-      child: Column(
-        children: <Widget>[
-          reusableObjList('All items', buildItemList()),
-        ],
+      padding: const EdgeInsets.fromLTRB(20.0, 40.0, 20.0, 20.0),
+      child: Container(
+        child: RaisedButton(
+          color: Colors.white,
+          onPressed: ()=>debugPrint,
+          child: Row(children: <Widget>[
+            Icon(Icons.search),
+            SizedBox(width: 10.0,),
+            Text("Try \"Basketball\"", style: TextStyle(fontFamily: 'Quicksand', fontWeight: FontWeight.w400),)
+          ],),
+        ),
+        width: width, 
+        height: height / 20,
       ),
     );
+ 
   }
 
   Widget rentalsTabPage() {
@@ -314,7 +330,7 @@ class HomePageState extends State<HomePage> {
   Widget profileIntroStream() {
     return StreamBuilder<DocumentSnapshot>(
       stream:
-      Firestore.instance.collection('users').document(userID).snapshots(),
+          Firestore.instance.collection('users').document(userID).snapshots(),
       builder:
           (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
         if (snapshot.hasError) {
@@ -573,76 +589,69 @@ class HomePageState extends State<HomePage> {
       imageUrl: ds['images'][0],
       placeholder: (context, url) => new CircularProgressIndicator(),
     );
-<<<<<<< HEAD
-
-=======
->>>>>>> d49807f53fd1dc7620958d07f02751840323469e
-    return InkWell(onTap: () {
-      navigateToDetail(ds.documentID);
-    }, child: new Card(child: new LayoutBuilder(
+    return InkWell(
+      onTap: () { navigateToDetail(ds.documentID); }, 
+      child: new Container(
+        child: new LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
-<<<<<<< HEAD
       double h = constraints.maxHeight;
       double w = constraints.maxWidth;
+      Icon icon = Icon(Icons.info_outline);
+      switch (ds['type']) {
+        case 'Tool':
+          icon = Icon(Icons.build, size: h/20,);
+          break;
+        case 'Leisure':
+          icon = Icon(Icons.golf_course, size: h/20);
+          break;
+        case 'Home':
+          icon = Icon(Icons.home, size: h/20);
+          break;
+        case 'Other':
+          icon = Icon(Icons.device_unknown, size: h/20);
+          break;
+      }
       return Column(
         children: <Widget>[
           Container(
-              height: 3 * h / 4,
+              height: 2 * h / 3,
               width: w,
               child: FittedBox(fit: BoxFit.cover, child: image)),
-          Container(
-              height: h / 4,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          SizedBox(height: 10.0,),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Row(
                 children: <Widget>[
-                  Row(
-                    children: <Widget>[
-                      Text(ds['description']),
-                      Icon(Icons.alarm)
-                    ],
-                  ),
-                  Text(ds['name']),
-                  Text("\$${ds['price']} per hour"),
-                  Text("[rating goes here]")
+                  icon, 
+                  SizedBox(width: 5.0,),
+                  ds['type'] != null 
+                      ? Text( '${ds['type']}'.toUpperCase(), style: TextStyle( fontSize: h / 25, fontFamily: 'Quicksand', fontWeight: FontWeight.bold),)
+                      : Text(''),
                 ],
-              )),
+              ),
+              Text(ds['name'], style: TextStyle( fontSize: h / 20, fontFamily: 'Quicksand', fontWeight: FontWeight.bold)),
+              Text("\$${ds['price']} per hour", style: TextStyle(fontSize: h / 21, fontFamily: 'Quicksand')),
+              Row( children: <Widget>[
+                  Icon( Icons.star_border, size: h / 19,),
+                  Icon( Icons.star_border, size: h / 19,),
+                  Icon( Icons.star_border, size: h / 19,),
+                  Icon( Icons.star_border, size: h / 19,),
+                  Icon( Icons.star_border, size: h / 19,),
+                  Container(width: 5.0,),
+                  Text( "328", style: TextStyle( fontSize: h / 25, fontFamily: 'Quicksand', fontWeight: FontWeight.bold,),)
+                ],
+              )
+            ],
+          ),
         ],
       );
     })));
-=======
-          double h = constraints.maxHeight;
-          double w = constraints.maxWidth;
-          return Column(
-            children: <Widget>[
-              Container(
-                  height: 3 * h / 4,
-                  width: w,
-                  child: FittedBox(fit: BoxFit.cover, child: image)),
-              Container(
-                  height: h / 4,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Row(
-                        children: <Widget>[
-                          Text(ds['description']),
-                          Icon(Icons.alarm)
-                        ],
-                      ),
-                      Text(ds['name']),
-                      Text("\$${ds['price']} per hour"),
-                      Text("[rating goes here]")
-                    ],
-                  )),
-            ],
-          );
-        })));
->>>>>>> d49807f53fd1dc7620958d07f02751840323469e
   }
 
   Widget buildItemList() {
-    CollectionReference collectionReference =
-    Firestore.instance.collection('items');
+    CollectionReference collectionReference = Firestore.instance.collection('items');
+    int tilerows = MediaQuery.of(context).size.width > 500 ? 3 : 2;
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
         stream: collectionReference.snapshots(),
@@ -660,70 +669,15 @@ class HomePageState extends State<HomePage> {
             default:
               List<DocumentSnapshot> items = snapshot.data.documents.toList();
               return GridView.count(
-                  crossAxisCount: 2,
-                  childAspectRatio: (3 / 4),
-                  padding: const EdgeInsets.all(15.0),
-                  mainAxisSpacing: 4.0,
-                  crossAxisSpacing: 4.0,
+                  crossAxisCount: tilerows,
+                  childAspectRatio: (2 / 3),
+                  padding: const EdgeInsets.all(20.0),
+//                  mainAxisSpacing: 10.0,
+                  crossAxisSpacing: MediaQuery.of(context).size.width/15,
                   children: items
                       .map((DocumentSnapshot ds) => cardItem(ds))
                       .toList());
-<<<<<<< HEAD
-            /*
-=======
-          /*
->>>>>>> d49807f53fd1dc7620958d07f02751840323469e
-              return new GridView.builder(
-                shrinkWrap: true,
-                itemCount: snapshot.data.documents.length,
-                gridDelegate: new SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2),
-                itemBuilder: (context, index) {
-                  DocumentSnapshot ds = snapshot.data.documents[index];
-                  Icon tileIcon;
-                  String itemType = ds['type'];
-
-                  switch (itemType) {
-                    case 'Tool':
-                      tileIcon = Icon(Icons.build);
-                      break;
-                    case 'Leisure':
-                      tileIcon = Icon(Icons.golf_course);
-                      break;
-                    case 'Home':
-                      tileIcon = Icon(Icons.home);
-                      break;
-                    case 'Other':
-                      tileIcon = Icon(Icons.device_unknown);
-                      break;
-                  }
-                  return InkWell(
-                    onTap: () {
-                      DocumentReference dr = ds['creator'];
-                      navigateToDetail(ds.documentID);
-                    },
-                    child: Column(
-                      children: <Widget>[
-                        GridTile(
-                          child: FittedBox(
-                            fit: BoxFit.cover,
-                            child: CachedNetworkImage(
-                              key: new ValueKey<String>(DateTime.now()
-                                  .millisecondsSinceEpoch
-                                  .toString()),
-                              imageUrl: ds['images'][0],
-                              placeholder: (context, url) =>
-                                  new CircularProgressIndicator(),
-                            ),
-                          ),
-                        ),
-                        Text(ds['name']),
-                      ],
-                    ),
-                  );
-                },
-              );
-              */
+  
           }
         },
       ),
@@ -732,7 +686,7 @@ class HomePageState extends State<HomePage> {
 
   Widget buildRentalsList() {
     CollectionReference collectionReference =
-    Firestore.instance.collection('rentals');
+        Firestore.instance.collection('rentals');
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
         stream: collectionReference.snapshots(),
@@ -783,17 +737,17 @@ class HomePageState extends State<HomePage> {
                     },
                     trailing: showChat
                         ? IconButton(
-                      icon: Icon(Icons.message),
-                      onPressed: () {
-                        Navigator.pushNamed(
-                          context,
-                          Chat.routeName,
-                          arguments: ChatArgs(
-                            ds.documentID,
-                          ),
-                        );
-                      },
-                    )
+                            icon: Icon(Icons.message),
+                            onPressed: () {
+                              Navigator.pushNamed(
+                                context,
+                                Chat.routeName,
+                                arguments: ChatArgs(
+                                  ds.documentID,
+                                ),
+                              );
+                            },
+                          )
                         : null,
                   );
                 },
@@ -806,7 +760,7 @@ class HomePageState extends State<HomePage> {
 
   Widget buildRentalsListCurrent() {
     CollectionReference collectionReference =
-    Firestore.instance.collection('rentals');
+        Firestore.instance.collection('rentals');
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
         stream: collectionReference.snapshots(),
@@ -881,17 +835,17 @@ class HomePageState extends State<HomePage> {
                                 },
                                 trailing: showChat
                                     ? IconButton(
-                                  icon: Icon(Icons.message),
-                                  onPressed: () {
-                                    Navigator.pushNamed(
-                                      context,
-                                      Chat.routeName,
-                                      arguments: ChatArgs(
-                                        ds.documentID,
-                                      ),
-                                    );
-                                  },
-                                )
+                                        icon: Icon(Icons.message),
+                                        onPressed: () {
+                                          Navigator.pushNamed(
+                                            context,
+                                            Chat.routeName,
+                                            arguments: ChatArgs(
+                                              ds.documentID,
+                                            ),
+                                          );
+                                        },
+                                      )
                                     : null,
                               );
                             } else {
@@ -913,7 +867,7 @@ class HomePageState extends State<HomePage> {
 
   Widget buildRentalsListRequested() {
     CollectionReference collectionReference =
-    Firestore.instance.collection('rentals');
+        Firestore.instance.collection('rentals');
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
         stream: collectionReference.snapshots(),
@@ -988,17 +942,17 @@ class HomePageState extends State<HomePage> {
                                 },
                                 trailing: showChat
                                     ? IconButton(
-                                  icon: Icon(Icons.message),
-                                  onPressed: () {
-                                    Navigator.pushNamed(
-                                      context,
-                                      Chat.routeName,
-                                      arguments: ChatArgs(
-                                        ds.documentID,
-                                      ),
-                                    );
-                                  },
-                                )
+                                        icon: Icon(Icons.message),
+                                        onPressed: () {
+                                          Navigator.pushNamed(
+                                            context,
+                                            Chat.routeName,
+                                            arguments: ChatArgs(
+                                              ds.documentID,
+                                            ),
+                                          );
+                                        },
+                                      )
                                     : null,
                               );
                             } else {
@@ -1020,13 +974,13 @@ class HomePageState extends State<HomePage> {
 
   Widget buildMyListingsList() {
     CollectionReference collectionReference =
-    Firestore.instance.collection('items');
+        Firestore.instance.collection('items');
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
         stream: collectionReference
             .where('creator',
-            isEqualTo:
-            Firestore.instance.collection('users').document(userID))
+                isEqualTo:
+                    Firestore.instance.collection('users').document(userID))
             .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
@@ -1092,13 +1046,13 @@ class HomePageState extends State<HomePage> {
 
   Widget buildMyListingsListAvailable() {
     CollectionReference collectionReference =
-    Firestore.instance.collection('items');
+        Firestore.instance.collection('items');
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
         stream: collectionReference
             .where('creator',
-            isEqualTo:
-            Firestore.instance.collection('users').document(userID))
+                isEqualTo:
+                    Firestore.instance.collection('users').document(userID))
             .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
@@ -1168,13 +1122,13 @@ class HomePageState extends State<HomePage> {
 
   Widget buildMyListingsListRented() {
     CollectionReference collectionReference =
-    Firestore.instance.collection('items');
+        Firestore.instance.collection('items');
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
         stream: collectionReference
             .where('creator',
-            isEqualTo:
-            Firestore.instance.collection('users').document(userID))
+                isEqualTo:
+                    Firestore.instance.collection('users').document(userID))
             .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
@@ -1244,7 +1198,7 @@ class HomePageState extends State<HomePage> {
 
   Widget buildMessagesList() {
     CollectionReference collectionReference =
-    Firestore.instance.collection('users');
+        Firestore.instance.collection('users');
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
         stream: collectionReference
@@ -1267,7 +1221,7 @@ class HomePageState extends State<HomePage> {
                 itemCount: snapshot.data.documents.length,
                 itemBuilder: (context, index) {
                   DocumentSnapshot userRentalDS =
-                  snapshot.data.documents[index];
+                      snapshot.data.documents[index];
                   DocumentReference otherUserDR = userRentalDS['otherUser'];
                   DocumentReference rentalDR = userRentalDS['rental'];
 
@@ -1303,13 +1257,13 @@ class HomePageState extends State<HomePage> {
                                     if (snapshot.hasData) {
                                       DocumentSnapshot rentalDS = snapshot.data;
                                       DocumentReference itemDR =
-                                      rentalDS['item'];
+                                          rentalDS['item'];
 
                                       return StreamBuilder<DocumentSnapshot>(
                                         stream: itemDR.snapshots(),
                                         builder: (BuildContext context,
                                             AsyncSnapshot<DocumentSnapshot>
-                                            snapshot) {
+                                                snapshot) {
                                           if (snapshot.hasError) {
                                             return new Text(
                                                 '${snapshot.error}');
@@ -1325,14 +1279,14 @@ class HomePageState extends State<HomePage> {
                                                     snapshot.data;
 
                                                 String title =
-                                                otherUserDS['displayName'];
+                                                    otherUserDS['displayName'];
                                                 String imageURL =
-                                                otherUserDS['photoURL'];
+                                                    otherUserDS['photoURL'];
                                                 String lastActive = 'Last seen: ' +
                                                     timeago.format(DateTime
                                                         .fromMillisecondsSinceEpoch(
-                                                        otherUserDS[
-                                                        'lastActiveTimestamp']));
+                                                            otherUserDS[
+                                                                'lastActiveTimestamp']));
                                                 String itemName =
                                                     'Item: ${itemDS['name']}';
                                                 String lastMessage =
@@ -1345,13 +1299,13 @@ class HomePageState extends State<HomePage> {
                                                       child: CachedNetworkImage(
                                                         key: new ValueKey<
                                                             String>(DateTime
-                                                            .now()
+                                                                .now()
                                                             .millisecondsSinceEpoch
                                                             .toString()),
                                                         imageUrl: imageURL,
                                                         placeholder:
                                                             (context, url) =>
-                                                        new Container(),
+                                                                new Container(),
                                                       ),
                                                     ),
                                                   ),
@@ -1360,7 +1314,7 @@ class HomePageState extends State<HomePage> {
                                                     title,
                                                     style: TextStyle(
                                                         fontWeight:
-                                                        FontWeight.bold),
+                                                            FontWeight.bold),
                                                   ),
                                                   subtitle: Text(
                                                       '$lastActive\n$itemName'),
@@ -1423,7 +1377,7 @@ class HomePageState extends State<HomePage> {
   Future<UserEdit> getUserEdit() async {
     UserEdit out;
     DocumentSnapshot ds =
-    await Firestore.instance.collection('users').document(userID).get();
+        await Firestore.instance.collection('users').document(userID).get();
     if (ds != null) {
       out = new UserEdit(
           id: userID, photoUrl: ds['photoURL'], displayName: ds['displayName']);
@@ -1439,8 +1393,8 @@ class HomePageState extends State<HomePage> {
         context,
         MaterialPageRoute(
           builder: (BuildContext context) => ProfileEdit(
-            userEdit: userEdit,
-          ),
+                userEdit: userEdit,
+              ),
           fullscreenDialog: true,
         ));
 
@@ -1457,34 +1411,34 @@ class HomePageState extends State<HomePage> {
 
     final ThemeData theme = Theme.of(context);
     final TextStyle dialogTextStyle =
-    theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
 
     return await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Delete item?'),
-          content: Text('${ds['name']}'),
-          actions: <Widget>[
-            FlatButton(
-              child: const Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop(
-                    false); // Pops the confirmation dialog but not the page.
-              },
-            ),
-            FlatButton(
-              child: const Text('Delete'),
-              onPressed: () {
-                Navigator.of(context).pop(false);
-                deleteItem(ds);
-                // Pops the confirmation dialog but not the page.
-              },
-            ),
-          ],
-        );
-      },
-    ) ??
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Delete item?'),
+              content: Text('${ds['name']}'),
+              actions: <Widget>[
+                FlatButton(
+                  child: const Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(context).pop(
+                        false); // Pops the confirmation dialog but not the page.
+                  },
+                ),
+                FlatButton(
+                  child: const Text('Delete'),
+                  onPressed: () {
+                    Navigator.of(context).pop(false);
+                    deleteItem(ds);
+                    // Pops the confirmation dialog but not the page.
+                  },
+                ),
+              ],
+            );
+          },
+        ) ??
         false;
   }
 
@@ -1512,7 +1466,7 @@ class HomePageState extends State<HomePage> {
 
   Future<DocumentSnapshot> getUserFromFirestore(String userID) async {
     DocumentSnapshot ds =
-    await Firestore.instance.collection('users').document(userID).get();
+        await Firestore.instance.collection('users').document(userID).get();
 
     return ds;
   }
