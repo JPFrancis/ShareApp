@@ -30,12 +30,12 @@ class Rental {
 
   Rental.fromMap(Map<String, dynamic> data)
       : this(
-    status: data['status'],
-    item: data['item'],
-    owner: data['owner'],
-    renter: data['renter'],
-    start: data['start'],
-    end: data['end'],
-    chat: data['chat'],
-  );
+          status: data['status'],
+          item: data['item'],
+          owner: data['owner'],
+          renter: data['renter'],
+          start: data['start'],
+          end: data['end'],
+          chat: data['chat'],
+        );
 }

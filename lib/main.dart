@@ -164,29 +164,39 @@ class HomePageArgs {
 class ItemDetailArgs {
   final String itemID;
 
-  ItemDetailArgs(this.itemID,);
+  ItemDetailArgs(
+    this.itemID,
+  );
 }
 
 class ItemEditArgs {
   final Item item;
 
-  ItemEditArgs(this.item,);
+  ItemEditArgs(
+    this.item,
+  );
 }
 
 class ItemRequestArgs {
   final String itemID;
 
-  ItemRequestArgs(this.itemID,);
+  ItemRequestArgs(
+    this.itemID,
+  );
 }
 
 class ItemRentalArgs {
   final String rentalID;
 
-  ItemRentalArgs(this.rentalID,);
+  ItemRentalArgs(
+    this.rentalID,
+  );
 }
 
 class ChatArgs {
   final String rentalID;
 
-  ChatArgs(this.rentalID,);
+  ChatArgs(
+    this.rentalID,
+  );
 }

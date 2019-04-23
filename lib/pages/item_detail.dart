@@ -124,7 +124,6 @@ class ItemDetailState extends State<ItemDetail> {
                 )
               : showBody(),
         ),
-
         floatingActionButton: showFAB(),
         bottomNavigationBar: isLoading
             ? Container(
@@ -521,8 +520,8 @@ class ItemDetailState extends State<ItemDetail> {
         context,
         MaterialPageRoute(
           builder: (BuildContext context) => ItemEdit(
-            item: editItem,
-          ),
+                item: editItem,
+              ),
           fullscreenDialog: true,
         ));
 
@@ -530,7 +529,7 @@ class ItemDetailState extends State<ItemDetail> {
       //updateParameters();
       //setCamera();
       setState(
-            () {
+        () {
           getSnapshots();
           //setCamera();
         },

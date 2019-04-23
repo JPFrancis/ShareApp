@@ -134,6 +134,15 @@ class ItemRequestState extends State<ItemRequest> {
           showCircularProgress(),
         ],
       ),
+      bottomNavigationBar: Container(
+        height: MediaQuery.of(context).size.height / 10,
+        color: Colors.black,
+        child: RaisedButton(
+          child: Text("test"),
+          onPressed: null,
+          color: Colors.red,
+        ),
+      ),
     );
   }
 

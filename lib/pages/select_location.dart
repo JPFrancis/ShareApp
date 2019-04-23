@@ -29,7 +29,6 @@ class SelectLocationState extends State<SelectLocation> {
 
   String kGoogleApiKey;
 
-
   StreamSubscription<Position> dataSub;
   GoogleMapController _controller;
   LatLng center = LatLng(39.08, -76.98);
@@ -188,10 +187,8 @@ class SelectLocationState extends State<SelectLocation> {
   }
 
   Future<String> getKeyH() async {
-    DocumentSnapshot ds = await Firestore.instance
-        .collection('keys')
-        .document('maps_key')
-        .get();
+    DocumentSnapshot ds =
+        await Firestore.instance.collection('keys').document('maps_key').get();
 
     return ds['key'];
   }

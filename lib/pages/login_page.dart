@@ -3,6 +3,7 @@ import 'package:shareapp/services/auth.dart';
 
 class LoginPage extends StatefulWidget {
   static const routeName = '/loginPage';
+
   LoginPage({Key key, this.title, this.auth, this.onSignIn}) : super(key: key);
 
   final String title;
@@ -219,10 +220,10 @@ class _LoginPageState extends State<LoginPage> {
     return new FlatButton(
       child: _formMode == FormMode.LOGIN
           ? new Text('Create an account',
-          style: new TextStyle(fontSize: 18.0, fontWeight: FontWeight.w300))
+              style: new TextStyle(fontSize: 18.0, fontWeight: FontWeight.w300))
           : new Text('Have an account? Sign in',
-          style:
-          new TextStyle(fontSize: 18.0, fontWeight: FontWeight.w300)),
+              style:
+                  new TextStyle(fontSize: 18.0, fontWeight: FontWeight.w300)),
       onPressed: _formMode == FormMode.LOGIN
           ? _changeFormToSignUp
           : _changeFormToLogin,
@@ -240,7 +241,7 @@ class _LoginPageState extends State<LoginPage> {
     return new RaisedButton(
         child: Text("Login with Facebook"),
         onPressed: null // () => initFacebookLogin(),
-    );
+        );
   }
 
   void initGoogleLogin() async {
@@ -287,9 +288,9 @@ class _LoginPageState extends State<LoginPage> {
             color: Colors.red,
             child: _formMode == FormMode.LOGIN
                 ? new Text('Login',
-                style: new TextStyle(fontSize: 20.0, color: Colors.white))
+                    style: new TextStyle(fontSize: 20.0, color: Colors.white))
                 : new Text('Create account',
-                style: new TextStyle(fontSize: 20.0, color: Colors.white)),
+                    style: new TextStyle(fontSize: 20.0, color: Colors.white)),
             onPressed: _validateAndSubmit,
           ),
         ));
