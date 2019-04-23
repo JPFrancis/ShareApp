@@ -29,20 +29,18 @@ class ProfileEdit extends StatefulWidget {
 class ProfileEditState extends State<ProfileEdit> {
   final GlobalKey<FormState> formKey = new GlobalKey<FormState>();
 
-  bool isUploading = false;
-  String photoURL;
-
   TextEditingController displayNameController = TextEditingController();
-
-  TextStyle textStyle;
-  TextStyle inputTextStyle;
-
-  ThemeData theme;
-
-  UserEdit userEditCopy;
 
   Future<File> selectedImage;
   File imageFile;
+  String photoURL;
+  bool isUploading = false;
+
+  TextStyle textStyle;
+  TextStyle inputTextStyle;
+  ThemeData theme;
+
+  UserEdit userEditCopy;
 
   @override
   void initState() {
@@ -70,8 +68,7 @@ class ProfileEditState extends State<ProfileEdit> {
                 textScaleFactor: 1.05,
                 style: theme.textTheme.body2.copyWith(color: Colors.white)),
             onPressed: () {
-              saveItem();
-              //Navigator.pop(context, DismissDialogAction.save);
+              saveProfile();
             },
           ),
         ],
@@ -122,7 +119,6 @@ class ProfileEditState extends State<ProfileEdit> {
         decoration: InputDecoration(
           labelText: 'Display name',
           filled: true,
-          //border: OutlineInputBorder(borderRadius: BorderRadius.circular(5.0)),
         ),
       ),
     );
@@ -149,7 +145,6 @@ class ProfileEditState extends State<ProfileEdit> {
               textColor: Colors.white,
               child: Text(
                 "Take picture",
-                //addButton + " Images",
                 textScaleFactor: 1.25,
               ),
               onPressed: () {
@@ -217,8 +212,6 @@ class ProfileEditState extends State<ProfileEdit> {
 
   Widget showCircularProgress() {
     if (isUploading) {
-      //return Center(child: CircularProgressIndicator());
-
       return Container(
         child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -241,7 +234,7 @@ class ProfileEditState extends State<ProfileEdit> {
     );
   }
 
-  void saveItem() async {
+  void saveProfile() async {
     setState(() {
       isUploading = true;
     });

@@ -33,32 +33,28 @@ class ItemRequestState extends State<ItemRequest> {
   SharedPreferences prefs;
 
   bool isUploading = false;
+  bool isLoading;
+  String myUserID;
   String photoURL;
-
-  TextEditingController displayNameController = TextEditingController();
-
-  TextStyle textStyle;
-  TextStyle inputTextStyle;
 
   DocumentSnapshot itemDS;
   DocumentSnapshot creatorDS;
-  ThemeData theme;
-  double padding = 5.0;
-  String note;
-  TextEditingController noteController = TextEditingController();
-
   Future<File> selectedImage;
   File imageFile;
+  String message;
+  String note;
+
+  TextEditingController displayNameController = TextEditingController();
+  TextEditingController noteController = TextEditingController();
+  FocusNode focusNode;
 
   DateTime startDateTime = DateTime.now().add(Duration(hours: 1));
   DateTime endDateTime = DateTime.now().add(Duration(hours: 2));
 
-  FocusNode focusNode;
-
-  String myUserID;
-  bool isLoading;
-
-  String message;
+  TextStyle textStyle;
+  TextStyle inputTextStyle;
+  ThemeData theme;
+  double padding = 5.0;
 
   @override
   void initState() {
@@ -237,7 +233,6 @@ class ItemRequestState extends State<ItemRequest> {
         decoration: InputDecoration(
           labelText: 'Add note (optional)',
           filled: true,
-          //border: OutlineInputBorder(borderRadius: BorderRadius.circular(5.0)),
         ),
       ),
     );
@@ -303,8 +298,6 @@ class ItemRequestState extends State<ItemRequest> {
 
   Widget showCircularProgress() {
     if (isUploading) {
-      //return Center(child: CircularProgressIndicator());
-
       return Container(
         child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

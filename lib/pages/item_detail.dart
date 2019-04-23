@@ -15,7 +15,6 @@ class ItemDetail extends StatefulWidget {
   static const routeName = '/itemDetail';
   final String itemID;
 
-  //ItemDetail(this.itemID, this.isMyItem);
   ItemDetail({Key key, this.itemID}) : super(key: key);
 
   @override
@@ -25,17 +24,14 @@ class ItemDetail extends StatefulWidget {
 }
 
 class ItemDetailState extends State<ItemDetail> {
-  String appBarTitle = "Item Details";
-  GoogleMapController googleMapController;
-
   final GlobalKey<RefreshIndicatorState> refreshIndicatorKey =
       new GlobalKey<RefreshIndicatorState>();
 
-  //List<String> imageURLs = List();
+  GoogleMapController googleMapController;
+  String appBarTitle = "Item Details";
+
   String url;
   double padding = 5.0;
-
-  //TextStyle textStyle;
 
   DocumentSnapshot itemDS;
   DocumentSnapshot creatorDS;
@@ -54,8 +50,6 @@ class ItemDetailState extends State<ItemDetail> {
         .addPostFrameCallback((_) => refreshIndicatorKey.currentState.show());
 
     getMyUserID();
-    //getItemCreatorID();
-
     getSnapshots();
   }
 
@@ -76,6 +70,7 @@ class ItemDetailState extends State<ItemDetail> {
 
   Future<Null> getSnapshots() async {
     isLoading = true;
+
     DocumentSnapshot ds = await Firestore.instance
         .collection('items')
         .document(widget.itemID)
@@ -103,8 +98,6 @@ class ItemDetailState extends State<ItemDetail> {
 
   @override
   Widget build(BuildContext context) {
-    //textStyle = Theme.of(context).textTheme.title;
-
     return WillPopScope(
       onWillPop: () {
         goToLastScreen();
@@ -267,7 +260,6 @@ class ItemDetailState extends State<ItemDetail> {
         color: Color(0x00000000),
         child: Text(
           '${itemDS['name']}',
-          //itemName,
           style: TextStyle(
               color: Colors.black,
               fontSize: 40.0,
@@ -423,17 +415,6 @@ class ItemDetailState extends State<ItemDetail> {
                   ),
             ),
           ),
-          /*
-          FlatButton(
-            //materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            onPressed: setCamera,
-            child: Text(
-              'Reset camera',
-              textScaleFactor: 1,
-              textAlign: TextAlign.center,
-            ),
-          ),
-          */
           Center(
             child: SizedBox(
               width: widthOfScreen,
@@ -466,8 +447,9 @@ class ItemDetailState extends State<ItemDetail> {
                 gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>[
                   Factory<OneSequenceGestureRecognizer>(
                     () =>
-                        // to disable dragging, use ScaleGestureRecognizer()
-                        // to enable dragging, use EagerGestureRecognizer()
+
+                        /// to disable dragging, use ScaleGestureRecognizer()
+                        /// to enable dragging, use EagerGestureRecognizer()
                         EagerGestureRecognizer(),
                     //ScaleGestureRecognizer(),
                   ),
@@ -526,34 +508,31 @@ class ItemDetailState extends State<ItemDetail> {
         ));
 
     if (result != null) {
-      //updateParameters();
-      //setCamera();
       setState(
         () {
           getSnapshots();
-          //setCamera();
         },
       );
     }
   }
 
   void handleRequestItemPressed() async {
-    getSnapshots().then((_) {
-      itemDS['rental'] != null
-          ? showRequestErrorDialog()
-          : Navigator.pushNamed(
-              context,
-              ItemRequest.routeName,
-              arguments: ItemRequestArgs(
-                widget.itemID,
-              ),
-            );
-    });
+    getSnapshots().then(
+      (_) {
+        itemDS['rental'] != null
+            ? showRequestErrorDialog()
+            : Navigator.pushNamed(
+                context,
+                ItemRequest.routeName,
+                arguments: ItemRequestArgs(
+                  widget.itemID,
+                ),
+              );
+      },
+    );
   }
 
   Future<bool> showRequestErrorDialog() async {
-    //if (widget.userEdit.displayName == userEditCopy.displayName) return true;
-
     final ThemeData theme = Theme.of(context);
     final TextStyle dialogTextStyle =
         theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
@@ -590,7 +569,6 @@ class ItemDetailState extends State<ItemDetail> {
     double long = gp.longitude;
 
     LatLng newLoc = LatLng(lat, long);
-    //final GoogleMapController controller = await _controller.future;
     googleMapController.animateCamera(CameraUpdate.newCameraPosition(
         new CameraPosition(target: newLoc, zoom: 11.5)));
   }

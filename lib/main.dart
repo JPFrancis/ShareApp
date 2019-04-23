@@ -142,13 +142,6 @@ class MyApp extends StatelessWidget {
             }
         }
       },
-      //initialRoute: '/',
-      /*routes: <String, WidgetBuilder>{
-        '/': (context) => RootPage(auth: new Auth()),
-        '/ItemList': (context) => new ItemList(
-              auth: RootPage().auth,
-            ),
-      },*/
     );
   }
 }

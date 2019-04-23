@@ -56,12 +56,12 @@ class ChatScreenState extends State<ChatScreen> {
   DocumentSnapshot renterDS;
   SharedPreferences prefs;
 
-  var listMessage;
-
   File imageFile;
   bool isLoading;
   String imageUrl;
   String myUserID;
+
+  var listMessage;
 
   Color primaryColor = Colors.red;
   double fontSize = 16;
@@ -612,6 +612,7 @@ class ChatScreenState extends State<ChatScreen> {
     return Container(
       child: Row(
         children: <Widget>[
+          /*
           // Button send image
           Material(
             child: new Container(
@@ -626,7 +627,6 @@ class ChatScreenState extends State<ChatScreen> {
             color: Colors.white,
           ),
 
-          /*
           Material(
             child: new Container(
               margin: new EdgeInsets.symmetric(horizontal: 1.0),
@@ -639,6 +639,13 @@ class ChatScreenState extends State<ChatScreen> {
             color: Colors.white,
           ),
           */
+
+          Material(
+            child: new Container(
+              margin: new EdgeInsets.symmetric(horizontal: 7),
+            ),
+            color: Colors.white,
+          ),
 
           // Edit text
           Flexible(

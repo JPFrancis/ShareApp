@@ -40,20 +40,18 @@ class RentalDetail extends StatefulWidget {
 class RentalDetailState extends State<RentalDetail> {
   GoogleMapController googleMapController;
 
-  //List<String> imageURLs = List();
+  SharedPreferences prefs;
+  String myUserID;
   String url;
-  double padding = 5.0;
-
-  TextStyle textStyle;
+  bool isLoading;
 
   DocumentSnapshot rentalDS;
   DocumentSnapshot itemDS;
   DocumentSnapshot ownerDS;
   DocumentSnapshot renterDS;
-  SharedPreferences prefs;
-  String myUserID;
 
-  bool isLoading;
+  TextStyle textStyle;
+  double padding = 5.0;
 
   @override
   void initState() {
@@ -181,11 +179,7 @@ class RentalDetailState extends State<RentalDetail> {
           ),
         );
       },
-
-      // Help text when you hold down FAB
       tooltip: 'Chat',
-
-      // Set FAB icon
       child: Icon(Icons.message),
     );
   }
@@ -314,11 +308,7 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   Future<bool> deleteRentalDialog() async {
-    //if (widget.userEdit.displayName == userEditCopy.displayName) return true;
-
     final ThemeData theme = Theme.of(context);
-    final TextStyle dialogTextStyle =
-        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
 
     return await showDialog<bool>(
           context: context,
@@ -394,20 +384,9 @@ class RentalDetailState extends State<RentalDetail> {
         .updateData({'rental': null});
 
     goToLastScreen();
-/*
-    Navigator.popUntil(context, (Route<dynamic> route){
-      bool shouldPop = false;
-      if (route.settings.name == ItemDetail.routeName){
-        shouldPop = true;
-      }
-      return shouldPop;
-    });
-*/
   }
 
   void goToLastScreen() {
-    //Navigator.of(context).pushNamedAndRemoveUntil('/', (_) => false);
-
     Navigator.popUntil(
       context,
       ModalRoute.withName('/'),
