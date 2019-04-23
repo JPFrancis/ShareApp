@@ -243,13 +243,12 @@ class HomePageState extends State<HomePage> {
       padding: edgeInset,
       child: Column(
         children: <Widget>[
-          reusableObjList(
-              'Items I\'m currently renting', buildRentalsListCurrent()),
+          reusableObjList('Items I\'m currently renting', buildRentalsList(0)),
           Container(
             height: padding,
           ),
           reusableObjList(
-              'Items I have requested to rent', buildRentalsListRequested()),
+              'Items I have requested to rent', buildRentalsList(1)),
         ],
       ),
     );
@@ -735,12 +734,15 @@ class HomePageState extends State<HomePage> {
     );
   }
 
-  Widget buildRentalsList() {
+  Widget buildRentalsList(int rent) {
     CollectionReference collectionReference =
-        Firestore.instance.collection('rentals');
+        Firestore.instance.collection('users');
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
-        stream: collectionReference.snapshots(),
+        stream: collectionReference
+            .document(userID)
+            .collection('rentals')
+            .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
             return new Text('${snapshot.error}');
@@ -755,81 +757,12 @@ class HomePageState extends State<HomePage> {
                 shrinkWrap: true,
                 itemCount: snapshot.data.documents.length,
                 itemBuilder: (context, index) {
-                  DocumentSnapshot ds = snapshot.data.documents[index];
-                  bool showChat = false;
-
-                  DocumentReference renterDR = ds['renter'];
-                  DocumentReference ownerDR = ds['owner'];
-
-                  if (userID == renterDR.documentID ||
-                      userID == ownerDR.documentID) {
-                    showChat = true;
-                  }
-
-                  return ListTile(
-                    leading: Icon(Icons.shopping_cart),
-                    title: Text(
-                      ds.documentID,
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Text('${ds['start'].toString()}'),
-                    onTap: () {
-                      Navigator.pushNamed(
-                        context,
-                        RentalDetail.routeName,
-                        arguments: ItemRentalArgs(
-                          ds.documentID,
-                        ),
-                      );
-                    },
-                    trailing: showChat
-                        ? IconButton(
-                            icon: Icon(Icons.message),
-                            onPressed: () {
-                              Navigator.pushNamed(
-                                context,
-                                Chat.routeName,
-                                arguments: ChatArgs(
-                                  ds.documentID,
-                                ),
-                              );
-                            },
-                          )
-                        : null,
-                  );
-                },
-              );
-          }
-        },
-      ),
-    );
-  }
-
-  Widget buildRentalsListCurrent() {
-    CollectionReference collectionReference =
-        Firestore.instance.collection('rentals');
-    return Expanded(
-      child: StreamBuilder<QuerySnapshot>(
-        stream: collectionReference.snapshots(),
-        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.hasError) {
-            return new Text('${snapshot.error}');
-          }
-          switch (snapshot.connectionState) {
-            case ConnectionState.waiting:
-              return new Center(
-                child: new Container(),
-              );
-            default:
-              return new ListView.builder(
-                shrinkWrap: true,
-                itemCount: snapshot.data.documents.length,
-                itemBuilder: (context, index) {
-                  DocumentSnapshot ds = snapshot.data.documents[index];
-                  DocumentReference itemDR = ds['item'];
+                  DocumentSnapshot userRentalDS =
+                      snapshot.data.documents[index];
+                  DocumentReference rentalDR = userRentalDS['rental'];
 
                   return StreamBuilder<DocumentSnapshot>(
-                    stream: itemDR.snapshots(),
+                    stream: rentalDR.snapshots(),
                     builder: (BuildContext context,
                         AsyncSnapshot<DocumentSnapshot> snapshot) {
                       if (snapshot.hasError) {
@@ -842,159 +775,109 @@ class HomePageState extends State<HomePage> {
                           );
                         default:
                           if (snapshot.hasData) {
-                            DocumentSnapshot itemDS = snapshot.data;
+                            DocumentSnapshot rentalDS = snapshot.data;
+                            DocumentReference itemDR = rentalDS['item'];
+                            DocumentReference renterDR = rentalDS['renter'];
 
-                            if (ds['status'] != 1) {
-                              bool showChat = false;
+                            if (userID == renterDR.documentID) {
+                              return StreamBuilder<DocumentSnapshot>(
+                                stream: itemDR.snapshots(),
+                                builder: (BuildContext context,
+                                    AsyncSnapshot<DocumentSnapshot> snapshot) {
+                                  if (snapshot.hasError) {
+                                    return new Text('${snapshot.error}');
+                                  }
+                                  switch (snapshot.connectionState) {
+                                    case ConnectionState.waiting:
+                                      return Center(
+                                        child: new Container(),
+                                      );
+                                    default:
+                                      if (snapshot.hasData) {
+                                        DocumentSnapshot itemDS = snapshot.data;
+                                        DocumentReference ownerDR =
+                                            itemDS['creator'];
 
-                              DocumentReference renterDR = ds['renter'];
-                              DocumentReference ownerDR = ds['owner'];
+                                        if (rentalDS['status'] == rent) {
+                                          return StreamBuilder<
+                                              DocumentSnapshot>(
+                                            stream: ownerDR.snapshots(),
+                                            builder: (BuildContext context,
+                                                AsyncSnapshot<DocumentSnapshot>
+                                                    snapshot) {
+                                              if (snapshot.hasError) {
+                                                return new Text(
+                                                    '${snapshot.error}');
+                                              }
+                                              switch (
+                                                  snapshot.connectionState) {
+                                                case ConnectionState.waiting:
+                                                  return Center(
+                                                    child: new Container(),
+                                                  );
+                                                default:
+                                                  if (snapshot.hasData) {
+                                                    DocumentSnapshot ownerDS =
+                                                        snapshot.data;
 
-                              if (userID == renterDR.documentID ||
-                                  userID == ownerDR.documentID) {
-                                showChat = true;
-                              }
+                                                    String created = 'Created: ' +
+                                                        timeago.format(DateTime
+                                                            .fromMillisecondsSinceEpoch(
+                                                                rentalDS[
+                                                                    'created']));
 
-                              String created = 'Created: ' +
-                                  timeago.format(
-                                      DateTime.fromMillisecondsSinceEpoch(
-                                          ds['created']));
-
-                              return ListTile(
-                                leading: Icon(Icons.shopping_cart),
-                                //leading: Icon(Icons.build),
-                                title: Text(
-                                  itemDS['name'],
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                                subtitle: Text(created),
-                                onTap: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    RentalDetail.routeName,
-                                    arguments: ItemRentalArgs(
-                                      ds.documentID,
-                                    ),
-                                  );
-                                },
-                                trailing: showChat
-                                    ? IconButton(
-                                        icon: Icon(Icons.message),
-                                        onPressed: () {
-                                          Navigator.pushNamed(
-                                            context,
-                                            Chat.routeName,
-                                            arguments: ChatArgs(
-                                              ds.documentID,
-                                            ),
+                                                    return ListTile(
+                                                      leading: Icon(
+                                                          Icons.shopping_cart),
+                                                      //leading: Icon(Icons.build),
+                                                      title: Text(
+                                                        '${ownerDS['displayName']}\'s ${itemDS['name']}',
+                                                        style: TextStyle(
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .bold),
+                                                      ),
+                                                      subtitle: Text(created),
+                                                      onTap: () {
+                                                        Navigator.pushNamed(
+                                                          context,
+                                                          RentalDetail
+                                                              .routeName,
+                                                          arguments:
+                                                              ItemRentalArgs(
+                                                            rentalDS.documentID,
+                                                          ),
+                                                        );
+                                                      },
+                                                      trailing: IconButton(
+                                                        icon:
+                                                            Icon(Icons.message),
+                                                        onPressed: () {
+                                                          Navigator.pushNamed(
+                                                            context,
+                                                            Chat.routeName,
+                                                            arguments: ChatArgs(
+                                                              rentalDS
+                                                                  .documentID,
+                                                            ),
+                                                          );
+                                                        },
+                                                      ),
+                                                    );
+                                                  } else {
+                                                    return Container();
+                                                  }
+                                              }
+                                            },
                                           );
-                                        },
-                                      )
-                                    : null,
-                              );
-                            } else {
-                              return Container();
-                            }
-                          } else {
-                            return Container();
-                          }
-                      }
-                    },
-                  );
-                },
-              );
-          }
-        },
-      ),
-    );
-  }
-
-  Widget buildRentalsListRequested() {
-    CollectionReference collectionReference =
-        Firestore.instance.collection('rentals');
-    return Expanded(
-      child: StreamBuilder<QuerySnapshot>(
-        stream: collectionReference.snapshots(),
-        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.hasError) {
-            return new Text('${snapshot.error}');
-          }
-          switch (snapshot.connectionState) {
-            case ConnectionState.waiting:
-              return new Center(
-                child: new Container(),
-              );
-            default:
-              return new ListView.builder(
-                shrinkWrap: true,
-                itemCount: snapshot.data.documents.length,
-                itemBuilder: (context, index) {
-                  DocumentSnapshot ds = snapshot.data.documents[index];
-                  DocumentReference itemDR = ds['item'];
-
-                  return StreamBuilder<DocumentSnapshot>(
-                    stream: itemDR.snapshots(),
-                    builder: (BuildContext context,
-                        AsyncSnapshot<DocumentSnapshot> snapshot) {
-                      if (snapshot.hasError) {
-                        return new Text('${snapshot.error}');
-                      }
-                      switch (snapshot.connectionState) {
-                        case ConnectionState.waiting:
-                          return Center(
-                            child: new Container(),
-                          );
-                        default:
-                          if (snapshot.hasData) {
-                            DocumentSnapshot itemDS = snapshot.data;
-
-                            if (ds['status'] == 1) {
-                              bool showChat = false;
-
-                              DocumentReference renterDR = ds['renter'];
-                              DocumentReference ownerDR = ds['owner'];
-
-                              if (userID == renterDR.documentID ||
-                                  userID == ownerDR.documentID) {
-                                showChat = true;
-                              }
-
-                              String created = 'Created: ' +
-                                  timeago.format(
-                                      DateTime.fromMillisecondsSinceEpoch(
-                                          ds['created']));
-
-                              return ListTile(
-                                leading: Icon(Icons.shopping_cart),
-                                //leading: Icon(Icons.build),
-                                title: Text(
-                                  itemDS['name'],
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                                subtitle: Text(created),
-                                onTap: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    RentalDetail.routeName,
-                                    arguments: ItemRentalArgs(
-                                      ds.documentID,
-                                    ),
-                                  );
+                                        } else {
+                                          return Container();
+                                        }
+                                      } else {
+                                        return Container();
+                                      }
+                                  }
                                 },
-                                trailing: showChat
-                                    ? IconButton(
-                                        icon: Icon(Icons.message),
-                                        onPressed: () {
-                                          Navigator.pushNamed(
-                                            context,
-                                            Chat.routeName,
-                                            arguments: ChatArgs(
-                                              ds.documentID,
-                                            ),
-                                          );
-                                        },
-                                      )
-                                    : null,
                               );
                             } else {
                               return Container();
@@ -1066,7 +949,6 @@ class HomePageState extends State<HomePage> {
                     ),
                     subtitle: Text(ds['description']),
                     onTap: () {
-                      DocumentReference dr = ds['creator'];
                       navigateToDetail(ds.documentID);
                     },
                     trailing: IconButton(
@@ -1106,7 +988,6 @@ class HomePageState extends State<HomePage> {
             default:
               return new ListView.builder(
                 shrinkWrap: true,
-                //padding: EdgeInsets.all(2.0),
                 itemCount: snapshot.data.documents.length,
                 itemBuilder: (context, index) {
                   DocumentSnapshot ds = snapshot.data.documents[index];
@@ -1139,7 +1020,6 @@ class HomePageState extends State<HomePage> {
                       ),
                       subtitle: Text(ds['description']),
                       onTap: () {
-                        DocumentReference dr = ds['creator'];
                         navigateToDetail(ds.documentID);
                       },
                       trailing: IconButton(
@@ -1213,7 +1093,6 @@ class HomePageState extends State<HomePage> {
                       ),
                       subtitle: Text(ds['description']),
                       onTap: () {
-                        DocumentReference dr = ds['creator'];
                         navigateToDetail(ds.documentID);
                       },
                       trailing: IconButton(
@@ -1444,8 +1323,6 @@ class HomePageState extends State<HomePage> {
   }
 
   Future<bool> deleteItemDialog(DocumentSnapshot ds) async {
-    final ThemeData theme = Theme.of(context);
-
     return await showDialog<bool>(
           context: context,
           builder: (BuildContext context) {
@@ -1528,6 +1405,7 @@ void showSnackBar(BuildContext context, String item) {
 }
 
 Widget template() {
+  // template
   return StreamBuilder<DocumentSnapshot>(
     stream: null,
     builder: (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {

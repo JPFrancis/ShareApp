@@ -44,6 +44,7 @@ class RentalDetailState extends State<RentalDetail> {
   String myUserID;
   String url;
   bool isLoading;
+  bool isRenter;
 
   DocumentSnapshot rentalDS;
   DocumentSnapshot itemDS;
@@ -115,6 +116,7 @@ class RentalDetailState extends State<RentalDetail> {
           ownerDS != null &&
           renterDS != null) {
         setState(() {
+          isRenter = myUserID == renterDS.documentID ? true : false;
           isLoading = false;
         });
       }
@@ -206,11 +208,17 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   Widget showItemName() {
+    String itemOwner = 'Item owner: ${ownerDS['displayName']}';
+    String itemRenter = 'Item renter: ${renterDS['displayName']}';
+    String you = ' (You)';
+
+    isRenter ? itemRenter += you : itemOwner += you;
+
     return Container(
       child: Text(
         'Item name: ${itemDS['name']}\n'
-            'Item owner: ${ownerDS['displayName']}\n'
-            'Item renter: ${renterDS['displayName']}',
+            '$itemOwner\n'
+            '$itemRenter',
         style: TextStyle(
           fontSize: 20,
         ),
