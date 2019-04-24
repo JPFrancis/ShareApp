@@ -143,14 +143,12 @@ class RentalDetailState extends State<RentalDetail> {
           ),
           actions: <Widget>[
             IconButton(
-              icon: Icon(Icons.refresh),
-              tooltip: 'Refresh rental',
+              icon: Icon(Icons.delete),
+              tooltip: 'Delete rental',
               onPressed: () {
-                setState(
-                  () {
-                    getSnapshots();
-                  },
-                );
+                setState(() {
+                  deleteRentalDialog();
+                });
               },
             ),
           ],
@@ -196,15 +194,57 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   Widget showBody() {
+    return StreamBuilder<DocumentSnapshot>(
+      stream: rentalDS.reference.snapshots(),
+      builder:
+          (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+        if (snapshot.hasError) {
+          return new Text('${snapshot.error}');
+        }
+        switch (snapshot.connectionState) {
+          case ConnectionState.waiting:
+            return Center(
+              child: new Container(),
+            );
+          default:
+            if (snapshot.hasData) {
+              rentalDS = snapshot.data;
+
+              return Padding(
+                padding: EdgeInsets.all(15),
+                child: ListView(
+                  children: <Widget>[
+                    showItemName(),
+                    Divider(
+                      height: 20,
+                    ),
+                    showItemRequestStatus(),
+                    showAcceptRejectButtons(),
+                  ],
+                ),
+              );
+            } else {
+              return Container();
+            }
+        }
+      },
+    );
+
+    /*
     return Padding(
       padding: EdgeInsets.all(15),
       child: ListView(
         children: <Widget>[
           showItemName(),
-          showCancelRequest(),
+          Divider(
+            height: 20,
+          ),
+          showItemRequestStatus(),
+          showAcceptRejectButtons(),
         ],
       ),
     );
+    */
   }
 
   Widget showItemName() {
@@ -250,69 +290,124 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   Widget showItemRequestStatus() {
-    int itemStatus = itemDS['status'];
+    int itemStatus = rentalDS['status'];
     String statusMessage;
 
-    switch (itemStatus) {
-      case 1: // requested
-        statusMessage = 'Status: requested\n'
-            'Awaiting response from ${ownerDS['displayName']}';
-        break;
-      case 2: // accepted
-        statusMessage = 'Status: accepted\n'
-            '${ownerDS['displayName']} has accepted your request';
-        break;
-      case 3: // active
-        statusMessage = 'Status: active\n'
-            'Happy renting your ${itemDS['name']}!';
-        break;
-      case 4: // returned
-        statusMessage = 'Status: returned\n'
-            '${itemDS['name']} has been returned to ${ownerDS['displayName']}';
-        break;
-      case 5: // completed
-        statusMessage = 'Status: completed\n'
-            'Rental has completed';
-        break;
-      default:
-        statusMessage = 'There was an error with getting status';
-        break;
+    if (isRenter) {
+      switch (itemStatus) {
+        case 1: // requested
+          statusMessage = 'Status: requested\n'
+              'Awaiting response from ${ownerDS['displayName']}';
+          break;
+        case 2: // accepted
+          statusMessage = 'Status: accepted\n'
+              '${ownerDS['displayName']} has accepted your request\n'
+              'Awaiting ${ownerDS['displayName']} to send item';
+          break;
+        case 3: // active
+          statusMessage = 'Status: active\n'
+              'Happy renting your ${itemDS['name']}!';
+          break;
+        case 4: // returned
+          statusMessage = 'Status: returned\n'
+              '${itemDS['name']} has been returned to ${ownerDS['displayName']}';
+          break;
+        case 5: // completed
+          statusMessage = 'Status: completed\n'
+              'Rental has completed';
+          break;
+        default:
+          statusMessage = 'There was an error with getting status';
+          break;
+      }
+    } else {
+      switch (itemStatus) {
+        case 1: // requested
+          statusMessage = 'Status: requested\n'
+              'Do you accept the request from ${renterDS['displayName']}?\n'
+              '${renterDS['displayName']} wants to pick up the item between ${rentalDS['start']} and ${rentalDS['end']}';
+          break;
+        case 2: // accepted
+          statusMessage = 'Status: accepted\n'
+              '${ownerDS['displayName']} has accepted your request\n'
+              'Get ready give the item to ${renterDS['displayName']}';
+          break;
+        case 3: // active
+          statusMessage = 'Status: active\n'
+              'Happy renting your ${itemDS['name']}!';
+          break;
+        case 4: // returned
+          statusMessage = 'Status: returned\n'
+              '${itemDS['name']} has been returned to ${ownerDS['displayName']}';
+          break;
+        case 5: // completed
+          statusMessage = 'Status: completed\n'
+              'Rental has completed';
+          break;
+        default:
+          statusMessage = 'There was an error with getting status';
+          break;
+      }
     }
 
-    return Padding(
-      padding: EdgeInsets.all(padding),
-      child: SizedBox(
-        height: 50.0,
-        child: Container(
-          color: Color(0x00000000),
-          child: Text(
-            statusMessage,
-            style: TextStyle(color: Colors.black, fontSize: 20.0),
-            textAlign: TextAlign.left,
-          ),
+    return Container(
+      child: Text(
+        statusMessage,
+        style: TextStyle(
+          fontSize: 20,
         ),
       ),
     );
   }
 
-  Widget showCancelRequest() {
-    return Container(
-      child: RaisedButton(
-        shape: new RoundedRectangleBorder(
-            borderRadius: new BorderRadius.circular(5.0)),
-        color: Colors.red,
-        textColor: Colors.white,
-        child: Text(
-          'Delete Rental',
-          textScaleFactor: 1.25,
-        ),
-        onPressed: () {
-          setState(() {
-            deleteRentalDialog();
-          });
-        },
-      ),
-    );
+  Widget showAcceptRejectButtons() {
+    return isRenter && rentalDS['status'] == 1
+        ? Container()
+        : Container(
+            child: Row(
+              children: <Widget>[
+                Expanded(
+                  child: RaisedButton(
+                    shape: new RoundedRectangleBorder(
+                        borderRadius: new BorderRadius.circular(5.0)),
+                    color: Colors.green,
+                    textColor: Colors.white,
+                    child: Text(
+                      "Accept",
+                      //addButton + " Images",
+                      textScaleFactor: 1.25,
+                    ),
+                    onPressed: () {
+                      updateStatus(2);
+                    },
+                  ),
+                ),
+                Container(
+                  width: 15.0,
+                ),
+                Expanded(
+                  child: RaisedButton(
+                    shape: new RoundedRectangleBorder(
+                        borderRadius: new BorderRadius.circular(5.0)),
+                    color: Colors.red[800],
+                    textColor: Colors.white,
+                    child: Text(
+                      "Reject",
+                      textScaleFactor: 1.25,
+                    ),
+                    onPressed: () {},
+                  ),
+                ),
+              ],
+            ),
+          );
+  }
+
+  void updateStatus(int status) async {
+    Firestore.instance
+        .collection('rentals')
+        .document(widget.rentalID)
+        .updateData({'status': status});
   }
 
   Future<bool> deleteRentalDialog() async {
@@ -351,14 +446,14 @@ class RentalDetailState extends State<RentalDetail> {
         .collection('users')
         .document(myUserID)
         .collection('rentals')
-        .document(rentalDS.documentID)
+        .document(widget.rentalID)
         .delete();
 
     Firestore.instance
         .collection('users')
         .document(ownerDS.documentID)
         .collection('rentals')
-        .document(rentalDS.documentID)
+        .document(widget.rentalID)
         .delete();
 
     /*

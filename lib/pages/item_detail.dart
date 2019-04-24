@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shareapp/models/item.dart';
 import 'package:shareapp/pages/item_edit.dart';
 import 'package:shareapp/rentals/item_request.dart';
+import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -35,6 +36,7 @@ class ItemDetailState extends State<ItemDetail> {
 
   DocumentSnapshot itemDS;
   DocumentSnapshot creatorDS;
+  DocumentSnapshot rentalDS = null;
   SharedPreferences prefs;
   String myUserID;
   String itemCreator;
@@ -88,6 +90,17 @@ class ItemDetailState extends State<ItemDetail> {
         creatorDS = ds;
       }
 
+      dr = itemDS['rental'];
+
+      if (dr != null) {
+        str = dr.documentID;
+        ds = await Firestore.instance.collection('rentals').document(str).get();
+
+        if (ds != null) {
+          rentalDS = ds;
+        }
+      }
+
       if (prefs != null && itemDS != null && creatorDS != null) {
         setState(() {
           isLoading = false;
@@ -128,6 +141,16 @@ class ItemDetailState extends State<ItemDetail> {
   }
 
   Container bottomDetails() {
+    bool userIsInRental;
+
+    if (creatorDS.documentID == myUserID) {
+      userIsInRental = true;
+    } else if (rentalDS != null && rentalDS['renter'].documentID == myUserID) {
+      userIsInRental = true;
+    } else {
+      userIsInRental = false;
+    }
+
     return Container(
       height: 70.0,
       decoration: BoxDecoration(color: Colors.white, boxShadow: [
@@ -144,7 +167,7 @@ class ItemDetailState extends State<ItemDetail> {
           ),
           Padding(
             padding: const EdgeInsets.only(right: 30.0),
-            child: requestButton(),
+            child: userIsInRental ? viewRentalButton() : requestButton(),
           )
         ],
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -155,12 +178,20 @@ class ItemDetailState extends State<ItemDetail> {
   RaisedButton requestButton() {
     return RaisedButton(
         onPressed:
-            myUserID == itemDS['creator'].documentID || itemDS['rental'] != null
-                ? null
-                : () => handleRequestItemPressed(),
+            itemDS['rental'] != null ? null : () => handleRequestItemPressed(),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5.0)),
         color: Colors.red,
-        child: Text("Check Availability",
+        child: Text('Request Item', //Text("Check Availability",
+            style: TextStyle(color: Colors.white, fontFamily: 'Quicksand')));
+  }
+
+  RaisedButton viewRentalButton() {
+    return RaisedButton(
+        onPressed:
+            itemDS['rental'] == null ? null : () => handleViewRentalPressed(),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5.0)),
+        color: Colors.red,
+        child: Text('View Rental',
             style: TextStyle(color: Colors.white, fontFamily: 'Quicksand')));
   }
 
@@ -528,6 +559,20 @@ class ItemDetailState extends State<ItemDetail> {
                   widget.itemID,
                 ),
               );
+      },
+    );
+  }
+
+  void handleViewRentalPressed() async {
+    getSnapshots().then(
+      (_) {
+        Navigator.pushNamed(
+          context,
+          RentalDetail.routeName,
+          arguments: RentalDetailArgs(
+            rentalDS.documentID,
+          ),
+        );
       },
     );
   }

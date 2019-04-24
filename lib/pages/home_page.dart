@@ -243,12 +243,13 @@ class HomePageState extends State<HomePage> {
       padding: edgeInset,
       child: Column(
         children: <Widget>[
-          reusableObjList('Items I\'m currently renting', buildRentalsList(0)),
+          reusableObjList(
+              'Items I\'m currently renting', buildRentalsList(true)),
           Container(
             height: padding,
           ),
           reusableObjList(
-              'Items I have requested to rent', buildRentalsList(1)),
+              'Items I have requested to rent', buildRentalsList(false)),
         ],
       ),
     );
@@ -291,14 +292,14 @@ class HomePageState extends State<HomePage> {
         children: <Widget>[
           reusableObjList(
             'My items that are available to rent',
-            buildMyListingsListAvailable(),
+            buildMyListingsList(false),
           ),
           Container(
             height: padding,
           ),
           reusableObjList(
             'My items that are currently being rented',
-            buildMyListingsListRented(),
+            buildMyListingsList(true),
           ),
         ],
       ),
@@ -472,6 +473,8 @@ class HomePageState extends State<HomePage> {
       height: height,
       child: ListView(
         children: <Widget>[
+          /// I'll remove this later, I'm just using it to quickly switch accounts
+          reusableFlatButton("LOG OUT (TEMP BUTTON)", null, logout),
           reusableCategory("ACCOUNT SETTINGS"),
           reusableFlatButton(
               "Personal information", Icons.person_outline, null),
@@ -569,24 +572,6 @@ class HomePageState extends State<HomePage> {
           );
         } else {
           return Container();
-        }
-      },
-    );
-  }
-
-  Widget showSignedInAs() {
-    return FutureBuilder(
-      future: Firestore.instance.collection('users').document(userID).get(),
-      builder: (BuildContext context, AsyncSnapshot snapshot) {
-        if (snapshot.hasData) {
-          DocumentSnapshot ds = snapshot.data;
-
-          return new Text(
-            'Signed in as: ${ds['displayName']}',
-            style: TextStyle(fontStyle: FontStyle.italic),
-          );
-        } else {
-          return new Text('');
         }
       },
     );
@@ -734,7 +719,7 @@ class HomePageState extends State<HomePage> {
     );
   }
 
-  Widget buildRentalsList(int rent) {
+  Widget buildRentalsList(bool requesting) {
     CollectionReference collectionReference =
         Firestore.instance.collection('users');
     return Expanded(
@@ -798,7 +783,8 @@ class HomePageState extends State<HomePage> {
                                         DocumentReference ownerDR =
                                             itemDS['creator'];
 
-                                        if (rentalDS['status'] == rent) {
+                                        if (requesting ^
+                                            (rentalDS['status'] == 1)) {
                                           return StreamBuilder<
                                               DocumentSnapshot>(
                                             stream: ownerDR.snapshots(),
@@ -844,7 +830,7 @@ class HomePageState extends State<HomePage> {
                                                           RentalDetail
                                                               .routeName,
                                                           arguments:
-                                                              ItemRentalArgs(
+                                                              RentalDetailArgs(
                                                             rentalDS.documentID,
                                                           ),
                                                         );
@@ -896,7 +882,7 @@ class HomePageState extends State<HomePage> {
     );
   }
 
-  Widget buildMyListingsList() {
+  Widget buildMyListingsList(bool status) {
     CollectionReference collectionReference =
         Firestore.instance.collection('items');
     return Expanded(
@@ -922,77 +908,7 @@ class HomePageState extends State<HomePage> {
                 itemBuilder: (context, index) {
                   DocumentSnapshot ds = snapshot.data.documents[index];
 
-                  Icon tileIcon;
-                  String itemType = ds['type'];
-
-                  switch (itemType) {
-                    case 'tool':
-                      tileIcon = Icon(Icons.build);
-                      break;
-                    case 'leisure':
-                      tileIcon = Icon(Icons.golf_course);
-                      break;
-                    case 'home':
-                      tileIcon = Icon(Icons.home);
-                      break;
-                    case 'other':
-                      tileIcon = Icon(Icons.device_unknown);
-                      break;
-                  }
-
-                  return ListTile(
-                    leading: tileIcon,
-                    //leading: Icon(Icons.build),
-                    title: Text(
-                      ds['name'],
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Text(ds['description']),
-                    onTap: () {
-                      navigateToDetail(ds.documentID);
-                    },
-                    trailing: IconButton(
-                      icon: Icon(Icons.delete),
-                      onPressed: () {
-                        deleteItemDialog(ds);
-                      },
-                    ),
-                  );
-                },
-              );
-          }
-        },
-      ),
-    );
-  }
-
-  Widget buildMyListingsListAvailable() {
-    CollectionReference collectionReference =
-        Firestore.instance.collection('items');
-    return Expanded(
-      child: StreamBuilder<QuerySnapshot>(
-        stream: collectionReference
-            .where('creator',
-                isEqualTo:
-                    Firestore.instance.collection('users').document(userID))
-            .snapshots(),
-        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.hasError) {
-            return new Text('${snapshot.error}');
-          }
-          switch (snapshot.connectionState) {
-            case ConnectionState.waiting:
-              return new Center(
-                child: new Container(),
-              );
-            default:
-              return new ListView.builder(
-                shrinkWrap: true,
-                itemCount: snapshot.data.documents.length,
-                itemBuilder: (context, index) {
-                  DocumentSnapshot ds = snapshot.data.documents[index];
-
-                  if (ds['rental'] == null) {
+                  if (status ^ (ds['rental'] == null)) {
                     Icon tileIcon;
                     String itemType = ds['type'];
 
@@ -1014,79 +930,6 @@ class HomePageState extends State<HomePage> {
                     return ListTile(
                       leading: tileIcon,
                       //leading: Icon(Icons.build),
-                      title: Text(
-                        ds['name'],
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Text(ds['description']),
-                      onTap: () {
-                        navigateToDetail(ds.documentID);
-                      },
-                      trailing: IconButton(
-                        icon: Icon(Icons.delete),
-                        onPressed: () {
-                          deleteItemDialog(ds);
-                        },
-                      ),
-                    );
-                  } else {
-                    return Container();
-                  }
-                },
-              );
-          }
-        },
-      ),
-    );
-  }
-
-  Widget buildMyListingsListRented() {
-    CollectionReference collectionReference =
-        Firestore.instance.collection('items');
-    return Expanded(
-      child: StreamBuilder<QuerySnapshot>(
-        stream: collectionReference
-            .where('creator',
-                isEqualTo:
-                    Firestore.instance.collection('users').document(userID))
-            .snapshots(),
-        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.hasError) {
-            return new Text('${snapshot.error}');
-          }
-          switch (snapshot.connectionState) {
-            case ConnectionState.waiting:
-              return new Center(
-                child: new Container(),
-              );
-            default:
-              return new ListView.builder(
-                shrinkWrap: true,
-                itemCount: snapshot.data.documents.length,
-                itemBuilder: (context, index) {
-                  DocumentSnapshot ds = snapshot.data.documents[index];
-
-                  if (ds['rental'] != null) {
-                    Icon tileIcon;
-                    String itemType = ds['type'];
-
-                    switch (itemType) {
-                      case 'tool':
-                        tileIcon = Icon(Icons.build);
-                        break;
-                      case 'leisure':
-                        tileIcon = Icon(Icons.golf_course);
-                        break;
-                      case 'home':
-                        tileIcon = Icon(Icons.home);
-                        break;
-                      case 'other':
-                        tileIcon = Icon(Icons.device_unknown);
-                        break;
-                    }
-
-                    return ListTile(
-                      leading: tileIcon,
                       title: Text(
                         ds['name'],
                         style: TextStyle(fontWeight: FontWeight.bold),
@@ -1174,6 +1017,8 @@ class HomePageState extends State<HomePage> {
                                       DocumentSnapshot rentalDS = snapshot.data;
                                       DocumentReference itemDR =
                                           rentalDS['item'];
+                                      DocumentReference chatDR =
+                                          rentalDS['chat'];
 
                                       return StreamBuilder<DocumentSnapshot>(
                                         stream: itemDR.snapshots(),
@@ -1194,54 +1039,122 @@ class HomePageState extends State<HomePage> {
                                                 DocumentSnapshot itemDS =
                                                     snapshot.data;
 
-                                                String title =
-                                                    otherUserDS['displayName'];
-                                                String imageURL =
-                                                    otherUserDS['photoURL'];
-                                                String lastActive = 'Last seen: ' +
-                                                    timeago.format(DateTime
-                                                        .fromMillisecondsSinceEpoch(
-                                                            otherUserDS[
-                                                                'lastActiveTimestamp']));
-                                                String itemName =
-                                                    'Item: ${itemDS['name']}';
-                                                String lastMessage =
-                                                    '<last message snippet here>';
+                                                return StreamBuilder<
+                                                    QuerySnapshot>(
+                                                  stream: Firestore.instance
+                                                      .collection('rentals')
+                                                      .document(
+                                                          rentalDS.documentID)
+                                                      .collection('chat')
+                                                      .orderBy('timestamp',
+                                                          descending: true)
+                                                      .limit(1)
+                                                      .snapshots(),
+                                                  builder:
+                                                      (BuildContext context,
+                                                          AsyncSnapshot<
+                                                                  QuerySnapshot>
+                                                              snapshot) {
+                                                    if (snapshot.hasError) {
+                                                      return new Text(
+                                                          '${snapshot.error}');
+                                                    }
+                                                    switch (snapshot
+                                                        .connectionState) {
+                                                      case ConnectionState
+                                                          .waiting:
+                                                        return Center(
+                                                          child:
+                                                              new Container(),
+                                                        );
+                                                      default:
+                                                        if (snapshot.hasData) {
+                                                          DocumentSnapshot
+                                                              lastMessageDS =
+                                                              snapshot.data
+                                                                  .documents[0];
 
-                                                return ListTile(
-                                                  leading: Container(
-                                                    height: 50,
-                                                    child: ClipOval(
-                                                      child: CachedNetworkImage(
-                                                        key: new ValueKey<
-                                                            String>(DateTime
-                                                                .now()
-                                                            .millisecondsSinceEpoch
-                                                            .toString()),
-                                                        imageUrl: imageURL,
-                                                        placeholder:
-                                                            (context, url) =>
-                                                                new Container(),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  //leading: Icon(Icons.build),
-                                                  title: Text(
-                                                    title,
-                                                    style: TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold),
-                                                  ),
-                                                  subtitle: Text(
-                                                      '$lastActive\n$itemName'),
-                                                  onTap: () {
-                                                    Navigator.pushNamed(
-                                                      context,
-                                                      Chat.routeName,
-                                                      arguments: ChatArgs(
-                                                        userRentalDS.documentID,
-                                                      ),
-                                                    );
+                                                          String title =
+                                                              otherUserDS[
+                                                                  'displayName'];
+                                                          String imageURL =
+                                                              otherUserDS[
+                                                                  'photoURL'];
+                                                          String lastActive = 'Last seen: ' +
+                                                              timeago.format(DateTime
+                                                                  .fromMillisecondsSinceEpoch(
+                                                                      otherUserDS[
+                                                                          'lastActiveTimestamp']));
+                                                          String itemName =
+                                                              'Item: ${itemDS['name']}';
+                                                          String lastMessage =
+                                                              lastMessageDS[
+                                                                  'content'];
+                                                          int cutoff = 30;
+                                                          String
+                                                              lastMessageCrop;
+
+                                                          if (lastMessage
+                                                                  .length >
+                                                              cutoff) {
+                                                            lastMessageCrop =
+                                                                lastMessage
+                                                                    .substring(
+                                                                        0,
+                                                                        cutoff);
+                                                            lastMessageCrop +=
+                                                                '...';
+                                                          } else {
+                                                            lastMessageCrop =
+                                                                lastMessage;
+                                                          }
+
+                                                          return ListTile(
+                                                            leading: Container(
+                                                              height: 50,
+                                                              child: ClipOval(
+                                                                child:
+                                                                    CachedNetworkImage(
+                                                                  key: new ValueKey<
+                                                                      String>(DateTime
+                                                                          .now()
+                                                                      .millisecondsSinceEpoch
+                                                                      .toString()),
+                                                                  imageUrl:
+                                                                      imageURL,
+                                                                  placeholder: (context,
+                                                                          url) =>
+                                                                      new Container(),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                            //leading: Icon(Icons.build),
+                                                            title: Text(
+                                                              title,
+                                                              style: TextStyle(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold),
+                                                            ),
+                                                            subtitle: Text(
+                                                                '$lastActive\n$itemName\n$lastMessageCrop'),
+                                                            onTap: () {
+                                                              Navigator
+                                                                  .pushNamed(
+                                                                context,
+                                                                Chat.routeName,
+                                                                arguments:
+                                                                    ChatArgs(
+                                                                  userRentalDS
+                                                                      .documentID,
+                                                                ),
+                                                              );
+                                                            },
+                                                          );
+                                                        } else {
+                                                          return Container();
+                                                        }
+                                                    }
                                                   },
                                                 );
                                               } else {

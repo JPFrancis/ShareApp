@@ -433,7 +433,7 @@ class ItemRequestState extends State<ItemRequest> {
         Navigator.pushNamed(
           context,
           RentalDetail.routeName,
-          arguments: ItemRentalArgs(
+          arguments: RentalDetailArgs(
             rentalID,
           ),
         );

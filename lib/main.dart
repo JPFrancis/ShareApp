@@ -117,7 +117,7 @@ class MyApp extends StatelessWidget {
 
           case RentalDetail.routeName:
             {
-              final ItemRentalArgs args = settings.arguments;
+              final RentalDetailArgs args = settings.arguments;
 
               return MaterialPageRoute(
                 builder: (context) {
@@ -178,10 +178,10 @@ class ItemRequestArgs {
   );
 }
 
-class ItemRentalArgs {
+class RentalDetailArgs {
   final String rentalID;
 
-  ItemRentalArgs(
+  RentalDetailArgs(
     this.rentalID,
   );
 }
