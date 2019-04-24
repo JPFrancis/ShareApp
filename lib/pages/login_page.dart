@@ -141,7 +141,7 @@ class _LoginPageState extends State<LoginPage> {
               _showSecondaryButton(),
               googleLogin(),
               //facebookLogin(),
-              otherUserSignin(),
+              //otherUserSignin(),
               _showErrorMessage(),
             ],
           ),

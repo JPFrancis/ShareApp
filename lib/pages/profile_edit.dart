@@ -93,7 +93,7 @@ class ProfileEditState extends State<ProfileEdit> {
       onWillPop: onWillPop,
       child: ListView(
         padding:
-            EdgeInsets.only(top: 10.0, bottom: 10.0, left: 18.0, right: 18.0),
+            EdgeInsets.only(top: 00.0, bottom: 10.0, left: 18.0, right: 18.0),
         children: <Widget>[
           previewImage(),
           showProfileOptions(),

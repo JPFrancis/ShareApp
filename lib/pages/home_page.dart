@@ -151,10 +151,11 @@ class HomePageState extends State<HomePage> {
       body: isLoading
           ? Container(
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: <Widget>[Center(child: CircularProgressIndicator())],
-              ),
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: <Widget>[
+                    Center(child: CircularProgressIndicator())
+                  ]),
             )
           : bottomTabPages[currentTabIndex],
       floatingActionButton: showFAB(),
@@ -187,8 +188,263 @@ class HomePageState extends State<HomePage> {
         child: Icon(Icons.add),
       );
     }
-
     return null;
+  }
+
+  Widget cardItem(DocumentSnapshot ds) {
+    CachedNetworkImage image = CachedNetworkImage(
+      key: new ValueKey<String>(
+          DateTime.now().millisecondsSinceEpoch.toString()),
+      imageUrl: ds['images'][0],
+      placeholder: (context, url) => new CircularProgressIndicator(),
+    );
+    return InkWell(onTap: () {
+      navigateToDetail(ds.documentID);
+    }, child: new Container(child: new LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+      double h = constraints.maxHeight;
+      double w = constraints.maxWidth;
+      Icon icon = Icon(Icons.info_outline);
+      switch (ds['type']) {
+        case 'Tool':
+          icon = Icon(
+            Icons.build,
+            size: h / 20,
+          );
+          break;
+        case 'Leisure':
+          icon = Icon(Icons.golf_course, size: h / 20);
+          break;
+        case 'Home':
+          icon = Icon(Icons.home, size: h / 20);
+          break;
+        case 'Other':
+          icon = Icon(Icons.device_unknown, size: h / 20);
+          break;
+      }
+      return Column(
+        children: <Widget>[
+          Container(
+              height: 2 * h / 3,
+              width: w,
+              child: FittedBox(fit: BoxFit.cover, child: image)),
+          SizedBox(
+            height: 10.0,
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Row(
+                children: <Widget>[
+                  icon,
+                  SizedBox(
+                    width: 5.0,
+                  ),
+                  ds['type'] != null
+                      ? Text(
+                          '${ds['type']}'.toUpperCase(),
+                          style: TextStyle(
+                              fontSize: h / 25,
+                              fontFamily: 'Quicksand',
+                              fontWeight: FontWeight.bold),
+                        )
+                      : Text(''),
+                ],
+              ),
+              Text(ds['name'],
+                  style: TextStyle(
+                      fontSize: h / 20,
+                      fontFamily: 'Quicksand',
+                      fontWeight: FontWeight.bold)),
+              Text("\$${ds['price']} per hour",
+                  style: TextStyle(fontSize: h / 21, fontFamily: 'Quicksand')),
+              Row(
+                children: <Widget>[
+                  Icon(
+                    Icons.star_border,
+                    size: h / 19,
+                  ),
+                  Icon(
+                    Icons.star_border,
+                    size: h / 19,
+                  ),
+                  Icon(
+                    Icons.star_border,
+                    size: h / 19,
+                  ),
+                  Icon(
+                    Icons.star_border,
+                    size: h / 19,
+                  ),
+                  Icon(
+                    Icons.star_border,
+                    size: h / 19,
+                  ),
+                  Container(
+                    width: 5.0,
+                  ),
+                  Text(
+                    "328",
+                    style: TextStyle(
+                      fontSize: h / 25,
+                      fontFamily: 'Quicksand',
+                      fontWeight: FontWeight.bold,
+                    ),
+                  )
+                ],
+              )
+            ],
+          ),
+        ],
+      );
+    })));
+  }
+
+  Widget cardItemListings(DocumentSnapshot ds, status) {
+    CachedNetworkImage image = CachedNetworkImage(
+      key: new ValueKey<String>(
+          DateTime.now().millisecondsSinceEpoch.toString()),
+      imageUrl: ds['images'][0],
+      placeholder: (context, url) => new CircularProgressIndicator(),
+    );
+    if (status ^ (ds['rental'] == null)) {
+      return InkWell(onTap: () {
+        navigateToDetail(ds.documentID);
+      }, child: new Container(child: new LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints constraints) {
+        double h = constraints.maxHeight;
+        double w = constraints.maxWidth;
+        Icon icon = Icon(Icons.info_outline);
+        switch (ds['type']) {
+          case 'Tool':
+            icon = Icon(
+              Icons.build,
+              size: h / 20,
+            );
+            break;
+          case 'Leisure':
+            icon = Icon(Icons.golf_course, size: h / 20);
+            break;
+          case 'Home':
+            icon = Icon(Icons.home, size: h / 20);
+            break;
+          case 'Other':
+            icon = Icon(Icons.device_unknown, size: h / 20);
+            break;
+        }
+        return Column(
+          children: <Widget>[
+            Container(
+                height: 2 * h / 3,
+                width: w,
+                child: FittedBox(fit: BoxFit.cover, child: image)),
+            SizedBox(
+              height: 10.0,
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    icon,
+                    SizedBox(
+                      width: 5.0,
+                    ),
+                    ds['type'] != null
+                        ? Text(
+                            '${ds['type']}'.toUpperCase(),
+                            style: TextStyle(
+                                fontSize: h / 25,
+                                fontFamily: 'Quicksand',
+                                fontWeight: FontWeight.bold),
+                          )
+                        : Text(''),
+                  ],
+                ),
+                Text(ds['name'],
+                    style: TextStyle(
+                        fontSize: h / 20,
+                        fontFamily: 'Quicksand',
+                        fontWeight: FontWeight.bold)),
+                Text("\$${ds['price']} per hour",
+                    style:
+                        TextStyle(fontSize: h / 21, fontFamily: 'Quicksand')),
+                Row(
+                  children: <Widget>[
+                    Icon(
+                      Icons.star_border,
+                      size: h / 19,
+                    ),
+                    Icon(
+                      Icons.star_border,
+                      size: h / 19,
+                    ),
+                    Icon(
+                      Icons.star_border,
+                      size: h / 19,
+                    ),
+                    Icon(
+                      Icons.star_border,
+                      size: h / 19,
+                    ),
+                    Icon(
+                      Icons.star_border,
+                      size: h / 19,
+                    ),
+                    Container(
+                      width: 5.0,
+                    ),
+                    Text(
+                      "328",
+                      style: TextStyle(
+                        fontSize: h / 25,
+                        fontFamily: 'Quicksand',
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
+                  ],
+                )
+              ],
+            ),
+          ],
+        );
+      })));
+    } else {
+      return Container(height: 0, width: 0);
+    }
+  }
+
+  Widget buildItemList() {
+    CollectionReference collectionReference =
+        Firestore.instance.collection('items');
+    int tilerows = MediaQuery.of(context).size.width > 500 ? 3 : 2;
+    return Expanded(
+      child: StreamBuilder<QuerySnapshot>(
+        stream: collectionReference.snapshots(),
+        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          if (snapshot.hasError) {
+            return new Text('${snapshot.error}');
+          }
+          switch (snapshot.connectionState) {
+            case ConnectionState.waiting:
+              return new Center(
+                child: new Container(),
+              );
+            default:
+              List<DocumentSnapshot> items = snapshot.data.documents.toList();
+              return GridView.count(
+                  crossAxisCount: tilerows,
+                  childAspectRatio: (2 / 3),
+                  padding: const EdgeInsets.all(20.0),
+//                  mainAxisSpacing: 10.0,
+                  crossAxisSpacing: MediaQuery.of(context).size.width / 15,
+                  children: items
+                      .map((DocumentSnapshot ds) => cardItem(ds))
+                      .toList());
+          }
+        },
+      ),
+    );
   }
 
   Widget homeTabPage() {
@@ -281,6 +537,44 @@ class HomePageState extends State<HomePage> {
           ),
           displayList,
         ],
+      ),
+    );
+  }
+
+  Widget buildMyListingsList(bool status) {
+    CollectionReference collectionReference =
+        Firestore.instance.collection('items');
+    int tilerows = MediaQuery.of(context).size.width > 500 ? 3 : 2;
+    return Expanded(
+      child: StreamBuilder<QuerySnapshot>(
+        stream: collectionReference
+            .where('creator',
+                isEqualTo:
+                    Firestore.instance.collection('users').document(userID))
+            .snapshots(),
+        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          if (snapshot.hasError) {
+            return new Text('${snapshot.error}');
+          }
+          switch (snapshot.connectionState) {
+            case ConnectionState.waiting:
+              return new Center(
+                child: new Container(),
+              );
+            default:
+              List<DocumentSnapshot> items = snapshot.data.documents.toList();
+              return GridView.count(
+                  crossAxisCount: tilerows,
+                  childAspectRatio: (2 / 3),
+                  padding: const EdgeInsets.all(20.0),
+//                  mainAxisSpacing: 10.0,
+                  crossAxisSpacing: MediaQuery.of(context).size.width / 15,
+                  children: items
+                      .map(
+                          (DocumentSnapshot ds) => cardItemListings(ds, status))
+                      .toList());
+          }
+        },
       ),
     );
   }
@@ -468,13 +762,12 @@ class HomePageState extends State<HomePage> {
 
   Widget profileTabAfterIntro() {
     // [TEMPORARY SOLUTION]
-    double height = (MediaQuery.of(context).size.height) - 320;
+    double height = (MediaQuery.of(context).size.height) - 335;
     return Container(
       height: height,
       child: ListView(
         children: <Widget>[
           /// I'll remove this later, I'm just using it to quickly switch accounts
-          reusableFlatButton("LOG OUT (TEMP BUTTON)", null, logout),
           reusableCategory("ACCOUNT SETTINGS"),
           reusableFlatButton(
               "Personal information", Icons.person_outline, null),
@@ -574,148 +867,6 @@ class HomePageState extends State<HomePage> {
           return Container();
         }
       },
-    );
-  }
-
-  Widget cardItem(DocumentSnapshot ds) {
-    CachedNetworkImage image = CachedNetworkImage(
-      key: new ValueKey<String>(
-          DateTime.now().millisecondsSinceEpoch.toString()),
-      imageUrl: ds['images'][0],
-      placeholder: (context, url) => new CircularProgressIndicator(),
-    );
-    return InkWell(onTap: () {
-      navigateToDetail(ds.documentID);
-    }, child: new Container(child: new LayoutBuilder(
-        builder: (BuildContext context, BoxConstraints constraints) {
-      double h = constraints.maxHeight;
-      double w = constraints.maxWidth;
-      Icon icon = Icon(Icons.info_outline);
-      switch (ds['type']) {
-        case 'Tool':
-          icon = Icon(
-            Icons.build,
-            size: h / 20,
-          );
-          break;
-        case 'Leisure':
-          icon = Icon(Icons.golf_course, size: h / 20);
-          break;
-        case 'Home':
-          icon = Icon(Icons.home, size: h / 20);
-          break;
-        case 'Other':
-          icon = Icon(Icons.device_unknown, size: h / 20);
-          break;
-      }
-      return Column(
-        children: <Widget>[
-          Container(
-              height: 2 * h / 3,
-              width: w,
-              child: FittedBox(fit: BoxFit.cover, child: image)),
-          SizedBox(
-            height: 10.0,
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Row(
-                children: <Widget>[
-                  icon,
-                  SizedBox(
-                    width: 5.0,
-                  ),
-                  ds['type'] != null
-                      ? Text(
-                          '${ds['type']}'.toUpperCase(),
-                          style: TextStyle(
-                              fontSize: h / 25,
-                              fontFamily: 'Quicksand',
-                              fontWeight: FontWeight.bold),
-                        )
-                      : Text(''),
-                ],
-              ),
-              Text(ds['name'],
-                  style: TextStyle(
-                      fontSize: h / 20,
-                      fontFamily: 'Quicksand',
-                      fontWeight: FontWeight.bold)),
-              Text("\$${ds['price']} per hour",
-                  style: TextStyle(fontSize: h / 21, fontFamily: 'Quicksand')),
-              Row(
-                children: <Widget>[
-                  Icon(
-                    Icons.star_border,
-                    size: h / 19,
-                  ),
-                  Icon(
-                    Icons.star_border,
-                    size: h / 19,
-                  ),
-                  Icon(
-                    Icons.star_border,
-                    size: h / 19,
-                  ),
-                  Icon(
-                    Icons.star_border,
-                    size: h / 19,
-                  ),
-                  Icon(
-                    Icons.star_border,
-                    size: h / 19,
-                  ),
-                  Container(
-                    width: 5.0,
-                  ),
-                  Text(
-                    "328",
-                    style: TextStyle(
-                      fontSize: h / 25,
-                      fontFamily: 'Quicksand',
-                      fontWeight: FontWeight.bold,
-                    ),
-                  )
-                ],
-              )
-            ],
-          ),
-        ],
-      );
-    })));
-  }
-
-  Widget buildItemList() {
-    CollectionReference collectionReference =
-        Firestore.instance.collection('items');
-    int tilerows = MediaQuery.of(context).size.width > 500 ? 3 : 2;
-    return Expanded(
-      child: StreamBuilder<QuerySnapshot>(
-        stream: collectionReference.snapshots(),
-        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.hasError) {
-            return new Text('${snapshot.error}');
-          }
-          switch (snapshot.connectionState) {
-            case ConnectionState.waiting:
-              return new Center(
-                child: new Container(),
-              );
-            default:
-              List<DocumentSnapshot> items = snapshot.data.documents.toList();
-              return GridView.count(
-                  crossAxisCount: tilerows,
-                  childAspectRatio: (2 / 3),
-                  padding: const EdgeInsets.all(20.0),
-//                  mainAxisSpacing: 10.0,
-                  crossAxisSpacing: MediaQuery.of(context).size.width / 15,
-                  children: items
-                      .map((DocumentSnapshot ds) => cardItem(ds))
-                      .toList());
-          }
-        },
-      ),
     );
   }
 
@@ -874,80 +1025,6 @@ class HomePageState extends State<HomePage> {
                       }
                     },
                   );
-                },
-              );
-          }
-        },
-      ),
-    );
-  }
-
-  Widget buildMyListingsList(bool status) {
-    CollectionReference collectionReference =
-        Firestore.instance.collection('items');
-    return Expanded(
-      child: StreamBuilder<QuerySnapshot>(
-        stream: collectionReference
-            .where('creator',
-                isEqualTo:
-                    Firestore.instance.collection('users').document(userID))
-            .snapshots(),
-        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.hasError) {
-            return new Text('${snapshot.error}');
-          }
-          switch (snapshot.connectionState) {
-            case ConnectionState.waiting:
-              return new Center(
-                child: new Container(),
-              );
-            default:
-              return new ListView.builder(
-                shrinkWrap: true,
-                itemCount: snapshot.data.documents.length,
-                itemBuilder: (context, index) {
-                  DocumentSnapshot itemDS = snapshot.data.documents[index];
-
-                  if (status ^ (itemDS['rental'] == null)) {
-                    Icon tileIcon;
-                    String itemType = itemDS['type'];
-
-                    switch (itemType) {
-                      case 'Tool':
-                        tileIcon = Icon(Icons.build);
-                        break;
-                      case 'Leisure':
-                        tileIcon = Icon(Icons.golf_course);
-                        break;
-                      case 'Home':
-                        tileIcon = Icon(Icons.home);
-                        break;
-                      case 'Other':
-                        tileIcon = Icon(Icons.device_unknown);
-                        break;
-                    }
-
-                    return ListTile(
-                      leading: tileIcon,
-                      //leading: Icon(Icons.build),
-                      title: Text(
-                        itemDS['name'],
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Text(itemDS['description']),
-                      onTap: () {
-                        navigateToDetail(itemDS.documentID);
-                      },
-                      trailing: itemDS['rental'] != null ? null : IconButton(
-                        icon: Icon(Icons.delete),
-                        onPressed: () {
-                          deleteItemDialog(itemDS);
-                        },
-                      ),
-                    );
-                  } else {
-                    return Container();
-                  }
                 },
               );
           }
