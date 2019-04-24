@@ -54,6 +54,9 @@ class RentalDetailState extends State<RentalDetail> {
   TextStyle textStyle;
   double padding = 5.0;
 
+  TextEditingController reviewController = TextEditingController();
+  String review;
+
   @override
   void initState() {
     // TODO: implement initState
@@ -219,7 +222,10 @@ class RentalDetailState extends State<RentalDetail> {
                       height: 20,
                     ),
                     showItemRequestStatus(),
-                    showAcceptRejectButtons(),
+                    showAcceptRejectRequestButtons(),
+                    showReceiveItemButton(),
+                    showReturnedItemButton(),
+                    showWriteReview(),
                   ],
                 ),
               );
@@ -306,15 +312,17 @@ class RentalDetailState extends State<RentalDetail> {
           break;
         case 3: // active
           statusMessage = 'Status: active\n'
-              'Happy renting your ${itemDS['name']}!';
+              'Happy renting your ${itemDS['name']}!\n'
+              'Return the item when you are done';
           break;
         case 4: // returned
           statusMessage = 'Status: returned\n'
-              '${itemDS['name']} has been returned to ${ownerDS['displayName']}';
+              '${itemDS['name']} has been returned to you\n'
+              'Please write a review of the item';
           break;
         case 5: // completed
           statusMessage = 'Status: completed\n'
-              'Rental has completed';
+              'Rental has been complete!';
           break;
         default:
           statusMessage = 'There was an error with getting status';
@@ -334,15 +342,17 @@ class RentalDetailState extends State<RentalDetail> {
           break;
         case 3: // active
           statusMessage = 'Status: active\n'
-              'Happy renting your ${itemDS['name']}!';
+              '${renterDS['displayName']} is currently renting your item\n'
+              'Press the button when the item has been returned to you to end the rental';
           break;
         case 4: // returned
           statusMessage = 'Status: returned\n'
-              '${itemDS['name']} has been returned to ${ownerDS['displayName']}';
+              'You have returned the item to ${ownerDS['displayName']}\n'
+          'Waiting for ${renterDS['displayName']} to write a review';
           break;
         case 5: // completed
           statusMessage = 'Status: completed\n'
-              'Rental has completed';
+              'Rental has completed!';
           break;
         default:
           statusMessage = 'There was an error with getting status';
@@ -360,10 +370,9 @@ class RentalDetailState extends State<RentalDetail> {
     );
   }
 
-  Widget showAcceptRejectButtons() {
-    return isRenter && rentalDS['status'] == 1
-        ? Container()
-        : Container(
+  Widget showAcceptRejectRequestButtons() {
+    return !isRenter && rentalDS['status'] == 1
+        ? Container(
             child: Row(
               children: <Widget>[
                 Expanded(
@@ -400,7 +409,98 @@ class RentalDetailState extends State<RentalDetail> {
                 ),
               ],
             ),
-          );
+          )
+        : Container();
+  }
+
+  Widget showReceiveItemButton() {
+    return isRenter && rentalDS['status'] == 2
+        ? Container(
+            child: RaisedButton(
+              shape: new RoundedRectangleBorder(
+                  borderRadius: new BorderRadius.circular(5.0)),
+              color: Colors.green,
+              textColor: Colors.white,
+              child: Text(
+                "I have received the item",
+                //addButton + " Images",
+                textScaleFactor: 1.25,
+              ),
+              onPressed: () {
+                updateStatus(3);
+              },
+            ),
+          )
+        : Container();
+  }
+
+  Widget showReturnedItemButton() {
+    return !isRenter && rentalDS['status'] == 3
+        ? Container(
+            child: RaisedButton(
+              shape: new RoundedRectangleBorder(
+                  borderRadius: new BorderRadius.circular(5.0)),
+              color: Colors.green,
+              textColor: Colors.white,
+              child: Text(
+                "${renterDS['displayName']} has returned the item",
+                //addButton + " Images",
+                textScaleFactor: 1.25,
+              ),
+              onPressed: () {
+                updateStatus(4);
+              },
+            ),
+          )
+        : Container();
+  }
+
+  Widget showWriteReview() {
+    return isRenter && rentalDS['status'] == 4
+        ? Container(
+            child: Column(
+              children: <Widget>[
+                showWriteReviewTextBox(),
+                showSubmitReviewButton(),
+              ],
+            ),
+          )
+        : Container();
+  }
+
+  Widget showSubmitReviewButton() {
+    return RaisedButton(
+      shape: new RoundedRectangleBorder(
+          borderRadius: new BorderRadius.circular(5.0)),
+      color: Colors.green,
+      textColor: Colors.white,
+      child: Text(
+        'Submit Review',
+        //addButton + " Images",
+        textScaleFactor: 1.25,
+      ),
+      onPressed: () {
+        updateStatus(5);
+      },
+    );
+  }
+
+  Widget showWriteReviewTextBox() {
+    return Padding(
+      padding: EdgeInsets.all(padding),
+      child: TextField(
+        maxLines: 3,
+        controller: reviewController,
+        style: textStyle,
+        onChanged: (value) {
+          review = reviewController.text;
+        },
+        decoration: InputDecoration(
+          labelText: 'Write review',
+          filled: true,
+        ),
+      ),
+    );
   }
 
   void updateStatus(int status) async {

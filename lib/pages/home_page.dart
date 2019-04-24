@@ -906,23 +906,23 @@ class HomePageState extends State<HomePage> {
                 shrinkWrap: true,
                 itemCount: snapshot.data.documents.length,
                 itemBuilder: (context, index) {
-                  DocumentSnapshot ds = snapshot.data.documents[index];
+                  DocumentSnapshot itemDS = snapshot.data.documents[index];
 
-                  if (status ^ (ds['rental'] == null)) {
+                  if (status ^ (itemDS['rental'] == null)) {
                     Icon tileIcon;
-                    String itemType = ds['type'];
+                    String itemType = itemDS['type'];
 
                     switch (itemType) {
-                      case 'tool':
+                      case 'Tool':
                         tileIcon = Icon(Icons.build);
                         break;
-                      case 'leisure':
+                      case 'Leisure':
                         tileIcon = Icon(Icons.golf_course);
                         break;
-                      case 'home':
+                      case 'Home':
                         tileIcon = Icon(Icons.home);
                         break;
-                      case 'other':
+                      case 'Other':
                         tileIcon = Icon(Icons.device_unknown);
                         break;
                     }
@@ -931,17 +931,17 @@ class HomePageState extends State<HomePage> {
                       leading: tileIcon,
                       //leading: Icon(Icons.build),
                       title: Text(
-                        ds['name'],
+                        itemDS['name'],
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
-                      subtitle: Text(ds['description']),
+                      subtitle: Text(itemDS['description']),
                       onTap: () {
-                        navigateToDetail(ds.documentID);
+                        navigateToDetail(itemDS.documentID);
                       },
-                      trailing: IconButton(
+                      trailing: itemDS['rental'] != null ? null : IconButton(
                         icon: Icon(Icons.delete),
                         onPressed: () {
-                          deleteItemDialog(ds);
+                          deleteItemDialog(itemDS);
                         },
                       ),
                     );
