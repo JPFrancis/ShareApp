@@ -117,7 +117,7 @@ class MyApp extends StatelessWidget {
 
           case RentalDetail.routeName:
             {
-              final ItemRentalArgs args = settings.arguments;
+              final RentalDetailArgs args = settings.arguments;
 
               return MaterialPageRoute(
                 builder: (context) {
@@ -142,13 +142,6 @@ class MyApp extends StatelessWidget {
             }
         }
       },
-      //initialRoute: '/',
-      /*routes: <String, WidgetBuilder>{
-        '/': (context) => RootPage(auth: new Auth()),
-        '/ItemList': (context) => new ItemList(
-              auth: RootPage().auth,
-            ),
-      },*/
     );
   }
 }
@@ -164,29 +157,39 @@ class HomePageArgs {
 class ItemDetailArgs {
   final String itemID;
 
-  ItemDetailArgs(this.itemID,);
+  ItemDetailArgs(
+    this.itemID,
+  );
 }
 
 class ItemEditArgs {
   final Item item;
 
-  ItemEditArgs(this.item,);
+  ItemEditArgs(
+    this.item,
+  );
 }
 
 class ItemRequestArgs {
   final String itemID;
 
-  ItemRequestArgs(this.itemID,);
+  ItemRequestArgs(
+    this.itemID,
+  );
 }
 
-class ItemRentalArgs {
+class RentalDetailArgs {
   final String rentalID;
 
-  ItemRentalArgs(this.rentalID,);
+  RentalDetailArgs(
+    this.rentalID,
+  );
 }
 
 class ChatArgs {
   final String rentalID;
 
-  ChatArgs(this.rentalID,);
+  ChatArgs(
+    this.rentalID,
+  );
 }

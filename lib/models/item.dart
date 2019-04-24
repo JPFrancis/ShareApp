@@ -53,35 +53,35 @@ class Item {
 
   Item.fromMap(Map<String, dynamic> data)
       : this(
-    id: data['id'],
-    status: data['status'],
-    creator: data['creator'],
-    name: data['name'],
-    description: data['description'],
-    type: data['type'],
-    condition: data['condition'],
-    price: data['price'],
-    numImages: data['numImages'],
-    images: data['images'],
-    location: data['location'],
-    rental: data['rental'],
-  );
+          id: data['id'],
+          status: data['status'],
+          creator: data['creator'],
+          name: data['name'],
+          description: data['description'],
+          type: data['type'],
+          condition: data['condition'],
+          price: data['price'],
+          numImages: data['numImages'],
+          images: data['images'],
+          location: data['location'],
+          rental: data['rental'],
+        );
 
   Item.copy(Item other)
       : this(
-    id: other.id,
-    status: other.status,
-    creator: other.creator,
-    name: other.name,
-    description: other.description,
-    type: other.type,
-    condition: other.condition,
-    price: other.price,
-    numImages: other.numImages,
-    images: other.images.toList(),
-    location: other.location,
-    rental: other.rental,
-  );
+          id: other.id,
+          status: other.status,
+          creator: other.creator,
+          name: other.name,
+          description: other.description,
+          type: other.type,
+          condition: other.condition,
+          price: other.price,
+          numImages: other.numImages,
+          images: other.images.toList(),
+          location: other.location,
+          rental: other.rental,
+        );
 
   bool compare(Item other) {
     return this.name == other.name &&

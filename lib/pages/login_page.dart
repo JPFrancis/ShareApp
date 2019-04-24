@@ -3,6 +3,7 @@ import 'package:shareapp/services/auth.dart';
 
 class LoginPage extends StatefulWidget {
   static const routeName = '/loginPage';
+
   LoginPage({Key key, this.title, this.auth, this.onSignIn}) : super(key: key);
 
   final String title;
@@ -17,20 +18,20 @@ class LoginPage extends StatefulWidget {
 enum FormMode { LOGIN, SIGNUP }
 
 class _LoginPageState extends State<LoginPage> {
-  final _formKey = new GlobalKey<FormState>();
+  final formKey = new GlobalKey<FormState>();
 
-  String _email;
-  String _password;
-  String _errorMessage;
+  String email;
+  String password;
+  String errorMessage;
 
   // Initial form is login form
   FormMode _formMode = FormMode.LOGIN;
-  bool _isIos;
-  bool _isLoading;
+  bool isIos;
+  bool isLoading;
 
   // Check if form is valid before perform login or signup
   bool _validateAndSave() {
-    final form = _formKey.currentState;
+    final form = formKey.currentState;
     if (form.validate()) {
       form.save();
       return true;
@@ -41,22 +42,22 @@ class _LoginPageState extends State<LoginPage> {
   // Perform login or signup
   void _validateAndSubmit() async {
     setState(() {
-      _errorMessage = "";
-      _isLoading = true;
+      errorMessage = "";
+      isLoading = true;
     });
     if (_validateAndSave()) {
       String userId = "";
       try {
         if (_formMode == FormMode.LOGIN) {
-          userId = await widget.auth.signIn(_email, _password);
+          userId = await widget.auth.signIn(email, password);
           print('Signed in: $userId');
         } else {
-          userId = await widget.auth.createUser(_email, _password);
+          userId = await widget.auth.createUser(email, password);
           print('Signed up user: $userId');
           widget.onSignIn();
         }
         setState(() {
-          _isLoading = false;
+          isLoading = false;
         });
 
         if (userId.length > 0 &&
@@ -67,11 +68,11 @@ class _LoginPageState extends State<LoginPage> {
       } catch (e) {
         print('Error: $e');
         setState(() {
-          _isLoading = false;
-          if (_isIos) {
-            _errorMessage = e.details;
+          isLoading = false;
+          if (isIos) {
+            errorMessage = e.details;
           } else
-            _errorMessage = e.message;
+            errorMessage = e.message;
         });
       }
     }
@@ -79,22 +80,22 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   void initState() {
-    _errorMessage = "";
-    _isLoading = false;
+    errorMessage = "";
+    isLoading = false;
     super.initState();
   }
 
   void _changeFormToSignUp() {
-    _formKey.currentState.reset();
-    _errorMessage = "";
+    formKey.currentState.reset();
+    errorMessage = "";
     setState(() {
       _formMode = FormMode.SIGNUP;
     });
   }
 
   void _changeFormToLogin() {
-    _formKey.currentState.reset();
-    _errorMessage = "";
+    formKey.currentState.reset();
+    errorMessage = "";
     setState(() {
       _formMode = FormMode.LOGIN;
     });
@@ -102,7 +103,7 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    _isIos = Theme.of(context).platform == TargetPlatform.iOS;
+    isIos = Theme.of(context).platform == TargetPlatform.iOS;
     return new Scaffold(
         appBar: new AppBar(
           title: new Text('ShareApp'),
@@ -116,7 +117,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _showCircularProgress() {
-    if (_isLoading) {
+    if (isLoading) {
       return Center(child: CircularProgressIndicator());
     }
     return Container(
@@ -129,7 +130,7 @@ class _LoginPageState extends State<LoginPage> {
     return new Container(
         padding: EdgeInsets.all(16.0),
         child: new Form(
-          key: _formKey,
+          key: formKey,
           child: new ListView(
             shrinkWrap: true,
             children: <Widget>[
@@ -139,7 +140,8 @@ class _LoginPageState extends State<LoginPage> {
               _showPrimaryButton(),
               _showSecondaryButton(),
               googleLogin(),
-              facebookLogin(),
+              //facebookLogin(),
+              otherUserSignin(),
               _showErrorMessage(),
             ],
           ),
@@ -147,9 +149,9 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _showErrorMessage() {
-    if (_errorMessage.length > 0 && _errorMessage != null) {
+    if (errorMessage.length > 0 && errorMessage != null) {
       return new Text(
-        _errorMessage,
+        errorMessage,
         style: TextStyle(
             fontSize: 13.0,
             color: Colors.red,
@@ -191,7 +193,7 @@ class _LoginPageState extends State<LoginPage> {
               color: Colors.grey,
             )),
         validator: (value) => value.isEmpty ? 'Email can\'t be empty' : null,
-        onSaved: (value) => _email = value,
+        onSaved: (value) => email = value,
       ),
     );
   }
@@ -210,7 +212,7 @@ class _LoginPageState extends State<LoginPage> {
               color: Colors.grey,
             )),
         validator: (value) => value.isEmpty ? 'Password can\'t be empty' : null,
-        onSaved: (value) => _password = value,
+        onSaved: (value) => password = value,
       ),
     );
   }
@@ -219,10 +221,10 @@ class _LoginPageState extends State<LoginPage> {
     return new FlatButton(
       child: _formMode == FormMode.LOGIN
           ? new Text('Create an account',
-          style: new TextStyle(fontSize: 18.0, fontWeight: FontWeight.w300))
+              style: new TextStyle(fontSize: 18.0, fontWeight: FontWeight.w300))
           : new Text('Have an account? Sign in',
-          style:
-          new TextStyle(fontSize: 18.0, fontWeight: FontWeight.w300)),
+              style:
+                  new TextStyle(fontSize: 18.0, fontWeight: FontWeight.w300)),
       onPressed: _formMode == FormMode.LOGIN
           ? _changeFormToSignUp
           : _changeFormToLogin,
@@ -240,6 +242,15 @@ class _LoginPageState extends State<LoginPage> {
     return new RaisedButton(
         child: Text("Login with Facebook"),
         onPressed: null // () => initFacebookLogin(),
+        );
+  }
+
+  Widget otherUserSignin() {
+    return new RaisedButton(
+      color: Colors.blueGrey,
+      textColor: Colors.white,
+      child: Text("Login as EC (TESTING PURPOSES ONLY)"),
+      onPressed: validateAndSubmitOtherUser,
     );
   }
 
@@ -248,12 +259,12 @@ class _LoginPageState extends State<LoginPage> {
       String userId = await widget.auth.logInGoogle();
 
       setState(() {
-        _errorMessage = 'Signed In\n\nUser id: $userId';
+        errorMessage = 'Signed In\n\nUser id: $userId';
       });
       widget.onSignIn();
     } catch (e) {
       setState(() {
-        _errorMessage = 'Sign In Error\n\n${e.toString()}';
+        errorMessage = 'Sign In Error\n\n${e.toString()}';
       });
       print(e);
     }
@@ -264,12 +275,12 @@ class _LoginPageState extends State<LoginPage> {
       String userId = await widget.auth.loginFB();
 
       setState(() {
-        _errorMessage = 'Signed In\n\nUser id: $userId';
+        errorMessage = 'Signed In\n\nUser id: $userId';
       });
       widget.onSignIn();
     } catch (e) {
       setState(() {
-        _errorMessage = 'Sign In Error\n\n${e.toString()}';
+        errorMessage = 'Sign In Error\n\n${e.toString()}';
       });
       print(e);
     }
@@ -287,11 +298,46 @@ class _LoginPageState extends State<LoginPage> {
             color: Colors.red,
             child: _formMode == FormMode.LOGIN
                 ? new Text('Login',
-                style: new TextStyle(fontSize: 20.0, color: Colors.white))
+                    style: new TextStyle(fontSize: 20.0, color: Colors.white))
                 : new Text('Create account',
-                style: new TextStyle(fontSize: 20.0, color: Colors.white)),
+                    style: new TextStyle(fontSize: 20.0, color: Colors.white)),
             onPressed: _validateAndSubmit,
           ),
         ));
+  }
+
+  void validateAndSubmitOtherUser() async {
+    setState(() {
+      errorMessage = "";
+      isLoading = true;
+    });
+
+    String userId = "";
+    try {
+      if (_formMode == FormMode.LOGIN) {
+        userId = await widget.auth.signIn('e@c.com', '000000');
+        print('Signed in: $userId');
+      } else {
+        userId = await widget.auth.createUser(email, password);
+        print('Signed up user: $userId');
+        widget.onSignIn();
+      }
+      setState(() {
+        isLoading = false;
+      });
+
+      if (userId.length > 0 && userId != null && _formMode == FormMode.LOGIN) {
+        widget.onSignIn();
+      }
+    } catch (e) {
+      print('Error: $e');
+      setState(() {
+        isLoading = false;
+        if (isIos) {
+          errorMessage = e.details;
+        } else
+          errorMessage = e.message;
+      });
+    }
   }
 }

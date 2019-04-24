@@ -29,29 +29,26 @@ class ItemEdit extends StatefulWidget {
 class ItemEditState extends State<ItemEdit> {
   final GlobalKey<FormState> formKey = new GlobalKey<FormState>();
 
-  bool isUploading = false;
-  String imageFileName;
-
   String appBarText = "Edit"; // Either 'Edit' or 'Add'. Prepended to " Item"
   String addButton = "Edit"; // 'Edit' if edit, 'Add' if adding
   String updateButton = "Save"; // 'Save' if edit, 'Add' if adding
+
+  List<Asset> imageAssets = List<Asset>();
+  List imageURLs = List();
+  String imageFileName;
+  bool imageButton = false;
   bool isEdit = true; // true if on editing mode, false if on adding mode
+  bool isUploading = false;
 
   TextEditingController nameController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
   TextEditingController priceController = TextEditingController();
 
-  List<Asset> imageAssets = List<Asset>();
-  bool imageButton = false;
-
-  List imageURLs = List();
-
-  TextStyle textStyle;
-  TextStyle inputTextStyle;
-
   List<DropdownMenuItem<String>> dropDownItemType;
   List<DropdownMenuItem<String>> dropDownItemCondition;
 
+  TextStyle textStyle;
+  TextStyle inputTextStyle;
   ThemeData theme;
 
   Item itemCopy;
@@ -74,7 +71,7 @@ class ItemEditState extends State<ItemEdit> {
     descriptionController.text = itemCopy.description;
     priceController.text = itemCopy.price.toString();
 
-    // new item
+    /// new item
     if (itemCopy.id == null) {
       isEdit = false;
       appBarText = "Add";
@@ -135,7 +132,6 @@ class ItemEditState extends State<ItemEdit> {
             style: TextStyle(color: Colors.white, fontFamily: 'Quicksand')),
         onPressed: () {
           saveWarning();
-          //Navigator.pop(context, DismissDialogAction.save);
         },
       ),
     );
@@ -413,40 +409,14 @@ class ItemEditState extends State<ItemEdit> {
   }
 
   void saveItem() async {
-    /// use final FormState form = _formKey.currentState;
-    /// links:
-    /// https://codingwithjoe.com/building-forms-with-flutter/
-    /// https://flutter.dev/docs/cookbook/forms/retrieve-input
-
     setState(() {
       isUploading = true;
-
-      //widget.item = itemCopy;
-      /*
-      List list = List();
-      list.add('https://bit.ly/2I11dot');
-      widget.item.images = list;
-      */
-
-      /*
-      widget.item.name = itemCopy.name;
-      widget.item.description = itemCopy.description;
-      widget.item.price = itemCopy.price;
-      widget.item.type = itemCopy.type;
-      widget.item.condition = itemCopy.condition;
-      widget.item.location = itemCopy.location;
-      widget.item.compare(itemCopy);
-*/
     });
-
-    ///if (_formKey.currentState.validate())
-
-    //goToLastScreen();
 
     // new item
     if (itemCopy.id == null) {
       final DocumentReference documentReference =
-      await Firestore.instance.collection("items").add({
+          await Firestore.instance.collection("items").add({
         'id': null,
         'status': itemCopy.status,
         'creator': itemCopy.creator,
@@ -556,7 +526,6 @@ class ItemEditState extends State<ItemEdit> {
   }
 
   Future<void> deleteAssets() async {
-    //await MultiImagePicker.deleteImages(assets: images);
     setState(() {
       for (int i = 0; i < itemCopy.numImages; i++) {
         FirebaseStorage.instance.ref().child('${itemCopy.id}/$i').delete();
@@ -584,7 +553,7 @@ class ItemEditState extends State<ItemEdit> {
     });
   }
 
-  /// fileName is the id of the item
+  // fileName is the id of the item
   Future<String> uploadImages(String fileName) async {
     String done;
     String result;

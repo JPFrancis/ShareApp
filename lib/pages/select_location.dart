@@ -25,26 +25,24 @@ class SelectLocation extends StatefulWidget {
 }
 
 class SelectLocationState extends State<SelectLocation> {
-  GeoPoint geoPoint;
-
   String kGoogleApiKey;
 
-
-  StreamSubscription<Position> dataSub;
   GoogleMapController _controller;
-  LatLng center = LatLng(39.08, -76.98);
-
+  StreamSubscription<Position> dataSub;
+  GeoPoint geoPoint;
   Position position;
+
+  Map<MarkerId, Marker> markerSet = <MarkerId, Marker>{};
+  MarkerId selectedMarker;
+  String markerName = 'Your Selected Location';
+  LatLng markerLatLng;
+  bool hasMarker = false;
 
   bool isLoading = false;
   String error;
   double zoom = 15.0;
 
-  Map<MarkerId, Marker> markerSet = <MarkerId, Marker>{};
-  bool hasMarker = false;
-  MarkerId selectedMarker;
-  String markerName = 'Your Selected Location';
-  LatLng markerLatLng;
+  LatLng center = LatLng(39.08, -76.98);
 
   CameraPosition initialCameraPosition = CameraPosition(
     target: LatLng(39.08, -76.98),
@@ -188,10 +186,8 @@ class SelectLocationState extends State<SelectLocation> {
   }
 
   Future<String> getKeyH() async {
-    DocumentSnapshot ds = await Firestore.instance
-        .collection('keys')
-        .document('maps_key')
-        .get();
+    DocumentSnapshot ds =
+        await Firestore.instance.collection('keys').document('maps_key').get();
 
     return ds['key'];
   }
@@ -249,16 +245,6 @@ class SelectLocationState extends State<SelectLocation> {
         addMarker(p.latitude, p.longitude);
       });
     });
-/*
-    Position waitForLoc = await getCurrLoc();
-
-    if (isLoading && waitForLoc != null) {
-      setState(() {
-        isLoading = false;
-        _position = waitForLoc;
-      });
-    }
-    */
   }
 
   Future<Position> getCurrLoc() async {
@@ -279,7 +265,7 @@ class SelectLocationState extends State<SelectLocation> {
 
   void setCamera(double lat, double long, double zoom) async {
     LatLng newLoc = LatLng(lat, long);
-    //final GoogleMapController controller = await _controller.future;
+
     _controller.animateCamera(CameraUpdate.newCameraPosition(
         new CameraPosition(target: newLoc, zoom: zoom)));
   }

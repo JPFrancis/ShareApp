@@ -29,20 +29,18 @@ class ProfileEdit extends StatefulWidget {
 class ProfileEditState extends State<ProfileEdit> {
   final GlobalKey<FormState> formKey = new GlobalKey<FormState>();
 
-  bool isUploading = false;
-  String photoURL;
-
   TextEditingController displayNameController = TextEditingController();
-
-  TextStyle textStyle;
-  TextStyle inputTextStyle;
-
-  ThemeData theme;
-
-  UserEdit userEditCopy;
 
   Future<File> selectedImage;
   File imageFile;
+  String photoURL;
+  bool isUploading = false;
+
+  TextStyle textStyle;
+  TextStyle inputTextStyle;
+  ThemeData theme;
+
+  UserEdit userEditCopy;
 
   @override
   void initState() {
@@ -70,8 +68,7 @@ class ProfileEditState extends State<ProfileEdit> {
                 textScaleFactor: 1.05,
                 style: theme.textTheme.body2.copyWith(color: Colors.white)),
             onPressed: () {
-              saveItem();
-              //Navigator.pop(context, DismissDialogAction.save);
+              saveProfile();
             },
           ),
         ],
@@ -80,9 +77,9 @@ class ProfileEditState extends State<ProfileEdit> {
         children: <Widget>[
           isUploading
               ? Container(
-            decoration:
-            new BoxDecoration(color: Colors.white.withOpacity(0.0)),
-          )
+                  decoration:
+                      new BoxDecoration(color: Colors.white.withOpacity(0.0)),
+                )
               : showBody(),
           showCircularProgress(),
         ],
@@ -109,14 +106,6 @@ class ProfileEditState extends State<ProfileEdit> {
       ),
     );
   }
-  
-  Widget showUserID() {
-    return Container(
-        child: Text(
-          "Your user id: ${userEditCopy.id}",
-          style: TextStyle(fontSize: 16),
-        ));
-  }
 
   Widget showDisplayNameEditor() {
     return Container(
@@ -129,7 +118,6 @@ class ProfileEditState extends State<ProfileEdit> {
         decoration: InputDecoration(
           labelText: 'Display name',
           filled: true,
-          //border: OutlineInputBorder(borderRadius: BorderRadius.circular(5.0)),
         ),
       ),
     );
@@ -138,48 +126,47 @@ class ProfileEditState extends State<ProfileEdit> {
   Widget showProfileOptions() {
     return Container(
         child: Row(
+      children: <Widget>[
+        Container(
+          height: 120,
+          width: 120,
+          child: previewImage(),
+        ),
+        Container(
+          width: 15,
+        ),
+        Column(
           children: <Widget>[
-            Container(
-              height: 120,
-              width: 120,
-              child: previewImage(),
+            RaisedButton(
+              shape: new RoundedRectangleBorder(
+                  borderRadius: new BorderRadius.circular(5.0)),
+              color: Colors.red,
+              textColor: Colors.white,
+              child: Text(
+                "Take picture",
+                textScaleFactor: 1.25,
+              ),
+              onPressed: () {
+                onImageButtonPressed(ImageSource.camera);
+              },
             ),
-            Container(
-              width: 15,
-            ),
-            Column(
-              children: <Widget>[
-                RaisedButton(
-                  shape: new RoundedRectangleBorder(
-                      borderRadius: new BorderRadius.circular(5.0)),
-                  color: Colors.red,
-                  textColor: Colors.white,
-                  child: Text(
-                    "Take picture",
-                    //addButton + " Images",
-                    textScaleFactor: 1.25,
-                  ),
-                  onPressed: () {
-                    onImageButtonPressed(ImageSource.camera);
-                  },
-                ),
-                RaisedButton(
-                  shape: new RoundedRectangleBorder(
-                      borderRadius: new BorderRadius.circular(5.0)),
-                  color: Colors.red,
-                  textColor: Colors.white,
-                  child: Text(
-                    "Pick from gallery",
-                    textScaleFactor: 1.25,
-                  ),
-                  onPressed: () {
-                    onImageButtonPressed(ImageSource.gallery);
-                  },
-                ),
-              ],
+            RaisedButton(
+              shape: new RoundedRectangleBorder(
+                  borderRadius: new BorderRadius.circular(5.0)),
+              color: Colors.red,
+              textColor: Colors.white,
+              child: Text(
+                "Pick from gallery",
+                textScaleFactor: 1.25,
+              ),
+              onPressed: () {
+                onImageButtonPressed(ImageSource.gallery);
+              },
             ),
           ],
-        ));
+        ),
+      ],
+    ));
   }
 
   Widget showCurrentProfilePic() {
@@ -187,11 +174,11 @@ class ProfileEditState extends State<ProfileEdit> {
       height: MediaQuery.of(context).size.height / 4,
       width: MediaQuery.of(context).size.height / 4,
       child: CachedNetworkImage(
-      key: new ValueKey<String>(
-          DateTime.now().millisecondsSinceEpoch.toString()),
-      imageUrl: userEditCopy.photoUrl,
-      placeholder: (context, url) => new CircularProgressIndicator(),
-        ),
+        key: new ValueKey<String>(
+            DateTime.now().millisecondsSinceEpoch.toString()),
+        imageUrl: userEditCopy.photoUrl,
+        placeholder: (context, url) => new CircularProgressIndicator(),
+      ),
     );
   }
 
@@ -224,8 +211,6 @@ class ProfileEditState extends State<ProfileEdit> {
 
   Widget showCircularProgress() {
     if (isUploading) {
-      //return Center(child: CircularProgressIndicator());
-
       return Container(
         child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -248,7 +233,7 @@ class ProfileEditState extends State<ProfileEdit> {
     );
   }
 
-  void saveItem() async {
+  void saveProfile() async {
     setState(() {
       isUploading = true;
     });
@@ -296,35 +281,35 @@ class ProfileEditState extends State<ProfileEdit> {
 
     final ThemeData theme = Theme.of(context);
     final TextStyle dialogTextStyle =
-    theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
 
     return await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          content: Text(
-            'Discard changes?',
-            style: dialogTextStyle,
-          ),
-          actions: <Widget>[
-            FlatButton(
-              child: const Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop(
-                    false); // Pops the confirmation dialog but not the page.
-              },
-            ),
-            FlatButton(
-              child: const Text('Discard'),
-              onPressed: () {
-                Navigator.of(context).pop(
-                    true); // Returning true to _onWillPop will pop again.
-              },
-            ),
-          ],
-        );
-      },
-    ) ??
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              content: Text(
+                'Discard changes?',
+                style: dialogTextStyle,
+              ),
+              actions: <Widget>[
+                FlatButton(
+                  child: const Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(context).pop(
+                        false); // Pops the confirmation dialog but not the page.
+                  },
+                ),
+                FlatButton(
+                  child: const Text('Discard'),
+                  onPressed: () {
+                    Navigator.of(context).pop(
+                        true); // Returning true to _onWillPop will pop again.
+                  },
+                ),
+              ],
+            );
+          },
+        ) ??
         false;
   }
 }

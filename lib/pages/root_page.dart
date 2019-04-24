@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 class RootPage extends StatefulWidget {
   static const routeName = '/rootPage';
+
   RootPage({Key key, this.auth}) : super(key: key);
   final BaseAuth auth;
 

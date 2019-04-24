@@ -34,15 +34,14 @@ class HomePage extends StatefulWidget {
 
 class HomePageState extends State<HomePage> {
   SharedPreferences prefs;
+  String userID;
   List<Item> itemList;
 
-  String userID;
   int currentTabIndex;
+  bool isLoading;
 
   EdgeInsets edgeInset;
   double padding;
-
-  bool isLoading;
 
   @override
   void initState() {
@@ -52,7 +51,6 @@ class HomePageState extends State<HomePage> {
     currentTabIndex = 0;
 
     padding = 18;
-    //edgeInset = EdgeInsets.all(padding);
     edgeInset = EdgeInsets.only(
         left: padding, right: padding, bottom: padding, top: 30);
 
@@ -193,15 +191,181 @@ class HomePageState extends State<HomePage> {
     return null;
   }
 
+  Widget cardItem(DocumentSnapshot ds) {
+    CachedNetworkImage image = CachedNetworkImage(
+      key: new ValueKey<String>(
+          DateTime.now().millisecondsSinceEpoch.toString()),
+      imageUrl: ds['images'][0],
+      placeholder: (context, url) => new CircularProgressIndicator(),
+    );
+    return InkWell(onTap: () {
+      navigateToDetail(ds.documentID);
+    }, child: new Container(child: new LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+      double h = constraints.maxHeight;
+      double w = constraints.maxWidth;
+      Icon icon = Icon(Icons.info_outline);
+      switch (ds['type']) {
+        case 'Tool':
+          icon = Icon(Icons.build, size: h/20,);
+          break;
+        case 'Leisure':
+          icon = Icon(Icons.golf_course, size: h/20);
+          break;
+        case 'Home':
+          icon = Icon(Icons.home, size: h/20);
+          break;
+        case 'Other':
+          icon = Icon(Icons.device_unknown, size: h/20);
+          break;
+      }
+      return Column(
+        children: <Widget>[
+          Container(
+              height: 2 * h / 3,
+              width: w,
+              child: FittedBox(fit: BoxFit.cover, child: image)),
+          SizedBox(height: 10.0,),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Row(
+                children: <Widget>[
+                  icon, 
+                  SizedBox(width: 5.0,),
+                  ds['type'] != null 
+                      ? Text( '${ds['type']}'.toUpperCase(), style: TextStyle( fontSize: h / 25, fontFamily: 'Quicksand', fontWeight: FontWeight.bold),)
+                      : Text(''),
+                ],
+              ),
+              Text(ds['name'], style: TextStyle( fontSize: h / 20, fontFamily: 'Quicksand', fontWeight: FontWeight.bold)),
+              Text("\$${ds['price']} per hour", style: TextStyle(fontSize: h / 21, fontFamily: 'Quicksand')),
+              Row( children: <Widget>[
+                  Icon( Icons.star_border, size: h / 19,),
+                  Icon( Icons.star_border, size: h / 19,),
+                  Icon( Icons.star_border, size: h / 19,),
+                  Icon( Icons.star_border, size: h / 19,),
+                  Icon( Icons.star_border, size: h / 19,),
+                  Container(width: 5.0,),
+                  Text( "328", style: TextStyle( fontSize: h / 25, fontFamily: 'Quicksand', fontWeight: FontWeight.bold,),)
+                ],
+              )
+            ],
+          ),
+        ],
+      );
+    })));
+  }
+
+  Widget cardItemListings(DocumentSnapshot ds, status) {
+    CachedNetworkImage image = CachedNetworkImage(
+      key: new ValueKey<String>(
+          DateTime.now().millisecondsSinceEpoch.toString()),
+      imageUrl: ds['images'][0],
+      placeholder: (context, url) => new CircularProgressIndicator(),
+    );
+    if (status ^ (ds['rental'] == null)){
+      return InkWell(onTap: () {
+        navigateToDetail(ds.documentID);
+      }, child: new Container(child: new LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints constraints) {
+        double h = constraints.maxHeight;
+        double w = constraints.maxWidth;
+        Icon icon = Icon(Icons.info_outline);
+        switch (ds['type']) {
+          case 'Tool':
+            icon = Icon(Icons.build, size: h/20,);
+            break;
+          case 'Leisure':
+            icon = Icon(Icons.golf_course, size: h/20);
+            break;
+          case 'Home':
+            icon = Icon(Icons.home, size: h/20);
+            break;
+          case 'Other':
+            icon = Icon(Icons.device_unknown, size: h/20);
+            break;
+        }
+        return Column(
+          children: <Widget>[
+            Container(
+                height: 2 * h / 3,
+                width: w,
+                child: FittedBox(fit: BoxFit.cover, child: image)),
+            SizedBox(height: 10.0,),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    icon, 
+                    SizedBox(width: 5.0,),
+                    ds['type'] != null 
+                        ? Text( '${ds['type']}'.toUpperCase(), style: TextStyle( fontSize: h / 25, fontFamily: 'Quicksand', fontWeight: FontWeight.bold),)
+                        : Text(''),
+                  ],
+                ),
+                Text(ds['name'], style: TextStyle( fontSize: h / 20, fontFamily: 'Quicksand', fontWeight: FontWeight.bold)),
+                Text("\$${ds['price']} per hour", style: TextStyle(fontSize: h / 21, fontFamily: 'Quicksand')),
+                Row( children: <Widget>[
+                    Icon( Icons.star_border, size: h / 19,),
+                    Icon( Icons.star_border, size: h / 19,),
+                    Icon( Icons.star_border, size: h / 19,),
+                    Icon( Icons.star_border, size: h / 19,),
+                    Icon( Icons.star_border, size: h / 19,),
+                    Container(width: 5.0,),
+                    Text( "328", style: TextStyle( fontSize: h / 25, fontFamily: 'Quicksand', fontWeight: FontWeight.bold,),)
+                  ],
+                )
+              ],
+            ),
+          ],
+        );
+      })));
+    } else {return Container(height: 0, width: 0);}
+  }
+
+  Widget buildItemList() {
+    CollectionReference collectionReference = Firestore.instance.collection('items');
+    int tilerows = MediaQuery.of(context).size.width > 500 ? 3 : 2;
+    return Expanded(
+      child: StreamBuilder<QuerySnapshot>(
+        stream: collectionReference.snapshots(),
+        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          if (snapshot.hasError) {
+            return new Text('${snapshot.error}');
+          }
+          switch (snapshot.connectionState) {
+            case ConnectionState.waiting:
+              return new Center(
+                child: new Container(),
+              );
+            default:
+              List<DocumentSnapshot> items = snapshot.data.documents.toList();
+              return GridView.count(
+                  crossAxisCount: tilerows,
+                  childAspectRatio: (2 / 3),
+                  padding: const EdgeInsets.all(20.0),
+//                  mainAxisSpacing: 10.0,
+                  crossAxisSpacing: MediaQuery.of(context).size.width / 15,
+                  children: items
+                      .map((DocumentSnapshot ds) => cardItem(ds))
+                      .toList());
+          }
+        },
+      ),
+    );
+  }
+
   Widget homeTabPage() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         searchField(),
-               Padding(
-                      padding: const EdgeInsets.only(left: 20.0),
-                      child: Text("Items near you", style: TextStyle(fontFamily: 'Quicksand', fontWeight: FontWeight.bold, fontSize: 30.0)),
-                    ),
+        Padding(
+              padding: const EdgeInsets.only(left: 20.0),
+              child: Text("Items near you", style: TextStyle(fontFamily: 'Quicksand', fontWeight: FontWeight.bold, fontSize: 30.0)),
+            ),
         buildItemList(),
       ],
     );
@@ -235,12 +399,12 @@ class HomePageState extends State<HomePage> {
       child: Column(
         children: <Widget>[
           reusableObjList(
-              'Items I\'m currently renting', buildRentalsListCurrent()),
+              'Items I\'m currently renting', buildRentalsList(true)),
           Container(
             height: padding,
           ),
           reusableObjList(
-              'Items I have requested to rent', buildRentalsListRequested()),
+              'Items I have requested to rent', buildRentalsList(false)),
         ],
       ),
     );
@@ -276,6 +440,43 @@ class HomePageState extends State<HomePage> {
     );
   }
 
+  Widget buildMyListingsList(bool status) {
+    CollectionReference collectionReference =
+        Firestore.instance.collection('items');
+    int tilerows = MediaQuery.of(context).size.width > 500 ? 3 : 2;
+    return Expanded(
+      child: StreamBuilder<QuerySnapshot>(
+        stream: collectionReference
+            .where('creator',
+                isEqualTo:
+                    Firestore.instance.collection('users').document(userID))
+            .snapshots(),
+        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          if (snapshot.hasError) {
+            return new Text('${snapshot.error}');
+          }
+          switch (snapshot.connectionState) {
+            case ConnectionState.waiting:
+              return new Center(
+                child: new Container(),
+              );
+            default:
+              List<DocumentSnapshot> items = snapshot.data.documents.toList();
+              return GridView.count(
+                  crossAxisCount: tilerows,
+                  childAspectRatio: (2 / 3),
+                  padding: const EdgeInsets.all(20.0),
+//                  mainAxisSpacing: 10.0,
+                  crossAxisSpacing: MediaQuery.of(context).size.width / 15,
+                  children: items
+                      .map((DocumentSnapshot ds) => cardItemListings(ds,status))
+                      .toList());
+          }
+        },
+      ),
+    );
+  }
+
   Widget myListingsTabPage() {
     return Padding(
       padding: edgeInset,
@@ -283,14 +484,14 @@ class HomePageState extends State<HomePage> {
         children: <Widget>[
           reusableObjList(
             'My items that are available to rent',
-            buildMyListingsListAvailable(),
+            buildMyListingsList(false),
           ),
           Container(
             height: padding,
           ),
           reusableObjList(
             'My items that are currently being rented',
-            buildMyListingsListRented(),
+            buildMyListingsList(true),
           ),
         ],
       ),
@@ -459,14 +660,14 @@ class HomePageState extends State<HomePage> {
 
   Widget profileTabAfterIntro() {
     // [TEMPORARY SOLUTION]
-    double height = (MediaQuery.of(context).size.height) - 320;
+    double height = (MediaQuery.of(context).size.height) - 335;
     return Container(
       height: height,
       child: ListView(
         children: <Widget>[
+          /// I'll remove this later, I'm just using it to quickly switch accounts
           reusableCategory("ACCOUNT SETTINGS"),
-          reusableFlatButton(
-              "Personal information", Icons.person_outline, null),
+          reusableFlatButton( "Personal information", Icons.person_outline, null),
           reusableFlatButton("Payments and payouts", Icons.payment, null),
           reusableFlatButton("Notifications", Icons.notifications, null),
           reusableCategory("SUPPORT"),
@@ -550,11 +751,13 @@ class HomePageState extends State<HomePage> {
               Container(
                 height: 15,
               ),
-              Text('Last active: ${details[3]}',
-                  style: TextStyle(
-                      color: Colors.black54,
-                      fontFamily: 'Quicksand',
-                      fontSize: 13.0)),
+              Text(
+                'Last active: ${details[3]}',
+                style: TextStyle(
+                    color: Colors.black54,
+                    fontFamily: 'Quicksand',
+                    fontSize: 13.0),
+              ),
             ],
           );
         } else {
@@ -564,134 +767,15 @@ class HomePageState extends State<HomePage> {
     );
   }
 
-  Widget showSignedInAs() {
-    return FutureBuilder(
-      future: Firestore.instance.collection('users').document(userID).get(),
-      builder: (BuildContext context, AsyncSnapshot snapshot) {
-        if (snapshot.hasData) {
-          DocumentSnapshot ds = snapshot.data;
-
-          return new Text(
-            'Signed in as: ${ds['displayName']}',
-            style: TextStyle(fontStyle: FontStyle.italic),
-          );
-        } else {
-          return new Text('');
-        }
-      },
-    );
-  }
-
-  Widget cardItem(DocumentSnapshot ds) {
-    CachedNetworkImage image = CachedNetworkImage(
-      key: new ValueKey<String>(
-          DateTime.now().millisecondsSinceEpoch.toString()),
-      imageUrl: ds['images'][0],
-      placeholder: (context, url) => new CircularProgressIndicator(),
-    );
-    return InkWell(
-      onTap: () { navigateToDetail(ds.documentID); }, 
-      child: new Container(
-        child: new LayoutBuilder(
-        builder: (BuildContext context, BoxConstraints constraints) {
-      double h = constraints.maxHeight;
-      double w = constraints.maxWidth;
-      Icon icon = Icon(Icons.info_outline);
-      switch (ds['type']) {
-        case 'Tool':
-          icon = Icon(Icons.build, size: h/20,);
-          break;
-        case 'Leisure':
-          icon = Icon(Icons.golf_course, size: h/20);
-          break;
-        case 'Home':
-          icon = Icon(Icons.home, size: h/20);
-          break;
-        case 'Other':
-          icon = Icon(Icons.device_unknown, size: h/20);
-          break;
-      }
-      return Column(
-        children: <Widget>[
-          Container(
-              height: 2 * h / 3,
-              width: w,
-              child: FittedBox(fit: BoxFit.cover, child: image)),
-          SizedBox(height: 10.0,),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Row(
-                children: <Widget>[
-                  icon, 
-                  SizedBox(width: 5.0,),
-                  ds['type'] != null 
-                      ? Text( '${ds['type']}'.toUpperCase(), style: TextStyle( fontSize: h / 25, fontFamily: 'Quicksand', fontWeight: FontWeight.bold),)
-                      : Text(''),
-                ],
-              ),
-              Text(ds['name'], style: TextStyle( fontSize: h / 20, fontFamily: 'Quicksand', fontWeight: FontWeight.bold)),
-              Text("\$${ds['price']} per hour", style: TextStyle(fontSize: h / 21, fontFamily: 'Quicksand')),
-              Row( children: <Widget>[
-                  Icon( Icons.star_border, size: h / 19,),
-                  Icon( Icons.star_border, size: h / 19,),
-                  Icon( Icons.star_border, size: h / 19,),
-                  Icon( Icons.star_border, size: h / 19,),
-                  Icon( Icons.star_border, size: h / 19,),
-                  Container(width: 5.0,),
-                  Text( "328", style: TextStyle( fontSize: h / 25, fontFamily: 'Quicksand', fontWeight: FontWeight.bold,),)
-                ],
-              )
-            ],
-          ),
-        ],
-      );
-    })));
-  }
-
-  Widget buildItemList() {
-    CollectionReference collectionReference = Firestore.instance.collection('items');
-    int tilerows = MediaQuery.of(context).size.width > 500 ? 3 : 2;
-    return Expanded(
-      child: StreamBuilder<QuerySnapshot>(
-        stream: collectionReference.snapshots(),
-        // to show all items created by you
-        //where('creator', isEqualTo: Firestore.instance.collection('users').document(userID)),
-        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.hasError) {
-            return new Text('${snapshot.error}');
-          }
-          switch (snapshot.connectionState) {
-            case ConnectionState.waiting:
-              return new Center(
-                child: new Container(),
-              );
-            default:
-              List<DocumentSnapshot> items = snapshot.data.documents.toList();
-              return GridView.count(
-                  crossAxisCount: tilerows,
-                  childAspectRatio: (2 / 3),
-                  padding: const EdgeInsets.all(20.0),
-//                  mainAxisSpacing: 10.0,
-                  crossAxisSpacing: MediaQuery.of(context).size.width/15,
-                  children: items
-                      .map((DocumentSnapshot ds) => cardItem(ds))
-                      .toList());
-  
-          }
-        },
-      ),
-    );
-  }
-
-  Widget buildRentalsList() {
+  Widget buildRentalsList(bool requesting) {
     CollectionReference collectionReference =
-        Firestore.instance.collection('rentals');
+        Firestore.instance.collection('users');
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
-        stream: collectionReference.snapshots(),
-        // to show all items created by you
-        //where('creator', isEqualTo: Firestore.instance.collection('users').document(userID)),
+        stream: collectionReference
+            .document(userID)
+            .collection('rentals')
+            .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
             return new Text('${snapshot.error}');
@@ -704,88 +788,14 @@ class HomePageState extends State<HomePage> {
             default:
               return new ListView.builder(
                 shrinkWrap: true,
-                //padding: EdgeInsets.all(2.0),
                 itemCount: snapshot.data.documents.length,
                 itemBuilder: (context, index) {
-                  DocumentSnapshot ds = snapshot.data.documents[index];
-                  bool showChat = false;
-
-                  DocumentReference renterDR = ds['renter'];
-                  DocumentReference ownerDR = ds['owner'];
-
-                  if (userID == renterDR.documentID ||
-                      userID == ownerDR.documentID) {
-                    showChat = true;
-                  }
-
-                  return ListTile(
-                    leading: Icon(Icons.shopping_cart),
-                    //leading: Icon(Icons.build),
-                    title: Text(
-                      ds.documentID,
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Text('${ds['start'].toString()}'),
-                    onTap: () {
-                      Navigator.pushNamed(
-                        context,
-                        RentalDetail.routeName,
-                        arguments: ItemRentalArgs(
-                          ds.documentID,
-                        ),
-                      );
-                    },
-                    trailing: showChat
-                        ? IconButton(
-                            icon: Icon(Icons.message),
-                            onPressed: () {
-                              Navigator.pushNamed(
-                                context,
-                                Chat.routeName,
-                                arguments: ChatArgs(
-                                  ds.documentID,
-                                ),
-                              );
-                            },
-                          )
-                        : null,
-                  );
-                },
-              );
-          }
-        },
-      ),
-    );
-  }
-
-  Widget buildRentalsListCurrent() {
-    CollectionReference collectionReference =
-        Firestore.instance.collection('rentals');
-    return Expanded(
-      child: StreamBuilder<QuerySnapshot>(
-        stream: collectionReference.snapshots(),
-        // to show all items created by you
-        //where('creator', isEqualTo: Firestore.instance.collection('users').document(userID)),
-        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.hasError) {
-            return new Text('${snapshot.error}');
-          }
-          switch (snapshot.connectionState) {
-            case ConnectionState.waiting:
-              return new Center(
-                child: new Container(),
-              );
-            default:
-              return new ListView.builder(
-                shrinkWrap: true,
-                //padding: EdgeInsets.all(2.0),
-                itemCount: snapshot.data.documents.length,
-                itemBuilder: (context, index) {
-                  DocumentSnapshot ds = snapshot.data.documents[index];
-                  DocumentReference itemDR = ds['item'];
+                  DocumentSnapshot userRentalDS =
+                      snapshot.data.documents[index];
+                  DocumentReference rentalDR = userRentalDS['rental'];
 
                   return StreamBuilder<DocumentSnapshot>(
-                    stream: itemDR.snapshots(),
+                    stream: rentalDR.snapshots(),
                     builder: (BuildContext context,
                         AsyncSnapshot<DocumentSnapshot> snapshot) {
                       if (snapshot.hasError) {
@@ -798,55 +808,110 @@ class HomePageState extends State<HomePage> {
                           );
                         default:
                           if (snapshot.hasData) {
-                            DocumentSnapshot itemDS = snapshot.data;
+                            DocumentSnapshot rentalDS = snapshot.data;
+                            DocumentReference itemDR = rentalDS['item'];
+                            DocumentReference renterDR = rentalDS['renter'];
 
-                            if (ds['status'] != 1) {
-                              bool showChat = false;
+                            if (userID == renterDR.documentID) {
+                              return StreamBuilder<DocumentSnapshot>(
+                                stream: itemDR.snapshots(),
+                                builder: (BuildContext context,
+                                    AsyncSnapshot<DocumentSnapshot> snapshot) {
+                                  if (snapshot.hasError) {
+                                    return new Text('${snapshot.error}');
+                                  }
+                                  switch (snapshot.connectionState) {
+                                    case ConnectionState.waiting:
+                                      return Center(
+                                        child: new Container(),
+                                      );
+                                    default:
+                                      if (snapshot.hasData) {
+                                        DocumentSnapshot itemDS = snapshot.data;
+                                        DocumentReference ownerDR =
+                                            itemDS['creator'];
 
-                              DocumentReference renterDR = ds['renter'];
-                              DocumentReference ownerDR = ds['owner'];
+                                        if (requesting ^
+                                            (rentalDS['status'] == 1)) {
+                                          return StreamBuilder<
+                                              DocumentSnapshot>(
+                                            stream: ownerDR.snapshots(),
+                                            builder: (BuildContext context,
+                                                AsyncSnapshot<DocumentSnapshot>
+                                                    snapshot) {
+                                              if (snapshot.hasError) {
+                                                return new Text(
+                                                    '${snapshot.error}');
+                                              }
+                                              switch (
+                                                  snapshot.connectionState) {
+                                                case ConnectionState.waiting:
+                                                  return Center(
+                                                    child: new Container(),
+                                                  );
+                                                default:
+                                                  if (snapshot.hasData) {
+                                                    DocumentSnapshot ownerDS =
+                                                        snapshot.data;
 
-                              if (userID == renterDR.documentID ||
-                                  userID == ownerDR.documentID) {
-                                showChat = true;
-                              }
+                                                    String created = 'Created: ' +
+                                                        timeago.format(DateTime
+                                                            .fromMillisecondsSinceEpoch(
+                                                                rentalDS[
+                                                                    'created']));
 
-                              String created = 'Created: ' +
-                                  timeago.format(
-                                      DateTime.fromMillisecondsSinceEpoch(
-                                          ds['created']));
-
-                              return ListTile(
-                                leading: Icon(Icons.shopping_cart),
-                                //leading: Icon(Icons.build),
-                                title: Text(
-                                  itemDS['name'],
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                                subtitle: Text(created),
-                                onTap: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    RentalDetail.routeName,
-                                    arguments: ItemRentalArgs(
-                                      ds.documentID,
-                                    ),
-                                  );
-                                },
-                                trailing: showChat
-                                    ? IconButton(
-                                        icon: Icon(Icons.message),
-                                        onPressed: () {
-                                          Navigator.pushNamed(
-                                            context,
-                                            Chat.routeName,
-                                            arguments: ChatArgs(
-                                              ds.documentID,
-                                            ),
+                                                    return ListTile(
+                                                      leading: Icon(
+                                                          Icons.shopping_cart),
+                                                      //leading: Icon(Icons.build),
+                                                      title: Text(
+                                                        '${ownerDS['displayName']}\'s ${itemDS['name']}',
+                                                        style: TextStyle(
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .bold),
+                                                      ),
+                                                      subtitle: Text(created),
+                                                      onTap: () {
+                                                        Navigator.pushNamed(
+                                                          context,
+                                                          RentalDetail
+                                                              .routeName,
+                                                          arguments:
+                                                              RentalDetailArgs(
+                                                            rentalDS.documentID,
+                                                          ),
+                                                        );
+                                                      },
+                                                      trailing: IconButton(
+                                                        icon:
+                                                            Icon(Icons.message),
+                                                        onPressed: () {
+                                                          Navigator.pushNamed(
+                                                            context,
+                                                            Chat.routeName,
+                                                            arguments: ChatArgs(
+                                                              rentalDS
+                                                                  .documentID,
+                                                            ),
+                                                          );
+                                                        },
+                                                      ),
+                                                    );
+                                                  } else {
+                                                    return Container();
+                                                  }
+                                              }
+                                            },
                                           );
-                                        },
-                                      )
-                                    : null,
+                                        } else {
+                                          return Container();
+                                        }
+                                      } else {
+                                        return Container();
+                                      }
+                                  }
+                                },
                               );
                             } else {
                               return Container();
@@ -857,337 +922,6 @@ class HomePageState extends State<HomePage> {
                       }
                     },
                   );
-                },
-              );
-          }
-        },
-      ),
-    );
-  }
-
-  Widget buildRentalsListRequested() {
-    CollectionReference collectionReference =
-        Firestore.instance.collection('rentals');
-    return Expanded(
-      child: StreamBuilder<QuerySnapshot>(
-        stream: collectionReference.snapshots(),
-        // to show all items created by you
-        //where('creator', isEqualTo: Firestore.instance.collection('users').document(userID)),
-        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.hasError) {
-            return new Text('${snapshot.error}');
-          }
-          switch (snapshot.connectionState) {
-            case ConnectionState.waiting:
-              return new Center(
-                child: new Container(),
-              );
-            default:
-              return new ListView.builder(
-                shrinkWrap: true,
-                //padding: EdgeInsets.all(2.0),
-                itemCount: snapshot.data.documents.length,
-                itemBuilder: (context, index) {
-                  DocumentSnapshot ds = snapshot.data.documents[index];
-                  DocumentReference itemDR = ds['item'];
-
-                  return StreamBuilder<DocumentSnapshot>(
-                    stream: itemDR.snapshots(),
-                    builder: (BuildContext context,
-                        AsyncSnapshot<DocumentSnapshot> snapshot) {
-                      if (snapshot.hasError) {
-                        return new Text('${snapshot.error}');
-                      }
-                      switch (snapshot.connectionState) {
-                        case ConnectionState.waiting:
-                          return Center(
-                            child: new Container(),
-                          );
-                        default:
-                          if (snapshot.hasData) {
-                            DocumentSnapshot itemDS = snapshot.data;
-
-                            if (ds['status'] == 1) {
-                              bool showChat = false;
-
-                              DocumentReference renterDR = ds['renter'];
-                              DocumentReference ownerDR = ds['owner'];
-
-                              if (userID == renterDR.documentID ||
-                                  userID == ownerDR.documentID) {
-                                showChat = true;
-                              }
-
-                              String created = 'Created: ' +
-                                  timeago.format(
-                                      DateTime.fromMillisecondsSinceEpoch(
-                                          ds['created']));
-
-                              return ListTile(
-                                leading: Icon(Icons.shopping_cart),
-                                //leading: Icon(Icons.build),
-                                title: Text(
-                                  itemDS['name'],
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                                subtitle: Text(created),
-                                onTap: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    RentalDetail.routeName,
-                                    arguments: ItemRentalArgs(
-                                      ds.documentID,
-                                    ),
-                                  );
-                                },
-                                trailing: showChat
-                                    ? IconButton(
-                                        icon: Icon(Icons.message),
-                                        onPressed: () {
-                                          Navigator.pushNamed(
-                                            context,
-                                            Chat.routeName,
-                                            arguments: ChatArgs(
-                                              ds.documentID,
-                                            ),
-                                          );
-                                        },
-                                      )
-                                    : null,
-                              );
-                            } else {
-                              return Container();
-                            }
-                          } else {
-                            return Container();
-                          }
-                      }
-                    },
-                  );
-                },
-              );
-          }
-        },
-      ),
-    );
-  }
-
-  Widget buildMyListingsList() {
-    CollectionReference collectionReference =
-        Firestore.instance.collection('items');
-    return Expanded(
-      child: StreamBuilder<QuerySnapshot>(
-        stream: collectionReference
-            .where('creator',
-                isEqualTo:
-                    Firestore.instance.collection('users').document(userID))
-            .snapshots(),
-        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.hasError) {
-            return new Text('${snapshot.error}');
-          }
-          switch (snapshot.connectionState) {
-            case ConnectionState.waiting:
-              return new Center(
-                child: new Container(),
-              );
-            default:
-              return new ListView.builder(
-                shrinkWrap: true,
-                //padding: EdgeInsets.all(2.0),
-                itemCount: snapshot.data.documents.length,
-                itemBuilder: (context, index) {
-                  DocumentSnapshot ds = snapshot.data.documents[index];
-
-                  Icon tileIcon;
-                  String itemType = ds['type'];
-
-                  switch (itemType) {
-                    case 'tool':
-                      tileIcon = Icon(Icons.build);
-                      break;
-                    case 'leisure':
-                      tileIcon = Icon(Icons.golf_course);
-                      break;
-                    case 'home':
-                      tileIcon = Icon(Icons.home);
-                      break;
-                    case 'other':
-                      tileIcon = Icon(Icons.device_unknown);
-                      break;
-                  }
-
-                  return ListTile(
-                    leading: tileIcon,
-                    //leading: Icon(Icons.build),
-                    title: Text(
-                      ds['name'],
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Text(ds['description']),
-                    onTap: () {
-                      DocumentReference dr = ds['creator'];
-                      navigateToDetail(ds.documentID);
-                    },
-                    trailing: IconButton(
-                      icon: Icon(Icons.delete),
-                      onPressed: () {
-                        deleteItemDialog(ds);
-                      },
-                    ),
-                  );
-                },
-              );
-          }
-        },
-      ),
-    );
-  }
-
-  Widget buildMyListingsListAvailable() {
-    CollectionReference collectionReference =
-        Firestore.instance.collection('items');
-    return Expanded(
-      child: StreamBuilder<QuerySnapshot>(
-        stream: collectionReference
-            .where('creator',
-                isEqualTo:
-                    Firestore.instance.collection('users').document(userID))
-            .snapshots(),
-        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.hasError) {
-            return new Text('${snapshot.error}');
-          }
-          switch (snapshot.connectionState) {
-            case ConnectionState.waiting:
-              return new Center(
-                child: new Container(),
-              );
-            default:
-              return new ListView.builder(
-                shrinkWrap: true,
-                //padding: EdgeInsets.all(2.0),
-                itemCount: snapshot.data.documents.length,
-                itemBuilder: (context, index) {
-                  DocumentSnapshot ds = snapshot.data.documents[index];
-
-                  if (ds['rental'] == null) {
-                    Icon tileIcon;
-                    String itemType = ds['type'];
-
-                    switch (itemType) {
-                      case 'tool':
-                        tileIcon = Icon(Icons.build);
-                        break;
-                      case 'leisure':
-                        tileIcon = Icon(Icons.golf_course);
-                        break;
-                      case 'home':
-                        tileIcon = Icon(Icons.home);
-                        break;
-                      case 'other':
-                        tileIcon = Icon(Icons.device_unknown);
-                        break;
-                    }
-
-                    return ListTile(
-                      leading: tileIcon,
-                      //leading: Icon(Icons.build),
-                      title: Text(
-                        ds['name'],
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Text(ds['description']),
-                      onTap: () {
-                        DocumentReference dr = ds['creator'];
-                        navigateToDetail(ds.documentID);
-                      },
-                      trailing: IconButton(
-                        icon: Icon(Icons.delete),
-                        onPressed: () {
-                          deleteItemDialog(ds);
-                        },
-                      ),
-                    );
-                  } else {
-                    return Container();
-                  }
-                },
-              );
-          }
-        },
-      ),
-    );
-  }
-
-  Widget buildMyListingsListRented() {
-    CollectionReference collectionReference =
-        Firestore.instance.collection('items');
-    return Expanded(
-      child: StreamBuilder<QuerySnapshot>(
-        stream: collectionReference
-            .where('creator',
-                isEqualTo:
-                    Firestore.instance.collection('users').document(userID))
-            .snapshots(),
-        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.hasError) {
-            return new Text('${snapshot.error}');
-          }
-          switch (snapshot.connectionState) {
-            case ConnectionState.waiting:
-              return new Center(
-                child: new Container(),
-              );
-            default:
-              return new ListView.builder(
-                shrinkWrap: true,
-                //padding: EdgeInsets.all(2.0),
-                itemCount: snapshot.data.documents.length,
-                itemBuilder: (context, index) {
-                  DocumentSnapshot ds = snapshot.data.documents[index];
-
-                  if (ds['rental'] != null) {
-                    Icon tileIcon;
-                    String itemType = ds['type'];
-
-                    switch (itemType) {
-                      case 'tool':
-                        tileIcon = Icon(Icons.build);
-                        break;
-                      case 'leisure':
-                        tileIcon = Icon(Icons.golf_course);
-                        break;
-                      case 'home':
-                        tileIcon = Icon(Icons.home);
-                        break;
-                      case 'other':
-                        tileIcon = Icon(Icons.device_unknown);
-                        break;
-                    }
-
-                    return ListTile(
-                      leading: tileIcon,
-                      //leading: Icon(Icons.build),
-                      title: Text(
-                        ds['name'],
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Text(ds['description']),
-                      onTap: () {
-                        DocumentReference dr = ds['creator'];
-                        navigateToDetail(ds.documentID);
-                      },
-                      trailing: IconButton(
-                        icon: Icon(Icons.delete),
-                        onPressed: () {
-                          deleteItemDialog(ds);
-                        },
-                      ),
-                    );
-                  } else {
-                    return Container();
-                  }
                 },
               );
           }
@@ -1217,7 +951,6 @@ class HomePageState extends State<HomePage> {
             default:
               return new ListView.builder(
                 shrinkWrap: true,
-                //padding: EdgeInsets.all(2.0),
                 itemCount: snapshot.data.documents.length,
                 itemBuilder: (context, index) {
                   DocumentSnapshot userRentalDS =
@@ -1258,6 +991,8 @@ class HomePageState extends State<HomePage> {
                                       DocumentSnapshot rentalDS = snapshot.data;
                                       DocumentReference itemDR =
                                           rentalDS['item'];
+                                      DocumentReference chatDR =
+                                          rentalDS['chat'];
 
                                       return StreamBuilder<DocumentSnapshot>(
                                         stream: itemDR.snapshots(),
@@ -1278,54 +1013,122 @@ class HomePageState extends State<HomePage> {
                                                 DocumentSnapshot itemDS =
                                                     snapshot.data;
 
-                                                String title =
-                                                    otherUserDS['displayName'];
-                                                String imageURL =
-                                                    otherUserDS['photoURL'];
-                                                String lastActive = 'Last seen: ' +
-                                                    timeago.format(DateTime
-                                                        .fromMillisecondsSinceEpoch(
-                                                            otherUserDS[
-                                                                'lastActiveTimestamp']));
-                                                String itemName =
-                                                    'Item: ${itemDS['name']}';
-                                                String lastMessage =
-                                                    '<last message snippet here>';
+                                                return StreamBuilder<
+                                                    QuerySnapshot>(
+                                                  stream: Firestore.instance
+                                                      .collection('rentals')
+                                                      .document(
+                                                          rentalDS.documentID)
+                                                      .collection('chat')
+                                                      .orderBy('timestamp',
+                                                          descending: true)
+                                                      .limit(1)
+                                                      .snapshots(),
+                                                  builder:
+                                                      (BuildContext context,
+                                                          AsyncSnapshot<
+                                                                  QuerySnapshot>
+                                                              snapshot) {
+                                                    if (snapshot.hasError) {
+                                                      return new Text(
+                                                          '${snapshot.error}');
+                                                    }
+                                                    switch (snapshot
+                                                        .connectionState) {
+                                                      case ConnectionState
+                                                          .waiting:
+                                                        return Center(
+                                                          child:
+                                                              new Container(),
+                                                        );
+                                                      default:
+                                                        if (snapshot.hasData) {
+                                                          DocumentSnapshot
+                                                              lastMessageDS =
+                                                              snapshot.data
+                                                                  .documents[0];
 
-                                                return ListTile(
-                                                  leading: Container(
-                                                    height: 50,
-                                                    child: ClipOval(
-                                                      child: CachedNetworkImage(
-                                                        key: new ValueKey<
-                                                            String>(DateTime
-                                                                .now()
-                                                            .millisecondsSinceEpoch
-                                                            .toString()),
-                                                        imageUrl: imageURL,
-                                                        placeholder:
-                                                            (context, url) =>
-                                                                new Container(),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  //leading: Icon(Icons.build),
-                                                  title: Text(
-                                                    title,
-                                                    style: TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold),
-                                                  ),
-                                                  subtitle: Text(
-                                                      '$lastActive\n$itemName'),
-                                                  onTap: () {
-                                                    Navigator.pushNamed(
-                                                      context,
-                                                      Chat.routeName,
-                                                      arguments: ChatArgs(
-                                                        userRentalDS.documentID,
-                                                      ),
-                                                    );
+                                                          String title =
+                                                              otherUserDS[
+                                                                  'displayName'];
+                                                          String imageURL =
+                                                              otherUserDS[
+                                                                  'photoURL'];
+                                                          String lastActive = 'Last seen: ' +
+                                                              timeago.format(DateTime
+                                                                  .fromMillisecondsSinceEpoch(
+                                                                      otherUserDS[
+                                                                          'lastActiveTimestamp']));
+                                                          String itemName =
+                                                              'Item: ${itemDS['name']}';
+                                                          String lastMessage =
+                                                              lastMessageDS[
+                                                                  'content'];
+                                                          int cutoff = 30;
+                                                          String
+                                                              lastMessageCrop;
+
+                                                          if (lastMessage
+                                                                  .length >
+                                                              cutoff) {
+                                                            lastMessageCrop =
+                                                                lastMessage
+                                                                    .substring(
+                                                                        0,
+                                                                        cutoff);
+                                                            lastMessageCrop +=
+                                                                '...';
+                                                          } else {
+                                                            lastMessageCrop =
+                                                                lastMessage;
+                                                          }
+
+                                                          return ListTile(
+                                                            leading: Container(
+                                                              height: 50,
+                                                              child: ClipOval(
+                                                                child:
+                                                                    CachedNetworkImage(
+                                                                  key: new ValueKey<
+                                                                      String>(DateTime
+                                                                          .now()
+                                                                      .millisecondsSinceEpoch
+                                                                      .toString()),
+                                                                  imageUrl:
+                                                                      imageURL,
+                                                                  placeholder: (context,
+                                                                          url) =>
+                                                                      new Container(),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                            //leading: Icon(Icons.build),
+                                                            title: Text(
+                                                              title,
+                                                              style: TextStyle(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold),
+                                                            ),
+                                                            subtitle: Text(
+                                                                '$lastActive\n$itemName\n$lastMessageCrop'),
+                                                            onTap: () {
+                                                              Navigator
+                                                                  .pushNamed(
+                                                                context,
+                                                                Chat.routeName,
+                                                                arguments:
+                                                                    ChatArgs(
+                                                                  userRentalDS
+                                                                      .documentID,
+                                                                ),
+                                                              );
+                                                            },
+                                                          );
+                                                        } else {
+                                                          return Container();
+                                                        }
+                                                    }
                                                   },
                                                 );
                                               } else {
@@ -1407,12 +1210,6 @@ class HomePageState extends State<HomePage> {
   }
 
   Future<bool> deleteItemDialog(DocumentSnapshot ds) async {
-    //if (widget.userEdit.displayName == userEditCopy.displayName) return true;
-
-    final ThemeData theme = Theme.of(context);
-    final TextStyle dialogTextStyle =
-        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
-
     return await showDialog<bool>(
           context: context,
           builder: (BuildContext context) {
@@ -1495,6 +1292,7 @@ void showSnackBar(BuildContext context, String item) {
 }
 
 Widget template() {
+  // template
   return StreamBuilder<DocumentSnapshot>(
     stream: null,
     builder: (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
@@ -1516,3 +1314,6 @@ Widget template() {
     },
   );
 }
+
+// to show all items created by you
+//where('creator', isEqualTo: Firestore.instance.collection('users').document(userID)),
