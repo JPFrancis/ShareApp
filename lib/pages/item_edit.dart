@@ -6,6 +6,7 @@ import 'package:shareapp/pages/select_location.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:multi_image_picker/multi_image_picker.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 enum DismissDialogAction {
   cancel,
@@ -40,6 +41,7 @@ class ItemEditState extends State<ItemEdit> {
   bool isEdit = true; // true if on editing mode, false if on adding mode
   bool isUploading = false;
 
+  GoogleMapController googleMapController;
   TextEditingController nameController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
   TextEditingController priceController = TextEditingController();
@@ -169,8 +171,7 @@ class ItemEditState extends State<ItemEdit> {
                 "Price", true, priceController, 'price', TextInputType.number),
             showImageCount(),
             showSelectedLocation(),
-            reusableTextEntry(
-                "Price", true, priceController, 'price', TextInputType.number),
+            showItemLocation(),
             showLocationButtons(),
           ]),
     );
@@ -329,6 +330,85 @@ class ItemEditState extends State<ItemEdit> {
               "No location yet",
               style: TextStyle(fontSize: 16),
             ),
+    );
+  }
+
+  Widget showItemLocation() {
+    if (itemCopy.location == null) {
+      return Container();
+
+      /// @rohith change this to whatever you want
+    }
+
+    double widthOfScreen = MediaQuery.of(context).size.width;
+    GeoPoint gp = itemCopy.location;
+    double lat = gp.latitude;
+    double long = gp.longitude;
+
+    return Padding(
+      padding: const EdgeInsets.only(left: 20.0, right: 20.0),
+      child: Column(
+        children: <Widget>[
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: EdgeInsets.only(bottom: 12.0),
+              child: Text('The Location',
+                  style: TextStyle(
+                      fontSize: 15.0,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                      fontFamily: 'Quicksand')
+                  //textScaleFactor: 1.2,
+                  ),
+            ),
+          ),
+          Center(
+            child: SizedBox(
+              width: widthOfScreen,
+              height: 200.0,
+              child: GoogleMap(
+                mapType: MapType.normal,
+                rotateGesturesEnabled: false,
+                initialCameraPosition: CameraPosition(
+                  target: LatLng(lat, long),
+                  zoom: 11.5,
+                ),
+                onMapCreated: (GoogleMapController controller) {
+                  googleMapController = controller;
+                },
+                markers: Set<Marker>.of(
+                  <Marker>[
+                    Marker(
+                      markerId: MarkerId("test_marker_id"),
+                      position: LatLng(
+                        lat,
+                        long,
+                      ),
+                      infoWindow: InfoWindow(
+                        title: 'Item Location',
+                        snippet: '${lat}, ${long}',
+                      ),
+                    )
+                  ],
+                ),
+                /*
+                gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>[
+                  Factory<OneSequenceGestureRecognizer>(
+                        () =>
+
+                    /// to disable dragging, use ScaleGestureRecognizer()
+                    /// to enable dragging, use EagerGestureRecognizer()
+                    EagerGestureRecognizer(),
+                    //ScaleGestureRecognizer(),
+                  ),
+                ].toSet(),
+                */
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -600,8 +680,19 @@ class ItemEditState extends State<ItemEdit> {
     if (returnLoc != null) {
       setState(() {
         itemCopy.location = returnLoc;
+        setCamera();
       });
     }
+  }
+
+  setCamera() async {
+    GeoPoint gp = itemCopy.location;
+    double lat = gp.latitude;
+    double long = gp.longitude;
+
+    LatLng newLoc = LatLng(lat, long);
+    googleMapController.animateCamera(CameraUpdate.newCameraPosition(
+        new CameraPosition(target: newLoc, zoom: 11.5)));
   }
 
   void resetLocation() {

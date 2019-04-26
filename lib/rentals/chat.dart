@@ -334,8 +334,7 @@ class ChatScreenState extends State<ChatScreen> {
                                 placeholder: (context, url) => Container(
                                       child: CircularProgressIndicator(
                                         valueColor:
-                                            AlwaysStoppedAnimation<Color>(
-                                                red),
+                                            AlwaysStoppedAnimation<Color>(red),
                                       ),
                                       width: 200.0,
                                       height: 200.0,
@@ -704,8 +703,7 @@ class ChatScreenState extends State<ChatScreen> {
                 if (!snapshot.hasData) {
                   return Center(
                       child: CircularProgressIndicator(
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(red)));
+                          valueColor: AlwaysStoppedAnimation<Color>(red)));
                 } else {
                   listMessage = snapshot.data.documents;
                   return ListView.builder(
