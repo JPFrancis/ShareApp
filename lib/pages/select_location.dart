@@ -99,37 +99,34 @@ class SelectLocationState extends State<SelectLocation> {
       ),
       body: Stack(
         children: <Widget>[
-          Stack(
-            children: <Widget>[
-              GoogleMap(
-                mapType: MapType.normal,
-                rotateGesturesEnabled: false,
-                initialCameraPosition: initialCameraPosition,
-                onMapCreated: (GoogleMapController controller) {
-                  _controller = controller;
-                },
-                markers: Set<Marker>.of(markerSet.values),
-              ),
-              Padding(
-                padding: EdgeInsets.all(10.0),
-                child: ButtonTheme(
-                  minWidth: double.infinity,
-                  height: 40.0,
-                  child: RaisedButton(
-                    color: Colors.grey[300],
-                    shape: new RoundedRectangleBorder(
-                        borderRadius: new BorderRadius.circular(7.0)),
-                    onPressed: _handlePressButton,
-                    child: Text(
-                      "Search",
-                      textScaleFactor: 1.4,
-                    ),
-                  ),
+          GoogleMap(
+            mapType: MapType.normal,
+            rotateGesturesEnabled: false,
+            initialCameraPosition: initialCameraPosition,
+            onMapCreated: (GoogleMapController controller) {
+              _controller = controller;
+            },
+            markers: Set<Marker>.of(markerSet.values),
+          ),
+          Padding(
+            padding: EdgeInsets.all(10.0),
+            child: ButtonTheme(
+              minWidth: double.infinity,
+              height: 40.0,
+              child: RaisedButton(
+                color: Colors.grey[300],
+                shape: new RoundedRectangleBorder(
+                    borderRadius: new BorderRadius.circular(7.0)),
+                onPressed: _handlePressButton,
+                child: Text(
+                  "Search",
+                  textScaleFactor: 1.4,
                 ),
               ),
-              showCircularProgress(),
-            ],
-          )
+            ),
+          ),
+          showCircularProgress(),
+          //showCircle(),
         ],
       ),
       floatingActionButton: Padding(
@@ -173,6 +170,22 @@ class SelectLocationState extends State<SelectLocation> {
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget showCircle() {
+    return Center(
+      child: Opacity(
+        opacity: .5,
+        child: Container(
+          width: 150,
+          height: 150,
+          decoration: new BoxDecoration(
+            color: Colors.blue,
+            shape: BoxShape.circle,
           ),
         ),
       ),

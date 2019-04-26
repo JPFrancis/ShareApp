@@ -544,7 +544,7 @@ class RentalDetailState extends State<RentalDetail> {
   void deleteRental() async {
     Firestore.instance
         .collection('users')
-        .document(myUserID)
+        .document(renterDS.documentID)
         .collection('rentals')
         .document(widget.rentalID)
         .delete();
