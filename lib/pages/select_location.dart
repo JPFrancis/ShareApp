@@ -14,7 +14,7 @@ GoogleMapsPlaces _places;
 
 class SelectLocation extends StatefulWidget {
   static const routeName = '/selectLocation';
-  GeoPoint geoPoint;
+  final GeoPoint geoPoint;
 
   SelectLocation(this.geoPoint);
 
@@ -84,7 +84,7 @@ class SelectLocationState extends State<SelectLocation> {
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.pop(context, geoPoint);
+            Navigator.pop(context);
           },
         ),
         actions: <Widget>[

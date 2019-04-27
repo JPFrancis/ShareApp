@@ -348,7 +348,7 @@ class RentalDetailState extends State<RentalDetail> {
         case 4: // returned
           statusMessage = 'Status: returned\n'
               'You have returned the item to ${ownerDS['displayName']}\n'
-          'Waiting for ${renterDS['displayName']} to write a review';
+              'Waiting for ${renterDS['displayName']} to write a review';
           break;
         case 5: // completed
           statusMessage = 'Status: completed\n'
