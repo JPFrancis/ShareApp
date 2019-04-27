@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:shareapp/models/user_edit.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -30,6 +31,8 @@ class ProfileEditState extends State<ProfileEdit> {
   final GlobalKey<FormState> formKey = new GlobalKey<FormState>();
 
   TextEditingController displayNameController = TextEditingController();
+  
+  DateTime selectedDate = DateTime.now();
 
   Future<File> selectedImage;
   File imageFile;
@@ -60,19 +63,6 @@ class ProfileEditState extends State<ProfileEdit> {
     displayNameController.text = userEditCopy.displayName;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Edit User Profile'),
-        actions: <Widget>[
-          FlatButton(
-            child: Text('SAVE',
-                textScaleFactor: 1.05,
-                style: theme.textTheme.body2.copyWith(color: Colors.white)),
-            onPressed: () {
-              saveProfile();
-            },
-          ),
-        ],
-      ),
       body: Stack(
         children: <Widget>[
           isUploading
@@ -84,6 +74,12 @@ class ProfileEditState extends State<ProfileEdit> {
           showCircularProgress(),
         ],
       ),
+      floatingActionButton: RaisedButton(
+        child: Text("SAVE"),
+        onPressed: () {
+          saveProfile();
+        },
+      ),
     );
   }
 
@@ -92,11 +88,24 @@ class ProfileEditState extends State<ProfileEdit> {
       key: formKey,
       onWillPop: onWillPop,
       child: ListView(
-        padding: EdgeInsets.only(top: 00.0, bottom: 10.0, left: 18.0, right: 18.0),
+        padding:
+            EdgeInsets.only(top: 30.0, bottom: 10.0, left: 18.0, right: 18.0),
         children: <Widget>[
           previewImage(),
-          showProfileOptions(),
           showDisplayNameEditor(),
+          Divider(),
+          Text("About me"),
+          showAboutMe(),
+          Divider(),
+          Text("Private Details"),
+          showGenderSelecter(),
+          datePicker(),
+          Text("email placeholder"),
+          Text("government ID placeholder"),
+          Text("emergency contact placeholder"),
+          Divider(),
+          Text("Optional Details"),
+          showProfileOptions(),
         ].map<Widget>((Widget child) {
           return Container(
             padding: const EdgeInsets.symmetric(vertical: 11),
@@ -107,17 +116,79 @@ class ProfileEditState extends State<ProfileEdit> {
     );
   }
 
-  Widget showDisplayNameEditor() {
+  Widget datePicker() {
+    var formatter = new DateFormat('MMMM d, y');
+    String formatted = formatter.format(selectedDate);
+
+    Future<Null> _selectDate(BuildContext context) async {
+      final DateTime picked = await showDatePicker(
+        context: context,
+        initialDate: selectedDate,
+        firstDate: DateTime(1930),
+        lastDate: DateTime(2020),
+      );
+      if (picked != null && picked != selectedDate)
+        setState(() {
+          selectedDate = picked;
+        });
+    }
+
+    return InkWell(
+      child: Text(formatted),
+      onTap: () => _selectDate(context),
+    );
+  }
+
+  Widget showGenderSelecter() {
     return Container(
-      child: TextField(
-        controller: displayNameController,
-        style: textStyle,
-        onChanged: (value) {
-          userEditCopy.displayName = displayNameController.text;
-        },
-        decoration: InputDecoration(
-          labelText: 'Display name',
-          filled: true,
+      padding: EdgeInsets.only(left: 15.0, right: 15.0),
+      child: DropdownButton<String>(
+          // [todo value]
+          hint: Text('Gender'),
+          onChanged: (String newValue) {
+            // [todo]
+          },
+          items: ["Male", "Female", "Other"]
+              .map(
+                (gender) => DropdownMenuItem<String>(
+                      value: gender,
+                      child: Text(gender),
+                    ),
+              )
+              .toList()),
+    );
+  }
+
+  Widget showAboutMe() {
+    double width = MediaQuery.of(context).size.width;
+    return Container(
+      alignment: Alignment.center,
+      child: Center(
+        child: TextField(
+          cursorColor: Colors.blueAccent,
+          style: textStyle,
+          onChanged: (value) {
+//            userEditCopy.displayName = displayNameController.text;
+          },
+          decoration: InputDecoration.collapsed(hintText: "Description"),
+        ),
+      ),
+    );
+  }
+
+  Widget showDisplayNameEditor() {
+    double width = MediaQuery.of(context).size.width;
+    return Container(
+      alignment: Alignment.center,
+      child: Center(
+        child: TextField(
+          cursorColor: Colors.blueAccent,
+          controller: displayNameController,
+          style: textStyle,
+          onChanged: (value) {
+            userEditCopy.displayName = displayNameController.text;
+          },
+          decoration: InputDecoration.collapsed(hintText: "Name"),
         ),
       ),
     );
@@ -170,14 +241,19 @@ class ProfileEditState extends State<ProfileEdit> {
   }
 
   Widget showCurrentProfilePic() {
+    double height = MediaQuery.of(context).size.height;
+    double width = MediaQuery.of(context).size.width;
     return Container(
-      height: MediaQuery.of(context).size.height / 4,
-      width: MediaQuery.of(context).size.height / 4,
-      child: CachedNetworkImage(
-        key: new ValueKey<String>(
-            DateTime.now().millisecondsSinceEpoch.toString()),
-        imageUrl: userEditCopy.photoUrl,
-        placeholder: (context, url) => new CircularProgressIndicator(),
+      padding: EdgeInsets.only(left: width / 5, right: width / 5),
+      height: height / 5,
+      child: FittedBox(
+        fit: BoxFit.cover,
+        child: CachedNetworkImage(
+          key: new ValueKey<String>(
+              DateTime.now().millisecondsSinceEpoch.toString()),
+          imageUrl: userEditCopy.photoUrl,
+          placeholder: (context, url) => new CircularProgressIndicator(),
+        ),
       ),
     );
   }

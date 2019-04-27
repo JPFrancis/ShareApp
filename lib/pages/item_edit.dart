@@ -1,6 +1,10 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:shareapp/models/item.dart';
 import 'package:shareapp/pages/select_location.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -43,6 +47,8 @@ class ItemEditState extends State<ItemEdit> {
   TextEditingController nameController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
   TextEditingController priceController = TextEditingController();
+
+  GoogleMapController googleMapController;
 
   List<DropdownMenuItem<String>> dropDownItemType;
   List<DropdownMenuItem<String>> dropDownItemCondition;
@@ -139,12 +145,15 @@ class ItemEditState extends State<ItemEdit> {
 
   Widget showBody() {
     double height = MediaQuery.of(context).size.height;
+    double width = MediaQuery.of(context).size.width;
+
     return Form(
       key: formKey,
       onWillPop: onWillPop,
       child: ListView(
           shrinkWrap: true,
-          padding: EdgeInsets.only(top: 10.0, bottom: 10.0, left: 18.0, right: 18.0),
+          padding: EdgeInsets.only(
+              top: height / 15, bottom: 10.0, left: 18.0, right: 18.0),
           children: <Widget>[
             backButton(),
             Padding(
@@ -152,26 +161,110 @@ class ItemEditState extends State<ItemEdit> {
               child: Center(child: Text("[ add image thumbnails here ]")),
             ),
             showImageButtons(),
-            Divider(),
+            divider(),
             reusableCategory("DETAILS"),
             reusableTextEntry("What are you selling? (required)", true,
                 nameController, 'name'),
             reusableTextEntry("Describe it... (required)", true,
                 descriptionController, 'description'),
-            Divider(),
+            divider(),
             reusableCategory("SPECIFICS"),
             showTypeSelector(),
             showConditionSelector(),
-            Divider(),
+            divider(),
             reusableCategory("PRICE"),
             reusableTextEntry(
                 "Price", true, priceController, 'price', TextInputType.number),
-            showImageCount(),
-            showSelectedLocation(),
-            reusableTextEntry(
-                "Price", true, priceController, 'price', TextInputType.number),
-            showLocationButtons(),
+            // showImageCount(),
+            //showSelectedLocation(),
+            //showLocationButtons(),
+            Padding(
+              padding: const EdgeInsets.only(top: 60, bottom: 60.0),
+              child: Center(
+                  child: Text(
+                      "[ add map widget with user's approximate location]")),
+            ),
           ]),
+    );
+  }
+
+  Widget divider() {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Divider(),
+    );
+  }
+
+
+  Widget showItemLocation() {
+    double widthOfScreen = MediaQuery.of(context).size.width;
+
+  Position p = Geolocator().getCurrentPosition() as Position;
+    double lat = p.latitude;
+    double long = p.longitude;
+    //setCamera();
+    return Padding(
+      padding: const EdgeInsets.only(left: 20.0, right: 20.0),
+      child: Column(
+        children: <Widget>[
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: EdgeInsets.only(bottom: 12.0),
+              child: Text('The Location',
+                  style: TextStyle(
+                      fontSize: 15.0,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                      fontFamily: 'Quicksand')
+                  //textScaleFactor: 1.2,
+                  ),
+            ),
+          ),
+          Center(
+            child: SizedBox(
+              width: widthOfScreen,
+              height: 200.0,
+              child: GoogleMap(
+                mapType: MapType.normal,
+                rotateGesturesEnabled: false,
+                initialCameraPosition: CameraPosition(
+                  target: LatLng(lat, long),
+                  zoom: 11.5,
+                ),
+                onMapCreated: (GoogleMapController controller) {
+                  googleMapController = controller;
+                },
+                markers: Set<Marker>.of(
+                  <Marker>[
+                    Marker(
+                      markerId: MarkerId("test_marker_id"),
+                      position: LatLng(
+                        lat,
+                        long,
+                      ),
+                      infoWindow: InfoWindow(
+                        title: 'Item Location',
+                        snippet: '${lat}, ${long}',
+                      ),
+                    )
+                  ],
+                ),
+                gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>[
+                  Factory<OneSequenceGestureRecognizer>(
+                    () =>
+
+                        /// to disable dragging, use ScaleGestureRecognizer()
+                        /// to enable dragging, use EagerGestureRecognizer()
+                        EagerGestureRecognizer(),
+                    //ScaleGestureRecognizer(),
+                  ),
+                ].toSet(),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

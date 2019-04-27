@@ -200,6 +200,8 @@ class HomePageState extends State<HomePage> {
     );
     return InkWell(onTap: () {
       navigateToDetail(ds.documentID);
+    }, onLongPress: () {
+      deleteItemDialog(ds);
     }, child: new Container(child: new LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
       double h = constraints.maxHeight;
@@ -207,16 +209,19 @@ class HomePageState extends State<HomePage> {
       Icon icon = Icon(Icons.info_outline);
       switch (ds['type']) {
         case 'Tool':
-          icon = Icon(Icons.build, size: h/20,);
+          icon = Icon(
+            Icons.build,
+            size: h / 20,
+          );
           break;
         case 'Leisure':
-          icon = Icon(Icons.golf_course, size: h/20);
+          icon = Icon(Icons.golf_course, size: h / 20);
           break;
         case 'Home':
-          icon = Icon(Icons.home, size: h/20);
+          icon = Icon(Icons.home, size: h / 20);
           break;
         case 'Other':
-          icon = Icon(Icons.device_unknown, size: h/20);
+          icon = Icon(Icons.device_unknown, size: h / 20);
           break;
       }
       return Column(
@@ -225,29 +230,69 @@ class HomePageState extends State<HomePage> {
               height: 2 * h / 3,
               width: w,
               child: FittedBox(fit: BoxFit.cover, child: image)),
-          SizedBox(height: 10.0,),
+          SizedBox(
+            height: 10.0,
+          ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Row(
                 children: <Widget>[
-                  icon, 
-                  SizedBox(width: 5.0,),
-                  ds['type'] != null 
-                      ? Text( '${ds['type']}'.toUpperCase(), style: TextStyle( fontSize: h / 25, fontFamily: 'Quicksand', fontWeight: FontWeight.bold),)
+                  icon,
+                  SizedBox(
+                    width: 5.0,
+                  ),
+                  ds['type'] != null
+                      ? Text(
+                          '${ds['type']}'.toUpperCase(),
+                          style: TextStyle(
+                              fontSize: h / 25,
+                              fontFamily: 'Quicksand',
+                              fontWeight: FontWeight.bold),
+                        )
                       : Text(''),
                 ],
               ),
-              Text(ds['name'], style: TextStyle( fontSize: h / 20, fontFamily: 'Quicksand', fontWeight: FontWeight.bold)),
-              Text("\$${ds['price']} per hour", style: TextStyle(fontSize: h / 21, fontFamily: 'Quicksand')),
-              Row( children: <Widget>[
-                  Icon( Icons.star_border, size: h / 19,),
-                  Icon( Icons.star_border, size: h / 19,),
-                  Icon( Icons.star_border, size: h / 19,),
-                  Icon( Icons.star_border, size: h / 19,),
-                  Icon( Icons.star_border, size: h / 19,),
-                  Container(width: 5.0,),
-                  Text( "328", style: TextStyle( fontSize: h / 25, fontFamily: 'Quicksand', fontWeight: FontWeight.bold,),)
+              Text(ds['name'],
+                  style: TextStyle(
+                      fontSize: h / 20,
+                      fontFamily: 'Quicksand',
+                      fontWeight: FontWeight.bold)),
+              Text("\$${ds['price']} per hour",
+                  style: TextStyle(fontSize: h / 21, fontFamily: 'Quicksand')),
+              Row(
+                children: <Widget>[
+                  Icon(
+                    Icons.star_border,
+                    size: h / 19,
+                  ),
+                  Icon(
+                    Icons.star_border,
+                    size: h / 19,
+                  ),
+                  Icon(
+                    Icons.star_border,
+                    size: h / 19,
+                  ),
+                  Icon(
+                    Icons.star_border,
+                    size: h / 19,
+                  ),
+                  Icon(
+                    Icons.star_border,
+                    size: h / 19,
+                  ),
+                  Container(
+                    width: 5.0,
+                  ),
+                  Text(
+                    "328",
+                    style: TextStyle(
+                      fontSize: h / 25,
+                      fontFamily: 'Quicksand',
+                      fontWeight: FontWeight.bold,
+                    ),
+                  )
                 ],
               )
             ],
@@ -264,7 +309,7 @@ class HomePageState extends State<HomePage> {
       imageUrl: ds['images'][0],
       placeholder: (context, url) => new CircularProgressIndicator(),
     );
-    if (status ^ (ds['rental'] == null)){
+    if (status ^ (ds['rental'] == null)) {
       return InkWell(onTap: () {
         navigateToDetail(ds.documentID);
       }, child: new Container(child: new LayoutBuilder(
@@ -274,16 +319,19 @@ class HomePageState extends State<HomePage> {
         Icon icon = Icon(Icons.info_outline);
         switch (ds['type']) {
           case 'Tool':
-            icon = Icon(Icons.build, size: h/20,);
+            icon = Icon(
+              Icons.build,
+              size: h / 20,
+            );
             break;
           case 'Leisure':
-            icon = Icon(Icons.golf_course, size: h/20);
+            icon = Icon(Icons.golf_course, size: h / 20);
             break;
           case 'Home':
-            icon = Icon(Icons.home, size: h/20);
+            icon = Icon(Icons.home, size: h / 20);
             break;
           case 'Other':
-            icon = Icon(Icons.device_unknown, size: h/20);
+            icon = Icon(Icons.device_unknown, size: h / 20);
             break;
         }
         return Column(
@@ -292,29 +340,70 @@ class HomePageState extends State<HomePage> {
                 height: 2 * h / 3,
                 width: w,
                 child: FittedBox(fit: BoxFit.cover, child: image)),
-            SizedBox(height: 10.0,),
+            SizedBox(
+              height: 10.0,
+            ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Row(
                   children: <Widget>[
-                    icon, 
-                    SizedBox(width: 5.0,),
-                    ds['type'] != null 
-                        ? Text( '${ds['type']}'.toUpperCase(), style: TextStyle( fontSize: h / 25, fontFamily: 'Quicksand', fontWeight: FontWeight.bold),)
+                    icon,
+                    SizedBox(
+                      width: 5.0,
+                    ),
+                    ds['type'] != null
+                        ? Text(
+                            '${ds['type']}'.toUpperCase(),
+                            style: TextStyle(
+                                fontSize: h / 25,
+                                fontFamily: 'Quicksand',
+                                fontWeight: FontWeight.bold),
+                          )
                         : Text(''),
                   ],
                 ),
-                Text(ds['name'], style: TextStyle( fontSize: h / 20, fontFamily: 'Quicksand', fontWeight: FontWeight.bold)),
-                Text("\$${ds['price']} per hour", style: TextStyle(fontSize: h / 21, fontFamily: 'Quicksand')),
-                Row( children: <Widget>[
-                    Icon( Icons.star_border, size: h / 19,),
-                    Icon( Icons.star_border, size: h / 19,),
-                    Icon( Icons.star_border, size: h / 19,),
-                    Icon( Icons.star_border, size: h / 19,),
-                    Icon( Icons.star_border, size: h / 19,),
-                    Container(width: 5.0,),
-                    Text( "328", style: TextStyle( fontSize: h / 25, fontFamily: 'Quicksand', fontWeight: FontWeight.bold,),)
+                Text(ds['name'],
+                    style: TextStyle(
+                        fontSize: h / 20,
+                        fontFamily: 'Quicksand',
+                        fontWeight: FontWeight.bold)),
+                Text("\$${ds['price']} per hour",
+                    style:
+                        TextStyle(fontSize: h / 21, fontFamily: 'Quicksand')),
+                Row(
+                  children: <Widget>[
+                    Icon(
+                      Icons.star_border,
+                      size: h / 19,
+                    ),
+                    Icon(
+                      Icons.star_border,
+                      size: h / 19,
+                    ),
+                    Icon(
+                      Icons.star_border,
+                      size: h / 19,
+                    ),
+                    Icon(
+                      Icons.star_border,
+                      size: h / 19,
+                    ),
+                    Icon(
+                      Icons.star_border,
+                      size: h / 19,
+                    ),
+                    Container(
+                      width: 5.0,
+                    ),
+                    Text(
+                      "328",
+                      style: TextStyle(
+                        fontSize: h / 25,
+                        fontFamily: 'Quicksand',
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
                   ],
                 )
               ],
@@ -322,11 +411,14 @@ class HomePageState extends State<HomePage> {
           ],
         );
       })));
-    } else {return Container(height: 0, width: 0);}
+    } else {
+      return Container(height: 0, width: 0);
+    }
   }
 
   Widget buildItemList() {
-    CollectionReference collectionReference = Firestore.instance.collection('items');
+    CollectionReference collectionReference =
+        Firestore.instance.collection('items');
     int tilerows = MediaQuery.of(context).size.width > 500 ? 3 : 2;
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
@@ -363,9 +455,13 @@ class HomePageState extends State<HomePage> {
       children: <Widget>[
         searchField(),
         Padding(
-              padding: const EdgeInsets.only(left: 20.0),
-              child: Text("Items near you", style: TextStyle(fontFamily: 'Quicksand', fontWeight: FontWeight.bold, fontSize: 30.0)),
-            ),
+          padding: const EdgeInsets.only(left: 20.0),
+          child: Text("Items near you",
+              style: TextStyle(
+                  fontFamily: 'Quicksand',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 30.0)),
+        ),
         buildItemList(),
       ],
     );
@@ -379,18 +475,25 @@ class HomePageState extends State<HomePage> {
       child: Container(
         child: RaisedButton(
           color: Colors.white,
-          onPressed: ()=>debugPrint,
-          child: Row(children: <Widget>[
-            Icon(Icons.search),
-            SizedBox(width: 10.0,),
-            Text("Try \"Basketball\"", style: TextStyle(fontFamily: 'Quicksand', fontWeight: FontWeight.w400),)
-          ],),
+          onPressed: () => debugPrint,
+          child: Row(
+            children: <Widget>[
+              Icon(Icons.search),
+              SizedBox(
+                width: 10.0,
+              ),
+              Text(
+                "Try \"Basketball\"",
+                style: TextStyle(
+                    fontFamily: 'Quicksand', fontWeight: FontWeight.w400),
+              )
+            ],
+          ),
         ),
-        width: width, 
+        width: width,
         height: height / 20,
       ),
     );
- 
   }
 
   Widget rentalsTabPage() {
@@ -469,7 +572,8 @@ class HomePageState extends State<HomePage> {
 //                  mainAxisSpacing: 10.0,
                   crossAxisSpacing: MediaQuery.of(context).size.width / 15,
                   children: items
-                      .map((DocumentSnapshot ds) => cardItemListings(ds,status))
+                      .map(
+                          (DocumentSnapshot ds) => cardItemListings(ds, status))
                       .toList());
           }
         },
@@ -667,7 +771,8 @@ class HomePageState extends State<HomePage> {
         children: <Widget>[
           /// I'll remove this later, I'm just using it to quickly switch accounts
           reusableCategory("ACCOUNT SETTINGS"),
-          reusableFlatButton( "Personal information", Icons.person_outline, null),
+          reusableFlatButton(
+              "Personal information", Icons.person_outline, null),
           reusableFlatButton("Payments and payouts", Icons.payment, null),
           reusableFlatButton("Notifications", Icons.notifications, null),
           reusableCategory("SUPPORT"),
