@@ -1,20 +1,12 @@
-import 'package:shareapp/main.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/gestures.dart';
-import 'package:flutter/rendering.dart';
-import 'package:flutter/foundation.dart';
-import 'package:shareapp/models/item.dart';
-import 'package:shareapp/rentals/chat.dart';
-import 'package:shareapp/models/rental.dart';
-import 'package:shareapp/pages/item_edit.dart';
-import 'package:shareapp/pages/home_page.dart';
-import 'package:shareapp/pages/root_page.dart';
-import 'package:shareapp/pages/item_detail.dart';
-import 'package:shareapp/rentals/item_request.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:shareapp/main.dart';
+import 'package:shareapp/rentals/chat.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 enum Status {
   requested,
