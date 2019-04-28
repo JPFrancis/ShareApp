@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
-import 'package:shareapp/services/auth.dart';
-import 'package:shareapp/pages/home_page.dart';
-import 'package:shareapp/pages/login_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:shareapp/login/login_page.dart';
+import 'package:shareapp/pages/home_page.dart';
+import 'package:shareapp/services/auth.dart';
 
 class RootPage extends StatefulWidget {
   static const routeName = '/rootPage';

@@ -1,13 +1,16 @@
-import 'dart:io';
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_picker/flutter_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:shareapp/main.dart';
-import 'package:flutter/material.dart';
-import 'package:shareapp/rentals/chat.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shareapp/services/picker_data.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
 enum DismissDialogAction {
   cancel,
@@ -70,7 +73,7 @@ class ItemRequestState extends State<ItemRequest> {
     myUserID = prefs.getString('userID') ?? '';
   }
 
-  void getSnapshots() async {
+  Future<Null> getSnapshots() async {
     isLoading = true;
     DocumentSnapshot ds = await Firestore.instance
         .collection('items')
@@ -150,6 +153,7 @@ class ItemRequestState extends State<ItemRequest> {
           ),
           showStartTimePicker(),
           showEndTimePicker(),
+          showDurationPicker(),
           showDuration(),
           Container(
             height: 10,
@@ -255,23 +259,51 @@ class ItemRequestState extends State<ItemRequest> {
   }
 
   Widget showEndTimePicker() {
-    return Padding(
-      padding: EdgeInsets.all(padding),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text('End', style: theme.textTheme.caption),
-          DateTimeItem(
-            dateTime: endDateTime,
-            onChanged: (DateTime value) {
-              setState(() {
-                endDateTime = value;
-              });
-            },
-          ),
-        ],
-      ),
+    return RaisedButton(
+      child: Text('Picker Show (Array)'),
+      color: Colors.blue,
+      onPressed: () {
+        showPickupWindowPicker(context);
+      },
     );
+  }
+
+  showPickupWindowPicker(BuildContext context) {
+    Picker(
+        adapter: PickerDataAdapter<String>(
+          pickerdata: JsonDecoder().convert(PickerData),
+          isArray: true,
+        ),
+        hideHeader: true,
+        selecteds: [0, 0],
+        title: Text("Select Pickup Window"),
+        onConfirm: (Picker picker, List value) {
+          print(value.toString());
+          print(picker.getSelectedValues());
+        }).showDialog(context);
+  }
+
+  Widget showDurationPicker() {
+    return RaisedButton(
+      child: Text('Select Duration'),
+      color: Colors.red,
+      onPressed: () {
+        showPickerNumber(context);
+      },
+    );
+  }
+
+  showPickerNumber(BuildContext context) {
+    Picker(
+        adapter: NumberPickerAdapter(data: [
+          NumberPickerColumn(begin: 1, end: 27),
+        ]),
+        hideHeader: true,
+        title: Text("Please Select"),
+        onConfirm: (Picker picker, List value) {
+          print(value.toString());
+          print(picker.getSelectedValues());
+        }).showDialog(context);
   }
 
   Widget showDuration() {
@@ -437,8 +469,6 @@ class ItemRequestState extends State<ItemRequest> {
   }
 
   Future<bool> sendItem() async {
-    //if (widget.userEdit.displayName == userEditCopy.displayName) return true;
-
     final ThemeData theme = Theme.of(context);
     final TextStyle dialogTextStyle =
         theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
@@ -469,8 +499,48 @@ class ItemRequestState extends State<ItemRequest> {
                   child: const Text('Send'),
                   onPressed: () {
                     Navigator.of(context).pop(false);
-                    navToItemRental();
+
+                    getSnapshots().then(
+                      (_) {
+                        if (itemDS['rental'] != null) {
+                          showRequestErrorDialog();
+                        } else {
+                          navToItemRental();
+                        }
+                      },
+                    );
                     // Pops the confirmation dialog but not the page.
+                  },
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
+  }
+
+  Future<bool> showRequestErrorDialog() async {
+    final ThemeData theme = Theme.of(context);
+    final TextStyle dialogTextStyle =
+        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+
+    String message = 'Someone has already requested this item!';
+
+    return await showDialog<bool>(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Error'),
+              content: Text(
+                message,
+                style: dialogTextStyle,
+              ),
+              actions: <Widget>[
+                FlatButton(
+                  child: const Text('Ok'),
+                  onPressed: () {
+                    Navigator.of(context).pop(
+                        false); // Pops the confirmation dialog but not the page.
                   },
                 ),
               ],
