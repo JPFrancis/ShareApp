@@ -1,21 +1,21 @@
 import 'dart:async';
-import 'package:shareapp/main.dart';
-import 'package:flutter/material.dart';
-import 'package:shareapp/models/item.dart';
-import 'package:shareapp/rentals/chat.dart';
-import 'package:shareapp/services/auth.dart';
-import 'package:shareapp/pages/item_edit.dart';
-import 'package:shareapp/models/user_edit.dart';
-import 'package:fluttertoast/fluttertoast.dart';
-import 'package:shareapp/pages/item_detail.dart';
-import 'package:timeago/timeago.dart' as timeago;
-import 'package:shareapp/pages/profile_edit.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:shareapp/rentals/rental_detail.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/material.dart';
+import 'package:shareapp/main.dart';
+import 'package:shareapp/models/item.dart';
+import 'package:shareapp/models/user_edit.dart';
+import 'package:shareapp/pages/item_detail.dart';
+import 'package:shareapp/pages/item_edit.dart';
+import 'package:shareapp/pages/profile_edit.dart';
+import 'package:shareapp/rentals/chat.dart';
+import 'package:shareapp/rentals/rental_detail.dart';
+import 'package:shareapp/services/auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
 class HomePage extends StatefulWidget {
   static const routeName = '/homePage';
