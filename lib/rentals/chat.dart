@@ -53,6 +53,7 @@ class ChatScreenState extends State<ChatScreen> {
   DocumentSnapshot itemDS;
   DocumentSnapshot ownerDS;
   DocumentSnapshot renterDS;
+  DocumentSnapshot otherUserDS;
   SharedPreferences prefs;
 
   File imageFile;
@@ -130,6 +131,8 @@ class ChatScreenState extends State<ChatScreen> {
         renterDS = ds;
       }
 
+      otherUserDS = myUserID == ownerDS.documentID ? renterDS : ownerDS;
+
       if (prefs != null &&
           itemDS != null &&
           ownerDS != null &&
@@ -187,7 +190,7 @@ class ChatScreenState extends State<ChatScreen> {
           documentReference,
           {
             'idFrom': myUserID,
-            'idTo': ownerDS.documentID,
+            'idTo': otherUserDS.documentID,
             'timestamp': DateTime.now().millisecondsSinceEpoch.toString(),
             'content': content,
             'type': type
@@ -301,7 +304,7 @@ class ChatScreenState extends State<ChatScreen> {
                                 height: 35.0,
                                 padding: EdgeInsets.all(10.0),
                               ),
-                          imageUrl: ownerDS['photoURL'],
+                          imageUrl: otherUserDS['photoURL'],
                           width: 35.0,
                           height: 35.0,
                           fit: BoxFit.cover,

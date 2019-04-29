@@ -168,8 +168,8 @@ class ItemEditState extends State<ItemEdit> {
             showConditionSelector(),
             Divider(),
             reusableCategory("PRICE"),
-            reusableTextEntry(
-                "Price", true, priceController, 'price', TextInputType.number),
+            reusableTextEntry("Price (Daily rate)", true, priceController,
+                'price', TextInputType.number),
             showImageCount(),
             showSelectedLocation(),
             showItemLocation(),

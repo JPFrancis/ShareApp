@@ -318,7 +318,7 @@ class ItemDetailState extends State<ItemDetail> {
                 fontFamily: 'Quicksand'),
           ),
           Text(
-            ' / HOUR',
+            ' / DAY',
             style: TextStyle(
                 color: Colors.black, fontSize: 12.0, fontFamily: 'Quicksand'),
           )

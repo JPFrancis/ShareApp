@@ -30,7 +30,6 @@ class ItemRequest extends StatefulWidget {
   }
 }
 
-/// We initially assume we are in editing mode
 class ItemRequestState extends State<ItemRequest> {
   final GlobalKey<FormState> formKey = new GlobalKey<FormState>();
   SharedPreferences prefs;
@@ -54,6 +53,12 @@ class ItemRequestState extends State<ItemRequest> {
   DateTime startDateTime = DateTime.now().add(Duration(hours: 1));
   DateTime endDateTime = DateTime.now().add(Duration(hours: 2));
 
+  DateTime pickupTime;
+  int duration = 1;
+  List windows;
+  int window; // a value 0-23 to represent range index in windows list
+  int amPm; // 0 for AM, 1 for PM
+
   TextStyle textStyle;
   TextStyle inputTextStyle;
   ThemeData theme;
@@ -64,8 +69,53 @@ class ItemRequestState extends State<ItemRequest> {
     // TODO: implement initState
     super.initState();
     focusNode = FocusNode();
+
+    initPickerData();
     getMyUserID();
     getSnapshots();
+  }
+
+  void initPickerData() {
+    List pickerData = JsonDecoder().convert(PickerData);
+    windows = pickerData[0];
+
+    DateTime currentTime = DateTime.now();
+    pickupTime = currentTime.add(Duration(hours: 1, minutes: 5));
+    int hour = pickupTime.hour;
+    int minute = pickupTime.minute;
+    amPm = pickupTime.hour >= 13 ? 1 : 0;
+
+    if ((hour == 21 && minute > 30) || hour > 22) {
+      if (hour == 21 || (hour == 22 && minute == 0)) {
+        window = 20;
+        amPm = 0;
+      } else {
+        window = 8;
+        amPm = 0;
+      }
+    } else {
+      if (amPm == 1) {
+        hour -= 12;
+      }
+
+      if (minute == 0) {
+        window = hour * 2 - 2;
+      } else if (1 <= minute && minute <= 30) {
+        window = hour * 2 + 1;
+      } else {
+        window = hour * 2 + 2;
+      }
+    }
+
+    if (!validate(window, amPm)) {
+      window = 8;
+      amPm = 0;
+    }
+
+    if (window < 0 || window > 23) {
+      window = 8;
+      amPm = 0;
+    }
   }
 
   void getMyUserID() async {
@@ -155,10 +205,8 @@ class ItemRequestState extends State<ItemRequest> {
           Container(
             height: 10,
           ),
-          showStartTimePicker(),
-          showEndTimePicker(),
-          showDurationPicker(),
-          showDuration(),
+          showItemPriceInfo(),
+          showTimePickers(),
           Container(
             height: 10,
           ),
@@ -186,39 +234,80 @@ class ItemRequestState extends State<ItemRequest> {
   }
 
   Widget showItemCreator() {
-    return FutureBuilder(
-      future: itemDS['creator'].get(),
-      builder: (BuildContext context, AsyncSnapshot snapshot) {
-        if (snapshot.hasData) {
-          creatorDS = snapshot.data;
+    return Row(
+      children: <Widget>[
+        Text(
+          'You\'re requesting from:\n${creatorDS['displayName']}',
+          style: TextStyle(color: Colors.black, fontSize: 20.0),
+          textAlign: TextAlign.left,
+        ),
+        Expanded(
+          child: Container(
+            height: 50,
+            child: CachedNetworkImage(
+              key: new ValueKey<String>(
+                  DateTime.now().millisecondsSinceEpoch.toString()),
+              imageUrl: creatorDS['photoURL'],
+              placeholder: (context, url) => new CircularProgressIndicator(),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 
-          return Row(
-            children: <Widget>[
-              Text(
-                'You\'re requesting from:\n${creatorDS['displayName']}',
-                style: TextStyle(color: Colors.black, fontSize: 20.0),
-                textAlign: TextAlign.left,
-              ),
-              Expanded(
-                child: Container(
-                  height: 50,
-                  child: CachedNetworkImage(
-                    key: new ValueKey<String>(
-                        DateTime.now().millisecondsSinceEpoch.toString()),
-                    imageUrl: creatorDS['photoURL'],
-                    placeholder: (context, url) =>
-                        new CircularProgressIndicator(),
-                  ),
-                ),
-              ),
-            ],
-          );
-        } else {
-          return Container(
-            child: Text('\n\n'),
-          );
-        }
-      },
+  Widget showItemPriceInfo() {
+    return Padding(
+      padding: EdgeInsets.all(padding),
+      child: SizedBox(
+          height: 50.0,
+          child: Container(
+            color: Color(0x00000000),
+            child: Text(
+              'Item daily rate: \$${itemDS['price']}\n'
+                  'Total due: \$${itemDS['price'] * duration}',
+              //itemName,
+              style: TextStyle(color: Colors.black, fontSize: 20.0),
+              textAlign: TextAlign.left,
+            ),
+          )),
+    );
+  }
+
+  Widget showTimePickers() {
+    return Padding(
+      padding: EdgeInsets.all(padding),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          DateTimeItem(
+            dateTime: pickupTime,
+            window: window,
+            amPm: amPm,
+            duration: duration,
+            onChangedDateTime: (DateTime value) {
+              setState(() {
+                pickupTime = value;
+              });
+            },
+            onChangedWindow: (int value) {
+              setState(() {
+                window = value;
+              });
+            },
+            onChangedAmPm: (int value) {
+              setState(() {
+                amPm = value;
+              });
+            },
+            onChangedDuration: (int value) {
+              setState(() {
+                duration = value;
+              });
+            },
+          ),
+        ],
+      ),
     );
   }
 
@@ -238,92 +327,6 @@ class ItemRequestState extends State<ItemRequest> {
           labelText: 'Add note (optional)',
           filled: true,
         ),
-      ),
-    );
-  }
-
-  Widget showStartTimePicker() {
-    return Padding(
-      padding: EdgeInsets.all(padding),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text('Start', style: theme.textTheme.caption),
-          DateTimeItem(
-            dateTime: startDateTime,
-            onChanged: (DateTime value) {
-              setState(() {
-                startDateTime = value;
-              });
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget showEndTimePicker() {
-    return RaisedButton(
-      child: Text('Picker Show (Array)'),
-      color: Colors.blue,
-      onPressed: () {
-        showPickupWindowPicker(context);
-      },
-    );
-  }
-
-  showPickupWindowPicker(BuildContext context) {
-    Picker(
-        adapter: PickerDataAdapter<String>(
-          pickerdata: JsonDecoder().convert(PickerData),
-          isArray: true,
-        ),
-        hideHeader: true,
-        selecteds: [0, 0],
-        title: Text("Select Pickup Window"),
-        onConfirm: (Picker picker, List value) {
-          print(value.toString());
-          print(picker.getSelectedValues());
-        }).showDialog(context);
-  }
-
-  Widget showDurationPicker() {
-    return RaisedButton(
-      child: Text('Select Duration'),
-      color: Colors.red,
-      onPressed: () {
-        showPickerNumber(context);
-      },
-    );
-  }
-
-  showPickerNumber(BuildContext context) {
-    Picker(
-        adapter: NumberPickerAdapter(data: [
-          NumberPickerColumn(begin: 1, end: 27),
-        ]),
-        hideHeader: true,
-        title: Text("Please Select"),
-        onConfirm: (Picker picker, List value) {
-          print(value.toString());
-          print(picker.getSelectedValues());
-        }).showDialog(context);
-  }
-
-  Widget showDuration() {
-    Duration durationTime = endDateTime.difference(startDateTime);
-    String duration = durationTime.inHours.toString();
-
-    return Padding(
-      padding: EdgeInsets.all(padding),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            'Duration: ${duration} hours',
-            style: TextStyle(fontSize: 20),
-          ),
-        ],
       ),
     );
   }
@@ -477,10 +480,14 @@ class ItemRequestState extends State<ItemRequest> {
     final TextStyle dialogTextStyle =
         theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
 
+    String range = parseWindow(windows, window, amPm);
+
     message = 'Hello ${creatorDS['displayName']}, '
-        'I am requesting your ${itemDS['name']}. '
-        'I would like to rent this item from '
-        '${startDateTime} to ${endDateTime}';
+        'I am requesting to rent your ${itemDS['name']} '
+        'for ${duration > 1 ? '$duration days' : '$duration day'}. '
+        'I would like to pick up this item '
+        'from $range on ${DateFormat('EEE, MMM d yyyy').format(pickupTime)}.'
+        '${note.length > 0 ? '\n\nAdditional Note:\n$note' : ''}';
 
     return await showDialog<bool>(
           context: context,
@@ -493,7 +500,7 @@ class ItemRequestState extends State<ItemRequest> {
               ),
               actions: <Widget>[
                 FlatButton(
-                  child: const Text('Go back'),
+                  child: const Text('Cancel'),
                   onPressed: () {
                     Navigator.of(context).pop(
                         false); // Pops the confirmation dialog but not the page.
@@ -593,24 +600,47 @@ class ItemRequestState extends State<ItemRequest> {
 }
 
 class DateTimeItem extends StatelessWidget {
-  DateTimeItem({Key key, DateTime dateTime, @required this.onChanged})
-      : assert(onChanged != null),
-        date = DateTime(dateTime.year, dateTime.month, dateTime.day),
-        time = TimeOfDay(hour: dateTime.hour, minute: dateTime.minute),
+  DateTimeItem({
+    Key key,
+    DateTime dateTime,
+    int window,
+    int amPm,
+    int duration,
+    @required this.onChangedDateTime,
+    @required this.onChangedWindow,
+    @required this.onChangedAmPm,
+    @required this.onChangedDuration,
+  })  : assert(onChangedDateTime != null),
+        dateTime = DateTime(dateTime.year, dateTime.month, dateTime.day),
+        window = window,
+        amPm = amPm,
+        duration = duration,
         super(key: key);
 
-  final DateTime date;
-  final TimeOfDay time;
-  final ValueChanged<DateTime> onChanged;
+  final DateTime dateTime;
+  final int window;
+  final int amPm;
+  final int duration;
+  final ValueChanged<DateTime> onChangedDateTime;
+  final ValueChanged<int> onChangedWindow;
+  final ValueChanged<int> onChangedAmPm;
+  final ValueChanged<int> onChangedDuration;
 
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
 
+    List pickerData = JsonDecoder().convert(PickerData);
+    List windows = pickerData[0];
+
+    String range = parseWindow(windows, window, amPm);
+
     return DefaultTextStyle(
       style: theme.textTheme.subhead,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
+          Text('Day to pickup item', style: theme.textTheme.caption),
           Container(
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -621,19 +651,23 @@ class DateTimeItem extends StatelessWidget {
                 onTap: () {
                   showDatePicker(
                     context: context,
-                    initialDate: date,
-                    firstDate: date.subtract(const Duration(days: 30)),
-                    lastDate: date.add(const Duration(days: 30)),
+                    initialDate: dateTime,
+                    firstDate: DateTime(2000),
+                    lastDate: DateTime(2100),
                   ).then<void>((DateTime value) {
-                    if (value != null)
-                      onChanged(DateTime(value.year, value.month, value.day,
-                          time.hour, time.minute));
+                    if (value != null) {
+                      onChangedDateTime(DateTime(
+                        value.year,
+                        value.month,
+                        value.day,
+                      ));
+                    }
                   });
                 },
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: <Widget>[
-                    Text(DateFormat('EEE, MMM d yyyy').format(date)),
+                    Text(DateFormat('EEE, MMM d yyyy').format(dateTime)),
                     const Icon(Icons.arrow_drop_down, color: Colors.black54),
                   ],
                 ),
@@ -641,24 +675,68 @@ class DateTimeItem extends StatelessWidget {
             ),
           ),
           Container(
+            height: 12,
+          ),
+          Text(
+              'Pickup window\n(earliest pickup must be at least 1 hr from now)',
+              style: theme.textTheme.caption),
+          Container(
             //margin: const EdgeInsets.only(left: 8.0),
             padding: const EdgeInsets.symmetric(vertical: 8.0),
             decoration: BoxDecoration(
                 border: Border(bottom: BorderSide(color: theme.dividerColor))),
             child: InkWell(
               onTap: () {
-                showTimePicker(
-                  context: context,
-                  initialTime: time,
-                ).then<void>((TimeOfDay value) {
-                  if (value != null)
-                    onChanged(DateTime(date.year, date.month, date.day,
-                        value.hour, value.minute));
-                });
+                Picker(
+                    adapter: PickerDataAdapter<String>(
+                      pickerdata: JsonDecoder().convert(PickerData),
+                      isArray: true,
+                    ),
+                    hideHeader: true,
+                    selecteds: [window, amPm],
+                    title: Text("Select Pickup Window"),
+                    columnFlex: [2, 1],
+                    onConfirm: (Picker picker, List value) {
+                      onChangedWindow(value[0]);
+                      onChangedAmPm(value[1]);
+                    }).showDialog(context);
               },
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
-                  Text('${time.format(context)}'),
+                  Text(range),
+                  const Icon(Icons.arrow_drop_down, color: Colors.black54),
+                ],
+              ),
+            ),
+          ),
+          Container(
+            height: 12,
+          ),
+          Text('How many days will you be renting?',
+              style: theme.textTheme.caption),
+          Container(
+            //margin: const EdgeInsets.only(left: 8.0),
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            decoration: BoxDecoration(
+                border: Border(bottom: BorderSide(color: theme.dividerColor))),
+            child: InkWell(
+              onTap: () {
+                Picker(
+                    adapter: NumberPickerAdapter(data: [
+                      NumberPickerColumn(begin: 1, end: 27),
+                    ]),
+                    hideHeader: true,
+                    selecteds: [duration - 1],
+                    title: Text('Rental Duration (days)'),
+                    onConfirm: (Picker picker, List value) {
+                      onChangedDuration(picker.getSelectedValues()[0]);
+                    }).showDialog(context);
+              },
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: <Widget>[
+                  Text('$duration'),
                   const Icon(Icons.arrow_drop_down, color: Colors.black54),
                 ],
               ),
@@ -668,4 +746,48 @@ class DateTimeItem extends StatelessWidget {
       ),
     );
   }
+}
+
+// false if window is between midnight and 5am, true otherwise
+bool validate(int window, int amPm) {
+  // am
+  if (amPm == 0) {
+    // 1:00-2:00am to 4:30-5:30am
+    if (0 <= window && window <= 7) {
+      return false;
+    }
+
+    // 11:30-12:30am to 12:30-1:30am
+    if (21 <= window && window <= 23) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+String parseWindow(List windows, int window, int amPm) {
+  String start = windows[window].split(' - ')[0];
+  String end = windows[window].split(' - ')[1];
+  String errorMessage = 'Range can\'t be between\nmidnight and 5 AM';
+  String range;
+
+  if (!validate(window, amPm)) {
+    range = errorMessage;
+  } else {
+    if (amPm == 0 && window == 20) {
+      range = '$start PM - Midnight';
+    } else if (amPm == 1 && window == 20) {
+      range = '$start AM - Noon';
+    } else if (amPm == 1 && window == 21) {
+      range = '$start AM - $end PM';
+    } else if (amPm == 1 && window == 22) {
+      range = 'Noon - $end PM';
+    } else {
+      range =
+          '$start ${amPm == 0 ? 'AM' : 'PM'} - $end ${amPm == 0 ? 'AM' : 'PM'}';
+    }
+  }
+
+  return range;
 }
