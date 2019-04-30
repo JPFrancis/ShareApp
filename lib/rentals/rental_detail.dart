@@ -325,7 +325,7 @@ class RentalDetailState extends State<RentalDetail> {
         case 1: // requested
           statusMessage = 'Status: requested\n'
               'Do you accept the request from ${renterDS['displayName']}?\n'
-              '${renterDS['displayName']} wants to pick up the item between ${rentalDS['start']} and ${rentalDS['end']}';
+              '${renterDS['displayName']} wants to pick up the item between ${rentalDS['pickupStartTime']} and ${rentalDS['pickupEndTime']}';
           break;
         case 2: // accepted
           statusMessage = 'Status: accepted\n'
@@ -381,6 +381,22 @@ class RentalDetailState extends State<RentalDetail> {
                     onPressed: () {
                       updateStatus(2);
                     },
+                  ),
+                ),
+                Container(
+                  width: 15.0,
+                ),
+                Expanded(
+                  child: RaisedButton(
+                    shape: new RoundedRectangleBorder(
+                        borderRadius: new BorderRadius.circular(5.0)),
+                    color: Colors.orange,
+                    textColor: Colors.white,
+                    child: Text(
+                      "Propose new time",
+                      textScaleFactor: 1.25,
+                    ),
+                    onPressed: () {},
                   ),
                 ),
                 Container(
@@ -534,6 +550,10 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   void deleteRental() async {
+    setState(() {
+      isLoading = true;
+    });
+
     Firestore.instance
         .collection('users')
         .document(renterDS.documentID)

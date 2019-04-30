@@ -50,11 +50,8 @@ class ItemRequestState extends State<ItemRequest> {
   TextEditingController noteController = TextEditingController();
   FocusNode focusNode;
 
-  DateTime startDateTime = DateTime.now().add(Duration(hours: 1));
-  DateTime endDateTime = DateTime.now().add(Duration(hours: 2));
-
   DateTime pickupTime;
-  int duration = 1;
+  int duration;
   List windows;
   int window; // a value 0-23 to represent range index in windows list
   int amPm; // 0 for AM, 1 for PM
@@ -78,44 +75,18 @@ class ItemRequestState extends State<ItemRequest> {
   void initPickerData() {
     List pickerData = JsonDecoder().convert(PickerData);
     windows = pickerData[0];
+    duration = 1;
 
-    DateTime currentTime = DateTime.now();
-    pickupTime = currentTime.add(Duration(hours: 1, minutes: 5));
-    int hour = pickupTime.hour;
-    int minute = pickupTime.minute;
-    amPm = pickupTime.hour >= 13 ? 1 : 0;
+    pickupTime = DateTime.now();
+    //pickupTime = currentTime.add(Duration(hours: 1, minutes: 5));
+    //int hour = pickupTime.hour;
+    //int minute = pickupTime.minute;
 
-    if ((hour == 21 && minute > 30) || hour > 22) {
-      if (hour == 21 || (hour == 22 && minute == 0)) {
-        window = 20;
-        amPm = 0;
-      } else {
-        window = 8;
-        amPm = 0;
-      }
-    } else {
-      if (amPm == 1) {
-        hour -= 12;
-      }
+    pickupTime = DateTime(
+        pickupTime.year, pickupTime.month, pickupTime.day, 5, 0, 0, 0, 0);
 
-      if (minute == 0) {
-        window = hour * 2 - 2;
-      } else if (1 <= minute && minute <= 30) {
-        window = hour * 2 + 1;
-      } else {
-        window = hour * 2 + 2;
-      }
-    }
-
-    if (!validate(window, amPm)) {
-      window = 8;
-      amPm = 0;
-    }
-
-    if (window < 0 || window > 23) {
-      window = 8;
-      amPm = 0;
-    }
+    window = 8;
+    amPm = 0;
   }
 
   void getMyUserID() async {
@@ -167,7 +138,17 @@ class ItemRequestState extends State<ItemRequest> {
                 textScaleFactor: 1.05,
                 style: theme.textTheme.body2.copyWith(color: Colors.white)),
             onPressed: () {
-              sendItem();
+              if (itemDS['rental'] != null) {
+                showRequestErrorDialog(1);
+              } else if (!validate(window, amPm)) {
+                showRequestErrorDialog(2);
+              } else if (DateTime.now()
+                  .add(Duration(hours: 1))
+                  .isAfter(pickupTime)) {
+                showRequestErrorDialog(3);
+              } else {
+                sendItem();
+              }
             },
           ),
         ],
@@ -206,6 +187,14 @@ class ItemRequestState extends State<ItemRequest> {
             height: 10,
           ),
           showItemPriceInfo(),
+          Container(
+            padding: EdgeInsets.all(10),
+            child: Text(
+              'Start: ${pickupTime}\n'
+                  'End: ${pickupTime.add(Duration(hours: 1))}',
+              style: TextStyle(fontSize: 18),
+            ),
+          ),
           showTimePickers(),
           Container(
             height: 10,
@@ -293,6 +282,25 @@ class ItemRequestState extends State<ItemRequest> {
             onChangedWindow: (int value) {
               setState(() {
                 window = value;
+
+                String start = windows[window].split(' - ')[0];
+                int hour = int.parse(start.split(':')[0]);
+                int minute = int.parse(start.split(':')[1]);
+
+                if (amPm == 1 && hour != 12) {
+                  hour += 12;
+                }
+
+                if (window == 20 && amPm == 0) {
+                  hour = 23;
+                }
+
+                if (amPm == 1 && (window == 20 || window == 21)) {
+                  hour = 11;
+                }
+
+                pickupTime = DateTime(pickupTime.year, pickupTime.month,
+                    pickupTime.day, hour, minute, 0, 0, 0);
               });
             },
             onChangedAmPm: (int value) {
@@ -363,6 +371,7 @@ class ItemRequestState extends State<ItemRequest> {
 
     String rentalID;
 
+    // create rental in 'rentals' collection
     DocumentReference rentalDR =
         await Firestore.instance.collection("rentals").add({
       'status': 1, // set rental status to requested
@@ -370,14 +379,17 @@ class ItemRequestState extends State<ItemRequest> {
       'owner':
           Firestore.instance.collection('users').document(creatorDS.documentID),
       'renter': Firestore.instance.collection('users').document(myUserID),
-      'start': startDateTime,
-      'end': endDateTime,
+      'pickupStartTime': pickupTime,
+      'pickupEndTime': pickupTime.add(Duration(hours: 1)),
+      'rentalEndTime': pickupTime.add(Duration(days: duration, hours: 1)),
       'created': DateTime.now().millisecondsSinceEpoch,
+      'duration': duration,
     });
 
     if (rentalDR != null) {
       rentalID = rentalDR.documentID;
 
+      // create rental document in renter's 'rentals' collection
       var myUserDR = Firestore.instance
           .collection('users')
           .document(myUserID)
@@ -397,6 +409,7 @@ class ItemRequestState extends State<ItemRequest> {
         );
       });
 
+      // create rental document in item owner's 'rentals' collection
       var creatorDR = Firestore.instance
           .collection('users')
           .document(creatorDS.documentID)
@@ -415,18 +428,6 @@ class ItemRequestState extends State<ItemRequest> {
         );
       });
 
-      /*
-      Firestore.instance
-          .collection('users')
-          .document(myUserID)
-          .updateData({'rentals': FieldValue.arrayUnion([rentalDR])});
-
-      Firestore.instance
-          .collection('users')
-          .document(creatorDS.documentID)
-          .updateData({'rentals': FieldValue.arrayUnion([rentalDR])});
-          */
-
       Firestore.instance
           .collection('items')
           .document(widget.itemID)
@@ -434,6 +435,7 @@ class ItemRequestState extends State<ItemRequest> {
         'rental': Firestore.instance.collection('rentals').document(rentalID)
       });
 
+      // create chat and send the default request message
       var dr = Firestore.instance
           .collection('rentals')
           .document(rentalID)
@@ -446,18 +448,12 @@ class ItemRequestState extends State<ItemRequest> {
           {
             'idFrom': myUserID,
             'idTo': creatorDS.documentID,
-            'timestamp': DateTime.now().millisecondsSinceEpoch.toString(),
+            'timestamp': DateTime.now().millisecondsSinceEpoch,
             'content': message,
             'type': 0,
           },
         );
       });
-
-      /*
-      Firestore.instance.collection('rentals').document(rentalID).updateData({
-        'chat': Firestore.instance.collection('messages').document(rentalID)
-      });
-      */
 
       setState(() {
         isUploading = false;
@@ -514,7 +510,13 @@ class ItemRequestState extends State<ItemRequest> {
                     getSnapshots().then(
                       (_) {
                         if (itemDS['rental'] != null) {
-                          showRequestErrorDialog();
+                          showRequestErrorDialog(1);
+                        } else if (!validate(window, amPm)) {
+                          showRequestErrorDialog(2);
+                        } else if (DateTime.now()
+                            .add(Duration(hours: 1))
+                            .isAfter(pickupTime)) {
+                          showRequestErrorDialog(3);
                         } else {
                           navToItemRental();
                         }
@@ -530,12 +532,23 @@ class ItemRequestState extends State<ItemRequest> {
         false;
   }
 
-  Future<bool> showRequestErrorDialog() async {
+  Future<bool> showRequestErrorDialog(int type) async {
     final ThemeData theme = Theme.of(context);
     final TextStyle dialogTextStyle =
         theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+    String message;
 
-    String message = 'Someone has already requested this item!';
+    switch (type) {
+      case 1:
+        message = 'Someone has already requested this item!';
+        break;
+      case 2:
+        message = 'Pickup window cannot be between midnight and 5 AM';
+        break;
+      case 3:
+        message = 'Pickup window must start at least one hour from now';
+        break;
+    }
 
     return await showDialog<bool>(
           context: context,
@@ -562,8 +575,6 @@ class ItemRequestState extends State<ItemRequest> {
   }
 
   Future<bool> onWillPop() async {
-    //if (widget.userEdit.displayName == userEditCopy.displayName) return true;
-
     final ThemeData theme = Theme.of(context);
     final TextStyle dialogTextStyle =
         theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);

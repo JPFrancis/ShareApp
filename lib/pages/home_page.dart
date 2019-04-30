@@ -473,7 +473,7 @@ class HomePageState extends State<HomePage> {
       child: Container(
         child: RaisedButton(
           color: Colors.white,
-          onPressed: () => debugPrint,
+          onPressed: () => print,
           child: Row(
             children: <Widget>[
               Icon(Icons.search),

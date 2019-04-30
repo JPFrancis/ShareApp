@@ -191,7 +191,7 @@ class ChatScreenState extends State<ChatScreen> {
           {
             'idFrom': myUserID,
             'idTo': otherUserDS.documentID,
-            'timestamp': DateTime.now().millisecondsSinceEpoch.toString(),
+            'timestamp': DateTime.now().millisecondsSinceEpoch,
             'content': content,
             'type': type
           },
@@ -391,7 +391,7 @@ class ChatScreenState extends State<ChatScreen> {
                     child: Text(
                       DateFormat('dd MMM kk:mm').format(
                           DateTime.fromMillisecondsSinceEpoch(
-                              int.parse(document['timestamp']))),
+                              document['timestamp'])),
                       style: TextStyle(
                           color: greyColor,
                           fontSize: 12.0,
@@ -461,6 +461,10 @@ class ChatScreenState extends State<ChatScreen> {
                     ),
                     Text(
                       'Item owner: ${ownerDS['displayName']}',
+                      style: TextStyle(fontSize: headingFontSize),
+                    ),
+                    Text(
+                      'Item renter: ${renterDS['displayName']}',
                       style: TextStyle(fontSize: headingFontSize),
                     ),
                     Divider(
