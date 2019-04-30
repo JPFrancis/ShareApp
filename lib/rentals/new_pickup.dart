@@ -18,19 +18,19 @@ enum DismissDialogAction {
   save,
 }
 
-class ItemRequest extends StatefulWidget {
-  static const routeName = '/requestItem';
+class NewPickup extends StatefulWidget {
+  static const routeName = '/newPickup';
   final String itemID;
 
-  ItemRequest({Key key, this.itemID}) : super(key: key);
+  NewPickup({Key key, this.itemID}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
-    return ItemRequestState();
+    return NewPickupState();
   }
 }
 
-class ItemRequestState extends State<ItemRequest> {
+class NewPickupState extends State<NewPickup> {
   final GlobalKey<FormState> formKey = new GlobalKey<FormState>();
   SharedPreferences prefs;
 
@@ -65,7 +65,6 @@ class ItemRequestState extends State<ItemRequest> {
     // TODO: implement initState
     super.initState();
     focusNode = FocusNode();
-    note = '';
 
     initPickerData();
     getMyUserID();
@@ -78,6 +77,9 @@ class ItemRequestState extends State<ItemRequest> {
     duration = 1;
 
     pickupTime = DateTime.now();
+    //pickupTime = currentTime.add(Duration(hours: 1, minutes: 5));
+    //int hour = pickupTime.hour;
+    //int minute = pickupTime.minute;
 
     pickupTime = DateTime(
         pickupTime.year, pickupTime.month, pickupTime.day, 5, 0, 0, 0, 0);
@@ -124,6 +126,7 @@ class ItemRequestState extends State<ItemRequest> {
     textStyle =
         Theme.of(context).textTheme.headline.merge(TextStyle(fontSize: 20));
     inputTextStyle = Theme.of(context).textTheme.subtitle;
+    note = '';
 
     return Scaffold(
       appBar: AppBar(
@@ -153,9 +156,9 @@ class ItemRequestState extends State<ItemRequest> {
         children: <Widget>[
           isLoading
               ? Container(
-                  decoration:
-                      new BoxDecoration(color: Colors.white.withOpacity(0.0)),
-                )
+            decoration:
+            new BoxDecoration(color: Colors.white.withOpacity(0.0)),
+          )
               : showBody(),
           showCircularProgress(),
         ],
@@ -183,7 +186,7 @@ class ItemRequestState extends State<ItemRequest> {
             height: 10,
           ),
           showItemPriceInfo(),
-          showTimeInfo(), // testing purposes only
+          //showStartEnd(), // testing purposes only
           showTimePickers(),
           Container(
             height: 10,
@@ -194,15 +197,13 @@ class ItemRequestState extends State<ItemRequest> {
     );
   }
 
-  // testing purposes only, will remove in final build
-  Widget showTimeInfo() {
+  // testing purposes only will remove in final build
+  Widget showStartEnd() {
     return Container(
       padding: EdgeInsets.all(10),
       child: Text(
         'Start: ${pickupTime}\n'
-            'End: ${pickupTime.add(Duration(hours: 1))}\n'
-            'Window: $window\n'
-            'amPm: $amPm',
+            'End: ${pickupTime.add(Duration(hours: 1))}',
         style: TextStyle(fontSize: 18),
       ),
     );
@@ -286,16 +287,29 @@ class ItemRequestState extends State<ItemRequest> {
               setState(() {
                 window = value;
 
-                pickupTime = updateDateTime(pickupTime.year, pickupTime.month,
-                    pickupTime.day, windows, window, amPm);
+                String start = windows[window].split(' - ')[0];
+                int hour = int.parse(start.split(':')[0]);
+                int minute = int.parse(start.split(':')[1]);
+
+                if (amPm == 1 && hour != 12) {
+                  hour += 12;
+                }
+
+                if (window == 20 && amPm == 0) {
+                  hour = 23;
+                }
+
+                if (amPm == 1 && (window == 20 || window == 21)) {
+                  hour = 11;
+                }
+
+                pickupTime = DateTime(pickupTime.year, pickupTime.month,
+                    pickupTime.day, hour, minute, 0, 0, 0);
               });
             },
             onChangedAmPm: (int value) {
               setState(() {
                 amPm = value;
-
-                pickupTime = updateDateTime(pickupTime.year, pickupTime.month,
-                    pickupTime.day, windows, window, amPm);
               });
             },
             onChangedDuration: (int value) {
@@ -319,9 +333,7 @@ class ItemRequestState extends State<ItemRequest> {
         controller: noteController,
         style: textStyle,
         onChanged: (value) {
-          setState(() {
-            note = noteController.text;
-          });
+          note = noteController.text;
         },
         decoration: InputDecoration(
           labelText: 'Add note (optional)',
@@ -365,11 +377,11 @@ class ItemRequestState extends State<ItemRequest> {
 
     // create rental in 'rentals' collection
     DocumentReference rentalDR =
-        await Firestore.instance.collection("rentals").add({
+    await Firestore.instance.collection("rentals").add({
       'status': 1, // set rental status to requested
       'item': Firestore.instance.collection('items').document(widget.itemID),
       'owner':
-          Firestore.instance.collection('users').document(creatorDS.documentID),
+      Firestore.instance.collection('users').document(creatorDS.documentID),
       'renter': Firestore.instance.collection('users').document(myUserID),
       'pickupStartTime': pickupTime,
       'pickupEndTime': pickupTime.add(Duration(hours: 1)),
@@ -415,7 +427,7 @@ class ItemRequestState extends State<ItemRequest> {
             'rental': rentalDR,
             'isRenter': false,
             'otherUser':
-                Firestore.instance.collection('users').document(myUserID),
+            Firestore.instance.collection('users').document(myUserID),
           },
         );
       });
@@ -466,7 +478,7 @@ class ItemRequestState extends State<ItemRequest> {
   Future<bool> sendItem() async {
     final ThemeData theme = Theme.of(context);
     final TextStyle dialogTextStyle =
-        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+    theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
 
     String range = parseWindow(windows, window, amPm);
 
@@ -478,56 +490,56 @@ class ItemRequestState extends State<ItemRequest> {
         '${note.length > 0 ? '\n\nAdditional Note:\n$note' : ''}';
 
     return await showDialog<bool>(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text('Preview message'),
-              content: Text(
-                message,
-                style: dialogTextStyle,
-              ),
-              actions: <Widget>[
-                FlatButton(
-                  child: const Text('Cancel'),
-                  onPressed: () {
-                    Navigator.of(context).pop(
-                        false); // Pops the confirmation dialog but not the page.
-                  },
-                ),
-                FlatButton(
-                  child: const Text('Send'),
-                  onPressed: () {
-                    Navigator.of(context).pop(false);
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Preview message'),
+          content: Text(
+            message,
+            style: dialogTextStyle,
+          ),
+          actions: <Widget>[
+            FlatButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop(
+                    false); // Pops the confirmation dialog but not the page.
+              },
+            ),
+            FlatButton(
+              child: const Text('Send'),
+              onPressed: () {
+                Navigator.of(context).pop(false);
 
-                    getSnapshots().then(
+                getSnapshots().then(
                       (_) {
-                        if (itemDS['rental'] != null) {
-                          showRequestErrorDialog(1);
-                        } else if (!validate(window, amPm)) {
-                          showRequestErrorDialog(2);
-                        } else if (DateTime.now()
-                            .add(Duration(hours: 1))
-                            .isAfter(pickupTime)) {
-                          showRequestErrorDialog(3);
-                        } else {
-                          navToItemRental();
-                        }
-                      },
-                    );
-                    // Pops the confirmation dialog but not the page.
+                    if (itemDS['rental'] != null) {
+                      showRequestErrorDialog(1);
+                    } else if (!validate(window, amPm)) {
+                      showRequestErrorDialog(2);
+                    } else if (DateTime.now()
+                        .add(Duration(hours: 1))
+                        .isAfter(pickupTime)) {
+                      showRequestErrorDialog(3);
+                    } else {
+                      navToItemRental();
+                    }
                   },
-                ),
-              ],
-            );
-          },
-        ) ??
+                );
+                // Pops the confirmation dialog but not the page.
+              },
+            ),
+          ],
+        );
+      },
+    ) ??
         false;
   }
 
   Future<bool> showRequestErrorDialog(int type) async {
     final ThemeData theme = Theme.of(context);
     final TextStyle dialogTextStyle =
-        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+    theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
     String message;
 
     switch (type) {
@@ -543,61 +555,61 @@ class ItemRequestState extends State<ItemRequest> {
     }
 
     return await showDialog<bool>(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text('Error'),
-              content: Text(
-                message,
-                style: dialogTextStyle,
-              ),
-              actions: <Widget>[
-                FlatButton(
-                  child: const Text('Ok'),
-                  onPressed: () {
-                    Navigator.of(context).pop(
-                        false); // Pops the confirmation dialog but not the page.
-                  },
-                ),
-              ],
-            );
-          },
-        ) ??
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Error'),
+          content: Text(
+            message,
+            style: dialogTextStyle,
+          ),
+          actions: <Widget>[
+            FlatButton(
+              child: const Text('Ok'),
+              onPressed: () {
+                Navigator.of(context).pop(
+                    false); // Pops the confirmation dialog but not the page.
+              },
+            ),
+          ],
+        );
+      },
+    ) ??
         false;
   }
 
   Future<bool> onWillPop() async {
     final ThemeData theme = Theme.of(context);
     final TextStyle dialogTextStyle =
-        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+    theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
 
     return await showDialog<bool>(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              content: Text(
-                'Discard changes?',
-                style: dialogTextStyle,
-              ),
-              actions: <Widget>[
-                FlatButton(
-                  child: const Text('Cancel'),
-                  onPressed: () {
-                    Navigator.of(context).pop(
-                        false); // Pops the confirmation dialog but not the page.
-                  },
-                ),
-                FlatButton(
-                  child: const Text('Discard'),
-                  onPressed: () {
-                    Navigator.of(context).pop(
-                        true); // Returning true to _onWillPop will pop again.
-                  },
-                ),
-              ],
-            );
-          },
-        ) ??
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: Text(
+            'Discard changes?',
+            style: dialogTextStyle,
+          ),
+          actions: <Widget>[
+            FlatButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop(
+                    false); // Pops the confirmation dialog but not the page.
+              },
+            ),
+            FlatButton(
+              child: const Text('Discard'),
+              onPressed: () {
+                Navigator.of(context).pop(
+                    true); // Returning true to _onWillPop will pop again.
+              },
+            ),
+          ],
+        );
+      },
+    ) ??
         false;
   }
 }
@@ -649,7 +661,7 @@ class DateTimeItem extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 8.0),
               decoration: BoxDecoration(
                   border:
-                      Border(bottom: BorderSide(color: theme.dividerColor))),
+                  Border(bottom: BorderSide(color: theme.dividerColor))),
               child: InkWell(
                 onTap: () {
                   showDatePicker(
@@ -659,8 +671,11 @@ class DateTimeItem extends StatelessWidget {
                     lastDate: DateTime(2100),
                   ).then<void>((DateTime value) {
                     if (value != null) {
-                      onChangedDateTime(updateDateTime(value.year, value.month,
-                          value.day, windows, window, amPm));
+                      onChangedDateTime(DateTime(
+                        value.year,
+                        value.month,
+                        value.day,
+                      ));
                     }
                   });
                 },
@@ -785,29 +800,9 @@ String parseWindow(List windows, int window, int amPm) {
       range = 'Noon - $end PM';
     } else {
       range =
-          '$start ${amPm == 0 ? 'AM' : 'PM'} - $end ${amPm == 0 ? 'AM' : 'PM'}';
+      '$start ${amPm == 0 ? 'AM' : 'PM'} - $end ${amPm == 0 ? 'AM' : 'PM'}';
     }
   }
 
   return range;
-}
-
-DateTime updateDateTime(year, month, day, windows, window, amPm) {
-  String start = windows[window].split(' - ')[0];
-  int hour = int.parse(start.split(':')[0]);
-  int minute = int.parse(start.split(':')[1]);
-
-  if (amPm == 1 && hour != 12) {
-    hour += 12;
-  }
-
-  if (window == 20 && amPm == 0) {
-    hour = 23;
-  }
-
-  if (amPm == 1 && (window == 20 || window == 21)) {
-    hour = 11;
-  }
-
-  return DateTime(year, month, day, hour, minute, 0, 0, 0);
 }
