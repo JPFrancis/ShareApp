@@ -10,6 +10,8 @@ import 'package:intl/intl.dart' as intl;
 import 'package:shareapp/extras/quote_icons.dart';
 import 'package:shareapp/models/user_edit.dart';
 
+import 'package:shareapp/extras/helpers.dart';
+
 enum DismissDialogAction {
   cancel,
   discard,
@@ -133,13 +135,6 @@ class ProfileEditState extends State<ProfileEdit> {
           style: TextStyle(
               fontSize: 11.0, fontWeight: FontWeight.w400, fontFamily: font),
         ));
-  }
-
-  Widget divider() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Divider(),
-    );
   }
 
   Widget emailEntry() {

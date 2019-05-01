@@ -9,6 +9,8 @@ import 'package:multi_image_picker/multi_image_picker.dart';
 import 'package:shareapp/models/item.dart';
 import 'package:shareapp/services/select_location.dart';
 
+import 'package:shareapp/extras/helpers.dart';
+
 enum DismissDialogAction {
   cancel,
   discard,
@@ -152,7 +154,7 @@ class ItemEditState extends State<ItemEdit> {
           padding: EdgeInsets.only(
               top: height / 15, bottom: 10.0, left: 18.0, right: 18.0),
           children: <Widget>[
-            backButton(),
+            backButton(context),
             Padding(
               padding: const EdgeInsets.only(top: 60, bottom: 60.0),
               child: Center(child: Text("[ add image thumbnails here ]")),
@@ -177,26 +179,6 @@ class ItemEditState extends State<ItemEdit> {
             showItemLocation(),
             showLocationButtons(),
           ]),
-    );
-  }
-
-  Widget divider() {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Divider(),
-    );
-  }
-
-  Widget backButton() {
-    return Container(
-      alignment: Alignment.topLeft,
-      child: FloatingActionButton(
-        child: BackButton(),
-        onPressed: () => Navigator.pop(context),
-        backgroundColor: Colors.transparent,
-        elevation: 0.0,
-        foregroundColor: Colors.black,
-      ),
     );
   }
 
