@@ -9,6 +9,7 @@ import 'package:shareapp/rentals/chat.dart';
 import 'package:shareapp/rentals/item_request.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/auth.dart';
+import 'package:shareapp/rentals/new_pickup.dart';
 
 void main() => runApp(MyApp());
 
@@ -106,6 +107,20 @@ class MyApp extends StatelessWidget {
                 },
               );
             }
+
+          case NewPickup.routeName:
+            {
+              final NewPickupArgs args = settings.arguments;
+
+              return MaterialPageRoute(
+                builder: (context) {
+                  return NewPickup(
+                    rentalID: args.rentalID,
+                    isRenter: args.isRenter,
+                  );
+                },
+              );
+            }
         }
       },
     );
@@ -157,5 +172,15 @@ class ChatArgs {
 
   ChatArgs(
     this.rentalID,
+  );
+}
+
+class NewPickupArgs {
+  final String rentalID;
+  final bool isRenter;
+
+  NewPickupArgs(
+    this.rentalID,
+    this.isRenter,
   );
 }

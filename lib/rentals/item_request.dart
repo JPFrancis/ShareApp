@@ -134,17 +134,7 @@ class ItemRequestState extends State<ItemRequest> {
                 textScaleFactor: 1.05,
                 style: theme.textTheme.body2.copyWith(color: Colors.white)),
             onPressed: () {
-              if (itemDS['rental'] != null) {
-                showRequestErrorDialog(1);
-              } else if (!validate(window, amPm)) {
-                showRequestErrorDialog(2);
-              } else if (DateTime.now()
-                  .add(Duration(hours: 1))
-                  .isAfter(pickupTime)) {
-                showRequestErrorDialog(3);
-              } else {
-                sendItem();
-              }
+              validateSend(sendItem);
             },
           ),
         ],
@@ -205,7 +195,7 @@ class ItemRequestState extends State<ItemRequest> {
             'End: ${pickupTime.add(Duration(hours: 1))}\n'
             'Window: $window\n'
             'amPm: $amPm\n'
-            'durationi: $duration',
+            'duration: $duration',
         style: theme.textTheme.caption,
       ),
     );
@@ -360,7 +350,7 @@ class ItemRequestState extends State<ItemRequest> {
     // create rental in 'rentals' collection
     DocumentReference rentalDR =
         await Firestore.instance.collection("rentals").add({
-      'status': 1, // set rental status to requested
+      'status': 0,
       'item': Firestore.instance.collection('items').document(widget.itemID),
       'owner':
           Firestore.instance.collection('users').document(creatorDS.documentID),
@@ -370,6 +360,7 @@ class ItemRequestState extends State<ItemRequest> {
       'rentalEnd': pickupTime.add(Duration(days: duration, hours: 1)),
       'created': DateTime.now().millisecondsSinceEpoch,
       'duration': duration,
+      'note': note,
     });
 
     if (rentalDR != null) {
@@ -487,7 +478,7 @@ class ItemRequestState extends State<ItemRequest> {
         'for ${duration > 1 ? '$duration days' : '$duration day'}. '
         'I would like to pick up this item '
         'from $range on ${DateFormat('EEE, MMM d yyyy').format(pickupTime)}.'
-        '${note.length > 0 ? '\n\nAdditional Note:\n$note' : ''}';
+        '${note.length > 0 ? '\n\nAdditional Note for pickup:\n$note' : ''}';
 
     return await showDialog<bool>(
           context: context,
@@ -513,17 +504,7 @@ class ItemRequestState extends State<ItemRequest> {
 
                     getSnapshots().then(
                       (_) {
-                        if (itemDS['rental'] != null) {
-                          showRequestErrorDialog(1);
-                        } else if (!validate(window, amPm)) {
-                          showRequestErrorDialog(2);
-                        } else if (DateTime.now()
-                            .add(Duration(hours: 1))
-                            .isAfter(pickupTime)) {
-                          showRequestErrorDialog(3);
-                        } else {
-                          navToItemRental();
-                        }
+                        validateSend(navToItemRental);
                       },
                     );
                     // Pops the confirmation dialog but not the page.
@@ -534,6 +515,18 @@ class ItemRequestState extends State<ItemRequest> {
           },
         ) ??
         false;
+  }
+
+  void validateSend(action) {
+    if (itemDS['rental'] != null) {
+      showRequestErrorDialog(1);
+    } else if (!validate(window, amPm)) {
+      showRequestErrorDialog(2);
+    } else if (DateTime.now().add(Duration(hours: 1)).isAfter(pickupTime)) {
+      showRequestErrorDialog(3);
+    } else {
+      action();
+    }
   }
 
   Future<bool> showRequestErrorDialog(int type) async {
