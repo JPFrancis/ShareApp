@@ -318,16 +318,16 @@ class NewPickupState extends State<NewPickup> {
   void sendNewTime() async {
     int delay = 500;
 
+    setState(() {
+      isUploading = true;
+    });
+
     int newStatus = widget.isRenter ? 0 : 1;
 
     Firestore.instance
         .collection('rentals')
         .document(widget.rentalID)
         .updateData({
-      'created': rentalDS['created'],
-      'item': rentalDS['item'],
-      'owner': rentalDS['owner'],
-      'renter': rentalDS['renter'],
       'status': newStatus,
       'pickupStart': pickupTime,
       'pickupEnd': pickupTime.add(Duration(hours: 1)),
@@ -374,12 +374,7 @@ class NewPickupState extends State<NewPickup> {
                   child: const Text('Send'),
                   onPressed: () {
                     Navigator.of(context).pop(false);
-
-                    getSnapshots().then(
-                      (_) {
-                        validateSend(sendNewTime);
-                      },
-                    );
+                    validateSend(sendNewTime);
                     // Pops the confirmation dialog but not the page.
                   },
                 ),
