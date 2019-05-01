@@ -4,9 +4,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:intl/intl.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/rentals/chat.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shareapp/rentals/new_pickup.dart';
 
 enum Status {
   requested,
@@ -217,7 +219,7 @@ class RentalDetailState extends State<RentalDetail> {
                     Container(
                       height: 10,
                     ),
-                    showAcceptRejectRequestButtons(),
+                    showRequestButtons(),
                     showReceiveItemButton(),
                     showReturnedItemButton(),
                     showWriteReview(),
@@ -294,13 +296,31 @@ class RentalDetailState extends State<RentalDetail> {
     int itemStatus = rentalDS['status'];
     String statusMessage;
 
+    String start = DateFormat('h:mm a on EEE, MMM d yyyy')
+        .format(rentalDS['pickupStart'].toDate());
+    String end = DateFormat('h:mm a on EEE, MMM d yyyy')
+        .format(rentalDS['pickupEnd'].toDate());
+    int durationDays = rentalDS['duration'];
+    String duration =
+        '${durationDays > 1 ? '$durationDays days' : '$durationDays day'}';
+
     // IF YOU ARE THE RENTER
     if (isRenter) {
       switch (itemStatus) {
-        case 1: // requested
-          statusMessage = 'Status: requested\n'
+        case 0: // requested, renter has sent request
+          statusMessage = 'Status: requested (0)\n'
               'Awaiting response from ${ownerDS['name']}\n'
-              'You proposed to pickup the item between ${rentalDS['pickupStart']} and ${rentalDS['pickupEnd']}';
+              'Your proposed pickup window:\n'
+              'Start: $start\n'
+              'End: $end\n'
+              'Rental duration: $duration';
+          break;
+        case 1: // requested, renter need to accept/reject pickup window
+          statusMessage = 'Status: requested (0)\n'
+              '${ownerDS['name']} has proposed a pickup window:\n'
+              'Start: $start\n'
+              'End: $end\n'
+              'Rental duration: $duration';
           break;
         case 2: // accepted
           statusMessage = 'Status: accepted\n'
@@ -327,13 +347,23 @@ class RentalDetailState extends State<RentalDetail> {
       }
     }
 
-    // IF YOU ARE THE ITEM OWNER
+    // IF YOU ARE THE OWNER
     else {
       switch (itemStatus) {
-        case 1: // requested
-          statusMessage = 'Status: requested\n'
-              'Do you accept the request from ${renterDS['name']}?\n'
-              '${renterDS['name']} wants to pick up the item between ${rentalDS['pickupStart']} and ${rentalDS['pickupEnd']}';
+        case 0: // requested, owner needs to accept/reject pickup window
+          statusMessage = 'Status: requested (0)\n'
+              '${renterDS['name']} has proposed a pickup window:\n'
+              'Start: $start\n'
+              'End: $end\n'
+              'Rental duration: $duration';
+          break;
+        case 1: // requested, owner has sent new pickup window
+          statusMessage = 'Status: requested (0)\n'
+              'Awaiting response from ${renterDS['name']}\n'
+              'Your proposed pickup window:\n'
+              'Start: $start\n'
+              'End: $end\n'
+              'Rental duration: $duration';
           break;
         case 2: // accepted
           statusMessage = 'Status: accepted\n'
@@ -364,36 +394,49 @@ class RentalDetailState extends State<RentalDetail> {
       child: Text(
         statusMessage,
         style: TextStyle(
-          fontSize: 20,
+          fontSize: 18,
         ),
       ),
     );
   }
 
-  Widget showAcceptRejectRequestButtons() {
-    double buttonHeight = 60;
-
-    return !isRenter && rentalDS['status'] == 1
+  Widget showRequestButtons() {
+    return (isRenter && rentalDS['status'] == 1) ||
+            (!isRenter && rentalDS['status'] == 0)
         ? Container(
-            child: Row(
+            child: Column(
               children: <Widget>[
-                Expanded(
-                  child: reusableButton('Accept', Colors.green, () {
-                    updateStatus(2);
-                  }),
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: reusableButton('Accept', Colors.green, () {
+                        updateStatus(2);
+                      }),
+                    ),
+                    Container(
+                      width: 10,
+                    ),
+                    Expanded(
+                      child: reusableButton('Propose new time',
+                          Colors.orange[700], newPickupProposal),
+                    ),
+                    Container(
+                      width: 10,
+                    ),
+                    Expanded(
+                      child: reusableButton('Reject', Colors.red[800], null),
+                    ),
+                  ],
                 ),
                 Container(
-                  width: 10,
-                ),
-                Expanded(
-                  child: reusableButton(
-                      'Propose new time', Colors.orange[700], null),
-                ),
-                Container(
-                  width: 10,
-                ),
-                Expanded(
-                  child: reusableButton('Reject', Colors.red[800], null),
+                  padding: EdgeInsets.only(top: 15),
+                  child: Text(
+                    'Pickup note: ${rentalDS['note']}',
+                    textAlign: TextAlign.left,
+                    style: TextStyle(
+                      fontSize: 20,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -411,6 +454,7 @@ class RentalDetailState extends State<RentalDetail> {
         textColor: Colors.white,
         child: Text(
           text,
+          textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 16,
           ),
@@ -517,6 +561,14 @@ class RentalDetailState extends State<RentalDetail> {
         .collection('rentals')
         .document(widget.rentalID)
         .updateData({'status': status});
+  }
+
+  void newPickupProposal() async {
+    Navigator.pushNamed(
+      context,
+      NewPickup.routeName,
+      arguments: NewPickupArgs(widget.rentalID, isRenter),
+    );
   }
 
   Future<bool> deleteRentalDialog() async {

@@ -20,9 +20,10 @@ enum DismissDialogAction {
 
 class NewPickup extends StatefulWidget {
   static const routeName = '/newPickup';
-  final String itemID;
+  final String rentalID;
+  final bool isRenter;
 
-  NewPickup({Key key, this.itemID}) : super(key: key);
+  NewPickup({Key key, this.rentalID, this.isRenter}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
@@ -37,10 +38,11 @@ class NewPickupState extends State<NewPickup> {
   bool isUploading = false;
   bool isLoading;
   String myUserID;
-  String photoURL;
 
+  DocumentSnapshot rentalDS;
   DocumentSnapshot itemDS;
-  DocumentSnapshot creatorDS;
+  DocumentSnapshot otherUserDS;
+
   Future<File> selectedImage;
   File imageFile;
   String message;
@@ -65,27 +67,10 @@ class NewPickupState extends State<NewPickup> {
     // TODO: implement initState
     super.initState();
     focusNode = FocusNode();
+    note = '';
 
-    initPickerData();
     getMyUserID();
     getSnapshots();
-  }
-
-  void initPickerData() {
-    List pickerData = JsonDecoder().convert(PickerData);
-    windows = pickerData[0];
-    duration = 1;
-
-    pickupTime = DateTime.now();
-    //pickupTime = currentTime.add(Duration(hours: 1, minutes: 5));
-    //int hour = pickupTime.hour;
-    //int minute = pickupTime.minute;
-
-    pickupTime = DateTime(
-        pickupTime.year, pickupTime.month, pickupTime.day, 5, 0, 0, 0, 0);
-
-    window = 8;
-    amPm = 0;
   }
 
   void getMyUserID() async {
@@ -96,26 +81,59 @@ class NewPickupState extends State<NewPickup> {
   Future<Null> getSnapshots() async {
     isLoading = true;
     DocumentSnapshot ds = await Firestore.instance
-        .collection('items')
-        .document(widget.itemID)
+        .collection('rentals')
+        .document(widget.rentalID)
         .get();
 
     if (ds != null) {
-      itemDS = ds;
+      rentalDS = ds;
 
-      DocumentReference dr = itemDS['creator'];
-      String str = dr.documentID;
+      DocumentReference itemDR = rentalDS['item'];
 
-      ds = await Firestore.instance.collection('users').document(str).get();
+      String str = itemDR.documentID;
+
+      ds = await Firestore.instance.collection('items').document(str).get();
 
       if (ds != null) {
-        creatorDS = ds;
-      }
+        itemDS = ds;
 
-      if (prefs != null && itemDS != null && creatorDS != null) {
-        setState(() {
-          isLoading = false;
-        });
+        DocumentReference otherUserDR =
+            widget.isRenter ? rentalDS['owner'] : rentalDS['renter'];
+        str = otherUserDR.documentID;
+
+        List pickerData = JsonDecoder().convert(PickerData);
+        windows = pickerData[0];
+
+        pickupTime = rentalDS['pickupStart'].toDate();
+        duration = rentalDS['duration'];
+
+        String date = DateFormat('h#mm#a').format(pickupTime);
+        List parsedDate = date.split('#');
+        int hour = int.parse(parsedDate[0]);
+        int minute = int.parse(parsedDate[1]);
+        String amPmStr = parsedDate[2];
+
+        window = (hour - 1) * 2;
+        amPm = amPmStr == 'AM' ? 0 : 1;
+
+        if (minute == 30) {
+          window++;
+        }
+
+        pickupTime = DateTime(pickupTime.year, pickupTime.month, pickupTime.day,
+            hour, minute, 0, 0, 0);
+
+        ds = await Firestore.instance.collection('users').document(str).get();
+
+        if (ds != null) {
+          otherUserDS = ds;
+
+          if (prefs != null && itemDS != null && otherUserDS != null) {
+            setState(() {
+              isLoading = false;
+            });
+          }
+        }
       }
     }
   }
@@ -126,28 +144,17 @@ class NewPickupState extends State<NewPickup> {
     textStyle =
         Theme.of(context).textTheme.headline.merge(TextStyle(fontSize: 20));
     inputTextStyle = Theme.of(context).textTheme.subtitle;
-    note = '';
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Item Request'),
+        title: Text('New Pickup'),
         actions: <Widget>[
           FlatButton(
             child: Text('SEND',
                 textScaleFactor: 1.05,
                 style: theme.textTheme.body2.copyWith(color: Colors.white)),
             onPressed: () {
-              if (itemDS['rental'] != null) {
-                showRequestErrorDialog(1);
-              } else if (!validate(window, amPm)) {
-                showRequestErrorDialog(2);
-              } else if (DateTime.now()
-                  .add(Duration(hours: 1))
-                  .isAfter(pickupTime)) {
-                showRequestErrorDialog(3);
-              } else {
-                sendItem();
-              }
+              validateSend(sendItem);
             },
           ),
         ],
@@ -180,72 +187,34 @@ class NewPickupState extends State<NewPickup> {
       padding: EdgeInsets.all(15),
       child: ListView(
         children: <Widget>[
-          showItemName(),
-          showItemCreator(),
           Container(
             height: 10,
           ),
           showItemPriceInfo(),
-          //showStartEnd(), // testing purposes only
           showTimePickers(),
           Container(
             height: 10,
           ),
           showNoteEdit(),
+          showTimeInfo(), // testing purposes only
         ],
       ),
     );
   }
 
-  // testing purposes only will remove in final build
-  Widget showStartEnd() {
+  // testing purposes only, will remove in final build
+  Widget showTimeInfo() {
     return Container(
       padding: EdgeInsets.all(10),
       child: Text(
-        'Start: ${pickupTime}\n'
-            'End: ${pickupTime.add(Duration(hours: 1))}',
-        style: TextStyle(fontSize: 18),
+        'TESTING PURPOSES ONLY\n'
+            'Start: ${pickupTime}\n'
+            'End: ${pickupTime.add(Duration(hours: 1))}\n'
+            'Window: $window\n'
+            'amPm: $amPm\n'
+            'duration: $duration',
+        style: theme.textTheme.caption,
       ),
-    );
-  }
-
-  Widget showItemName() {
-    return Padding(
-      padding: EdgeInsets.all(padding),
-      child: SizedBox(
-          height: 50.0,
-          child: Container(
-            color: Color(0x00000000),
-            child: Text(
-              'You\'re requesting a:\n${itemDS['name']}',
-              //itemName,
-              style: TextStyle(color: Colors.black, fontSize: 20.0),
-              textAlign: TextAlign.left,
-            ),
-          )),
-    );
-  }
-
-  Widget showItemCreator() {
-    return Row(
-      children: <Widget>[
-        Text(
-          'You\'re requesting from:\n${creatorDS['name']}',
-          style: TextStyle(color: Colors.black, fontSize: 20.0),
-          textAlign: TextAlign.left,
-        ),
-        Expanded(
-          child: Container(
-            height: 50,
-            child: CachedNetworkImage(
-              key: new ValueKey<String>(
-                  DateTime.now().millisecondsSinceEpoch.toString()),
-              imageUrl: creatorDS['avatar'],
-              placeholder: (context, url) => new CircularProgressIndicator(),
-            ),
-          ),
-        ),
-      ],
     );
   }
 
@@ -287,29 +256,16 @@ class NewPickupState extends State<NewPickup> {
               setState(() {
                 window = value;
 
-                String start = windows[window].split(' - ')[0];
-                int hour = int.parse(start.split(':')[0]);
-                int minute = int.parse(start.split(':')[1]);
-
-                if (amPm == 1 && hour != 12) {
-                  hour += 12;
-                }
-
-                if (window == 20 && amPm == 0) {
-                  hour = 23;
-                }
-
-                if (amPm == 1 && (window == 20 || window == 21)) {
-                  hour = 11;
-                }
-
-                pickupTime = DateTime(pickupTime.year, pickupTime.month,
-                    pickupTime.day, hour, minute, 0, 0, 0);
+                pickupTime = updateDateTime(pickupTime.year, pickupTime.month,
+                    pickupTime.day, windows, window, amPm);
               });
             },
             onChangedAmPm: (int value) {
               setState(() {
                 amPm = value;
+
+                pickupTime = updateDateTime(pickupTime.year, pickupTime.month,
+                    pickupTime.day, windows, window, amPm);
               });
             },
             onChangedDuration: (int value) {
@@ -333,7 +289,9 @@ class NewPickupState extends State<NewPickup> {
         controller: noteController,
         style: textStyle,
         onChanged: (value) {
-          note = noteController.text;
+          setState(() {
+            note = noteController.text;
+          });
         },
         decoration: InputDecoration(
           labelText: 'Add note (optional)',
@@ -344,135 +302,43 @@ class NewPickupState extends State<NewPickup> {
   }
 
   Widget showCircularProgress() {
-    if (isUploading) {
-      return Container(
-        child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
-              Text(
-                "Sending...",
-                style: TextStyle(fontSize: 30),
-              ),
-              Container(
-                height: 20.0,
-              ),
-              Center(child: CircularProgressIndicator())
-            ]),
-      );
-    } else {
-      return Container(
-        height: 0.0,
-        width: 0.0,
-      );
-    }
+    return isUploading
+        ? Container(
+            child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: <Widget>[Center(child: CircularProgressIndicator())]),
+          )
+        : Container(
+            height: 0.0,
+            width: 0.0,
+          );
   }
 
-  void navToItemRental() async {
-    setState(() {
-      isUploading = true;
-    });
+  void sendNewTime() async {
+    int delay = 500;
 
-    String rentalID;
+    int newStatus = widget.isRenter ? 0 : 1;
 
-    // create rental in 'rentals' collection
-    DocumentReference rentalDR =
-        await Firestore.instance.collection("rentals").add({
-      'status': 1, // set rental status to requested
-      'item': Firestore.instance.collection('items').document(widget.itemID),
-      'owner':
-          Firestore.instance.collection('users').document(creatorDS.documentID),
-      'renter': Firestore.instance.collection('users').document(myUserID),
+    Firestore.instance
+        .collection('rentals')
+        .document(widget.rentalID)
+        .updateData({
+      'created': rentalDS['created'],
+      'item': rentalDS['item'],
+      'owner': rentalDS['owner'],
+      'renter': rentalDS['renter'],
+      'status': newStatus,
       'pickupStart': pickupTime,
       'pickupEnd': pickupTime.add(Duration(hours: 1)),
       'rentalEnd': pickupTime.add(Duration(days: duration, hours: 1)),
-      'created': DateTime.now().millisecondsSinceEpoch,
       'duration': duration,
+      'note': note,
     });
 
-    if (rentalDR != null) {
-      rentalID = rentalDR.documentID;
+    await new Future.delayed(Duration(seconds: 1));
 
-      // create rental document in renter's 'rentals' collection
-      var myUserDR = Firestore.instance
-          .collection('users')
-          .document(myUserID)
-          .collection('rentals')
-          .document(rentalDR.documentID);
-
-      Firestore.instance.runTransaction((transaction) async {
-        await transaction.set(
-          myUserDR,
-          {
-            'rental': rentalDR,
-            'isRenter': true,
-            'otherUser': Firestore.instance
-                .collection('users')
-                .document(creatorDS.documentID),
-          },
-        );
-      });
-
-      // create rental document in item owner's 'rentals' collection
-      var creatorDR = Firestore.instance
-          .collection('users')
-          .document(creatorDS.documentID)
-          .collection('rentals')
-          .document(rentalDR.documentID);
-
-      Firestore.instance.runTransaction((transaction) async {
-        await transaction.set(
-          creatorDR,
-          {
-            'rental': rentalDR,
-            'isRenter': false,
-            'otherUser':
-                Firestore.instance.collection('users').document(myUserID),
-          },
-        );
-      });
-
-      Firestore.instance
-          .collection('items')
-          .document(widget.itemID)
-          .updateData({
-        'rental': Firestore.instance.collection('rentals').document(rentalID)
-      });
-
-      // create chat and send the default request message
-      var dr = Firestore.instance
-          .collection('rentals')
-          .document(rentalID)
-          .collection('chat')
-          .document(DateTime.now().millisecondsSinceEpoch.toString());
-
-      Firestore.instance.runTransaction((transaction) async {
-        await transaction.set(
-          dr,
-          {
-            'idFrom': myUserID,
-            'idTo': creatorDS.documentID,
-            'timestamp': DateTime.now().millisecondsSinceEpoch,
-            'content': message,
-            'type': 0,
-          },
-        );
-      });
-
-      setState(() {
-        isUploading = false;
-      });
-
-      if (rentalID != null) {
-        Navigator.pushNamed(
-          context,
-          RentalDetail.routeName,
-          arguments: RentalDetailArgs(
-            rentalID,
-          ),
-        );
-      }
-    }
+    Navigator.of(context).pop();
   }
 
   Future<bool> sendItem() async {
@@ -482,18 +348,16 @@ class NewPickupState extends State<NewPickup> {
 
     String range = parseWindow(windows, window, amPm);
 
-    message = 'Hello ${creatorDS['name']}, '
-        'I am requesting to rent your ${itemDS['name']} '
-        'for ${duration > 1 ? '$duration days' : '$duration day'}. '
-        'I would like to pick up this item '
-        'from $range on ${DateFormat('EEE, MMM d yyyy').format(pickupTime)}.'
-        '${note.length > 0 ? '\n\nAdditional Note:\n$note' : ''}';
+    message = 'Window: $range\n'
+        'Date: ${DateFormat('EEE, MMM d yyyy').format(pickupTime)}\n'
+        'Duration: ${duration > 1 ? '$duration days' : '$duration day'}\n\n'
+        'Pickup note: ${note.length > 0 ? '\n\nAdditional Note:\n$note' : ''}';
 
     return await showDialog<bool>(
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              title: Text('Preview message'),
+              title: Text('Preview new pickup'),
               content: Text(
                 message,
                 style: dialogTextStyle,
@@ -513,17 +377,7 @@ class NewPickupState extends State<NewPickup> {
 
                     getSnapshots().then(
                       (_) {
-                        if (itemDS['rental'] != null) {
-                          showRequestErrorDialog(1);
-                        } else if (!validate(window, amPm)) {
-                          showRequestErrorDialog(2);
-                        } else if (DateTime.now()
-                            .add(Duration(hours: 1))
-                            .isAfter(pickupTime)) {
-                          showRequestErrorDialog(3);
-                        } else {
-                          navToItemRental();
-                        }
+                        validateSend(sendNewTime);
                       },
                     );
                     // Pops the confirmation dialog but not the page.
@@ -536,6 +390,16 @@ class NewPickupState extends State<NewPickup> {
         false;
   }
 
+  void validateSend(action) {
+    if (!validate(window, amPm)) {
+      showRequestErrorDialog(1);
+    } else if (DateTime.now().add(Duration(hours: 1)).isAfter(pickupTime)) {
+      showRequestErrorDialog(2);
+    } else {
+      action();
+    }
+  }
+
   Future<bool> showRequestErrorDialog(int type) async {
     final ThemeData theme = Theme.of(context);
     final TextStyle dialogTextStyle =
@@ -544,12 +408,9 @@ class NewPickupState extends State<NewPickup> {
 
     switch (type) {
       case 1:
-        message = 'Someone has already requested this item!';
-        break;
-      case 2:
         message = 'Pickup window cannot be between midnight and 5 AM';
         break;
-      case 3:
+      case 2:
         message = 'Pickup window must start at least one hour from now';
         break;
     }
@@ -671,11 +532,8 @@ class DateTimeItem extends StatelessWidget {
                     lastDate: DateTime(2100),
                   ).then<void>((DateTime value) {
                     if (value != null) {
-                      onChangedDateTime(DateTime(
-                        value.year,
-                        value.month,
-                        value.day,
-                      ));
+                      onChangedDateTime(updateDateTime(value.year, value.month,
+                          value.day, windows, window, amPm));
                     }
                   });
                 },
@@ -805,4 +663,28 @@ String parseWindow(List windows, int window, int amPm) {
   }
 
   return range;
+}
+
+DateTime updateDateTime(year, month, day, windows, window, amPm) {
+  String start = windows[window].split(' - ')[0];
+  int hour = int.parse(start.split(':')[0]);
+  int minute = int.parse(start.split(':')[1]);
+
+  if (amPm == 1 && hour != 12) {
+    hour += 12;
+  }
+
+  if (window == 20 && amPm == 0) {
+    hour = 23;
+  }
+
+  if (amPm == 1 && (window == 20 || window == 21)) {
+    hour = 11;
+  }
+
+  return DateTime(year, month, day, hour, minute, 0, 0, 0);
+}
+
+void delay() async {
+  await new Future.delayed(const Duration(seconds: 3));
 }
