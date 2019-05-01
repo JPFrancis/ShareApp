@@ -7,9 +7,8 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart' as intl;
-import 'package:shareapp/models/user_edit.dart';
-
 import 'package:shareapp/extras/quote_icons.dart';
+import 'package:shareapp/models/user_edit.dart';
 
 enum DismissDialogAction {
   cancel,
@@ -72,9 +71,9 @@ class ProfileEditState extends State<ProfileEdit> {
         children: <Widget>[
           isUploading
               ? Container(
-            decoration:
-            new BoxDecoration(color: Colors.white.withOpacity(0.0)),
-          )
+                  decoration:
+                      new BoxDecoration(color: Colors.white.withOpacity(0.0)),
+                )
               : showBody(),
           showCircularProgress(),
         ],
@@ -113,12 +112,12 @@ class ProfileEditState extends State<ProfileEdit> {
                     phoneEntry(),
                   ]
                       .map((Widget child) => Container(
-                    padding: EdgeInsets.symmetric(
-                        horizontal: 10.0, vertical: 10.0),
-                    child: Column(
-                      children: <Widget>[child, Divider()],
-                    ),
-                  ))
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 10.0, vertical: 10.0),
+                            child: Column(
+                              children: <Widget>[child, Divider()],
+                            ),
+                          ))
                       .toList(),
                 )),
           ]),
@@ -129,7 +128,11 @@ class ProfileEditState extends State<ProfileEdit> {
     return Container(
         padding: EdgeInsets.only(top: 10.0, bottom: 15.0),
         alignment: Alignment.centerLeft,
-        child: Text(text, style: TextStyle(fontSize: 11.0, fontWeight: FontWeight.w400,fontFamily: font),));
+        child: Text(
+          text,
+          style: TextStyle(
+              fontSize: 11.0, fontWeight: FontWeight.w400, fontFamily: font),
+        ));
   }
 
   Widget divider() {
@@ -143,7 +146,15 @@ class ProfileEditState extends State<ProfileEdit> {
     return InkWell(
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[Text("Email", style: TextStyle(fontFamily: font, fontWeight: FontWeight.w500)), Text("rohith2017324@gmail.com", style: TextStyle(fontFamily: font),)],
+          children: <Widget>[
+            Text("Email",
+                style:
+                    TextStyle(fontFamily: font, fontWeight: FontWeight.w500)),
+            Text(
+              "rohith2017324@gmail.com",
+              style: TextStyle(fontFamily: font),
+            )
+          ],
         ),
         onTap: null);
   }
@@ -152,7 +163,15 @@ class ProfileEditState extends State<ProfileEdit> {
     return InkWell(
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[Text("Phone", style: TextStyle(fontFamily: font, fontWeight: FontWeight.w500)), Text("999-999-9999", style: TextStyle(fontFamily: font),)],
+          children: <Widget>[
+            Text("Phone",
+                style:
+                    TextStyle(fontFamily: font, fontWeight: FontWeight.w500)),
+            Text(
+              "999-999-9999",
+              style: TextStyle(fontFamily: font),
+            )
+          ],
         ),
         onTap: null);
   }
@@ -178,8 +197,14 @@ class ProfileEditState extends State<ProfileEdit> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
-          Text("Birth Date", style: TextStyle(fontFamily: font, fontWeight: FontWeight.w500),),
-          Text(formatted, style: TextStyle(fontFamily: font),),
+          Text(
+            "Birth Date",
+            style: TextStyle(fontFamily: font, fontWeight: FontWeight.w500),
+          ),
+          Text(
+            formatted,
+            style: TextStyle(fontFamily: font),
+          ),
         ],
       ),
       onTap: () => _selectDate(context),
@@ -193,17 +218,23 @@ class ProfileEditState extends State<ProfileEdit> {
             isDense: true,
             isExpanded: true,
             // [todo value]
-            hint: Text('Gender', style: TextStyle(fontFamily: font, fontWeight: FontWeight.w500),),
+            hint: Text(
+              'Gender',
+              style: TextStyle(fontFamily: font, fontWeight: FontWeight.w500),
+            ),
             onChanged: (String newValue) {
               // [todo]
             },
             items: ["Male", "Female", "Other"]
                 .map(
                   (gender) => DropdownMenuItem<String>(
-                value: gender,
-                child: Text(gender, style: TextStyle(fontFamily: font),),
-              ),
-            )
+                        value: gender,
+                        child: Text(
+                          gender,
+                          style: TextStyle(fontFamily: font),
+                        ),
+                      ),
+                )
                 .toList()),
       ),
     );
@@ -219,7 +250,7 @@ class ProfileEditState extends State<ProfileEdit> {
           keyboardType: TextInputType.multiline,
           textAlign: TextAlign.center,
           cursorColor: Colors.blueAccent,
-          style: TextStyle(fontFamily: font, fontSize: width/20),
+          style: TextStyle(fontFamily: font, fontSize: width / 20),
           // onChanged: (value) { userEditCopy.displayName = displayNameController.text; },
           decoration: InputDecoration(
             border: InputBorder.none,
@@ -240,11 +271,11 @@ class ProfileEditState extends State<ProfileEdit> {
         textAlign: TextAlign.center,
         cursorColor: Colors.blueAccent,
         controller: displayNameController,
-        style: TextStyle(fontFamily: font, fontSize: width/15),
+        style: TextStyle(fontFamily: font, fontSize: width / 15),
         onChanged: (value) {
           userEditCopy.displayName = displayNameController.text;
         },
-        decoration: InputDecoration.collapsed(hintText: "Name" ),
+        decoration: InputDecoration.collapsed(hintText: "Name"),
       ),
     );
   }
@@ -370,35 +401,35 @@ class ProfileEditState extends State<ProfileEdit> {
 
     final ThemeData theme = Theme.of(context);
     final TextStyle dialogTextStyle =
-    theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
 
     return await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          content: Text(
-            'Discard changes?',
-            style: dialogTextStyle,
-          ),
-          actions: <Widget>[
-            FlatButton(
-              child: const Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop(
-                    false); // Pops the confirmation dialog but not the page.
-              },
-            ),
-            FlatButton(
-              child: const Text('Discard'),
-              onPressed: () {
-                Navigator.of(context).pop(
-                    true); // Returning true to _onWillPop will pop again.
-              },
-            ),
-          ],
-        );
-      },
-    ) ??
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              content: Text(
+                'Discard changes?',
+                style: dialogTextStyle,
+              ),
+              actions: <Widget>[
+                FlatButton(
+                  child: const Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(context).pop(
+                        false); // Pops the confirmation dialog but not the page.
+                  },
+                ),
+                FlatButton(
+                  child: const Text('Discard'),
+                  onPressed: () {
+                    Navigator.of(context).pop(
+                        true); // Returning true to _onWillPop will pop again.
+                  },
+                ),
+              ],
+            );
+          },
+        ) ??
         false;
   }
 }

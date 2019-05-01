@@ -121,7 +121,7 @@ class ItemDetailState extends State<ItemDetail> {
           onRefresh: getSnapshots,
           child: isLoading ? Container() : showBody(),
         ),
-        floatingActionButton: showFAB(),
+        //floatingActionButton: showFAB(),
         bottomNavigationBar: isLoading
             ? Container(
                 height: 0,
