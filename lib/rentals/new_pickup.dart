@@ -156,9 +156,9 @@ class NewPickupState extends State<NewPickup> {
         children: <Widget>[
           isLoading
               ? Container(
-            decoration:
-            new BoxDecoration(color: Colors.white.withOpacity(0.0)),
-          )
+                  decoration:
+                      new BoxDecoration(color: Colors.white.withOpacity(0.0)),
+                )
               : showBody(),
           showCircularProgress(),
         ],
@@ -230,7 +230,7 @@ class NewPickupState extends State<NewPickup> {
     return Row(
       children: <Widget>[
         Text(
-          'You\'re requesting from:\n${creatorDS['displayName']}',
+          'You\'re requesting from:\n${creatorDS['name']}',
           style: TextStyle(color: Colors.black, fontSize: 20.0),
           textAlign: TextAlign.left,
         ),
@@ -240,7 +240,7 @@ class NewPickupState extends State<NewPickup> {
             child: CachedNetworkImage(
               key: new ValueKey<String>(
                   DateTime.now().millisecondsSinceEpoch.toString()),
-              imageUrl: creatorDS['photoURL'],
+              imageUrl: creatorDS['avatar'],
               placeholder: (context, url) => new CircularProgressIndicator(),
             ),
           ),
@@ -377,15 +377,15 @@ class NewPickupState extends State<NewPickup> {
 
     // create rental in 'rentals' collection
     DocumentReference rentalDR =
-    await Firestore.instance.collection("rentals").add({
+        await Firestore.instance.collection("rentals").add({
       'status': 1, // set rental status to requested
       'item': Firestore.instance.collection('items').document(widget.itemID),
       'owner':
-      Firestore.instance.collection('users').document(creatorDS.documentID),
+          Firestore.instance.collection('users').document(creatorDS.documentID),
       'renter': Firestore.instance.collection('users').document(myUserID),
-      'pickupStartTime': pickupTime,
-      'pickupEndTime': pickupTime.add(Duration(hours: 1)),
-      'rentalEndTime': pickupTime.add(Duration(days: duration, hours: 1)),
+      'pickupStart': pickupTime,
+      'pickupEnd': pickupTime.add(Duration(hours: 1)),
+      'rentalEnd': pickupTime.add(Duration(days: duration, hours: 1)),
       'created': DateTime.now().millisecondsSinceEpoch,
       'duration': duration,
     });
@@ -427,7 +427,7 @@ class NewPickupState extends State<NewPickup> {
             'rental': rentalDR,
             'isRenter': false,
             'otherUser':
-            Firestore.instance.collection('users').document(myUserID),
+                Firestore.instance.collection('users').document(myUserID),
           },
         );
       });
@@ -478,11 +478,11 @@ class NewPickupState extends State<NewPickup> {
   Future<bool> sendItem() async {
     final ThemeData theme = Theme.of(context);
     final TextStyle dialogTextStyle =
-    theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
 
     String range = parseWindow(windows, window, amPm);
 
-    message = 'Hello ${creatorDS['displayName']}, '
+    message = 'Hello ${creatorDS['name']}, '
         'I am requesting to rent your ${itemDS['name']} '
         'for ${duration > 1 ? '$duration days' : '$duration day'}. '
         'I would like to pick up this item '
@@ -490,56 +490,56 @@ class NewPickupState extends State<NewPickup> {
         '${note.length > 0 ? '\n\nAdditional Note:\n$note' : ''}';
 
     return await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Preview message'),
-          content: Text(
-            message,
-            style: dialogTextStyle,
-          ),
-          actions: <Widget>[
-            FlatButton(
-              child: const Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop(
-                    false); // Pops the confirmation dialog but not the page.
-              },
-            ),
-            FlatButton(
-              child: const Text('Send'),
-              onPressed: () {
-                Navigator.of(context).pop(false);
-
-                getSnapshots().then(
-                      (_) {
-                    if (itemDS['rental'] != null) {
-                      showRequestErrorDialog(1);
-                    } else if (!validate(window, amPm)) {
-                      showRequestErrorDialog(2);
-                    } else if (DateTime.now()
-                        .add(Duration(hours: 1))
-                        .isAfter(pickupTime)) {
-                      showRequestErrorDialog(3);
-                    } else {
-                      navToItemRental();
-                    }
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Preview message'),
+              content: Text(
+                message,
+                style: dialogTextStyle,
+              ),
+              actions: <Widget>[
+                FlatButton(
+                  child: const Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(context).pop(
+                        false); // Pops the confirmation dialog but not the page.
                   },
-                );
-                // Pops the confirmation dialog but not the page.
-              },
-            ),
-          ],
-        );
-      },
-    ) ??
+                ),
+                FlatButton(
+                  child: const Text('Send'),
+                  onPressed: () {
+                    Navigator.of(context).pop(false);
+
+                    getSnapshots().then(
+                      (_) {
+                        if (itemDS['rental'] != null) {
+                          showRequestErrorDialog(1);
+                        } else if (!validate(window, amPm)) {
+                          showRequestErrorDialog(2);
+                        } else if (DateTime.now()
+                            .add(Duration(hours: 1))
+                            .isAfter(pickupTime)) {
+                          showRequestErrorDialog(3);
+                        } else {
+                          navToItemRental();
+                        }
+                      },
+                    );
+                    // Pops the confirmation dialog but not the page.
+                  },
+                ),
+              ],
+            );
+          },
+        ) ??
         false;
   }
 
   Future<bool> showRequestErrorDialog(int type) async {
     final ThemeData theme = Theme.of(context);
     final TextStyle dialogTextStyle =
-    theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
     String message;
 
     switch (type) {
@@ -555,61 +555,61 @@ class NewPickupState extends State<NewPickup> {
     }
 
     return await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Error'),
-          content: Text(
-            message,
-            style: dialogTextStyle,
-          ),
-          actions: <Widget>[
-            FlatButton(
-              child: const Text('Ok'),
-              onPressed: () {
-                Navigator.of(context).pop(
-                    false); // Pops the confirmation dialog but not the page.
-              },
-            ),
-          ],
-        );
-      },
-    ) ??
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Error'),
+              content: Text(
+                message,
+                style: dialogTextStyle,
+              ),
+              actions: <Widget>[
+                FlatButton(
+                  child: const Text('Ok'),
+                  onPressed: () {
+                    Navigator.of(context).pop(
+                        false); // Pops the confirmation dialog but not the page.
+                  },
+                ),
+              ],
+            );
+          },
+        ) ??
         false;
   }
 
   Future<bool> onWillPop() async {
     final ThemeData theme = Theme.of(context);
     final TextStyle dialogTextStyle =
-    theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
 
     return await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          content: Text(
-            'Discard changes?',
-            style: dialogTextStyle,
-          ),
-          actions: <Widget>[
-            FlatButton(
-              child: const Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop(
-                    false); // Pops the confirmation dialog but not the page.
-              },
-            ),
-            FlatButton(
-              child: const Text('Discard'),
-              onPressed: () {
-                Navigator.of(context).pop(
-                    true); // Returning true to _onWillPop will pop again.
-              },
-            ),
-          ],
-        );
-      },
-    ) ??
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              content: Text(
+                'Discard changes?',
+                style: dialogTextStyle,
+              ),
+              actions: <Widget>[
+                FlatButton(
+                  child: const Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(context).pop(
+                        false); // Pops the confirmation dialog but not the page.
+                  },
+                ),
+                FlatButton(
+                  child: const Text('Discard'),
+                  onPressed: () {
+                    Navigator.of(context).pop(
+                        true); // Returning true to _onWillPop will pop again.
+                  },
+                ),
+              ],
+            );
+          },
+        ) ??
         false;
   }
 }
@@ -661,7 +661,7 @@ class DateTimeItem extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 8.0),
               decoration: BoxDecoration(
                   border:
-                  Border(bottom: BorderSide(color: theme.dividerColor))),
+                      Border(bottom: BorderSide(color: theme.dividerColor))),
               child: InkWell(
                 onTap: () {
                   showDatePicker(
@@ -800,7 +800,7 @@ String parseWindow(List windows, int window, int amPm) {
       range = 'Noon - $end PM';
     } else {
       range =
-      '$start ${amPm == 0 ? 'AM' : 'PM'} - $end ${amPm == 0 ? 'AM' : 'PM'}';
+          '$start ${amPm == 0 ? 'AM' : 'PM'} - $end ${amPm == 0 ? 'AM' : 'PM'}';
     }
   }
 

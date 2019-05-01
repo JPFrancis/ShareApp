@@ -304,7 +304,7 @@ class ChatScreenState extends State<ChatScreen> {
                                 height: 35.0,
                                 padding: EdgeInsets.all(10.0),
                               ),
-                          imageUrl: otherUserDS['photoURL'],
+                          imageUrl: otherUserDS['avatar'],
                           width: 35.0,
                           height: 35.0,
                           fit: BoxFit.cover,
@@ -460,11 +460,11 @@ class ChatScreenState extends State<ChatScreen> {
                       style: TextStyle(fontSize: headingFontSize),
                     ),
                     Text(
-                      'Item owner: ${ownerDS['displayName']}',
+                      'Item owner: ${ownerDS['name']}',
                       style: TextStyle(fontSize: headingFontSize),
                     ),
                     Text(
-                      'Item renter: ${renterDS['displayName']}',
+                      'Item renter: ${renterDS['name']}',
                       style: TextStyle(fontSize: headingFontSize),
                     ),
                     Divider(

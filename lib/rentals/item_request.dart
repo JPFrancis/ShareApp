@@ -183,12 +183,13 @@ class ItemRequestState extends State<ItemRequest> {
             height: 10,
           ),
           showItemPriceInfo(),
-          showTimeInfo(), // testing purposes only
+
           showTimePickers(),
           Container(
             height: 10,
           ),
           showNoteEdit(),
+          showTimeInfo(), // testing purposes only
         ],
       ),
     );
@@ -199,11 +200,13 @@ class ItemRequestState extends State<ItemRequest> {
     return Container(
       padding: EdgeInsets.all(10),
       child: Text(
-        'Start: ${pickupTime}\n'
+        'TESTING PURPOSES ONLY\n'
+            'Start: ${pickupTime}\n'
             'End: ${pickupTime.add(Duration(hours: 1))}\n'
             'Window: $window\n'
-            'amPm: $amPm',
-        style: TextStyle(fontSize: 18),
+            'amPm: $amPm\n'
+            'durationi: $duration',
+        style: theme.textTheme.caption,
       ),
     );
   }
@@ -229,7 +232,7 @@ class ItemRequestState extends State<ItemRequest> {
     return Row(
       children: <Widget>[
         Text(
-          'You\'re requesting from:\n${creatorDS['displayName']}',
+          'You\'re requesting from:\n${creatorDS['name']}',
           style: TextStyle(color: Colors.black, fontSize: 20.0),
           textAlign: TextAlign.left,
         ),
@@ -239,7 +242,7 @@ class ItemRequestState extends State<ItemRequest> {
             child: CachedNetworkImage(
               key: new ValueKey<String>(
                   DateTime.now().millisecondsSinceEpoch.toString()),
-              imageUrl: creatorDS['photoURL'],
+              imageUrl: creatorDS['avatar'],
               placeholder: (context, url) => new CircularProgressIndicator(),
             ),
           ),
@@ -332,31 +335,22 @@ class ItemRequestState extends State<ItemRequest> {
   }
 
   Widget showCircularProgress() {
-    if (isUploading) {
-      return Container(
-        child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
-              Text(
-                "Sending...",
-                style: TextStyle(fontSize: 30),
-              ),
-              Container(
-                height: 20.0,
-              ),
-              Center(child: CircularProgressIndicator())
-            ]),
-      );
-    } else {
-      return Container(
-        height: 0.0,
-        width: 0.0,
-      );
-    }
+    return isUploading
+        ? Container(
+            child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: <Widget>[Center(child: CircularProgressIndicator())]),
+          )
+        : Container(
+            height: 0.0,
+            width: 0.0,
+          );
   }
 
   void navToItemRental() async {
+    int delay = 500;
+
     setState(() {
       isUploading = true;
     });
@@ -371,14 +365,16 @@ class ItemRequestState extends State<ItemRequest> {
       'owner':
           Firestore.instance.collection('users').document(creatorDS.documentID),
       'renter': Firestore.instance.collection('users').document(myUserID),
-      'pickupStartTime': pickupTime,
-      'pickupEndTime': pickupTime.add(Duration(hours: 1)),
-      'rentalEndTime': pickupTime.add(Duration(days: duration, hours: 1)),
+      'pickupStart': pickupTime,
+      'pickupEnd': pickupTime.add(Duration(hours: 1)),
+      'rentalEnd': pickupTime.add(Duration(days: duration, hours: 1)),
       'created': DateTime.now().millisecondsSinceEpoch,
       'duration': duration,
     });
 
     if (rentalDR != null) {
+      await new Future.delayed(Duration(milliseconds: delay));
+
       rentalID = rentalDR.documentID;
 
       // create rental document in renter's 'rentals' collection
@@ -388,7 +384,8 @@ class ItemRequestState extends State<ItemRequest> {
           .collection('rentals')
           .document(rentalDR.documentID);
 
-      Firestore.instance.runTransaction((transaction) async {
+      Future userRental =
+          Firestore.instance.runTransaction((transaction) async {
         await transaction.set(
           myUserDR,
           {
@@ -401,64 +398,79 @@ class ItemRequestState extends State<ItemRequest> {
         );
       });
 
-      // create rental document in item owner's 'rentals' collection
-      var creatorDR = Firestore.instance
-          .collection('users')
-          .document(creatorDS.documentID)
-          .collection('rentals')
-          .document(rentalDR.documentID);
+      if (userRental != null) {
+        await new Future.delayed(Duration(milliseconds: delay));
 
-      Firestore.instance.runTransaction((transaction) async {
-        await transaction.set(
-          creatorDR,
-          {
-            'rental': rentalDR,
-            'isRenter': false,
-            'otherUser':
-                Firestore.instance.collection('users').document(myUserID),
-          },
-        );
-      });
+        // create rental document in item owner's 'rentals' collection
+        var creatorDR = Firestore.instance
+            .collection('users')
+            .document(creatorDS.documentID)
+            .collection('rentals')
+            .document(rentalDR.documentID);
 
-      Firestore.instance
-          .collection('items')
-          .document(widget.itemID)
-          .updateData({
-        'rental': Firestore.instance.collection('rentals').document(rentalID)
-      });
+        Future ownerRental =
+            Firestore.instance.runTransaction((transaction) async {
+          await transaction.set(
+            creatorDR,
+            {
+              'rental': rentalDR,
+              'isRenter': false,
+              'otherUser':
+                  Firestore.instance.collection('users').document(myUserID),
+            },
+          );
+        });
 
-      // create chat and send the default request message
-      var dr = Firestore.instance
-          .collection('rentals')
-          .document(rentalID)
-          .collection('chat')
-          .document(DateTime.now().millisecondsSinceEpoch.toString());
+        if (ownerRental != null) {
+          await new Future.delayed(Duration(milliseconds: delay));
 
-      Firestore.instance.runTransaction((transaction) async {
-        await transaction.set(
-          dr,
-          {
-            'idFrom': myUserID,
-            'idTo': creatorDS.documentID,
-            'timestamp': DateTime.now().millisecondsSinceEpoch,
-            'content': message,
-            'type': 0,
-          },
-        );
-      });
+          Future itemRental = Firestore.instance
+              .collection('items')
+              .document(widget.itemID)
+              .updateData({
+            'rental':
+                Firestore.instance.collection('rentals').document(rentalID)
+          });
 
-      setState(() {
-        isUploading = false;
-      });
+          if (itemRental != null) {
+            await new Future.delayed(Duration(milliseconds: delay));
 
-      if (rentalID != null) {
-        Navigator.pushNamed(
-          context,
-          RentalDetail.routeName,
-          arguments: RentalDetailArgs(
-            rentalID,
-          ),
-        );
+            // create chat and send the default request message
+            var dr = Firestore.instance
+                .collection('rentals')
+                .document(rentalID)
+                .collection('chat')
+                .document(DateTime.now().millisecondsSinceEpoch.toString());
+
+            Future chat =
+                Firestore.instance.runTransaction((transaction) async {
+              await transaction.set(
+                dr,
+                {
+                  'idFrom': myUserID,
+                  'idTo': creatorDS.documentID,
+                  'timestamp': DateTime.now().millisecondsSinceEpoch,
+                  'content': message,
+                  'type': 0,
+                },
+              );
+            });
+
+            if (chat != null) {
+              await new Future.delayed(Duration(milliseconds: delay));
+
+              if (rentalID != null) {
+                Navigator.pushNamed(
+                  context,
+                  RentalDetail.routeName,
+                  arguments: RentalDetailArgs(
+                    rentalID,
+                  ),
+                );
+              }
+            }
+          }
+        }
       }
     }
   }
@@ -470,7 +482,7 @@ class ItemRequestState extends State<ItemRequest> {
 
     String range = parseWindow(windows, window, amPm);
 
-    message = 'Hello ${creatorDS['displayName']}, '
+    message = 'Hello ${creatorDS['name']}, '
         'I am requesting to rent your ${itemDS['name']} '
         'for ${duration > 1 ? '$duration days' : '$duration day'}. '
         'I would like to pick up this item '
@@ -810,4 +822,8 @@ DateTime updateDateTime(year, month, day, windows, window, amPm) {
   }
 
   return DateTime(year, month, day, hour, minute, 0, 0, 0);
+}
+
+void delay() async {
+  await new Future.delayed(const Duration(seconds: 3));
 }

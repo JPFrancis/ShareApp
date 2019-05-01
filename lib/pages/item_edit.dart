@@ -465,29 +465,26 @@ class ItemEditState extends State<ItemEdit> {
   }
 
   Widget showCircularProgress() {
-    if (isUploading) {
-      //return Center(child: CircularProgressIndicator());
-
-      return Container(
-        child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
-              Text(
-                "Uploading...",
-                style: TextStyle(fontSize: 30),
-              ),
-              Container(
-                height: 20.0,
-              ),
-              Center(child: CircularProgressIndicator())
-            ]),
-      );
-    }
-    return Container(
-      height: 0.0,
-      width: 0.0,
-    );
+    return isUploading
+        ? Container(
+            child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: <Widget>[
+                  Text(
+                    "Uploading...",
+                    style: TextStyle(fontSize: 30),
+                  ),
+                  Container(
+                    height: 20.0,
+                  ),
+                  Center(child: CircularProgressIndicator())
+                ]),
+          )
+        : Container(
+            height: 0.0,
+            width: 0.0,
+          );
   }
 
   void saveItem() async {

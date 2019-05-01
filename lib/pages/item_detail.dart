@@ -253,7 +253,7 @@ class ItemDetailState extends State<ItemDetail> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
           Text(
-            'Shared by ${creatorDS['displayName']}',
+            'Shared by ${creatorDS['name']}',
             style: TextStyle(
                 color: Colors.black, fontSize: 15.0, fontFamily: 'Quicksand'),
             textAlign: TextAlign.left,
@@ -264,7 +264,7 @@ class ItemDetailState extends State<ItemDetail> {
               child: CachedNetworkImage(
                 key: new ValueKey<String>(
                     DateTime.now().millisecondsSinceEpoch.toString()),
-                imageUrl: creatorDS['photoURL'],
+                imageUrl: creatorDS['avatar'],
                 placeholder: (context, url) => new CircularProgressIndicator(),
               ),
             ),

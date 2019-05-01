@@ -21,7 +21,7 @@ class User {
       : this(
           id: id,
           photoUrl: data['imageURL'],
-          displayName: data['displayName'],
+          displayName: data['name'],
           email: data['email'],
           items: data['myListings'],
           rentals: data['myRentals'],

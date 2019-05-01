@@ -13,7 +13,7 @@ class UserEdit {
       : this(
           id: id,
           photoUrl: data['imageURL'],
-          displayName: data['displayName'],
+          displayName: data['name'],
         );
 
   UserEdit.copy(UserEdit other)

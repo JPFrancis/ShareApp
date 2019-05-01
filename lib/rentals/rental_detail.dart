@@ -214,6 +214,9 @@ class RentalDetailState extends State<RentalDetail> {
                       height: 20,
                     ),
                     showItemRequestStatus(),
+                    Container(
+                      height: 10,
+                    ),
                     showAcceptRejectRequestButtons(),
                     showReceiveItemButton(),
                     showReturnedItemButton(),
@@ -246,8 +249,8 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   Widget showItemName() {
-    String itemOwner = 'Item owner: ${ownerDS['displayName']}';
-    String itemRenter = 'Item renter: ${renterDS['displayName']}';
+    String itemOwner = 'Item owner: ${ownerDS['name']}';
+    String itemRenter = 'Item renter: ${renterDS['name']}';
     String you = ' (You)';
 
     isRenter ? itemRenter += you : itemOwner += you;
@@ -268,7 +271,7 @@ class RentalDetailState extends State<RentalDetail> {
     return Row(
       children: <Widget>[
         Text(
-          'Item owner:\n${ownerDS['displayName']}',
+          'Item owner:\n${ownerDS['name']}',
           style: TextStyle(color: Colors.black, fontSize: 20.0),
           textAlign: TextAlign.left,
         ),
@@ -278,7 +281,7 @@ class RentalDetailState extends State<RentalDetail> {
             child: CachedNetworkImage(
               key: new ValueKey<String>(
                   DateTime.now().millisecondsSinceEpoch.toString()),
-              imageUrl: ownerDS['photoURL'],
+              imageUrl: ownerDS['avatar'],
               placeholder: (context, url) => new CircularProgressIndicator(),
             ),
           ),
@@ -291,16 +294,18 @@ class RentalDetailState extends State<RentalDetail> {
     int itemStatus = rentalDS['status'];
     String statusMessage;
 
+    // IF YOU ARE THE RENTER
     if (isRenter) {
       switch (itemStatus) {
         case 1: // requested
           statusMessage = 'Status: requested\n'
-              'Awaiting response from ${ownerDS['displayName']}';
+              'Awaiting response from ${ownerDS['name']}\n'
+              'You proposed to pickup the item between ${rentalDS['pickupStart']} and ${rentalDS['pickupEnd']}';
           break;
         case 2: // accepted
           statusMessage = 'Status: accepted\n'
-              '${ownerDS['displayName']} has accepted your request\n'
-              'Awaiting ${ownerDS['displayName']} to send item';
+              '${ownerDS['name']} has accepted your request\n'
+              'Awaiting ${ownerDS['name']} to send item';
           break;
         case 3: // active
           statusMessage = 'Status: active\n'
@@ -320,27 +325,30 @@ class RentalDetailState extends State<RentalDetail> {
           statusMessage = 'There was an error with getting status';
           break;
       }
-    } else {
+    }
+
+    // IF YOU ARE THE ITEM OWNER
+    else {
       switch (itemStatus) {
         case 1: // requested
           statusMessage = 'Status: requested\n'
-              'Do you accept the request from ${renterDS['displayName']}?\n'
-              '${renterDS['displayName']} wants to pick up the item between ${rentalDS['pickupStartTime']} and ${rentalDS['pickupEndTime']}';
+              'Do you accept the request from ${renterDS['name']}?\n'
+              '${renterDS['name']} wants to pick up the item between ${rentalDS['pickupStart']} and ${rentalDS['pickupEnd']}';
           break;
         case 2: // accepted
           statusMessage = 'Status: accepted\n'
-              '${ownerDS['displayName']} has accepted your request\n'
-              'Get ready give the item to ${renterDS['displayName']}';
+              '${ownerDS['name']} has accepted your request\n'
+              'Get ready give the item to ${renterDS['name']}';
           break;
         case 3: // active
           statusMessage = 'Status: active\n'
-              '${renterDS['displayName']} is currently renting your item\n'
+              '${renterDS['name']} is currently renting your item\n'
               'Press the button when the item has been returned to you to end the rental';
           break;
         case 4: // returned
           statusMessage = 'Status: returned\n'
-              'You have returned the item to ${ownerDS['displayName']}\n'
-              'Waiting for ${renterDS['displayName']} to write a review';
+              'You have returned the item to ${ownerDS['name']}\n'
+              'Waiting for ${renterDS['name']} to write a review';
           break;
         case 5: // completed
           statusMessage = 'Status: completed\n'
@@ -363,62 +371,55 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   Widget showAcceptRejectRequestButtons() {
+    double buttonHeight = 60;
+
     return !isRenter && rentalDS['status'] == 1
         ? Container(
             child: Row(
               children: <Widget>[
                 Expanded(
-                  child: RaisedButton(
-                    shape: new RoundedRectangleBorder(
-                        borderRadius: new BorderRadius.circular(5.0)),
-                    color: Colors.green,
-                    textColor: Colors.white,
-                    child: Text(
-                      "Accept",
-                      //addButton + " Images",
-                      textScaleFactor: 1.25,
-                    ),
-                    onPressed: () {
-                      updateStatus(2);
-                    },
-                  ),
+                  child: reusableButton('Accept', Colors.green, () {
+                    updateStatus(2);
+                  }),
                 ),
                 Container(
-                  width: 15.0,
+                  width: 10,
                 ),
                 Expanded(
-                  child: RaisedButton(
-                    shape: new RoundedRectangleBorder(
-                        borderRadius: new BorderRadius.circular(5.0)),
-                    color: Colors.orange,
-                    textColor: Colors.white,
-                    child: Text(
-                      "Propose new time",
-                      textScaleFactor: 1.25,
-                    ),
-                    onPressed: () {},
-                  ),
+                  child: reusableButton(
+                      'Propose new time', Colors.orange[700], null),
                 ),
                 Container(
-                  width: 15.0,
+                  width: 10,
                 ),
                 Expanded(
-                  child: RaisedButton(
-                    shape: new RoundedRectangleBorder(
-                        borderRadius: new BorderRadius.circular(5.0)),
-                    color: Colors.red[800],
-                    textColor: Colors.white,
-                    child: Text(
-                      "Reject",
-                      textScaleFactor: 1.25,
-                    ),
-                    onPressed: () {},
-                  ),
+                  child: reusableButton('Reject', Colors.red[800], null),
                 ),
               ],
             ),
           )
         : Container();
+  }
+
+  Widget reusableButton(String text, Color color, action) {
+    return ButtonTheme(
+      height: 60,
+      child: RaisedButton(
+        shape: new RoundedRectangleBorder(
+            borderRadius: new BorderRadius.circular(5.0)),
+        color: color,
+        textColor: Colors.white,
+        child: Text(
+          text,
+          style: TextStyle(
+            fontSize: 16,
+          ),
+        ),
+        onPressed: () {
+          action();
+        },
+      ),
+    );
   }
 
   Widget showReceiveItemButton() {
@@ -451,7 +452,7 @@ class RentalDetailState extends State<RentalDetail> {
               color: Colors.green,
               textColor: Colors.white,
               child: Text(
-                "${renterDS['displayName']} has returned the item",
+                "${renterDS['name']} has returned the item",
                 //addButton + " Images",
                 textScaleFactor: 1.25,
               ),
@@ -550,9 +551,13 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   void deleteRental() async {
+    int delay = 500;
+
     setState(() {
       isLoading = true;
     });
+
+    await new Future.delayed(Duration(milliseconds: delay));
 
     Firestore.instance
         .collection('users')
@@ -561,6 +566,8 @@ class RentalDetailState extends State<RentalDetail> {
         .document(widget.rentalID)
         .delete();
 
+    await new Future.delayed(Duration(milliseconds: delay));
+
     Firestore.instance
         .collection('users')
         .document(ownerDS.documentID)
@@ -568,19 +575,11 @@ class RentalDetailState extends State<RentalDetail> {
         .document(widget.rentalID)
         .delete();
 
-    /*
-    DocumentReference documentReference = rentalDS.reference;
-    
-    Firestore.instance.collection('users').document(myUserID).updateData({
-      'rentals': FieldValue.arrayRemove([documentReference])
-    });
-
-    Firestore.instance.collection('users').document(ownerDS.documentID).updateData({
-      'rentals': FieldValue.arrayRemove([documentReference])
-    });
-    */
+    await new Future.delayed(Duration(milliseconds: delay));
 
     Firestore.instance.collection('rentals').document(widget.rentalID).delete();
+
+    await new Future.delayed(Duration(milliseconds: delay));
 
     Firestore.instance
         .collection('rentals')
@@ -592,6 +591,8 @@ class RentalDetailState extends State<RentalDetail> {
         ds.reference.delete();
       }
     });
+
+    await new Future.delayed(Duration(milliseconds: delay));
 
     Firestore.instance
         .collection('items')

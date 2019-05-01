@@ -1,0 +1,1575 @@
+[1mdiff --git a/lib/models/user.dart b/lib/models/user.dart[m
+[1mindex 690439e..fa198a3 100644[m
+[1m--- a/lib/models/user.dart[m
+[1m+++ b/lib/models/user.dart[m
+[36m@@ -21,7 +21,7 @@[m [mclass User {[m
+       : this([m
+           id: id,[m
+           photoUrl: data['imageURL'],[m
+[31m-          displayName: data['displayName'],[m
+[32m+[m[32m          displayName: data['name'],[m
+           email: data['email'],[m
+           items: data['myListings'],[m
+           rentals: data['myRentals'],[m
+[1mdiff --git a/lib/models/user_edit.dart b/lib/models/user_edit.dart[m
+[1mindex cb3c447..677bbf8 100644[m
+[1m--- a/lib/models/user_edit.dart[m
+[1m+++ b/lib/models/user_edit.dart[m
+[36m@@ -13,7 +13,7 @@[m [mclass UserEdit {[m
+       : this([m
+           id: id,[m
+           photoUrl: data['imageURL'],[m
+[31m-          displayName: data['displayName'],[m
+[32m+[m[32m          displayName: data['name'],[m
+         );[m
+ [m
+   UserEdit.copy(UserEdit other)[m
+[1mdiff --git a/lib/pages/home_page.dart b/lib/pages/home_page.dart[m
+[1mindex 7b30b86..20dbf63 100644[m
+[1m--- a/lib/pages/home_page.dart[m
+[1m+++ b/lib/pages/home_page.dart[m
+[36m@@ -89,11 +89,11 @@[m [mclass HomePageState extends State<HomePage> {[m
+       // if user is not in database, create user[m
+       if (!ds.exists) {[m
+         Firestore.instance.collection('users').document(userID).setData({[m
+[31m-          'displayName': widget.firebaseUser.displayName ?? 'new user $userID',[m
+[31m-          'photoURL': widget.firebaseUser.photoUrl ?? 'https://bit.ly/2vcmALY',[m
+[32m+[m[32m          'name': widget.firebaseUser.displayName ?? 'new user $userID',[m
+[32m+[m[32m          'avatar': widget.firebaseUser.photoUrl ?? 'https://bit.ly/2vcmALY',[m
+           'email': widget.firebaseUser.email,[m
+[31m-          'lastActiveTimestamp': DateTime.now().millisecondsSinceEpoch,[m
+[31m-          'accountCreationTimestamp':[m
+[32m+[m[32m          'lastActive': DateTime.now().millisecondsSinceEpoch,[m
+[32m+[m[32m          'creationDate':[m
+               widget.firebaseUser.metadata.creationTimestamp,[m
+         });[m
+       }[m
+[36m@@ -117,12 +117,12 @@[m [mclass HomePageState extends State<HomePage> {[m
+         .get()[m
+         .then((DocumentSnapshot ds) {[m
+       Firestore.instance.collection('users').document(userID).updateData({[m
+[31m-        'lastActiveTimestamp': DateTime.now().millisecondsSinceEpoch,[m
+[32m+[m[32m        'lastActive': DateTime.now().millisecondsSinceEpoch,[m
+ [m
+         /// TAKE BELOW TWO LINES OUT SOON[m
+         'email': widget.firebaseUser.email,[m
+ [m
+[31m-        'accountCreationTimestamp':[m
+[32m+[m[32m        'creationDate':[m
+             widget.firebaseUser.metadata.creationTimestamp,[m
+       });[m
+     });[m
+[36m@@ -661,7 +661,7 @@[m [mclass HomePageState extends State<HomePage> {[m
+                         child: CachedNetworkImage([m
+                           key: new ValueKey<String>([m
+                               DateTime.now().millisecondsSinceEpoch.toString()),[m
+[31m-                          imageUrl: ds['photoURL'],[m
+[32m+[m[32m                          imageUrl: ds['avatar'],[m
+                           placeholder: (context, url) => new Container(),[m
+                         ),[m
+                       ),[m
+[36m@@ -670,7 +670,7 @@[m [mclass HomePageState extends State<HomePage> {[m
+                     Container([m
+                         padding: const EdgeInsets.only(top: 8.0, left: 15.0),[m
+                         alignment: Alignment.centerLeft,[m
+[31m-                        child: Text('${ds['displayName']}',[m
+[32m+[m[32m                        child: Text('${ds['name']}',[m
+                             style: TextStyle([m
+                                 fontSize: 20.0,[m
+                                 fontWeight: FontWeight.bold,[m
+[36m@@ -721,7 +721,7 @@[m [mclass HomePageState extends State<HomePage> {[m
+                     child: CachedNetworkImage([m
+                       key: new ValueKey<String>([m
+                           DateTime.now().millisecondsSinceEpoch.toString()),[m
+[31m-                      imageUrl: ds['photoURL'],[m
+[32m+[m[32m                      imageUrl: ds['avatar'],[m
+                       placeholder: (context, url) => new Container(),[m
+                     ),[m
+                   ),[m
+[36m@@ -730,7 +730,7 @@[m [mclass HomePageState extends State<HomePage> {[m
+                 Container([m
+                     padding: const EdgeInsets.only(top: 8.0, left: 15.0),[m
+                     alignment: Alignment.centerLeft,[m
+[31m-                    child: Text('${ds['displayName']}',[m
+[32m+[m[32m                    child: Text('${ds['name']}',[m
+                         style: TextStyle([m
+                             fontSize: 20.0,[m
+                             fontWeight: FontWeight.bold,[m
+[36m@@ -829,11 +829,11 @@[m [mclass HomePageState extends State<HomePage> {[m
+           details.add(ds.documentID);[m
+           details.add(ds['email']);[m
+           var date1 = new DateTime.fromMillisecondsSinceEpoch([m
+[31m-              ds['accountCreationTimestamp']);[m
+[32m+[m[32m              ds['creationDate']);[m
+           details.add(date1.toString());[m
+ [m
+           var date2 = new DateTime.fromMillisecondsSinceEpoch([m
+[31m-              ds['lastActiveTimestamp']);[m
+[32m+[m[32m              ds['lastActive']);[m
+           details.add(date2.toString());[m
+           return Column([m
+             children: <Widget>[[m
+[36m@@ -970,7 +970,7 @@[m [mclass HomePageState extends State<HomePage> {[m
+                                                           Icons.shopping_cart),[m
+                                                       //leading: Icon(Icons.build),[m
+                                                       title: Text([m
+[31m-                                                        '${ownerDS['displayName']}\'s ${itemDS['name']}',[m
+[32m+[m[32m                                                        '${ownerDS['name']}\'s ${itemDS['name']}',[m
+                                                         style: TextStyle([m
+                                                             fontWeight:[m
+                                                                 FontWeight[m
+[36m@@ -1155,15 +1155,15 @@[m [mclass HomePageState extends State<HomePage> {[m
+ [m
+                                                           String title =[m
+                                                               otherUserDS[[m
+[31m-                                                                  'displayName'];[m
+[32m+[m[32m                                                                  'name'];[m
+                                                           String imageURL =[m
+                                                               otherUserDS[[m
+[31m-                                                                  'photoURL'];[m
+[32m+[m[32m                                                                  'avatar'];[m
+                                                           String lastActive = 'Last seen: ' +[m
+                                                               timeago.format(DateTime[m
+                                                                   .fromMillisecondsSinceEpoch([m
+                                                                       otherUserDS[[m
+[31m-                                                                          'lastActiveTimestamp']));[m
+[32m+[m[32m                                                                          'lastActive']));[m
+                                                           String itemName =[m
+                                                               'Item: ${itemDS['name']}';[m
+                                                           String lastMessage =[m
+[36m@@ -1288,7 +1288,7 @@[m [mclass HomePageState extends State<HomePage> {[m
+         await Firestore.instance.collection('users').document(userID).get();[m
+     if (ds != null) {[m
+       out = new UserEdit([m
+[31m-          id: userID, photoUrl: ds['photoURL'], displayName: ds['displayName']);[m
+[32m+[m[32m          id: userID, photoUrl: ds['avatar'], displayName: ds['name']);[m
+     }[m
+ [m
+     return out;[m
+[36m@@ -1308,8 +1308,8 @@[m [mclass HomePageState extends State<HomePage> {[m
+ [m
+     if (result != null) {[m
+       Firestore.instance.collection('users').document(userID).updateData({[m
+[31m-        'displayName': result.displayName,[m
+[31m-        'photoURL': result.photoUrl,[m
+[32m+[m[32m        'name': result.displayName,[m
+[32m+[m[32m        'avatar': result.photoUrl,[m
+       });[m
+     }[m
+   }[m
+[1mdiff --git a/lib/pages/item_detail.dart b/lib/pages/item_detail.dart[m
+[1mindex 7dddfa5..e6b1f2c 100644[m
+[1m--- a/lib/pages/item_detail.dart[m
+[1m+++ b/lib/pages/item_detail.dart[m
+[36m@@ -253,7 +253,7 @@[m [mclass ItemDetailState extends State<ItemDetail> {[m
+         mainAxisAlignment: MainAxisAlignment.spaceBetween,[m
+         children: <Widget>[[m
+           Text([m
+[31m-            'Shared by ${creatorDS['displayName']}',[m
+[32m+[m[32m            'Shared by ${creatorDS['name']}',[m
+             style: TextStyle([m
+                 color: Colors.black, fontSize: 15.0, fontFamily: 'Quicksand'),[m
+             textAlign: TextAlign.left,[m
+[36m@@ -264,7 +264,7 @@[m [mclass ItemDetailState extends State<ItemDetail> {[m
+               child: CachedNetworkImage([m
+                 key: new ValueKey<String>([m
+                     DateTime.now().millisecondsSinceEpoch.toString()),[m
+[31m-                imageUrl: creatorDS['photoURL'],[m
+[32m+[m[32m                imageUrl: creatorDS['avatar'],[m
+                 placeholder: (context, url) => new CircularProgressIndicator(),[m
+               ),[m
+             ),[m
+[1mdiff --git a/lib/pages/item_edit.dart b/lib/pages/item_edit.dart[m
+[1mindex 6bc2ccb..afcde7a 100644[m
+[1m--- a/lib/pages/item_edit.dart[m
+[1m+++ b/lib/pages/item_edit.dart[m
+[36m@@ -465,29 +465,26 @@[m [mclass ItemEditState extends State<ItemEdit> {[m
+   }[m
+ [m
+   Widget showCircularProgress() {[m
+[31m-    if (isUploading) {[m
+[31m-      //return Center(child: CircularProgressIndicator());[m
+[31m-[m
+[31m-      return Container([m
+[31m-        child: Column([m
+[31m-            mainAxisAlignment: MainAxisAlignment.center,[m
+[31m-            crossAxisAlignment: CrossAxisAlignment.center,[m
+[31m-            children: <Widget>[[m
+[31m-              Text([m
+[31m-                "Uploading...",[m
+[31m-                style: TextStyle(fontSize: 30),[m
+[31m-              ),[m
+[31m-              Container([m
+[31m-                height: 20.0,[m
+[31m-              ),[m
+[31m-              Center(child: CircularProgressIndicator())[m
+[31m-            ]),[m
+[31m-      );[m
+[31m-    }[m
+[31m-    return Container([m
+[31m-      height: 0.0,[m
+[31m-      width: 0.0,[m
+[31m-    );[m
+[32m+[m[32m    return isUploading[m
+[32m+[m[32m        ? Container([m
+[32m+[m[32m            child: Column([m
+[32m+[m[32m                mainAxisAlignment: MainAxisAlignment.center,[m
+[32m+[m[32m                crossAxisAlignment: CrossAxisAlignment.center,[m
+[32m+[m[32m                children: <Widget>[[m
+[32m+[m[32m                  Text([m
+[32m+[m[32m                    "Uploading...",[m
+[32m+[m[32m                    style: TextStyle(fontSize: 30),[m
+[32m+[m[32m                  ),[m
+[32m+[m[32m                  Container([m
+[32m+[m[32m                    height: 20.0,[m
+[32m+[m[32m                  ),[m
+[32m+[m[32m                  Center(child: CircularProgressIndicator())[m
+[32m+[m[32m                ]),[m
+[32m+[m[32m          )[m
+[32m+[m[32m        : Container([m
+[32m+[m[32m            height: 0.0,[m
+[32m+[m[32m            width: 0.0,[m
+[32m+[m[32m          );[m
+   }[m
+ [m
+   void saveItem() async {[m
+[1mdiff --git a/lib/pages/profile_edit.dart b/lib/pages/profile_edit.dart[m
+[1mindex ce9b29e..09897cf 100644[m
+[1m--- a/lib/pages/profile_edit.dart[m
+[1m+++ b/lib/pages/profile_edit.dart[m
+[36m@@ -6,8 +6,11 @@[m [mimport 'package:cloud_firestore/cloud_firestore.dart';[m
+ import 'package:firebase_storage/firebase_storage.dart';[m
+ import 'package:flutter/material.dart';[m
+ import 'package:image_picker/image_picker.dart';[m
+[32m+[m[32mimport 'package:intl/intl.dart' as intl;[m
+ import 'package:shareapp/models/user_edit.dart';[m
+ [m
+[32m+[m[32mimport 'package:shareapp/extras/quote_icons.dart';[m
+[32m+[m
+ enum DismissDialogAction {[m
+   cancel,[m
+   discard,[m
+[36m@@ -32,11 +35,15 @@[m [mclass ProfileEditState extends State<ProfileEdit> {[m
+ [m
+   TextEditingController displayNameController = TextEditingController();[m
+ [m
+[32m+[m[32m  DateTime selectedDate = DateTime.now();[m
+[32m+[m
+   Future<File> selectedImage;[m
+   File imageFile;[m
+   String photoURL;[m
+   bool isUploading = false;[m
+ [m
+[32m+[m[32m  String font = 'Quicksand';[m
+[32m+[m
+   TextStyle textStyle;[m
+   TextStyle inputTextStyle;[m
+   ThemeData theme;[m
+[36m@@ -61,30 +68,23 @@[m [mclass ProfileEditState extends State<ProfileEdit> {[m
+     displayNameController.text = userEditCopy.displayName;[m
+ [m
+     return Scaffold([m
+[31m-      appBar: AppBar([m
+[31m-        title: Text('Edit User Profile'),[m
+[31m-        actions: <Widget>[[m
+[31m-          FlatButton([m
+[31m-            child: Text('SAVE',[m
+[31m-                textScaleFactor: 1.05,[m
+[31m-                style: theme.textTheme.body2.copyWith(color: Colors.white)),[m
+[31m-            onPressed: () {[m
+[31m-              saveProfile();[m
+[31m-            },[m
+[31m-          ),[m
+[31m-        ],[m
+[31m-      ),[m
+       body: Stack([m
+         children: <Widget>[[m
+           isUploading[m
+               ? Container([m
+[31m-                  decoration:[m
+[31m-                      new BoxDecoration(color: Colors.white.withOpacity(0.0)),[m
+[31m-                )[m
+[32m+[m[32m            decoration:[m
+[32m+[m[32m            new BoxDecoration(color: Colors.white.withOpacity(0.0)),[m
+[32m+[m[32m          )[m
+               : showBody(),[m
+           showCircularProgress(),[m
+         ],[m
+       ),[m
+[32m+[m[32m      floatingActionButton: RaisedButton([m
+[32m+[m[32m        child: Text("SAVE"),[m
+[32m+[m[32m        onPressed: () {[m
+[32m+[m[32m          saveProfile();[m
+[32m+[m[32m        },[m
+[32m+[m[32m      ),[m
+     );[m
+   }[m
+ [m
+[36m@@ -93,93 +93,176 @@[m [mclass ProfileEditState extends State<ProfileEdit> {[m
+       key: formKey,[m
+       onWillPop: onWillPop,[m
+       child: ListView([m
+[31m-        padding:[m
+[31m-            EdgeInsets.only(top: 00.0, bottom: 10.0, left: 18.0, right: 18.0),[m
+[32m+[m[32m          padding: EdgeInsets.only(top: 40.0, left: 25.0, right: 25.0),[m
+[32m+[m[32m          children: <Widget>[[m
+[32m+[m[32m            image(),[m
+[32m+[m[32m            SizedBox(height: 10.0),[m
+[32m+[m[32m            showDisplayNameEditor(),[m
+[32m+[m[32m            divider(),[m
+[32m+[m[32m            reusableCategory("ABOUT ME"),[m
+[32m+[m[32m            showAboutMe(),[m
+[32m+[m[32m            divider(),[m
+[32m+[m[32m            reusableCategory("PRIVATE DETAILS"),[m
+[32m+[m[32m            Container([m
+[32m+[m[32m                color: Colors.white,[m
+[32m+[m[32m                child: Column([m
+[32m+[m[32m                  children: <Widget>[[m
+[32m+[m[32m                    showGenderSelecter(),[m
+[32m+[m[32m                    birthPicker(),[m
+[32m+[m[32m                    emailEntry(),[m
+[32m+[m[32m                    phoneEntry(),[m
+[32m+[m[32m                  ][m
+[32m+[m[32m                      .map((Widget child) => Container([m
+[32m+[m[32m                    padding: EdgeInsets.symmetric([m
+[32m+[m[32m                        horizontal: 10.0, vertical: 10.0),[m
+[32m+[m[32m                    child: Column([m
+[32m+[m[32m                      children: <Widget>[child, Divider()],[m
+[32m+[m[32m                    ),[m
+[32m+[m[32m                  ))[m
+[32m+[m[32m                      .toList(),[m
+[32m+[m[32m                )),[m
+[32m+[m[32m          ]),[m
+[32m+[m[32m    );[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  Widget reusableCategory(text) {[m
+[32m+[m[32m    return Container([m
+[32m+[m[32m        padding: EdgeInsets.only(top: 10.0, bottom: 15.0),[m
+[32m+[m[32m        alignment: Alignment.centerLeft,[m
+[32m+[m[32m        child: Text(text, style: TextStyle(fontSize: 11.0, fontWeight: FontWeight.w400,fontFamily: font),));[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  Widget divider() {[m
+[32m+[m[32m    return Padding([m
+[32m+[m[32m      padding: const EdgeInsets.symmetric(vertical: 8.0),[m
+[32m+[m[32m      child: Divider(),[m
+[32m+[m[32m    );[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  Widget emailEntry() {[m
+[32m+[m[32m    return InkWell([m
+[32m+[m[32m        child: Row([m
+[32m+[m[32m          mainAxisAlignment: MainAxisAlignment.spaceBetween,[m
+[32m+[m[32m          children: <Widget>[Text("Email", style: TextStyle(fontFamily: font, fontWeight: FontWeight.w500)), Text("rohith2017324@gmail.com", style: TextStyle(fontFamily: font),)],[m
+[32m+[m[32m        ),[m
+[32m+[m[32m        onTap: null);[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  Widget phoneEntry() {[m
+[32m+[m[32m    return InkWell([m
+[32m+[m[32m        child: Row([m
+[32m+[m[32m          mainAxisAlignment: MainAxisAlignment.spaceBetween,[m
+[32m+[m[32m          children: <Widget>[Text("Phone", style: TextStyle(fontFamily: font, fontWeight: FontWeight.w500)), Text("999-999-9999", style: TextStyle(fontFamily: font),)],[m
+[32m+[m[32m        ),[m
+[32m+[m[32m        onTap: null);[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  Widget birthPicker() {[m
+[32m+[m[32m    var formatter = new intl.DateFormat('MMMM d, y');[m
+[32m+[m[32m    String formatted = formatter.format(selectedDate);[m
+[32m+[m
+[32m+[m[32m    Future<Null> _selectDate(BuildContext context) async {[m
+[32m+[m[32m      final DateTime picked = await showDatePicker([m
+[32m+[m[32m        context: context,[m
+[32m+[m[32m        initialDate: selectedDate,[m
+[32m+[m[32m        firstDate: DateTime(1930),[m
+[32m+[m[32m        lastDate: DateTime(2020),[m
+[32m+[m[32m      );[m
+[32m+[m[32m      if (picked != null && picked != selectedDate)[m
+[32m+[m[32m        setState(() {[m
+[32m+[m[32m          selectedDate = picked;[m
+[32m+[m[32m        });[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    return InkWell([m
+[32m+[m[32m      child: Row([m
+[32m+[m[32m        mainAxisAlignment: MainAxisAlignment.spaceBetween,[m
+         children: <Widget>[[m
+[31m-          previewImage(),[m
+[31m-          showProfileOptions(),[m
+[31m-          showDisplayNameEditor(),[m
+[31m-        ].map<Widget>((Widget child) {[m
+[31m-          return Container([m
+[31m-            padding: const EdgeInsets.symmetric(vertical: 11),[m
+[31m-            child: child,[m
+[31m-          );[m
+[31m-        }).toList(),[m
+[32m+[m[32m          Text("Birth Date", style: TextStyle(fontFamily: font, fontWeight: FontWeight.w500),),[m
+[32m+[m[32m          Text(formatted, style: TextStyle(fontFamily: font),),[m
+[32m+[m[32m        ],[m
+       ),[m
+[32m+[m[32m      onTap: () => _selectDate(context),[m
+     );[m
+   }[m
+ [m
+[31m-  Widget showDisplayNameEditor() {[m
+[32m+[m[32m  Widget showGenderSelecter() {[m
+     return Container([m
+[32m+[m[32m      child: DropdownButtonHideUnderline([m
+[32m+[m[32m        child: DropdownButton<String>([m
+[32m+[m[32m            isDense: true,[m
+[32m+[m[32m            isExpanded: true,[m
+[32m+[m[32m            // [todo value][m
+[32m+[m[32m            hint: Text('Gender', style: TextStyle(fontFamily: font, fontWeight: FontWeight.w500),),[m
+[32m+[m[32m            onChanged: (String newValue) {[m
+[32m+[m[32m              // [todo][m
+[32m+[m[32m            },[m
+[32m+[m[32m            items: ["Male", "Female", "Other"][m
+[32m+[m[32m                .map([m
+[32m+[m[32m                  (gender) => DropdownMenuItem<String>([m
+[32m+[m[32m                value: gender,[m
+[32m+[m[32m                child: Text(gender, style: TextStyle(fontFamily: font),),[m
+[32m+[m[32m              ),[m
+[32m+[m[32m            )[m
+[32m+[m[32m                .toList()),[m
+[32m+[m[32m      ),[m
+[32m+[m[32m    );[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  Widget showAboutMe() {[m
+[32m+[m[32m    double width = MediaQuery.of(context).size.width;[m
+[32m+[m[32m    return Center([m
+[32m+[m[32m      child: Column(children: <Widget>[[m
+[32m+[m[32m        Align(alignment: Alignment.topLeft, child: Icon(QuoteIcons.quote_left)),[m
+[32m+[m[32m        TextField([m
+[32m+[m[32m          maxLines: null,[m
+[32m+[m[32m          keyboardType: TextInputType.multiline,[m
+[32m+[m[32m          textAlign: TextAlign.center,[m
+[32m+[m[32m          cursorColor: Colors.blueAccent,[m
+[32m+[m[32m          style: TextStyle(fontFamily: font, fontSize: width/20),[m
+[32m+[m[32m          // onChanged: (value) { userEditCopy.displayName = displayNameController.text; },[m
+[32m+[m[32m          decoration: InputDecoration([m
+[32m+[m[32m            border: InputBorder.none,[m
+[32m+[m[32m            hintText: "Description",[m
+[32m+[m[32m          ),[m
+[32m+[m[32m        ),[m
+[32m+[m[32m        Align([m
+[32m+[m[32m            alignment: Alignment.bottomRight,[m
+[32m+[m[32m            child: Icon(QuoteIcons.quote_right)),[m
+[32m+[m[32m      ]),[m
+[32m+[m[32m    );[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  Widget showDisplayNameEditor() {[m
+[32m+[m[32m    double width = MediaQuery.of(context).size.width;[m
+[32m+[m[32m    return Center([m
+       child: TextField([m
+[32m+[m[32m        textAlign: TextAlign.center,[m
+[32m+[m[32m        cursorColor: Colors.blueAccent,[m
+         controller: displayNameController,[m
+[31m-        style: textStyle,[m
+[32m+[m[32m        style: TextStyle(fontFamily: font, fontSize: width/15),[m
+         onChanged: (value) {[m
+           userEditCopy.displayName = displayNameController.text;[m
+         },[m
+[31m-        decoration: InputDecoration([m
+[31m-          labelText: 'Display name',[m
+[31m-          filled: true,[m
+[31m-        ),[m
+[32m+[m[32m        decoration: InputDecoration.collapsed(hintText: "Name" ),[m
+       ),[m
+     );[m
+   }[m
+ [m
+[31m-  Widget showProfileOptions() {[m
+[31m-    return Container([m
+[31m-        child: Row([m
+[31m-      children: <Widget>[[m
+[31m-        Container([m
+[31m-          height: 120,[m
+[31m-          width: 120,[m
+[31m-          child: previewImage(),[m
+[31m-        ),[m
+[31m-        Container([m
+[31m-          width: 15,[m
+[31m-        ),[m
+[31m-        Column([m
+[31m-          children: <Widget>[[m
+[31m-            RaisedButton([m
+[31m-              shape: new RoundedRectangleBorder([m
+[31m-                  borderRadius: new BorderRadius.circular(5.0)),[m
+[31m-              color: Colors.red,[m
+[31m-              textColor: Colors.white,[m
+[31m-              child: Text([m
+[31m-                "Take picture",[m
+[31m-                textScaleFactor: 1.25,[m
+[31m-              ),[m
+[31m-              onPressed: () {[m
+[31m-                onImageButtonPressed(ImageSource.camera);[m
+[31m-              },[m
+[31m-            ),[m
+[31m-            RaisedButton([m
+[31m-              shape: new RoundedRectangleBorder([m
+[31m-                  borderRadius: new BorderRadius.circular(5.0)),[m
+[31m-              color: Colors.red,[m
+[31m-              textColor: Colors.white,[m
+[31m-              child: Text([m
+[31m-                "Pick from gallery",[m
+[31m-                textScaleFactor: 1.25,[m
+[31m-              ),[m
+[31m-              onPressed: () {[m
+[31m-                onImageButtonPressed(ImageSource.gallery);[m
+[31m-              },[m
+[31m-            ),[m
+[31m-          ],[m
+[31m-        ),[m
+[31m-      ],[m
+[31m-    ));[m
+[31m-  }[m
+[31m-[m
+   Widget showCurrentProfilePic() {[m
+[32m+[m[32m    double height = MediaQuery.of(context).size.height;[m
+[32m+[m[32m    double width = MediaQuery.of(context).size.width;[m
+     return Container([m
+[31m-      height: MediaQuery.of(context).size.height / 4,[m
+[31m-      width: MediaQuery.of(context).size.height / 4,[m
+[31m-      child: CachedNetworkImage([m
+[31m-        key: new ValueKey<String>([m
+[31m-            DateTime.now().millisecondsSinceEpoch.toString()),[m
+[31m-        imageUrl: userEditCopy.photoUrl,[m
+[31m-        placeholder: (context, url) => new CircularProgressIndicator(),[m
+[32m+[m[32m      padding: EdgeInsets.only(left: width / 5, right: width / 5),[m
+[32m+[m[32m      height: height / 5,[m
+[32m+[m[32m      child: FittedBox([m
+[32m+[m[32m        fit: BoxFit.cover,[m
+[32m+[m[32m        child: CachedNetworkImage([m
+[32m+[m[32m          key: new ValueKey<String>([m
+[32m+[m[32m              DateTime.now().millisecondsSinceEpoch.toString()),[m
+[32m+[m[32m          imageUrl: userEditCopy.photoUrl,[m
+[32m+[m[32m          placeholder: (context, url) => new CircularProgressIndicator(),[m
+[32m+[m[32m        ),[m
+       ),[m
+     );[m
+   }[m
+[36m@@ -190,24 +273,28 @@[m [mclass ProfileEditState extends State<ProfileEdit> {[m
+     });[m
+   }[m
+ [m
+[31m-  Widget previewImage() {[m
+[31m-    return Container([m
+[31m-      child: FutureBuilder<File>([m
+[31m-          future: selectedImage,[m
+[31m-          builder: (BuildContext context, AsyncSnapshot<File> snapshot) {[m
+[31m-            if (snapshot.connectionState == ConnectionState.done &&[m
+[31m-                snapshot.data != null) {[m
+[31m-              imageFile = snapshot.data;[m
+[31m-              return Image.file(imageFile);[m
+[31m-            } else if (snapshot.error != null) {[m
+[31m-              return const Text([m
+[31m-                'Error',[m
+[31m-                textAlign: TextAlign.center,[m
+[31m-              );[m
+[31m-            } else {[m
+[31m-              return showCurrentProfilePic();[m
+[31m-            }[m
+[31m-          }),[m
+[32m+[m[32m  Widget image() {[m
+[32m+[m[32m    return Center([m
+[32m+[m[32m      child: InkWell([m
+[32m+[m[32m        onTap: () => onImageButtonPressed(ImageSource.gallery),[m
+[32m+[m[32m        child: FutureBuilder<File>([m
+[32m+[m[32m            future: selectedImage,[m
+[32m+[m[32m            builder: (BuildContext context, AsyncSnapshot<File> snapshot) {[m
+[32m+[m[32m              if (snapshot.connectionState == ConnectionState.done &&[m
+[32m+[m[32m                  snapshot.data != null) {[m
+[32m+[m[32m                imageFile = snapshot.data;[m
+[32m+[m[32m                return Image.file(imageFile);[m
+[32m+[m[32m              } else if (snapshot.error != null) {[m
+[32m+[m[32m                return const Text([m
+[32m+[m[32m                  'Error',[m
+[32m+[m[32m                  textAlign: TextAlign.center,[m
+[32m+[m[32m                );[m
+[32m+[m[32m              } else {[m
+[32m+[m[32m                return showCurrentProfilePic();[m
+[32m+[m[32m              }[m
+[32m+[m[32m            }),[m
+[32m+[m[32m      ),[m
+[32m+[m[32m      // Icon(Icons.edit)[m
+     );[m
+   }[m
+ [m
+[36m@@ -251,7 +338,7 @@[m [mclass ProfileEditState extends State<ProfileEdit> {[m
+           .collection('users')[m
+           .document(userEditCopy.id)[m
+           .updateData({[m
+[31m-        'photoURL': userEditCopy.photoUrl,[m
+[32m+[m[32m        'avatar': userEditCopy.photoUrl,[m
+       });[m
+ [m
+       setState(() {[m
+[36m@@ -263,7 +350,7 @@[m [mclass ProfileEditState extends State<ProfileEdit> {[m
+         .collection('users')[m
+         .document(userEditCopy.id)[m
+         .updateData({[m
+[31m-      'displayName': userEditCopy.displayName,[m
+[32m+[m[32m      'name': userEditCopy.displayName,[m
+     });[m
+ [m
+     Navigator.of(context).pop(userEditCopy);[m
+[36m@@ -283,35 +370,35 @@[m [mclass ProfileEditState extends State<ProfileEdit> {[m
+ [m
+     final ThemeData theme = Theme.of(context);[m
+     final TextStyle dialogTextStyle =[m
+[31m-        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);[m
+[32m+[m[32m    theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);[m
+ [m
+     return await showDialog<bool>([m
+[31m-          context: context,[m
+[31m-          builder: (BuildContext context) {[m
+[31m-            return AlertDialog([m
+[31m-              content: Text([m
+[31m-                'Discard changes?',[m
+[31m-                style: dialogTextStyle,[m
+[31m-              ),[m
+[31m-              actions: <Widget>[[m
+[31m-                FlatButton([m
+[31m-                  child: const Text('Cancel'),[m
+[31m-                  onPressed: () {[m
+[31m-                    Navigator.of(context).pop([m
+[31m-                        false); // Pops the confirmation dialog but not the page.[m
+[31m-                  },[m
+[31m-                ),[m
+[31m-                FlatButton([m
+[31m-                  child: const Text('Discard'),[m
+[31m-                  onPressed: () {[m
+[31m-                    Navigator.of(context).pop([m
+[31m-                        true); // Returning true to _onWillPop will pop again.[m
+[31m-                  },[m
+[31m-                ),[m
+[31m-              ],[m
+[31m-            );[m
+[31m-          },[m
+[31m-        ) ??[m
+[32m+[m[32m      context: context,[m
+[32m+[m[32m      builder: (BuildContext context) {[m
+[32m+[m[32m        return AlertDialog([m
+[32m+[m[32m          content: Text([m
+[32m+[m[32m            'Discard changes?',[m
+[32m+[m[32m            style: dialogTextStyle,[m
+[32m+[m[32m          ),[m
+[32m+[m[32m          actions: <Widget>[[m
+[32m+[m[32m            FlatButton([m
+[32m+[m[32m              child: const Text('Cancel'),[m
+[32m+[m[32m              onPressed: () {[m
+[32m+[m[32m                Navigator.of(context).pop([m
+[32m+[m[32m                    false); // Pops the confirmation dialog but not the page.[m
+[32m+[m[32m              },[m
+[32m+[m[32m            ),[m
+[32m+[m[32m            FlatButton([m
+[32m+[m[32m              child: const Text('Discard'),[m
+[32m+[m[32m              onPressed: () {[m
+[32m+[m[32m                Navigator.of(context).pop([m
+[32m+[m[32m                    true); // Returning true to _onWillPop will pop again.[m
+[32m+[m[32m              },[m
+[32m+[m[32m            ),[m
+[32m+[m[32m          ],[m
+[32m+[m[32m        );[m
+[32m+[m[32m      },[m
+[32m+[m[32m    ) ??[m
+         false;[m
+   }[m
+[31m-}[m
+[32m+[m[32m}[m
+\ No newline at end of file[m
+[1mdiff --git a/lib/rentals/chat.dart b/lib/rentals/chat.dart[m
+[1mindex bc7f1b4..e2cdd92 100644[m
+[1m--- a/lib/rentals/chat.dart[m
+[1m+++ b/lib/rentals/chat.dart[m
+[36m@@ -304,7 +304,7 @@[m [mclass ChatScreenState extends State<ChatScreen> {[m
+                                 height: 35.0,[m
+                                 padding: EdgeInsets.all(10.0),[m
+                               ),[m
+[31m-                          imageUrl: otherUserDS['photoURL'],[m
+[32m+[m[32m                          imageUrl: otherUserDS['avatar'],[m
+                           width: 35.0,[m
+                           height: 35.0,[m
+                           fit: BoxFit.cover,[m
+[36m@@ -460,11 +460,11 @@[m [mclass ChatScreenState extends State<ChatScreen> {[m
+                       style: TextStyle(fontSize: headingFontSize),[m
+                     ),[m
+                     Text([m
+[31m-                      'Item owner: ${ownerDS['displayName']}',[m
+[32m+[m[32m                      'Item owner: ${ownerDS['name']}',[m
+                       style: TextStyle(fontSize: headingFontSize),[m
+                     ),[m
+                     Text([m
+[31m-                      'Item renter: ${renterDS['displayName']}',[m
+[32m+[m[32m                      'Item renter: ${renterDS['name']}',[m
+                       style: TextStyle(fontSize: headingFontSize),[m
+                     ),[m
+                     Divider([m
+[1mdiff --git a/lib/rentals/item_request.dart b/lib/rentals/item_request.dart[m
+[1mindex 7cc75a3..6488ed2 100644[m
+[1m--- a/lib/rentals/item_request.dart[m
+[1m+++ b/lib/rentals/item_request.dart[m
+[36m@@ -183,12 +183,13 @@[m [mclass ItemRequestState extends State<ItemRequest> {[m
+             height: 10,[m
+           ),[m
+           showItemPriceInfo(),[m
+[31m-          showTimeInfo(), // testing purposes only[m
+[32m+[m
+           showTimePickers(),[m
+           Container([m
+             height: 10,[m
+           ),[m
+           showNoteEdit(),[m
+[32m+[m[32m          showTimeInfo(), // testing purposes only[m
+         ],[m
+       ),[m
+     );[m
+[36m@@ -199,11 +200,13 @@[m [mclass ItemRequestState extends State<ItemRequest> {[m
+     return Container([m
+       padding: EdgeInsets.all(10),[m
+       child: Text([m
+[31m-        'Start: ${pickupTime}\n'[m
+[32m+[m[32m        'TESTING PURPOSES ONLY\n'[m
+[32m+[m[32m            'Start: ${pickupTime}\n'[m
+             'End: ${pickupTime.add(Duration(hours: 1))}\n'[m
+             'Window: $window\n'[m
+[31m-            'amPm: $amPm',[m
+[31m-        style: TextStyle(fontSize: 18),[m
+[32m+[m[32m            'amPm: $amPm\n'[m
+[32m+[m[32m            'durationi: $duration',[m
+[32m+[m[32m        style: theme.textTheme.caption,[m
+       ),[m
+     );[m
+   }[m
+[36m@@ -229,7 +232,7 @@[m [mclass ItemRequestState extends State<ItemRequest> {[m
+     return Row([m
+       children: <Widget>[[m
+         Text([m
+[31m-          'You\'re requesting from:\n${creatorDS['displayName']}',[m
+[32m+[m[32m          'You\'re requesting from:\n${creatorDS['name']}',[m
+           style: TextStyle(color: Colors.black, fontSize: 20.0),[m
+           textAlign: TextAlign.left,[m
+         ),[m
+[36m@@ -239,7 +242,7 @@[m [mclass ItemRequestState extends State<ItemRequest> {[m
+             child: CachedNetworkImage([m
+               key: new ValueKey<String>([m
+                   DateTime.now().millisecondsSinceEpoch.toString()),[m
+[31m-              imageUrl: creatorDS['photoURL'],[m
+[32m+[m[32m              imageUrl: creatorDS['avatar'],[m
+               placeholder: (context, url) => new CircularProgressIndicator(),[m
+             ),[m
+           ),[m
+[36m@@ -332,31 +335,22 @@[m [mclass ItemRequestState extends State<ItemRequest> {[m
+   }[m
+ [m
+   Widget showCircularProgress() {[m
+[31m-    if (isUploading) {[m
+[31m-      return Container([m
+[31m-        child: Column([m
+[31m-            mainAxisAlignment: MainAxisAlignment.center,[m
+[31m-            crossAxisAlignment: CrossAxisAlignment.center,[m
+[31m-            children: <Widget>[[m
+[31m-              Text([m
+[31m-                "Sending...",[m
+[31m-                style: TextStyle(fontSize: 30),[m
+[31m-              ),[m
+[31m-              Container([m
+[31m-                height: 20.0,[m
+[31m-              ),[m
+[31m-              Center(child: CircularProgressIndicator())[m
+[31m-            ]),[m
+[31m-      );[m
+[31m-    } else {[m
+[31m-      return Container([m
+[31m-        height: 0.0,[m
+[31m-        width: 0.0,[m
+[31m-      );[m
+[31m-    }[m
+[32m+[m[32m    return isUploading[m
+[32m+[m[32m        ? Container([m
+[32m+[m[32m            child: Column([m
+[32m+[m[32m                mainAxisAlignment: MainAxisAlignment.center,[m
+[32m+[m[32m                crossAxisAlignment: CrossAxisAlignment.center,[m
+[32m+[m[32m                children: <Widget>[Center(child: CircularProgressIndicator())]),[m
+[32m+[m[32m          )[m
+[32m+[m[32m        : Container([m
+[32m+[m[32m            height: 0.0,[m
+[32m+[m[32m            width: 0.0,[m
+[32m+[m[32m          );[m
+   }[m
+ [m
+   void navToItemRental() async {[m
+[32m+[m[32m    int delay = 500;[m
+[32m+[m
+     setState(() {[m
+       isUploading = true;[m
+     });[m
+[36m@@ -371,14 +365,16 @@[m [mclass ItemRequestState extends State<ItemRequest> {[m
+       'owner':[m
+           Firestore.instance.collection('users').document(creatorDS.documentID),[m
+       'renter': Firestore.instance.collection('users').document(myUserID),[m
+[31m-      'pickupStartTime': pickupTime,[m
+[31m-      'pickupEndTime': pickupTime.add(Duration(hours: 1)),[m
+[31m-      'rentalEndTime': pickupTime.add(Duration(days: duration, hours: 1)),[m
+[32m+[m[32m      'pickupStart': pickupTime,[m
+[32m+[m[32m      'pickupEnd': pickupTime.add(Duration(hours: 1)),[m
+[32m+[m[32m      'rentalEnd': pickupTime.add(Duration(days: duration, hours: 1)),[m
+       'created': DateTime.now().millisecondsSinceEpoch,[m
+       'duration': duration,[m
+     });[m
+ [m
+     if (rentalDR != null) {[m
+[32m+[m[32m      await new Future.delayed(Duration(milliseconds: delay));[m
+[32m+[m
+       rentalID = rentalDR.documentID;[m
+ [m
+       // create rental document in renter's 'rentals' collection[m
+[36m@@ -388,7 +384,8 @@[m [mclass ItemRequestState extends State<ItemRequest> {[m
+           .collection('rentals')[m
+           .document(rentalDR.documentID);[m
+ [m
+[31m-      Firestore.instance.runTransaction((transaction) async {[m
+[32m+[m[32m      Future userRental =[m
+[32m+[m[32m          Firestore.instance.runTransaction((transaction) async {[m
+         await transaction.set([m
+           myUserDR,[m
+           {[m
+[36m@@ -401,64 +398,79 @@[m [mclass ItemRequestState extends State<ItemRequest> {[m
+         );[m
+       });[m
+ [m
+[31m-      // create rental document in item owner's 'rentals' collection[m
+[31m-      var creatorDR = Firestore.instance[m
+[31m-          .collection('users')[m
+[31m-          .document(creatorDS.documentID)[m
+[31m-          .collection('rentals')[m
+[31m-          .document(rentalDR.documentID);[m
+[31m-[m
+[31m-      Firestore.instance.runTransaction((transaction) async {[m
+[31m-        await transaction.set([m
+[31m-          creatorDR,[m
+[31m-          {[m
+[31m-            'rental': rentalDR,[m
+[31m-            'isRenter': false,[m
+[31m-            'otherUser':[m
+[31m-                Firestore.instance.collection('users').document(myUserID),[m
+[31m-          },[m
+[31m-        );[m
+[31m-      });[m
+[31m-[m
+[31m-      Firestore.instance[m
+[31m-          .collection('items')[m
+[31m-          .document(widget.itemID)[m
+[31m-          .updateData({[m
+[31m-        'rental': Firestore.instance.collection('rentals').document(rentalID)[m
+[31m-      });[m
+[32m+[m[32m      if (userRental != null) {[m
+[32m+[m[32m        await new Future.delayed(Duration(milliseconds: delay));[m
+[32m+[m
+[32m+[m[32m        // create rental document in item owner's 'rentals' collection[m
+[32m+[m[32m        var creatorDR = Firestore.instance[m
+[32m+[m[32m            .collection('users')[m
+[32m+[m[32m            .document(creatorDS.documentID)[m
+[32m+[m[32m            .collection('rentals')[m
+[32m+[m[32m            .document(rentalDR.documentID);[m
+[32m+[m
+[32m+[m[32m        Future ownerRental =[m
+[32m+[m[32m            Firestore.instance.runTransaction((transaction) async {[m
+[32m+[m[32m          await transaction.set([m
+[32m+[m[32m            creatorDR,[m
+[32m+[m[32m            {[m
+[32m+[m[32m              'rental': rentalDR,[m
+[32m+[m[32m              'isRenter': false,[m
+[32m+[m[32m              'otherUser':[m
+[32m+[m[32m                  Firestore.instance.collection('users').document(myUserID),[m
+[32m+[m[32m            },[m
+[32m+[m[32m          );[m
+[32m+[m[32m        });[m
+ [m
+[31m-      // create chat and send the default request message[m
+[31m-      var dr = Firestore.instance[m
+[31m-          .collection('rentals')[m
+[31m-          .document(rentalID)[m
+[31m-          .collection('chat')[m
+[31m-          .document(DateTime.now().millisecondsSinceEpoch.toString());[m
+[32m+[m[32m        if (ownerRental != null) {[m
+[32m+[m[32m          await new Future.delayed(Duration(milliseconds: delay));[m
+ [m
+[31m-      Firestore.instance.runTransaction((transaction) async {[m
+[31m-        await transaction.set([m
+[31m-          dr,[m
+[31m-          {[m
+[31m-            'idFrom': myUserID,[m
+[31m-            'idTo': creatorDS.documentID,[m
+[31m-            'timestamp': DateTime.now().millisecondsSinceEpoch,[m
+[31m-            'content': message,[m
+[31m-            'type': 0,[m
+[31m-          },[m
+[31m-        );[m
+[31m-      });[m
+[31m-[m
+[31m-      setState(() {[m
+[31m-        isUploading = false;[m
+[31m-      });[m
+[32m+[m[32m          Future itemRental = Firestore.instance[m
+[32m+[m[32m              .collection('items')[m
+[32m+[m[32m              .document(widget.itemID)[m
+[32m+[m[32m              .updateData({[m
+[32m+[m[32m            'rental':[m
+[32m+[m[32m                Firestore.instance.collection('rentals').document(rentalID)[m
+[32m+[m[32m          });[m
+ [m
+[31m-      if (rentalID != null) {[m
+[31m-        Navigator.pushNamed([m
+[31m-          context,[m
+[31m-          RentalDetail.routeName,[m
+[31m-          arguments: RentalDetailArgs([m
+[31m-            rentalID,[m
+[31m-          ),[m
+[31m-        );[m
+[32m+[m[32m          if (itemRental != null) {[m
+[32m+[m[32m            await new Future.delayed(Duration(milliseconds: delay));[m
+[32m+[m
+[32m+[m[32m            // create chat and send the default request message[m
+[32m+[m[32m            var dr = Firestore.instance[m
+[32m+[m[32m                .collection('rentals')[m
+[32m+[m[32m                .document(rentalID)[m
+[32m+[m[32m                .collection('chat')[m
+[32m+[m[32m                .document(DateTime.now().millisecondsSinceEpoch.toString());[m
+[32m+[m
+[32m+[m[32m            Future chat =[m
+[32m+[m[32m                Firestore.instance.runTransaction((transaction) async {[m
+[32m+[m[32m              await transaction.set([m
+[32m+[m[32m                dr,[m
+[32m+[m[32m                {[m
+[32m+[m[32m                  'idFrom': myUserID,[m
+[32m+[m[32m                  'idTo': creatorDS.documentID,[m
+[32m+[m[32m                  'timestamp': DateTime.now().millisecondsSinceEpoch,[m
+[32m+[m[32m                  'content': message,[m
+[32m+[m[32m                  'type': 0,[m
+[32m+[m[32m                },[m
+[32m+[m[32m              );[m
+[32m+[m[32m            });[m
+[32m+[m
+[32m+[m[32m            if (chat != null) {[m
+[32m+[m[32m              await new Future.delayed(Duration(milliseconds: delay));[m
+[32m+[m
+[32m+[m[32m              if (rentalID != null) {[m
+[32m+[m[32m                Navigator.pushNamed([m
+[32m+[m[32m                  context,[m
+[32m+[m[32m                  RentalDetail.routeName,[m
+[32m+[m[32m                  arguments: RentalDetailArgs([m
+[32m+[m[32m                    rentalID,[m
+[32m+[m[32m                  ),[m
+[32m+[m[32m                );[m
+[32m+[m[32m              }[m
+[32m+[m[32m            }[m
+[32m+[m[32m          }[m
+[32m+[m[32m        }[m
+       }[m
+     }[m
+   }[m
+[36m@@ -470,7 +482,7 @@[m [mclass ItemRequestState extends State<ItemRequest> {[m
+ [m
+     String range = parseWindow(windows, window, amPm);[m
+ [m
+[31m-    message = 'Hello ${creatorDS['displayName']}, '[m
+[32m+[m[32m    message = 'Hello ${creatorDS['name']}, '[m
+         'I am requesting to rent your ${itemDS['name']} '[m
+         'for ${duration > 1 ? '$duration days' : '$duration day'}. '[m
+         'I would like to pick up this item '[m
+[36m@@ -811,3 +823,7 @@[m [mDateTime updateDateTime(year, month, day, windows, window, amPm) {[m
+ [m
+   return DateTime(year, month, day, hour, minute, 0, 0, 0);[m
+ }[m
+[32m+[m
+[32m+[m[32mvoid delay() async {[m
+[32m+[m[32m  await new Future.delayed(const Duration(seconds: 3));[m
+[32m+[m[32m}[m
+[1mdiff --git a/lib/rentals/new_pickup.dart b/lib/rentals/new_pickup.dart[m
+[1mindex 8df5138..eb5e8ee 100644[m
+[1m--- a/lib/rentals/new_pickup.dart[m
+[1m+++ b/lib/rentals/new_pickup.dart[m
+[36m@@ -156,9 +156,9 @@[m [mclass NewPickupState extends State<NewPickup> {[m
+         children: <Widget>[[m
+           isLoading[m
+               ? Container([m
+[31m-            decoration:[m
+[31m-            new BoxDecoration(color: Colors.white.withOpacity(0.0)),[m
+[31m-          )[m
+[32m+[m[32m                  decoration:[m
+[32m+[m[32m                      new BoxDecoration(color: Colors.white.withOpacity(0.0)),[m
+[32m+[m[32m                )[m
+               : showBody(),[m
+           showCircularProgress(),[m
+         ],[m
+[36m@@ -230,7 +230,7 @@[m [mclass NewPickupState extends State<NewPickup> {[m
+     return Row([m
+       children: <Widget>[[m
+         Text([m
+[31m-          'You\'re requesting from:\n${creatorDS['displayName']}',[m
+[32m+[m[32m          'You\'re requesting from:\n${creatorDS['name']}',[m
+           style: TextStyle(color: Colors.black, fontSize: 20.0),[m
+           textAlign: TextAlign.left,[m
+         ),[m
+[36m@@ -240,7 +240,7 @@[m [mclass NewPickupState extends State<NewPickup> {[m
+             child: CachedNetworkImage([m
+               key: new ValueKey<String>([m
+                   DateTime.now().millisecondsSinceEpoch.toString()),[m
+[31m-              imageUrl: creatorDS['photoURL'],[m
+[32m+[m[32m              imageUrl: creatorDS['avatar'],[m
+               placeholder: (context, url) => new CircularProgressIndicator(),[m
+             ),[m
+           ),[m
+[36m@@ -377,15 +377,15 @@[m [mclass NewPickupState extends State<NewPickup> {[m
+ [m
+     // create rental in 'rentals' collection[m
+     DocumentReference rentalDR =[m
+[31m-    await Firestore.instance.collection("rentals").add({[m
+[32m+[m[32m        await Firestore.instance.collection("rentals").add({[m
+       'status': 1, // set rental status to requested[m
+       'item': Firestore.instance.collection('items').document(widget.itemID),[m
+       'owner':[m
+[31m-      Firestore.instance.collection('users').document(creatorDS.documentID),[m
+[32m+[m[32m          Firestore.instance.collection('users').document(creatorDS.documentID),[m
+       'renter': Firestore.instance.collection('users').document(myUserID),[m
+[31m-      'pickupStartTime': pickupTime,[m
+[31m-      'pickupEndTime': pickupTime.add(Duration(hours: 1)),[m
+[31m-      'rentalEndTime': pickupTime.add(Duration(days: duration, hours: 1)),[m
+[32m+[m[32m      'pickupStart': pickupTime,[m
+[32m+[m[32m      'pickupEnd': pickupTime.add(Duration(hours: 1)),[m
+[32m+[m[32m      'rentalEnd': pickupTime.add(Duration(days: duration, hours: 1)),[m
+       'created': DateTime.now().millisecondsSinceEpoch,[m
+       'duration': duration,[m
+     });[m
+[36m@@ -427,7 +427,7 @@[m [mclass NewPickupState extends State<NewPickup> {[m
+             'rental': rentalDR,[m
+             'isRenter': false,[m
+             'otherUser':[m
+[31m-            Firestore.instance.collection('users').document(myUserID),[m
+[32m+[m[32m                Firestore.instance.collection('users').document(myUserID),[m
+           },[m
+         );[m
+       });[m
+[36m@@ -478,11 +478,11 @@[m [mclass NewPickupState extends State<NewPickup> {[m
+   Future<bool> sendItem() async {[m
+     final ThemeData theme = Theme.of(context);[m
+     final TextStyle dialogTextStyle =[m
+[31m-    theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);[m
+[32m+[m[32m        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);[m
+ [m
+     String range = parseWindow(windows, window, amPm);[m
+ [m
+[31m-    message = 'Hello ${creatorDS['displayName']}, '[m
+[32m+[m[32m    message = 'Hello ${creatorDS['name']}, '[m
+         'I am requesting to rent your ${itemDS['name']} '[m
+         'for ${duration > 1 ? '$duration days' : '$duration day'}. '[m
+         'I would like to pick up this item '[m
+[36m@@ -490,56 +490,56 @@[m [mclass NewPickupState extends State<NewPickup> {[m
+         '${note.length > 0 ? '\n\nAdditional Note:\n$note' : ''}';[m
+ [m
+     return await showDialog<bool>([m
+[31m-      context: context,[m
+[31m-      builder: (BuildContext context) {[m
+[31m-        return AlertDialog([m
+[31m-          title: Text('Preview message'),[m
+[31m-          content: Text([m
+[31m-            message,[m
+[31m-            style: dialogTextStyle,[m
+[31m-          ),[m
+[31m-          actions: <Widget>[[m
+[31m-            FlatButton([m
+[31m-              child: const Text('Cancel'),[m
+[31m-              onPressed: () {[m
+[31m-                Navigator.of(context).pop([m
+[31m-                    false); // Pops the confirmation dialog but not the page.[m
+[31m-              },[m
+[31m-            ),[m
+[31m-            FlatButton([m
+[31m-              child: const Text('Send'),[m
+[31m-              onPressed: () {[m
+[31m-                Navigator.of(context).pop(false);[m
+[32m+[m[32m          context: context,[m
+[32m+[m[32m          builder: (BuildContext context) {[m
+[32m+[m[32m            return AlertDialog([m
+[32m+[m[32m              title: Text('Preview message'),[m
+[32m+[m[32m              content: Text([m
+[32m+[m[32m                message,[m
+[32m+[m[32m                style: dialogTextStyle,[m
+[32m+[m[32m              ),[m
+[32m+[m[32m              actions: <Widget>[[m
+[32m+[m[32m                FlatButton([m
+[32m+[m[32m                  child: const Text('Cancel'),[m
+[32m+[m[32m                  onPressed: () {[m
+[32m+[m[32m                    Navigator.of(context).pop([m
+[32m+[m[32m                        false); // Pops the confirmation dialog but not the page.[m
+[32m+[m[32m                  },[m
+[32m+[m[32m                ),[m
+[32m+[m[32m                FlatButton([m
+[32m+[m[32m                  child: const Text('Send'),[m
+[32m+[m[32m                  onPressed: () {[m
+[32m+[m[32m                    Navigator.of(context).pop(false);[m
+ [m
+[31m-                getSnapshots().then([m
+[32m+[m[32m                    getSnapshots().then([m
+                       (_) {[m
+[31m-                    if (itemDS['rental'] != null) {[m
+[31m-                      showRequestErrorDialog(1);[m
+[31m-                    } else if (!validate(window, amPm)) {[m
+[31m-                      showRequestErrorDialog(2);[m
+[31m-                    } else if (DateTime.now()[m
+[31m-                        .add(Duration(hours: 1))[m
+[31m-                        .isAfter(pickupTime)) {[m
+[31m-                      showRequestErrorDialog(3);[m
+[31m-                    } else {[m
+[31m-                      navToItemRental();[m
+[31m-                    }[m
+[32m+[m[32m                        if (itemDS['rental'] != null) {[m
+[32m+[m[32m                          showRequestErrorDialog(1);[m
+[32m+[m[32m                        } else if (!validate(window, amPm)) {[m
+[32m+[m[32m                          showRequestErrorDialog(2);[m
+[32m+[m[32m                        } else if (DateTime.now()[m
+[32m+[m[32m                            .add(Duration(hours: 1))[m
+[32m+[m[32m                            .isAfter(pickupTime)) {[m
+[32m+[m[32m                          showRequestErrorDialog(3);[m
+[32m+[m[32m                        } else {[m
+[32m+[m[32m                          navToItemRental();[m
+[32m+[m[32m                        }[m
+[32m+[m[32m                      },[m
+[32m+[m[32m                    );[m
+[32m+[m[32m                    // Pops the confirmation dialog but not the page.[m
+                   },[m
+[31m-                );[m
+[31m-                // Pops the confirmation dialog but not the page.[m
+[31m-              },[m
+[31m-            ),[m
+[31m-          ],[m
+[31m-        );[m
+[31m-      },[m
+[31m-    ) ??[m
+[32m+[m[32m                ),[m
+[32m+[m[32m              ],[m
+[32m+[m[32m            );[m
+[32m+[m[32m          },[m
+[32m+[m[32m        ) ??[m
+         false;[m
+   }[m
+ [m
+   Future<bool> showRequestErrorDialog(int type) async {[m
+     final ThemeData theme = Theme.of(context);[m
+     final TextStyle dialogTextStyle =[m
+[31m-    theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);[m
+[32m+[m[32m        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);[m
+     String message;[m
+ [m
+     switch (type) {[m
+[36m@@ -555,61 +555,61 @@[m [mclass NewPickupState extends State<NewPickup> {[m
+     }[m
+ [m
+     return await showDialog<bool>([m
+[31m-      context: context,[m
+[31m-      builder: (BuildContext context) {[m
+[31m-        return AlertDialog([m
+[31m-          title: Text('Error'),[m
+[31m-          content: Text([m
+[31m-            message,[m
+[31m-            style: dialogTextStyle,[m
+[31m-          ),[m
+[31m-          actions: <Widget>[[m
+[31m-            FlatButton([m
+[31m-              child: const Text('Ok'),[m
+[31m-              onPressed: () {[m
+[31m-                Navigator.of(context).pop([m
+[31m-                    false); // Pops the confirmation dialog but not the page.[m
+[31m-              },[m
+[31m-            ),[m
+[31m-          ],[m
+[31m-        );[m
+[31m-      },[m
+[31m-    ) ??[m
+[32m+[m[32m          context: context,[m
+[32m+[m[32m          builder: (BuildContext context) {[m
+[32m+[m[32m            return AlertDialog([m
+[32m+[m[32m              title: Text('Error'),[m
+[32m+[m[32m              content: Text([m
+[32m+[m[32m                message,[m
+[32m+[m[32m                style: dialogTextStyle,[m
+[32m+[m[32m              ),[m
+[32m+[m[32m              actions: <Widget>[[m
+[32m+[m[32m                FlatButton([m
+[32m+[m[32m                  child: const Text('Ok'),[m
+[32m+[m[32m                  onPressed: () {[m
+[32m+[m[32m                    Navigator.of(context).pop([m
+[32m+[m[32m                        false); // Pops the confirmation dialog but not the page.[m
+[32m+[m[32m                  },[m
+[32m+[m[32m                ),[m
+[32m+[m[32m              ],[m
+[32m+[m[32m            );[m
+[32m+[m[32m          },[m
+[32m+[m[32m        ) ??[m
+         false;[m
+   }[m
+ [m
+   Future<bool> onWillPop() async {[m
+     final ThemeData theme = Theme.of(context);[m
+     final TextStyle dialogTextStyle =[m
+[31m-    theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);[m
+[32m+[m[32m        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);[m
+ [m
+     return await showDialog<bool>([m
+[31m-      context: context,[m
+[31m-      builder: (BuildContext context) {[m
+[31m-        return AlertDialog([m
+[31m-          content: Text([m
+[31m-            'Discard changes?',[m
+[31m-            style: dialogTextStyle,[m
+[31m-          ),[m
+[31m-          actions: <Widget>[[m
+[31m-            FlatButton([m
+[31m-              child: const Text('Cancel'),[m
+[31m-              onPressed: () {[m
+[31m-                Navigator.of(context).pop([m
+[31m-                    false); // Pops the confirmation dialog but not the page.[m
+[31m-              },[m
+[31m-            ),[m
+[31m-            FlatButton([m
+[31m-              child: const Text('Discard'),[m
+[31m-              onPressed: () {[m
+[31m-                Navigator.of(context).pop([m
+[31m-                    true); // Returning true to _onWillPop will pop again.[m
+[31m-              },[m
+[31m-            ),[m
+[31m-          ],[m
+[31m-        );[m
+[31m-      },[m
+[31m-    ) ??[m
+[32m+[m[32m          context: context,[m
+[32m+[m[32m          builder: (BuildContext context) {[m
+[32m+[m[32m            return AlertDialog([m
+[32m+[m[32m              content: Text([m
+[32m+[m[32m                'Discard changes?',[m
+[32m+[m[32m                style: dialogTextStyle,[m
+[32m+[m[32m              ),[m
+[32m+[m[32m              actions: <Widget>[[m
+[32m+[m[32m                FlatButton([m
+[32m+[m[32m                  child: const Text('Cancel'),[m
+[32m+[m[32m                  onPressed: () {[m
+[32m+[m[32m                    Navigator.of(context).pop([m
+[32m+[m[32m                        false); // Pops the confirmation dialog but not the page.[m
+[32m+[m[32m                  },[m
+[32m+[m[32m                ),[m
+[32m+[m[32m                FlatButton([m
+[32m+[m[32m                  child: const Text('Discard'),[m
+[32m+[m[32m                  onPressed: () {[m
+[32m+[m[32m                    Navigator.of(context).pop([m
+[32m+[m[32m                        true); // Returning true to _onWillPop will pop again.[m
+[32m+[m[32m                  },[m
+[32m+[m[32m                ),[m
+[32m+[m[32m              ],[m
+[32m+[m[32m            );[m
+[32m+[m[32m          },[m
+[32m+[m[32m        ) ??[m
+         false;[m
+   }[m
+ }[m
+[36m@@ -661,7 +661,7 @@[m [mclass DateTimeItem extends StatelessWidget {[m
+               padding: const EdgeInsets.symmetric(vertical: 8.0),[m
+               decoration: BoxDecoration([m
+                   border:[m
+[31m-                  Border(bottom: BorderSide(color: theme.dividerColor))),[m
+[32m+[m[32m                      Border(bottom: BorderSide(color: theme.dividerColor))),[m
+               child: InkWell([m
+                 onTap: () {[m
+                   showDatePicker([m
+[36m@@ -800,7 +800,7 @@[m [mString parseWindow(List windows, int window, int amPm) {[m
+       range = 'Noon - $end PM';[m
+     } else {[m
+       range =[m
+[31m-      '$start ${amPm == 0 ? 'AM' : 'PM'} - $end ${amPm == 0 ? 'AM' : 'PM'}';[m
+[32m+[m[32m          '$start ${amPm == 0 ? 'AM' : 'PM'} - $end ${amPm == 0 ? 'AM' : 'PM'}';[m
+     }[m
+   }[m
+ [m
+[1mdiff --git a/lib/rentals/rental_detail.dart b/lib/rentals/rental_detail.dart[m
+[1mindex 4199673..ef36b70 100644[m
+[1m--- a/lib/rentals/rental_detail.dart[m
+[1m+++ b/lib/rentals/rental_detail.dart[m
+[36m@@ -214,6 +214,9 @@[m [mclass RentalDetailState extends State<RentalDetail> {[m
+                       height: 20,[m
+                     ),[m
+                     showItemRequestStatus(),[m
+[32m+[m[32m                    Container([m
+[32m+[m[32m                      height: 10,[m
+[32m+[m[32m                    ),[m
+                     showAcceptRejectRequestButtons(),[m
+                     showReceiveItemButton(),[m
+                     showReturnedItemButton(),[m
+[36m@@ -246,8 +249,8 @@[m [mclass RentalDetailState extends State<RentalDetail> {[m
+   }[m
+ [m
+   Widget showItemName() {[m
+[31m-    String itemOwner = 'Item owner: ${ownerDS['displayName']}';[m
+[31m-    String itemRenter = 'Item renter: ${renterDS['displayName']}';[m
+[32m+[m[32m    String itemOwner = 'Item owner: ${ownerDS['name']}';[m
+[32m+[m[32m    String itemRenter = 'Item renter: ${renterDS['name']}';[m
+     String you = ' (You)';[m
+ [m
+     isRenter ? itemRenter += you : itemOwner += you;[m
+[36m@@ -268,7 +271,7 @@[m [mclass RentalDetailState extends State<RentalDetail> {[m
+     return Row([m
+       children: <Widget>[[m
+         Text([m
+[31m-          'Item owner:\n${ownerDS['displayName']}',[m
+[32m+[m[32m          'Item owner:\n${ownerDS['name']}',[m
+           style: TextStyle(color: Colors.black, fontSize: 20.0),[m
+           textAlign: TextAlign.left,[m
+         ),[m
+[36m@@ -278,7 +281,7 @@[m [mclass RentalDetailState extends State<RentalDetail> {[m
+             child: CachedNetworkImage([m
+               key: new ValueKey<String>([m
+                   DateTime.now().millisecondsSinceEpoch.toString()),[m
+[31m-              imageUrl: ownerDS['photoURL'],[m
+[32m+[m[32m              imageUrl: ownerDS['avatar'],[m
+               placeholder: (context, url) => new CircularProgressIndicator(),[m
+             ),[m
+           ),[m
+[36m@@ -291,16 +294,18 @@[m [mclass RentalDetailState extends State<RentalDetail> {[m
+     int itemStatus = rentalDS['status'];[m
+     String statusMessage;[m
+ [m
+[32m+[m[32m    // IF YOU ARE THE RENTER[m
+     if (isRenter) {[m
+       switch (itemStatus) {[m
+         case 1: // requested[m
+           statusMessage = 'Status: requested\n'[m
+[31m-              'Awaiting response from ${ownerDS['displayName']}';[m
+[32m+[m[32m              'Awaiting response from ${ownerDS['name']}\n'[m
+[32m+[m[32m              'You proposed to pickup the item between ${rentalDS['pickupStart']} and ${rentalDS['pickupEnd']}';[m
+           break;[m
+         case 2: // accepted[m
+           statusMessage = 'Status: accepted\n'[m
+[31m-              '${ownerDS['displayName']} has accepted your request\n'[m
+[31m-              'Awaiting ${ownerDS['displayName']} to send item';[m
+[32m+[m[32m              '${ownerDS['name']} has accepted your request\n'[m
+[32m+[m[32m              'Awaiting ${ownerDS['name']} to send item';[m
+           break;[m
+         case 3: // active[m
+           statusMessage = 'Status: active\n'[m
+[36m@@ -320,27 +325,30 @@[m [mclass RentalDetailState extends State<RentalDetail> {[m
+           statusMessage = 'There was an error with getting status';[m
+           break;[m
+       }[m
+[31m-    } else {[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    // IF YOU ARE THE ITEM OWNER[m
+[32m+[m[32m    else {[m
+       switch (itemStatus) {[m
+         case 1: // requested[m
+           statusMessage = 'Status: requested\n'[m
+[31m-              'Do you accept the request from ${renterDS['displayName']}?\n'[m
+[31m-              '${renterDS['displayName']} wants to pick up the item between ${rentalDS['pickupStartTime']} and ${rentalDS['pickupEndTime']}';[m
+[32m+[m[32m              'Do you accept the request from ${renterDS['name']}?\n'[m
+[32m+[m[32m              '${renterDS['name']} wants to pick up the item between ${rentalDS['pickupStart']} and ${rentalDS['pickupEnd']}';[m
+           break;[m
+         case 2: // accepted[m
+           statusMessage = 'Status: accepted\n'[m
+[31m-              '${ownerDS['displayName']} has accepted your request\n'[m
+[31m-              'Get ready give the item to ${renterDS['displayName']}';[m
+[32m+[m[32m              '${ownerDS['name']} has accepted your request\n'[m
+[32m+[m[32m              'Get ready give the item to ${renterDS['name']}';[m
+           break;[m
+         case 3: // active[m
+           statusMessage = 'Status: active\n'[m
+[31m-              '${renterDS['displayName']} is currently renting your item\n'[m
+[32m+[m[32m              '${renterDS['name']} is currently renting your item\n'[m
+               'Press the button when the item has been returned to you to end the rental';[m
+           break;[m
+         case 4: // returned[m
+           statusMessage = 'Status: returned\n'[m
+[31m-              'You have returned the item to ${ownerDS['displayName']}\n'[m
+[31m-              'Waiting for ${renterDS['displayName']} to write a review';[m
+[32m+[m[32m              'You have returned the item to ${ownerDS['name']}\n'[m
+[32m+[m[32m              'Waiting for ${renterDS['name']} to write a review';[m
+           break;[m
+         case 5: // completed[m
+           statusMessage = 'Status: completed\n'[m
+[36m@@ -363,57 +371,29 @@[m [mclass RentalDetailState extends State<RentalDetail> {[m
+   }[m
+ [m
+   Widget showAcceptRejectRequestButtons() {[m
+[32m+[m[32m    double buttonHeight = 60;[m
+[32m+[m
+     return !isRenter && rentalDS['status'] == 1[m
+         ? Container([m
+             child: Row([m
+               children: <Widget>[[m
+                 Expanded([m
+[31m-                  child: RaisedButton([m
+[31m-                    shape: new RoundedRectangleBorder([m
+[31m-                        borderRadius: new BorderRadius.circular(5.0)),[m
+[31m-                    color: Colors.green,[m
+[31m-                    textColor: Colors.white,[m
+[31m-                    child: Text([m
+[31m-                      "Accept",[m
+[31m-                      //addButton + " Images",[m
+[31m-                      textScaleFactor: 1.25,[m
+[31m-                    ),[m
+[31m-                    onPressed: () {[m
+[31m-                      updateStatus(2);[m
+[31m-                    },[m
+[31m-                  ),[m
+[32m+[m[32m                  child: reusableButton('Accept', Colors.green, () {[m
+[32m+[m[32m                    updateStatus(2);[m
+[32m+[m[32m                  }),[m
+                 ),[m
+                 Container([m
+[31m-                  width: 15.0,[m
+[32m+[m[32m                  width: 10,[m
+                 ),[m
+                 Expanded([m
+[31m-                  child: RaisedButton([m
+[31m-                    shape: new RoundedRectangleBorder([m
+[31m-                        borderRadius: new BorderRadius.circular(5.0)),[m
+[31m-                    color: Colors.orange,[m
+[31m-                    textColor: Colors.white,[m
+[31m-                    child: Text([m
+[31m-                      "Propose new time",[m
+[31m-                      textScaleFactor: 1.25,[m
+[31m-                    ),[m
+[31m-                    onPressed: () {},[m
+[31m-                  ),[m
+[32m+[m[32m                  child: reusableButton([m
+[32m+[m[32m                      'Propose new time', Colors.orange[700], null),[m
+                 ),[m
+                 Container([m
+[31m-                  width: 15.0,[m
+[32m+[m[32m                  width: 10,[m
+                 ),[m
+                 Expanded([m
+[31m-                  child: RaisedButton([m
+[31m-                    shape: new RoundedRectangleBorder([m
+[31m-                        borderRadius: new BorderRadius.circular(5.0)),[m
+[31m-                    color: Colors.red[800],[m
+[31m-                    textColor: Colors.white,[m
+[31m-                    child: Text([m
+[31m-                      "Reject",[m
+[31m-                      textScaleFactor: 1.25,[m
+[31m-                    ),[m
+[31m-                    onPressed: () {},[m
+[31m-                  ),[m
+[32m+[m[32m                  child: reusableButton('Reject', Colors.red[800], null),[m
+                 ),[m
+               ],[m
+             ),[m
+[36m@@ -421,6 +401,27 @@[m [mclass RentalDetailState extends State<RentalDetail> {[m
+         : Container();[m
+   }[m
+ [m
+[32m+[m[32m  Widget reusableButton(String text, Color color, action) {[m
+[32m+[m[32m    return ButtonTheme([m
+[32m+[m[32m      height: 60,[m
+[32m+[m[32m      child: RaisedButton([m
+[32m+[m[32m        shape: new RoundedRectangleBorder([m
+[32m+[m[32m            borderRadius: new BorderRadius.circular(5.0)),[m
+[32m+[m[32m        color: color,[m
+[32m+[m[32m        textColor: Colors.white,[m
+[32m+[m[32m        child: Text([m
+[32m+[m[32m          text,[m
+[32m+[m[32m          style: TextStyle([m
+[32m+[m[32m            fontSize: 16,[m
+[32m+[m[32m          ),[m
+[32m+[m[32m        ),[m
+[32m+[m[32m        onPressed: () {[m
+[32m+[m[32m          action();[m
+[32m+[m[32m        },[m
+[32m+[m[32m      ),[m
+[32m+[m[32m    );[m
+[32m+[m[32m  }[m
+[32m+[m
+   Widget showReceiveItemButton() {[m
+     return isRenter && rentalDS['status'] == 2[m
+         ? Container([m
+[36m@@ -451,7 +452,7 @@[m [mclass RentalDetailState extends State<RentalDetail> {[m
+               color: Colors.green,[m
+               textColor: Colors.white,[m
+               child: Text([m
+[31m-                "${renterDS['displayName']} has returned the item",[m
+[32m+[m[32m                "${renterDS['name']} has returned the item",[m
+                 //addButton + " Images",[m
+                 textScaleFactor: 1.25,[m
+               ),[m
+[36m@@ -550,10 +551,14 @@[m [mclass RentalDetailState extends State<RentalDetail> {[m
+   }[m
+ [m
+   void deleteRental() async {[m
+[32m+[m[32m    int delay = 500;[m
+[32m+[m
+     setState(() {[m
+       isLoading = true;[m
+     });[m
+ [m
+[32m+[m[32m    await new Future.delayed(Duration(milliseconds: delay));[m
+[32m+[m
+     Firestore.instance[m
+         .collection('users')[m
+         .document(renterDS.documentID)[m
+[36m@@ -561,6 +566,8 @@[m [mclass RentalDetailState extends State<RentalDetail> {[m
+         .document(widget.rentalID)[m
+         .delete();[m
+ [m
+[32m+[m[32m    await new Future.delayed(Duration(milliseconds: delay));[m
+[32m+[m
+     Firestore.instance[m
+         .collection('users')[m
+         .document(ownerDS.documentID)[m
+[36m@@ -568,20 +575,12 @@[m [mclass RentalDetailState extends State<RentalDetail> {[m
+         .document(widget.rentalID)[m
+         .delete();[m
+ [m
+[31m-    /*[m
+[31m-    DocumentReference documentReference = rentalDS.reference;[m
+[31m-    [m
+[31m-    Firestore.instance.collection('users').document(myUserID).updateData({[m
+[31m-      'rentals': FieldValue.arrayRemove([documentReference])[m
+[31m-    });[m
+[31m-[m
+[31m-    Firestore.instance.collection('users').document(ownerDS.documentID).updateData({[m
+[31m-      'rentals': FieldValue.arrayRemove([documentReference])[m
+[31m-    });[m
+[31m-    */[m
+[32m+[m[32m    await new Future.delayed(Duration(milliseconds: delay));[m
+ [m
+     Firestore.instance.collection('rentals').document(widget.rentalID).delete();[m
+ [m
+[32m+[m[32m    await new Future.delayed(Duration(milliseconds: delay));[m
+[32m+[m
+     Firestore.instance[m
+         .collection('rentals')[m
+         .document(widget.rentalID)[m
+[36m@@ -593,6 +592,8 @@[m [mclass RentalDetailState extends State<RentalDetail> {[m
+       }[m
+     });[m
+ [m
+[32m+[m[32m    await new Future.delayed(Duration(milliseconds: delay));[m
+[32m+[m
+     Firestore.instance[m
+         .collection('items')[m
+         .document(itemDS.documentID)[m
+[1mdiff --git a/pubspec.yaml b/pubspec.yaml[m
+[1mindex fc6950f..08721df 100644[m
+[1m--- a/pubspec.yaml[m
+[1m+++ b/pubspec.yaml[m
+[36m@@ -14,6 +14,8 @@[m [menvironment:[m
+ [m
+ dependencies:[m
+ [m
+[32m+[m[32m  flutter_hooks:[m
+[32m+[m
+   numberpicker:[m
+ [m
+   timeago:[m

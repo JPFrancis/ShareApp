@@ -89,11 +89,11 @@ class HomePageState extends State<HomePage> {
       // if user is not in database, create user
       if (!ds.exists) {
         Firestore.instance.collection('users').document(userID).setData({
-          'displayName': widget.firebaseUser.displayName ?? 'new user $userID',
-          'photoURL': widget.firebaseUser.photoUrl ?? 'https://bit.ly/2vcmALY',
+          'name': widget.firebaseUser.displayName ?? 'new user $userID',
+          'avatar': widget.firebaseUser.photoUrl ?? 'https://bit.ly/2vcmALY',
           'email': widget.firebaseUser.email,
-          'lastActiveTimestamp': DateTime.now().millisecondsSinceEpoch,
-          'accountCreationTimestamp':
+          'lastActive': DateTime.now().millisecondsSinceEpoch,
+          'creationDate':
               widget.firebaseUser.metadata.creationTimestamp,
         });
       }
@@ -117,12 +117,12 @@ class HomePageState extends State<HomePage> {
         .get()
         .then((DocumentSnapshot ds) {
       Firestore.instance.collection('users').document(userID).updateData({
-        'lastActiveTimestamp': DateTime.now().millisecondsSinceEpoch,
+        'lastActive': DateTime.now().millisecondsSinceEpoch,
 
         /// TAKE BELOW TWO LINES OUT SOON
         'email': widget.firebaseUser.email,
 
-        'accountCreationTimestamp':
+        'creationDate':
             widget.firebaseUser.metadata.creationTimestamp,
       });
     });
@@ -661,7 +661,7 @@ class HomePageState extends State<HomePage> {
                         child: CachedNetworkImage(
                           key: new ValueKey<String>(
                               DateTime.now().millisecondsSinceEpoch.toString()),
-                          imageUrl: ds['photoURL'],
+                          imageUrl: ds['avatar'],
                           placeholder: (context, url) => new Container(),
                         ),
                       ),
@@ -670,7 +670,7 @@ class HomePageState extends State<HomePage> {
                     Container(
                         padding: const EdgeInsets.only(top: 8.0, left: 15.0),
                         alignment: Alignment.centerLeft,
-                        child: Text('${ds['displayName']}',
+                        child: Text('${ds['name']}',
                             style: TextStyle(
                                 fontSize: 20.0,
                                 fontWeight: FontWeight.bold,
@@ -721,7 +721,7 @@ class HomePageState extends State<HomePage> {
                     child: CachedNetworkImage(
                       key: new ValueKey<String>(
                           DateTime.now().millisecondsSinceEpoch.toString()),
-                      imageUrl: ds['photoURL'],
+                      imageUrl: ds['avatar'],
                       placeholder: (context, url) => new Container(),
                     ),
                   ),
@@ -730,7 +730,7 @@ class HomePageState extends State<HomePage> {
                 Container(
                     padding: const EdgeInsets.only(top: 8.0, left: 15.0),
                     alignment: Alignment.centerLeft,
-                    child: Text('${ds['displayName']}',
+                    child: Text('${ds['name']}',
                         style: TextStyle(
                             fontSize: 20.0,
                             fontWeight: FontWeight.bold,
@@ -829,11 +829,11 @@ class HomePageState extends State<HomePage> {
           details.add(ds.documentID);
           details.add(ds['email']);
           var date1 = new DateTime.fromMillisecondsSinceEpoch(
-              ds['accountCreationTimestamp']);
+              ds['creationDate']);
           details.add(date1.toString());
 
           var date2 = new DateTime.fromMillisecondsSinceEpoch(
-              ds['lastActiveTimestamp']);
+              ds['lastActive']);
           details.add(date2.toString());
           return Column(
             children: <Widget>[
@@ -970,7 +970,7 @@ class HomePageState extends State<HomePage> {
                                                           Icons.shopping_cart),
                                                       //leading: Icon(Icons.build),
                                                       title: Text(
-                                                        '${ownerDS['displayName']}\'s ${itemDS['name']}',
+                                                        '${ownerDS['name']}\'s ${itemDS['name']}',
                                                         style: TextStyle(
                                                             fontWeight:
                                                                 FontWeight
@@ -1155,15 +1155,15 @@ class HomePageState extends State<HomePage> {
 
                                                           String title =
                                                               otherUserDS[
-                                                                  'displayName'];
+                                                                  'name'];
                                                           String imageURL =
                                                               otherUserDS[
-                                                                  'photoURL'];
+                                                                  'avatar'];
                                                           String lastActive = 'Last seen: ' +
                                                               timeago.format(DateTime
                                                                   .fromMillisecondsSinceEpoch(
                                                                       otherUserDS[
-                                                                          'lastActiveTimestamp']));
+                                                                          'lastActive']));
                                                           String itemName =
                                                               'Item: ${itemDS['name']}';
                                                           String lastMessage =
@@ -1288,7 +1288,7 @@ class HomePageState extends State<HomePage> {
         await Firestore.instance.collection('users').document(userID).get();
     if (ds != null) {
       out = new UserEdit(
-          id: userID, photoUrl: ds['photoURL'], displayName: ds['displayName']);
+          id: userID, photoUrl: ds['avatar'], displayName: ds['name']);
     }
 
     return out;
@@ -1308,8 +1308,8 @@ class HomePageState extends State<HomePage> {
 
     if (result != null) {
       Firestore.instance.collection('users').document(userID).updateData({
-        'displayName': result.displayName,
-        'photoURL': result.photoUrl,
+        'name': result.displayName,
+        'avatar': result.photoUrl,
       });
     }
   }
