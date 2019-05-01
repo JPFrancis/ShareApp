@@ -117,8 +117,9 @@ class HomePageState extends State<HomePage> {
 
     final bottomTabPages = <Widget>[
       homeTabPage(),
-      rentalsTabPage(),
-      myListingsTabPage(),
+      myRentalsPage(),
+      //myListingsTabPage(),
+      myListingsPage(),
       messagesTabPage(),
       profileTabPage(),
     ];
@@ -416,37 +417,90 @@ class HomePageState extends State<HomePage> {
     }
   }
 
-  Widget buildItemList() {
-    CollectionReference collectionReference =
-        Firestore.instance.collection('items');
-    int tilerows = MediaQuery.of(context).size.width > 500 ? 3 : 2;
-    return Expanded(
-      child: StreamBuilder<QuerySnapshot>(
-        stream: collectionReference.snapshots(),
-        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.hasError) {
-            return new Text('${snapshot.error}');
-          }
-          switch (snapshot.connectionState) {
-            case ConnectionState.waiting:
-              return new Center(
-                child: new Container(),
-              );
-            default:
-              List<DocumentSnapshot> items = snapshot.data.documents.toList();
-              return GridView.count(
-                  crossAxisCount: tilerows,
-                  childAspectRatio: (2 / 3),
-                  padding: const EdgeInsets.all(20.0),
-//                  mainAxisSpacing: 10.0,
-                  crossAxisSpacing: MediaQuery.of(context).size.width / 15,
-                  children: items
-                      .map((DocumentSnapshot ds) => cardItem(ds))
-                      .toList());
-          }
-        },
-      ),
+  Widget cardItemRentals(ds, ownerDS, rentalDS) {
+    CachedNetworkImage image = CachedNetworkImage(
+      key: new ValueKey<String>(
+          DateTime.now().millisecondsSinceEpoch.toString()),
+      imageUrl: ds['images'][0],
+      placeholder: (context, url) => new CircularProgressIndicator(),
     );
+    return new Container(child: new LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+      double h = constraints.maxHeight;
+      double w = constraints.maxWidth;
+
+      return InkWell(
+        onTap: () {
+          navigateToDetail(ds.documentID);
+        },
+        child: Column(
+          children: <Widget>[
+            Container(
+                height: 1.5 * h / 3,
+                width: w,
+                child: FittedBox(fit: BoxFit.cover, child: image)),
+            SizedBox(
+              height: 10.0,
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    ds['type'] != null
+                        ? Text(
+                            '${ds['type']}'.toUpperCase(),
+                            style: TextStyle(
+                                fontSize: h / 25,
+                                fontFamily: 'Quicksand',
+                                fontWeight: FontWeight.bold),
+                          )
+                        : Text(''),
+                  ],
+                ),
+                Text('${ownerDS['displayName']}\'s ${ds['name']}',
+                    style: TextStyle(
+                        fontSize: h / 20,
+                        fontFamily: 'Quicksand',
+                        fontWeight: FontWeight.bold)),
+                Text("\$${ds['price']} per hour",
+                    style:
+                        TextStyle(fontSize: h / 21, fontFamily: 'Quicksand')),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: <Widget>[
+                    IconButton(
+                      icon: Icon(Icons.shopping_cart),
+                      onPressed: () {
+                        Navigator.pushNamed(
+                          context,
+                          RentalDetail.routeName,
+                          arguments: RentalDetailArgs(
+                            rentalDS.documentID,
+                          ),
+                        );
+                      },
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.message),
+                      onPressed: () {
+                        Navigator.pushNamed(
+                          context,
+                          Chat.routeName,
+                          arguments: ChatArgs(
+                            rentalDS.documentID,
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                )
+              ],
+            ),
+          ],
+        ),
+      );
+    }));
   }
 
   Widget homeTabPage() {
@@ -462,7 +516,7 @@ class HomePageState extends State<HomePage> {
                   fontWeight: FontWeight.bold,
                   fontSize: 30.0)),
         ),
-        buildItemList(),
+        buildItemList('all'),
       ],
     );
   }
@@ -496,19 +550,32 @@ class HomePageState extends State<HomePage> {
     );
   }
 
-  Widget rentalsTabPage() {
-    return Padding(
-      padding: edgeInset,
-      child: Column(
-        children: <Widget>[
-          reusableObjList(
-              'Items I\'m currently renting', buildRentalsList(true)),
-          Container(
-            height: padding,
+Widget myRentalsPage() {
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          bottom: TabBar(
+            tabs: [
+              Tab(text: "renting"),
+              Tab(text: "requesting"),
+            ],
           ),
-          reusableObjList(
-              'Items I have requested to rent', buildRentalsList(false)),
-        ],
+        ),
+        body: TabBarView(
+          children: [
+            Column(
+              children: <Widget>[
+                buildRentalsListtest(true),
+              ],
+            ),
+            Column(
+              children: <Widget>[
+                buildRentalsListtest(false),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -543,17 +610,21 @@ class HomePageState extends State<HomePage> {
     );
   }
 
-  Widget buildMyListingsList(bool status) {
+  Widget buildItemList([type = 'all', bool status]) {
     CollectionReference collectionReference =
         Firestore.instance.collection('items');
     int tilerows = MediaQuery.of(context).size.width > 500 ? 3 : 2;
+    Stream stream = collectionReference.snapshots();
+    if (type == 'listings') {
+      stream = collectionReference
+          .where('creator',
+              isEqualTo:
+                  Firestore.instance.collection('users').document(userID))
+          .snapshots();
+    }
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
-        stream: collectionReference
-            .where('creator',
-                isEqualTo:
-                    Firestore.instance.collection('users').document(userID))
-            .snapshots(),
+        stream: stream,
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
             return new Text('${snapshot.error}');
@@ -566,14 +637,16 @@ class HomePageState extends State<HomePage> {
             default:
               List<DocumentSnapshot> items = snapshot.data.documents.toList();
               return GridView.count(
+                  shrinkWrap: true,
                   crossAxisCount: tilerows,
                   childAspectRatio: (2 / 3),
                   padding: const EdgeInsets.all(20.0),
 //                  mainAxisSpacing: 10.0,
                   crossAxisSpacing: MediaQuery.of(context).size.width / 15,
                   children: items
-                      .map(
-                          (DocumentSnapshot ds) => cardItemListings(ds, status))
+                      .map((DocumentSnapshot ds) => type == 'listings'
+                          ? cardItemListings(ds, status)
+                          : cardItem(ds))
                       .toList());
           }
         },
@@ -581,23 +654,32 @@ class HomePageState extends State<HomePage> {
     );
   }
 
-  Widget myListingsTabPage() {
-    return Padding(
-      padding: edgeInset,
-      child: Column(
-        children: <Widget>[
-          reusableObjList(
-            'My items that are available to rent',
-            buildMyListingsList(false),
+  Widget myListingsPage() {
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          bottom: TabBar(
+            tabs: [
+              Tab(text: "available"),
+              Tab(text: "being rented"),
+            ],
           ),
-          Container(
-            height: padding,
-          ),
-          reusableObjList(
-            'My items that are currently being rented',
-            buildMyListingsList(true),
-          ),
-        ],
+        ),
+        body: TabBarView(
+          children: [
+            Column(
+              children: <Widget>[
+                buildItemList('listings', false),
+              ],
+            ),
+            Column(
+              children: <Widget>[
+                buildItemList('listings', true),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -652,7 +734,6 @@ class HomePageState extends State<HomePage> {
               return new Container(
                 child: Column(
                   children: <Widget>[
-                    // User Icon
                     Container(
                       padding: EdgeInsets.only(left: 15.0),
                       alignment: Alignment.topLeft,
@@ -666,7 +747,6 @@ class HomePageState extends State<HomePage> {
                         ),
                       ),
                     ),
-                    // username
                     Container(
                         padding: const EdgeInsets.only(top: 8.0, left: 15.0),
                         alignment: Alignment.centerLeft,
@@ -675,14 +755,12 @@ class HomePageState extends State<HomePage> {
                                 fontSize: 20.0,
                                 fontWeight: FontWeight.bold,
                                 fontFamily: 'Quicksand'))),
-                    // email
                     Container(
                         padding: const EdgeInsets.only(top: 4.0, left: 15.0),
                         alignment: Alignment.centerLeft,
                         child: Text('${ds['email']}',
                             style: TextStyle(
                                 fontSize: 15.0, fontFamily: 'Quicksand'))),
-                    //
                     Container(
                         alignment: Alignment.centerLeft,
                         child: FlatButton(
@@ -768,6 +846,7 @@ class HomePageState extends State<HomePage> {
     return Container(
       height: height,
       child: ListView(
+        shrinkWrap: true,
         children: <Widget>[
           /// I'll remove this later, I'm just using it to quickly switch accounts
           reusableCategory("ACCOUNT SETTINGS"),
@@ -1029,6 +1108,139 @@ class HomePageState extends State<HomePage> {
                   );
                 },
               );
+          }
+        },
+      ),
+    );
+  }
+
+  Widget buildRentalsListtest(bool requesting) {
+    CollectionReference collectionReference =
+        Firestore.instance.collection('users');
+    int tilerows = MediaQuery.of(context).size.width > 500 ? 3 : 2;
+    return Expanded(
+      child: StreamBuilder<QuerySnapshot>(
+        stream: collectionReference
+            .document(userID)
+            .collection('rentals')
+            .snapshots(),
+        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          if (snapshot.hasError) {
+            return new Text('${snapshot.error}');
+          }
+          switch (snapshot.connectionState) {
+            case ConnectionState.waiting:
+              return new Center(
+                child: new Container(),
+              );
+            default:
+              List<DocumentSnapshot> items = snapshot.data.documents.toList();
+              return GridView.count(
+                  shrinkWrap: true,
+                  crossAxisCount: tilerows,
+                  childAspectRatio: (2 / 3),
+                  crossAxisSpacing: MediaQuery.of(context).size.width / 15,
+                  children: items.map((DocumentSnapshot userRentalDS) {
+                    DocumentReference rentalDR = userRentalDS['rental'];
+
+                    return StreamBuilder<DocumentSnapshot>(
+                      stream: rentalDR.snapshots(),
+                      builder: (BuildContext context,
+                          AsyncSnapshot<DocumentSnapshot> snapshot) {
+                        if (snapshot.hasError) {
+                          return new Text('${snapshot.error}');
+                        }
+                        switch (snapshot.connectionState) {
+                          case ConnectionState.waiting:
+                            return Center(
+                              child: new Container(),
+                            );
+                          default:
+                            if (snapshot.hasData) {
+                              DocumentSnapshot rentalDS = snapshot.data;
+                              DocumentReference itemDR = rentalDS['item'];
+                              DocumentReference renterDR = rentalDS['renter'];
+
+                              if (userID == renterDR.documentID) {
+                                return StreamBuilder<DocumentSnapshot>(
+                                  stream: itemDR.snapshots(),
+                                  builder: (BuildContext context,
+                                      AsyncSnapshot<DocumentSnapshot>
+                                          snapshot) {
+                                    if (snapshot.hasError) {
+                                      return new Text('${snapshot.error}');
+                                    }
+                                    switch (snapshot.connectionState) {
+                                      case ConnectionState.waiting:
+                                        return Center(
+                                          child: new Container(),
+                                        );
+                                      default:
+                                        if (snapshot.hasData) {
+                                          DocumentSnapshot itemDS =
+                                              snapshot.data;
+                                          DocumentReference ownerDR =
+                                              itemDS['creator'];
+
+                                          if (requesting ^
+                                              (rentalDS['status'] == 1)) {
+                                            return StreamBuilder<
+                                                DocumentSnapshot>(
+                                              stream: ownerDR.snapshots(),
+                                              builder: (BuildContext context,
+                                                  AsyncSnapshot<
+                                                          DocumentSnapshot>
+                                                      snapshot) {
+                                                if (snapshot.hasError) {
+                                                  return new Text(
+                                                      '${snapshot.error}');
+                                                }
+                                                switch (
+                                                    snapshot.connectionState) {
+                                                  case ConnectionState.waiting:
+                                                    return Center(
+                                                      child: new Container(),
+                                                    );
+                                                  default:
+                                                    if (snapshot.hasData) {
+                                                      DocumentSnapshot ownerDS =
+                                                          snapshot.data;
+
+                                                      String created = 'Created: ' +
+                                                          timeago.format(DateTime
+                                                              .fromMillisecondsSinceEpoch(
+                                                                  rentalDS[
+                                                                      'created']));
+
+                                                      return cardItemRentals(
+                                                          itemDS,
+                                                          ownerDS,
+                                                          rentalDS);
+                                                    } else {
+                                                      return Container();
+                                                    }
+                                                }
+                                              },
+                                            );
+                                          } else {
+                                            return Container();
+                                          }
+                                        } else {
+                                          return Container();
+                                        }
+                                    }
+                                  },
+                                );
+                              } else {
+                                return Container();
+                              }
+                            } else {
+                              return Container();
+                            }
+                        }
+                      },
+                    );
+                  }).toList());
           }
         },
       ),

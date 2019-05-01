@@ -6,8 +6,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' as intl;
 import 'package:shareapp/models/user_edit.dart';
+
+import 'package:shareapp/extras/quote_icons.dart';
 
 enum DismissDialogAction {
   cancel,
@@ -32,13 +34,15 @@ class ProfileEditState extends State<ProfileEdit> {
   final GlobalKey<FormState> formKey = new GlobalKey<FormState>();
 
   TextEditingController displayNameController = TextEditingController();
-  
+
   DateTime selectedDate = DateTime.now();
 
   Future<File> selectedImage;
   File imageFile;
   String photoURL;
   bool isUploading = false;
+
+  String font = 'Quicksand';
 
   TextStyle textStyle;
   TextStyle inputTextStyle;
@@ -89,36 +93,72 @@ class ProfileEditState extends State<ProfileEdit> {
       key: formKey,
       onWillPop: onWillPop,
       child: ListView(
-        padding:
-            EdgeInsets.only(top: 30.0, bottom: 10.0, left: 18.0, right: 18.0),
-        children: <Widget>[
-          previewImage(),
-          showDisplayNameEditor(),
-          Divider(),
-          Text("About me"),
-          showAboutMe(),
-          Divider(),
-          Text("Private Details"),
-          showGenderSelecter(),
-          datePicker(),
-          Text("email placeholder"),
-          Text("government ID placeholder"),
-          Text("emergency contact placeholder"),
-          Divider(),
-          Text("Optional Details"),
-          showProfileOptions(),
-        ].map<Widget>((Widget child) {
-          return Container(
-            padding: const EdgeInsets.symmetric(vertical: 11),
-            child: child,
-          );
-        }).toList(),
-      ),
+          padding: EdgeInsets.only(top: 40.0, left: 25.0, right: 25.0),
+          children: <Widget>[
+            image(),
+            SizedBox(height: 10.0),
+            showDisplayNameEditor(),
+            divider(),
+            reusableCategory("ABOUT ME"),
+            showAboutMe(),
+            divider(),
+            reusableCategory("PRIVATE DETAILS"),
+            Container(
+                color: Colors.white,
+                child: Column(
+                  children: <Widget>[
+                    showGenderSelecter(),
+                    birthPicker(),
+                    emailEntry(),
+                    phoneEntry(),
+                  ]
+                      .map((Widget child) => Container(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 10.0, vertical: 10.0),
+                            child: Column(
+                              children: <Widget>[child, Divider()],
+                            ),
+                          ))
+                      .toList(),
+                )),
+          ]),
     );
   }
 
-  Widget datePicker() {
-    var formatter = new DateFormat('MMMM d, y');
+  Widget reusableCategory(text) {
+    return Container(
+        padding: EdgeInsets.only(top: 10.0, bottom: 15.0),
+        alignment: Alignment.centerLeft,
+        child: Text(text, style: TextStyle(fontSize: 11.0, fontWeight: FontWeight.w400,fontFamily: font),));
+  }
+
+  Widget divider() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Divider(),
+    );
+  }
+
+  Widget emailEntry() {
+    return InkWell(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: <Widget>[Text("Email", style: TextStyle(fontFamily: font, fontWeight: FontWeight.w500)), Text("rohith2017324@gmail.com", style: TextStyle(fontFamily: font),)],
+        ),
+        onTap: null);
+  }
+
+  Widget phoneEntry() {
+    return InkWell(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: <Widget>[Text("Phone", style: TextStyle(fontFamily: font, fontWeight: FontWeight.w500)), Text("999-999-9999", style: TextStyle(fontFamily: font),)],
+        ),
+        onTap: null);
+  }
+
+  Widget birthPicker() {
+    var formatter = new intl.DateFormat('MMMM d, y');
     String formatted = formatter.format(selectedDate);
 
     Future<Null> _selectDate(BuildContext context) async {
@@ -135,110 +175,78 @@ class ProfileEditState extends State<ProfileEdit> {
     }
 
     return InkWell(
-      child: Text(formatted),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          Text("Birth Date", style: TextStyle(fontFamily: font, fontWeight: FontWeight.w500),),
+          Text(formatted, style: TextStyle(fontFamily: font),),
+        ],
+      ),
       onTap: () => _selectDate(context),
     );
   }
 
   Widget showGenderSelecter() {
     return Container(
-      padding: EdgeInsets.only(left: 15.0, right: 15.0),
-      child: DropdownButton<String>(
-          // [todo value]
-          hint: Text('Gender'),
-          onChanged: (String newValue) {
-            // [todo]
-          },
-          items: ["Male", "Female", "Other"]
-              .map(
-                (gender) => DropdownMenuItem<String>(
-                      value: gender,
-                      child: Text(gender),
-                    ),
-              )
-              .toList()),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+            isDense: true,
+            isExpanded: true,
+            // [todo value]
+            hint: Text('Gender', style: TextStyle(fontFamily: font, fontWeight: FontWeight.w500),),
+            onChanged: (String newValue) {
+              // [todo]
+            },
+            items: ["Male", "Female", "Other"]
+                .map(
+                  (gender) => DropdownMenuItem<String>(
+                        value: gender,
+                        child: Text(gender, style: TextStyle(fontFamily: font),),
+                      ),
+                )
+                .toList()),
+      ),
     );
   }
 
   Widget showAboutMe() {
     double width = MediaQuery.of(context).size.width;
-    return Container(
-      alignment: Alignment.center,
-      child: Center(
-        child: TextField(
+    return Center(
+      child: Column(children: <Widget>[
+        Align(alignment: Alignment.topLeft, child: Icon(QuoteIcons.quote_left)),
+        TextField(
+          maxLines: null,
+          keyboardType: TextInputType.multiline,
+          textAlign: TextAlign.center,
           cursorColor: Colors.blueAccent,
-          style: textStyle,
-          onChanged: (value) {
-//            userEditCopy.displayName = displayNameController.text;
-          },
-          decoration: InputDecoration.collapsed(hintText: "Description"),
+          style: TextStyle(fontFamily: font, fontSize: width/20),
+          // onChanged: (value) { userEditCopy.displayName = displayNameController.text; },
+          decoration: InputDecoration(
+            border: InputBorder.none,
+            hintText: "Description",
+          ),
         ),
-      ),
+        Align(
+            alignment: Alignment.bottomRight,
+            child: Icon(QuoteIcons.quote_right)),
+      ]),
     );
   }
 
   Widget showDisplayNameEditor() {
     double width = MediaQuery.of(context).size.width;
-    return Container(
-      alignment: Alignment.center,
-      child: Center(
-        child: TextField(
-          cursorColor: Colors.blueAccent,
-          controller: displayNameController,
-          style: textStyle,
-          onChanged: (value) {
-            userEditCopy.displayName = displayNameController.text;
-          },
-          decoration: InputDecoration.collapsed(hintText: "Name"),
-        ),
+    return Center(
+      child: TextField(
+        textAlign: TextAlign.center,
+        cursorColor: Colors.blueAccent,
+        controller: displayNameController,
+        style: TextStyle(fontFamily: font, fontSize: width/15),
+        onChanged: (value) {
+          userEditCopy.displayName = displayNameController.text;
+        },
+        decoration: InputDecoration.collapsed(hintText: "Name" ),
       ),
     );
-  }
-
-  Widget showProfileOptions() {
-    return Container(
-        child: Row(
-      children: <Widget>[
-        Container(
-          height: 120,
-          width: 120,
-          child: previewImage(),
-        ),
-        Container(
-          width: 15,
-        ),
-        Column(
-          children: <Widget>[
-            RaisedButton(
-              shape: new RoundedRectangleBorder(
-                  borderRadius: new BorderRadius.circular(5.0)),
-              color: Colors.red,
-              textColor: Colors.white,
-              child: Text(
-                "Take picture",
-                textScaleFactor: 1.25,
-              ),
-              onPressed: () {
-                onImageButtonPressed(ImageSource.camera);
-              },
-            ),
-            RaisedButton(
-              shape: new RoundedRectangleBorder(
-                  borderRadius: new BorderRadius.circular(5.0)),
-              color: Colors.red,
-              textColor: Colors.white,
-              child: Text(
-                "Pick from gallery",
-                textScaleFactor: 1.25,
-              ),
-              onPressed: () {
-                onImageButtonPressed(ImageSource.gallery);
-              },
-            ),
-          ],
-        ),
-      ],
-    ));
   }
 
   Widget showCurrentProfilePic() {
@@ -265,24 +273,28 @@ class ProfileEditState extends State<ProfileEdit> {
     });
   }
 
-  Widget previewImage() {
-    return Container(
-      child: FutureBuilder<File>(
-          future: selectedImage,
-          builder: (BuildContext context, AsyncSnapshot<File> snapshot) {
-            if (snapshot.connectionState == ConnectionState.done &&
-                snapshot.data != null) {
-              imageFile = snapshot.data;
-              return Image.file(imageFile);
-            } else if (snapshot.error != null) {
-              return const Text(
-                'Error',
-                textAlign: TextAlign.center,
-              );
-            } else {
-              return showCurrentProfilePic();
-            }
-          }),
+  Widget image() {
+    return Center(
+      child: InkWell(
+        onTap: () => onImageButtonPressed(ImageSource.gallery),
+        child: FutureBuilder<File>(
+            future: selectedImage,
+            builder: (BuildContext context, AsyncSnapshot<File> snapshot) {
+              if (snapshot.connectionState == ConnectionState.done &&
+                  snapshot.data != null) {
+                imageFile = snapshot.data;
+                return Image.file(imageFile);
+              } else if (snapshot.error != null) {
+                return const Text(
+                  'Error',
+                  textAlign: TextAlign.center,
+                );
+              } else {
+                return showCurrentProfilePic();
+              }
+            }),
+      ),
+      // Icon(Icons.edit)
     );
   }
 

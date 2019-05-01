@@ -85,6 +85,7 @@ dev_dependencies:
 
 # The following section is specific to Flutter.
 flutter:
+  uses-material-design: true
   fonts:
     - family: Quicksand
       fonts:
@@ -96,11 +97,13 @@ flutter:
           weight: 300
         - asset: fonts/Quicksand-Medium.ttf
           weight: 500
+    - family: QuoteIcons
+      fonts:
+       - asset: fonts/QuoteIcons.ttf
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
-  uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
   # assets:
