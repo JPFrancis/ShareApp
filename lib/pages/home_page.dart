@@ -37,6 +37,8 @@ class HomePageState extends State<HomePage> {
   String userID;
   List<Item> itemList;
 
+  List bottomNavBarTiles;
+  List bottomTabPages;
   int currentTabIndex;
   bool isLoading;
 
@@ -50,6 +52,17 @@ class HomePageState extends State<HomePage> {
 
     currentTabIndex = 0;
 
+    bottomNavBarTiles = <BottomNavigationBarItem>[
+      BottomNavigationBarItem(icon: Icon(Icons.search), title: Text('Search')),
+      BottomNavigationBarItem(
+          icon: Icon(Icons.shopping_cart), title: Text('Rentals')),
+      BottomNavigationBarItem(
+          icon: Icon(Icons.style), title: Text('My Listings')),
+      BottomNavigationBarItem(icon: Icon(Icons.forum), title: Text('Messages')),
+      BottomNavigationBarItem(
+          icon: Icon(Icons.account_circle), title: Text('Profile')),
+    ];
+
     padding = 18;
     edgeInset = EdgeInsets.only(
         left: padding, right: padding, bottom: padding, top: 30);
@@ -57,7 +70,6 @@ class HomePageState extends State<HomePage> {
     userID = widget.firebaseUser.uid;
 
     setPrefs();
-
     handleInitUser();
   }
 
@@ -115,7 +127,7 @@ class HomePageState extends State<HomePage> {
       });
     });
 
-    final bottomTabPages = <Widget>[
+    bottomTabPages = <Widget>[
       homeTabPage(),
       myRentalsPage(),
       //myListingsTabPage(),
@@ -124,29 +136,7 @@ class HomePageState extends State<HomePage> {
       profileTabPage(),
     ];
 
-    final bottomNavBarTiles = <BottomNavigationBarItem>[
-      BottomNavigationBarItem(icon: Icon(Icons.search), title: Text('Search')),
-      BottomNavigationBarItem(
-          icon: Icon(Icons.shopping_cart), title: Text('Rentals')),
-      BottomNavigationBarItem(
-          icon: Icon(Icons.style), title: Text('My Listings')),
-      BottomNavigationBarItem(icon: Icon(Icons.forum), title: Text('Messages')),
-      BottomNavigationBarItem(
-          icon: Icon(Icons.account_circle), title: Text('Profile')),
-      //more_horiz
-      //view_headline
-    ];
     assert(bottomTabPages.length == bottomNavBarTiles.length);
-    final bottomNavBar = BottomNavigationBar(
-      items: bottomNavBarTiles,
-      currentIndex: currentTabIndex,
-      type: BottomNavigationBarType.fixed,
-      onTap: (int index) {
-        setState(() {
-          currentTabIndex = index;
-        });
-      },
-    );
 
     return Scaffold(
       body: isLoading
@@ -158,38 +148,50 @@ class HomePageState extends State<HomePage> {
                     Center(child: CircularProgressIndicator())
                   ]),
             )
-          : bottomTabPages[currentTabIndex],
+          : IndexedStack(
+              index: currentTabIndex,
+              children: bottomTabPages,
+            ),
       floatingActionButton: showFAB(),
-      bottomNavigationBar: bottomNavBar,
+      bottomNavigationBar: BottomNavigationBar(
+        items: bottomNavBarTiles,
+        currentIndex: currentTabIndex,
+        type: BottomNavigationBarType.fixed,
+        onTap: (int index) {
+          setState(() {
+            currentTabIndex = index;
+          });
+        },
+      ),
     );
   }
 
   FloatingActionButton showFAB() {
-    if (currentTabIndex == 2) {
-      return FloatingActionButton(
-        onPressed: () {
-          navigateToEdit(
-            Item(
-              id: null,
-              status: true,
-              creator: Firestore.instance.collection('users').document(userID),
-              name: '',
-              description: '',
-              type: null,
-              condition: null,
-              price: 0,
-              numImages: 0,
-              images: new List(),
-              location: null,
-              rental: null,
-            ),
-          );
-        },
-        tooltip: 'Add new item',
-        child: Icon(Icons.add),
-      );
-    }
-    return null;
+    return currentTabIndex == 2
+        ? FloatingActionButton(
+            onPressed: () {
+              navigateToEdit(
+                Item(
+                  id: null,
+                  status: true,
+                  creator:
+                      Firestore.instance.collection('users').document(userID),
+                  name: '',
+                  description: '',
+                  type: null,
+                  condition: null,
+                  price: 0,
+                  numImages: 0,
+                  images: new List(),
+                  location: null,
+                  rental: null,
+                ),
+              );
+            },
+            tooltip: 'Add new item',
+            child: Icon(Icons.add),
+          )
+        : null;
   }
 
   Widget cardItem(DocumentSnapshot ds) {
@@ -529,7 +531,7 @@ class HomePageState extends State<HomePage> {
       child: Container(
         child: RaisedButton(
           color: Colors.white,
-          onPressed: () => debugPrint,
+          onPressed: () => print,
           child: Row(
             children: <Widget>[
               Icon(Icons.search),
@@ -1601,7 +1603,7 @@ void showSnackBar(BuildContext context, String item) {
     action: SnackBarAction(
         label: "Undo",
         onPressed: () {
-          debugPrint('Performing dummy UNDO operation');
+          // do something
         }),
   );
 

@@ -119,16 +119,7 @@ class ItemDetailState extends State<ItemDetail> {
         body: RefreshIndicator(
           key: refreshIndicatorKey,
           onRefresh: getSnapshots,
-          child: isLoading
-              ? Container(
-                  child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: <Widget>[
-                        Center(child: CircularProgressIndicator())
-                      ]),
-                )
-              : showBody(),
+          child: isLoading ? Container() : showBody(),
         ),
         //floatingActionButton: showFAB(),
         bottomNavigationBar: isLoading
@@ -318,7 +309,7 @@ class ItemDetailState extends State<ItemDetail> {
                 fontFamily: 'Quicksand'),
           ),
           Text(
-            ' / HOUR',
+            ' / DAY',
             style: TextStyle(
                 color: Colors.black, fontSize: 12.0, fontFamily: 'Quicksand'),
           )
