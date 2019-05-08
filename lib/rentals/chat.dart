@@ -11,6 +11,8 @@ import 'package:intl/intl.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:shareapp/extras/helpers.dart';
+
 class Chat extends StatelessWidget {
   static const routeName = '/chat';
   final String rentalID;
@@ -23,15 +25,6 @@ class Chat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
-      appBar: new AppBar(
-        title: new Text(
-          'Chat',
-          style: TextStyle(
-            color: Colors.white /*primaryColor*/,
-          ),
-        ),
-        //centerTitle: true,
-      ),
       body: new ChatScreen(
         rentalID: rentalID,
       ),
@@ -63,7 +56,7 @@ class ChatScreenState extends State<ChatScreen> {
 
   var listMessage;
 
-  Color primaryColor = Colors.red;
+  Color primaryColor = Color.fromRGBO(80, 150, 150, 1);
   double fontSize = 16;
   double headingFontSize = 20;
   Color red = Colors.red;
@@ -320,7 +313,9 @@ class ChatScreenState extends State<ChatScreen> {
                         child: Text(
                           document['content'],
                           style: TextStyle(
-                              color: Colors.white, fontSize: fontSize),
+                              color: Colors.white,
+                              fontSize: fontSize,
+                              fontFamily: 'Quicksand'),
                         ),
                         padding: EdgeInsets.fromLTRB(15.0, 10.0, 15.0, 10.0),
                         width: 200.0,
@@ -452,26 +447,34 @@ class ChatScreenState extends State<ChatScreen> {
               children: <Widget>[
                 Column(
                   children: <Widget>[
+                    SizedBox(
+                      height: 30.0,
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: <Widget>[
+                      FlatButton(child: BackButton(), onPressed:()=> Navigator.pop(context),),
+                      Align(
+                        alignment: Alignment.bottomCenter,
+                        child: Text( '${renterDS['name']}', style: TextStyle(fontSize: 20.0, fontFamily: 'Quicksand'),
+                        ),
+                      ),
+                      FlatButton(child: Icon(Icons.more_horiz), onPressed: null,)
+                    ],),
+                    Divider(color: Colors.black45,),
                     Container(
-                      height: 20,
+                      height: 40.0,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: <Widget>[
+                        Align(
+                          alignment: Alignment.bottomCenter,
+                          child: FlatButton( child: Text( '[status]', style: TextStyle(fontSize: 15.0, fontFamily: 'Quicksand', color: Colors.grey),), onPressed: null),
+                        ),
+                        FlatButton(onPressed: null, child: Text("Details", style: TextStyle(fontFamily: 'Quicksand', color: primaryColor),),)
+                      ],),
                     ),
-                    Text(
-                      'Item name: ${itemDS['name']}',
-                      style: TextStyle(fontSize: headingFontSize),
-                    ),
-                    Text(
-                      'Item owner: ${ownerDS['name']}',
-                      style: TextStyle(fontSize: headingFontSize),
-                    ),
-                    Text(
-                      'Item renter: ${renterDS['name']}',
-                      style: TextStyle(fontSize: headingFontSize),
-                    ),
-                    Divider(
-                      height: 50,
-                      color: Colors.black,
-                    ),
-
+                    Divider(),
                     // List of messages
                     buildListMessage(),
 

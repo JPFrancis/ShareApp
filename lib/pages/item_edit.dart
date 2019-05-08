@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -269,24 +270,46 @@ class ItemEditState extends State<ItemEdit> {
   }
 
   Widget showImageButtons() {
+    _showAlertDialog(BuildContext context) {
+      // set up the buttons
+      Widget cameraButton = FlatButton(
+        child: Icon(Icons.camera),
+        onPressed: () {},
+      );
+      Widget galleryButton = FlatButton(
+        child: Icon(Icons.image),
+        onPressed: () {
+          loadAssets();
+          Navigator.pop(context);
+        },
+      );
+
+      CupertinoAlertDialog alert = CupertinoAlertDialog(
+        actions: [
+          cameraButton,
+          galleryButton,
+        ],
+      );
+      // show the dialog
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return alert;
+        },
+      );
+    }
+
     return Container(
       child: Row(
         children: <Widget>[
           Expanded(
             child: RaisedButton(
-              color: Colors.white,
-              textColor: Colors.black,
-              child: Text(
-                "Add More Photos",
-              ),
-              onPressed: imageButton
-                  ? () {
-                      setState(() {
-                        loadAssets();
-                      });
-                    }
-                  : null,
-            ),
+                color: Colors.white,
+                textColor: Colors.black,
+                child: Text("Add Images"),
+                onPressed: () {
+                  _showAlertDialog(context);
+                }),
           ),
           /*
           Expanded(
@@ -304,8 +327,7 @@ class ItemEditState extends State<ItemEdit> {
                   : () {
                       deleteImagesWarning();
                     },
-            ),
-          ),*/
+            ),*/
         ],
       ),
     );
@@ -326,21 +348,16 @@ class ItemEditState extends State<ItemEdit> {
   }
 
   Widget showItemLocation() {
+    Widget toret;
     if (itemCopy.location == null) {
       return Container();
+    } else {
+      double widthOfScreen = MediaQuery.of(context).size.width;
+      GeoPoint gp = itemCopy.location;
+      double lat = gp.latitude;
+      double long = gp.longitude;
 
-      /// @rohith change this to whatever you want
-    }
-
-    double widthOfScreen = MediaQuery.of(context).size.width;
-    GeoPoint gp = itemCopy.location;
-    double lat = gp.latitude;
-    double long = gp.longitude;
-
-    return Padding(
-      padding: const EdgeInsets.only(
-          left: 20.0, right: 20.0, top: 20.0, bottom: 20.0),
-      child: Center(
+      toret = Center(
         child: SizedBox(
           width: widthOfScreen,
           height: 200.0,
@@ -383,8 +400,10 @@ class ItemEditState extends State<ItemEdit> {
             */
           ),
         ),
-      ),
-    );
+      );
+    }
+
+    return toret;
   }
 
   Widget showLocationButtons() {
