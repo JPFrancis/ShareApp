@@ -12,6 +12,8 @@ import 'package:shareapp/rentals/item_request.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:shareapp/extras/helpers.dart';
+
 class ItemDetail extends StatefulWidget {
   static const routeName = '/itemDetail';
   final String itemID;
@@ -212,7 +214,7 @@ class ItemDetailState extends State<ItemDetail> {
       children: <Widget>[
         Stack(children: <Widget>[
           showItemImages(),
-          backButton(),
+          backButton(context),
         ]),
         showItemType(),
         showItemName(),
@@ -222,19 +224,6 @@ class ItemDetailState extends State<ItemDetail> {
         divider(),
         showItemLocation(),
       ],
-    );
-  }
-
-  Widget backButton() {
-    return Container(
-      alignment: Alignment.topLeft,
-      child: FloatingActionButton(
-        child: BackButton(),
-        onPressed: () => goToLastScreen(),
-        backgroundColor: Colors.transparent,
-        elevation: 0.0,
-        foregroundColor: Colors.black,
-      ),
     );
   }
 
