@@ -6,10 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:multi_image_picker/multi_image_picker.dart';
+import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/models/item.dart';
 import 'package:shareapp/services/select_location.dart';
-
-import 'package:shareapp/extras/helpers.dart';
 
 enum DismissDialogAction {
   cancel,

@@ -7,9 +7,11 @@ import 'package:shareapp/pages/item_detail.dart';
 import 'package:shareapp/pages/item_edit.dart';
 import 'package:shareapp/rentals/chat.dart';
 import 'package:shareapp/rentals/item_request.dart';
+import 'package:shareapp/rentals/new_pickup.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/auth.dart';
-import 'package:shareapp/rentals/new_pickup.dart';
+import 'package:shareapp/services/credit_card_info.dart';
+import 'package:shareapp/models/credit_card.dart';
 
 void main() => runApp(MyApp());
 
@@ -121,6 +123,19 @@ class MyApp extends StatelessWidget {
                 },
               );
             }
+
+          case CreditCardInfo.routeName:
+            {
+              final CreditCardInfoArgs args = settings.arguments;
+
+              return MaterialPageRoute(
+                builder: (context) {
+                  return CreditCardInfo(
+                    creditCard: args.creditCard,
+                  );
+                },
+              );
+            }
         }
       },
     );
@@ -183,4 +198,10 @@ class NewPickupArgs {
     this.rentalID,
     this.isRenter,
   );
+}
+
+class CreditCardInfoArgs {
+  final CreditCard creditCard;
+
+  CreditCardInfoArgs(this.creditCard);
 }

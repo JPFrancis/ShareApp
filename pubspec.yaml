@@ -14,6 +14,14 @@ environment:
 
 dependencies:
 
+  stripe_payment:
+
+  barcode_scan:
+
+  square_in_app_payments:
+
+  square_reader_sdk: ^2.0.1
+
   flutter_hooks:
 
   numberpicker:
@@ -34,7 +42,7 @@ dependencies:
 
   flutter_google_places: #^0.2.0
 
-  #permission_handler:
+  permission_handler:
 
   google_maps_webservice:
 
@@ -101,7 +109,7 @@ flutter:
           weight: 500
     - family: QuoteIcons
       fonts:
-       - asset: fonts/QuoteIcons.ttf
+        - asset: fonts/QuoteIcons.ttf
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

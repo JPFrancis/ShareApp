@@ -94,6 +94,7 @@ class HomePageState extends State<HomePage> {
           'email': widget.firebaseUser.email,
           'lastActive': DateTime.now().millisecondsSinceEpoch,
           'creationDate': widget.firebaseUser.metadata.creationTimestamp,
+          'cc': null,
         });
       }
 

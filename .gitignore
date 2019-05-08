@@ -1,5 +1,6 @@
 # Firestore backend
 **/android/**/google-services.json
+**/android/gradle.properties
 
 # Miscellaneous
 *.class

@@ -7,10 +7,9 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart' as intl;
+import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/extras/quote_icons.dart';
 import 'package:shareapp/models/user_edit.dart';
-
-import 'package:shareapp/extras/helpers.dart';
 
 enum DismissDialogAction {
   cancel,

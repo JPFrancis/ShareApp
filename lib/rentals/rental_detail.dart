@@ -6,9 +6,11 @@ import 'package:flutter/rendering.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:shareapp/main.dart';
+import 'package:shareapp/models/credit_card.dart';
 import 'package:shareapp/rentals/chat.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shareapp/rentals/new_pickup.dart';
+import 'package:shareapp/services/credit_card_info.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 enum Status {
   requested,
@@ -35,7 +37,7 @@ class RentalDetailState extends State<RentalDetail> {
   GoogleMapController googleMapController;
 
   SharedPreferences prefs;
-  String myUserID;
+  String userID;
   String url;
   bool isLoading;
   bool isRenter;
@@ -44,6 +46,7 @@ class RentalDetailState extends State<RentalDetail> {
   DocumentSnapshot itemDS;
   DocumentSnapshot ownerDS;
   DocumentSnapshot renterDS;
+  DocumentSnapshot userDS;
 
   TextStyle textStyle;
   double padding = 5.0;
@@ -61,7 +64,7 @@ class RentalDetailState extends State<RentalDetail> {
 
   void getMyUserID() async {
     prefs = await SharedPreferences.getInstance();
-    myUserID = prefs.getString('userID') ?? '';
+    userID = prefs.getString('userID') ?? '';
   }
 
   void getSnapshots() async {
@@ -113,7 +116,8 @@ class RentalDetailState extends State<RentalDetail> {
           ownerDS != null &&
           renterDS != null) {
         setState(() {
-          isRenter = myUserID == renterDS.documentID ? true : false;
+          isRenter = userID == renterDS.documentID ? true : false;
+          userDS = isRenter ? renterDS : ownerDS;
           isLoading = false;
         });
       }
@@ -220,6 +224,7 @@ class RentalDetailState extends State<RentalDetail> {
                       height: 10,
                     ),
                     showRequestButtons(),
+                    showCreditCardButton(),
                     showReceiveItemButton(),
                     showReturnedItemButton(),
                     showWriteReview(),
@@ -232,22 +237,6 @@ class RentalDetailState extends State<RentalDetail> {
         }
       },
     );
-
-    /*
-    return Padding(
-      padding: EdgeInsets.all(15),
-      child: ListView(
-        children: <Widget>[
-          showItemName(),
-          Divider(
-            height: 20,
-          ),
-          showItemRequestStatus(),
-          showAcceptRejectButtons(),
-        ],
-      ),
-    );
-    */
   }
 
   Widget showItemName() {
@@ -368,7 +357,7 @@ class RentalDetailState extends State<RentalDetail> {
         case 2: // accepted
           statusMessage = 'Status: accepted\n'
               '${ownerDS['name']} has accepted your request\n'
-              'Get ready give the item to ${renterDS['name']}';
+              'Give the item to ${renterDS['name']}';
           break;
         case 3: // active
           statusMessage = 'Status: active\n'
@@ -467,7 +456,7 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   Widget showReceiveItemButton() {
-    return isRenter && rentalDS['status'] == 2
+    return rentalDS['status'] == 2
         ? Container(
             child: RaisedButton(
               shape: new RoundedRectangleBorder(
@@ -475,7 +464,7 @@ class RentalDetailState extends State<RentalDetail> {
               color: Colors.green,
               textColor: Colors.white,
               child: Text(
-                "I have received the item",
+                "Simulate start of rental",
                 //addButton + " Images",
                 textScaleFactor: 1.25,
               ),
@@ -487,8 +476,10 @@ class RentalDetailState extends State<RentalDetail> {
         : Container();
   }
 
-  Widget showReturnedItemButton() {
-    return !isRenter && rentalDS['status'] == 3
+  Widget showCreditCardButton() {
+    String buttonText = userDS['cc'] == null ? 'Add' : 'Edit';
+
+    return rentalDS['status'] == 2
         ? Container(
             child: RaisedButton(
               shape: new RoundedRectangleBorder(
@@ -496,7 +487,29 @@ class RentalDetailState extends State<RentalDetail> {
               color: Colors.green,
               textColor: Colors.white,
               child: Text(
-                "${renterDS['name']} has returned the item",
+                '$buttonText Credit Card',
+                //addButton + " Images",
+                textScaleFactor: 1.25,
+              ),
+              onPressed: () {
+                navToCreditCard();
+                //updateStatus(3);
+              },
+            ),
+          )
+        : Container();
+  }
+
+  Widget showReturnedItemButton() {
+    return rentalDS['status'] == 3
+        ? Container(
+            child: RaisedButton(
+              shape: new RoundedRectangleBorder(
+                  borderRadius: new BorderRadius.circular(5.0)),
+              color: Colors.green,
+              textColor: Colors.white,
+              child: Text(
+                'Simulate end of rental',
                 //addButton + " Images",
                 textScaleFactor: 1.25,
               ),
@@ -652,6 +665,39 @@ class RentalDetailState extends State<RentalDetail> {
         .updateData({'rental': null});
 
     goToLastScreen();
+  }
+
+  void navToCreditCard() async {
+    CreditCard temp;
+
+    if (userDS['cc'] == null) {
+      temp = new CreditCard(
+        userID: userID,
+        name: '',
+        number: '',
+        month: '',
+        year: '',
+        cvv: '',
+        zip: '',
+      );
+    } else {
+      temp = CreditCard.fromMap(
+          userID, new Map<String, dynamic>.from(userDS['cc']));
+    }
+
+    bool ret = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (BuildContext context) => CreditCardInfo(
+              creditCard: temp,
+            ),
+        fullscreenDialog: true,
+      ),
+    );
+
+    if (ret) {
+      getSnapshots();
+    }
   }
 
   void goToLastScreen() {
