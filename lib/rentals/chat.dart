@@ -11,8 +11,6 @@ import 'package:intl/intl.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:shareapp/extras/helpers.dart';
-
 class Chat extends StatelessWidget {
   static const routeName = '/chat';
   final String rentalID;
@@ -453,26 +451,54 @@ class ChatScreenState extends State<ChatScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: <Widget>[
-                      FlatButton(child: BackButton(), onPressed:()=> Navigator.pop(context),),
-                      Align(
-                        alignment: Alignment.bottomCenter,
-                        child: Text( '${renterDS['name']}', style: TextStyle(fontSize: 20.0, fontFamily: 'Quicksand'),
+                        FlatButton(
+                          child: BackButton(),
+                          onPressed: () => Navigator.pop(context),
                         ),
-                      ),
-                      FlatButton(child: Icon(Icons.more_horiz), onPressed: null,)
-                    ],),
-                    Divider(color: Colors.black45,),
+                        Align(
+                          alignment: Alignment.bottomCenter,
+                          child: Text(
+                            '${renterDS['name']}',
+                            style: TextStyle(
+                                fontSize: 20.0, fontFamily: 'Quicksand'),
+                          ),
+                        ),
+                        FlatButton(
+                          child: Icon(Icons.more_horiz),
+                          onPressed: null,
+                        )
+                      ],
+                    ),
+                    Divider(
+                      color: Colors.black45,
+                    ),
                     Container(
                       height: 40.0,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: <Widget>[
-                        Align(
-                          alignment: Alignment.bottomCenter,
-                          child: FlatButton( child: Text( '[status]', style: TextStyle(fontSize: 15.0, fontFamily: 'Quicksand', color: Colors.grey),), onPressed: null),
-                        ),
-                        FlatButton(onPressed: null, child: Text("Details", style: TextStyle(fontFamily: 'Quicksand', color: primaryColor),),)
-                      ],),
+                          Align(
+                            alignment: Alignment.bottomCenter,
+                            child: FlatButton(
+                                child: Text(
+                                  '[status]',
+                                  style: TextStyle(
+                                      fontSize: 15.0,
+                                      fontFamily: 'Quicksand',
+                                      color: Colors.grey),
+                                ),
+                                onPressed: null),
+                          ),
+                          FlatButton(
+                            onPressed: null,
+                            child: Text(
+                              "Details",
+                              style: TextStyle(
+                                  fontFamily: 'Quicksand', color: primaryColor),
+                            ),
+                          )
+                        ],
+                      ),
                     ),
                     Divider(),
                     // List of messages

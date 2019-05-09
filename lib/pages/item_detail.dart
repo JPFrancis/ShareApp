@@ -5,14 +5,13 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/models/item.dart';
 import 'package:shareapp/pages/item_edit.dart';
 import 'package:shareapp/rentals/item_request.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import 'package:shareapp/extras/helpers.dart';
 
 class ItemDetail extends StatefulWidget {
   static const routeName = '/itemDetail';

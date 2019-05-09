@@ -125,8 +125,8 @@ class CreditCardInfoState extends State<CreditCardInfo> {
       onWillPop: onWillPop,
       child: ListView(
         shrinkWrap: true,
-        padding: EdgeInsets.only(
-            top: 10, bottom: 10.0, left: 18.0, right: 18.0),
+        padding:
+            EdgeInsets.only(top: 10, bottom: 10.0, left: 18.0, right: 18.0),
         children: <Widget>[
           reusableTextEntry(
               'Name on card', true, nameController, 'name', TextInputType.text),
