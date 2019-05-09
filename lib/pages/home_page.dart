@@ -207,10 +207,7 @@ class HomePageState extends State<HomePage> {
       Icon icon = Icon(Icons.info_outline);
       switch (ds['type']) {
         case 'Tool':
-          icon = Icon(
-            Icons.build,
-            size: h / 20,
-          );
+          icon = Icon(Icons.build, size: h / 20,);
           break;
         case 'Leisure':
           icon = Icon(Icons.golf_course, size: h / 20);
@@ -228,68 +225,28 @@ class HomePageState extends State<HomePage> {
               height: 2 * h / 3,
               width: w,
               child: FittedBox(fit: BoxFit.cover, child: image)),
-          SizedBox(
-            height: 10.0,
-          ),
+          SizedBox( height: 10.0,),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Row(
                 children: <Widget>[
                   icon,
-                  SizedBox(
-                    width: 5.0,
-                  ),
-                  ds['type'] != null
-                      ? Text(
-                          '${ds['type']}'.toUpperCase(),
-                          style: TextStyle(
-                              fontSize: h / 25,
-                              fontFamily: 'Quicksand',
-                              fontWeight: FontWeight.bold),
-                        )
-                      : Text(''),
+                  SizedBox( width: 5.0,),
+                  ds['type'] != null ? Text( '${ds['type']}'.toUpperCase(), style: TextStyle( fontSize: h / 25, fontFamily: 'Quicksand', fontWeight: FontWeight.bold),) : Text(''),
                 ],
               ),
-              Text(ds['name'],
-                  style: TextStyle(
-                      fontSize: h / 20,
-                      fontFamily: 'Quicksand',
-                      fontWeight: FontWeight.bold)),
-              Text("\$${ds['price']} per day",
-                  style: TextStyle(fontSize: h / 21, fontFamily: 'Quicksand')),
+              Text(ds['name'], style: TextStyle( fontSize: h / 20, fontFamily: 'Quicksand', fontWeight: FontWeight.bold)),
+              Text("\$${ds['price']} per day", style: TextStyle(fontSize: h / 21, fontFamily: 'Quicksand')),
               Row(
                 children: <Widget>[
-                  Icon(
-                    Icons.star_border,
-                    size: h / 19,
-                  ),
-                  Icon(
-                    Icons.star_border,
-                    size: h / 19,
-                  ),
-                  Icon(
-                    Icons.star_border,
-                    size: h / 19,
-                  ),
-                  Icon(
-                    Icons.star_border,
-                    size: h / 19,
-                  ),
-                  Icon(
-                    Icons.star_border,
-                    size: h / 19,
-                  ),
-                  Container(
-                    width: 5.0,
-                  ),
-                  Text(
-                    "328",
-                    style: TextStyle(
-                      fontSize: h / 25,
-                      fontFamily: 'Quicksand',
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Icon( Icons.star_border, size: h / 19,),
+                  Icon( Icons.star_border, size: h / 19,),
+                  Icon( Icons.star_border, size: h / 19,),
+                  Icon( Icons.star_border, size: h / 19,),
+                  Icon( Icons.star_border, size: h / 19,),
+                  SizedBox( width: 5.0,),
+                  Text( "328", style: TextStyle( fontSize: h / 25, fontFamily: 'Quicksand', fontWeight: FontWeight.bold,),
                   )
                 ],
               )
@@ -509,8 +466,7 @@ class HomePageState extends State<HomePage> {
             height: 30.0,
           ),
           categories(),
-          divider(),
-          lookingFor()
+          //lookingFor()
         ],
       ),
     );
@@ -636,28 +592,25 @@ class HomePageState extends State<HomePage> {
   Widget categories() {
     double h = MediaQuery.of(context).size.height;
 
-    Widget _categoryTile(category, image, onpress) {
-      return InkWell(
-        onTap: () => onpress,
-        child: ClipRRect(
-          borderRadius: new BorderRadius.circular(5.0),
-          child: Container(
-            height: h / 7.5,
-            width: h / 7.5,
-            child: Stack(
-              children: <Widget>[
-                SizedBox.expand(child: Image.asset(image, fit: BoxFit.cover)),
-                SizedBox.expand(
-                  child: Container(color: Colors.black45),
-                ),
-                Center(
-                    child: Text(category,
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontFamily: 'Quicksand',
-                            fontSize: h / 60)))
-              ],
-            ),
+    Widget _categoryTile(category, image) {
+      return ClipRRect(
+        borderRadius: new BorderRadius.circular(5.0),
+        child: Container(
+          height: h / 7.5,
+          width: h / 7.5,
+          child: Stack(
+            children: <Widget>[
+              SizedBox.expand(child: Image.asset(image, fit: BoxFit.cover)),
+              SizedBox.expand(
+                child: Container(color: Colors.black45),
+              ),
+              Center(
+                  child: Text(category,
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontFamily: 'Quicksand',
+                          fontSize: h / 60)))
+            ],
           ),
         ),
       );
@@ -670,9 +623,9 @@ class HomePageState extends State<HomePage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
-              _categoryTile("Tools", 'assets/hammer.jpg', null),
-              _categoryTile("Leisure", 'assets/golfclub.jpg', null),
-              _categoryTile("Household", 'assets/coffee.jpg', null),
+              _categoryTile("Tools", 'assets/hammer.jpg'),
+              _categoryTile("Leisure", 'assets/golfclub.jpg'),
+              _categoryTile("Household", 'assets/vacuum2.jpg'),
             ],
           ),
           SizedBox(
@@ -681,9 +634,9 @@ class HomePageState extends State<HomePage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
-              _categoryTile("Equipment", 'assets/lawnmower.jpg', null),
-              _categoryTile("Miscellaneous", 'assets/lawnchair.jpg', null),
-              _categoryTile("More", 'assets/misc.jpg', Navigator.push(context, MaterialPageRoute(builder: (context) => AllItems()))),
+              _categoryTile("Equipment", 'assets/lawnmower.jpg'),
+              _categoryTile("Miscellaneous", 'assets/lawnchair.jpg'),
+              InkWell(onTap: navToAllItems, child: _categoryTile( "More", 'assets/misc.jpg')),
             ],
           ),
         ],
