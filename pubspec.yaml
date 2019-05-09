@@ -14,13 +14,13 @@ environment:
 
 dependencies:
 
-  stripe_payment:
+  #stripe_payment:
 
-  barcode_scan:
+  #barcode_scan:
 
-  square_in_app_payments:
+  #square_in_app_payments:
 
-  square_reader_sdk: ^2.0.1
+  #square_reader_sdk: ^2.0.1
 
   flutter_hooks:
 
@@ -42,7 +42,7 @@ dependencies:
 
   flutter_google_places: #^0.2.0
 
-  permission_handler:
+  #permission_handler:
 
   google_maps_webservice:
 
