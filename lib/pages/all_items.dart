@@ -39,7 +39,9 @@ class AllItemsState extends State<AllItems> {
   }
 
   Widget showBody() {
-    return Center(child: Text('Hello'),);
+    return Center(
+      child: Text('Hello'),
+    );
   }
 
   void goBack() {

@@ -5,9 +5,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/models/item.dart';
 import 'package:shareapp/models/user_edit.dart';
+import 'package:shareapp/pages/all_items.dart';
 import 'package:shareapp/pages/item_detail.dart';
 import 'package:shareapp/pages/item_edit.dart';
 import 'package:shareapp/pages/profile_edit.dart';
@@ -16,9 +18,6 @@ import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timeago/timeago.dart' as timeago;
-
-import 'package:shareapp/extras/helpers.dart';
-import 'package:shareapp/pages/all_items.dart';
 
 class HomePage extends StatefulWidget {
   static const routeName = '/homePage';
@@ -139,17 +138,17 @@ class HomePageState extends State<HomePage> {
     return Scaffold(
       body: isLoading
           ? Container(
-        child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
-              Center(child: CircularProgressIndicator())
-            ]),
-      )
+              child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: <Widget>[
+                    Center(child: CircularProgressIndicator())
+                  ]),
+            )
           : IndexedStack(
-        index: currentTabIndex,
-        children: bottomTabPages,
-      ),
+              index: currentTabIndex,
+              children: bottomTabPages,
+            ),
       floatingActionButton: showFAB(),
       bottomNavigationBar: BottomNavigationBar(
         items: bottomNavBarTiles,
@@ -167,27 +166,26 @@ class HomePageState extends State<HomePage> {
   RaisedButton showFAB() {
     return currentTabIndex == 2
         ? RaisedButton(
-        onPressed: () {
-          navigateToEdit(
-            Item(
-              id: null,
-              status: true,
-              creator:
-              Firestore.instance.collection('users').document(userID),
-              name: '',
-              description: '',
-              type: null,
-              condition: null,
-              price: 0,
-              numImages: 0,
-              images: new List(),
-              location: null,
-              rental: null,
-            ),
-          );
-        },
-        child: Text("Add Item")
-    )
+            onPressed: () {
+              navigateToEdit(
+                Item(
+                  id: null,
+                  status: true,
+                  creator:
+                      Firestore.instance.collection('users').document(userID),
+                  name: '',
+                  description: '',
+                  type: null,
+                  condition: null,
+                  price: 0,
+                  numImages: 0,
+                  images: new List(),
+                  location: null,
+                  rental: null,
+                ),
+              );
+            },
+            child: Text("Add Item"))
         : null;
   }
 
@@ -204,102 +202,102 @@ class HomePageState extends State<HomePage> {
       ds['rental'] == null ? deleteItemDialog(ds) : deleteItemError();
     }, child: new Container(child: new LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
-          double h = constraints.maxHeight;
-          double w = constraints.maxWidth;
-          Icon icon = Icon(Icons.info_outline);
-          switch (ds['type']) {
-            case 'Tool':
-              icon = Icon(
-                Icons.build,
-                size: h / 20,
-              );
-              break;
-            case 'Leisure':
-              icon = Icon(Icons.golf_course, size: h / 20);
-              break;
-            case 'Home':
-              icon = Icon(Icons.home, size: h / 20);
-              break;
-            case 'Other':
-              icon = Icon(Icons.device_unknown, size: h / 20);
-              break;
-          }
-          return Column(
+      double h = constraints.maxHeight;
+      double w = constraints.maxWidth;
+      Icon icon = Icon(Icons.info_outline);
+      switch (ds['type']) {
+        case 'Tool':
+          icon = Icon(
+            Icons.build,
+            size: h / 20,
+          );
+          break;
+        case 'Leisure':
+          icon = Icon(Icons.golf_course, size: h / 20);
+          break;
+        case 'Home':
+          icon = Icon(Icons.home, size: h / 20);
+          break;
+        case 'Other':
+          icon = Icon(Icons.device_unknown, size: h / 20);
+          break;
+      }
+      return Column(
+        children: <Widget>[
+          Container(
+              height: 2 * h / 3,
+              width: w,
+              child: FittedBox(fit: BoxFit.cover, child: image)),
+          SizedBox(
+            height: 10.0,
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Container(
-                  height: 2 * h / 3,
-                  width: w,
-                  child: FittedBox(fit: BoxFit.cover, child: image)),
-              SizedBox(
-                height: 10.0,
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Row(
                 children: <Widget>[
-                  Row(
-                    children: <Widget>[
-                      icon,
-                      SizedBox(
-                        width: 5.0,
-                      ),
-                      ds['type'] != null
-                          ? Text(
-                        '${ds['type']}'.toUpperCase(),
-                        style: TextStyle(
-                            fontSize: h / 25,
-                            fontFamily: 'Quicksand',
-                            fontWeight: FontWeight.bold),
-                      )
-                          : Text(''),
-                    ],
+                  icon,
+                  SizedBox(
+                    width: 5.0,
                   ),
-                  Text(ds['name'],
-                      style: TextStyle(
-                          fontSize: h / 20,
-                          fontFamily: 'Quicksand',
-                          fontWeight: FontWeight.bold)),
-                  Text("\$${ds['price']} per day",
-                      style: TextStyle(fontSize: h / 21, fontFamily: 'Quicksand')),
-                  Row(
-                    children: <Widget>[
-                      Icon(
-                        Icons.star_border,
-                        size: h / 19,
-                      ),
-                      Icon(
-                        Icons.star_border,
-                        size: h / 19,
-                      ),
-                      Icon(
-                        Icons.star_border,
-                        size: h / 19,
-                      ),
-                      Icon(
-                        Icons.star_border,
-                        size: h / 19,
-                      ),
-                      Icon(
-                        Icons.star_border,
-                        size: h / 19,
-                      ),
-                      Container(
-                        width: 5.0,
-                      ),
-                      Text(
-                        "328",
-                        style: TextStyle(
-                          fontSize: h / 25,
-                          fontFamily: 'Quicksand',
-                          fontWeight: FontWeight.bold,
-                        ),
-                      )
-                    ],
-                  )
+                  ds['type'] != null
+                      ? Text(
+                          '${ds['type']}'.toUpperCase(),
+                          style: TextStyle(
+                              fontSize: h / 25,
+                              fontFamily: 'Quicksand',
+                              fontWeight: FontWeight.bold),
+                        )
+                      : Text(''),
                 ],
               ),
+              Text(ds['name'],
+                  style: TextStyle(
+                      fontSize: h / 20,
+                      fontFamily: 'Quicksand',
+                      fontWeight: FontWeight.bold)),
+              Text("\$${ds['price']} per day",
+                  style: TextStyle(fontSize: h / 21, fontFamily: 'Quicksand')),
+              Row(
+                children: <Widget>[
+                  Icon(
+                    Icons.star_border,
+                    size: h / 19,
+                  ),
+                  Icon(
+                    Icons.star_border,
+                    size: h / 19,
+                  ),
+                  Icon(
+                    Icons.star_border,
+                    size: h / 19,
+                  ),
+                  Icon(
+                    Icons.star_border,
+                    size: h / 19,
+                  ),
+                  Icon(
+                    Icons.star_border,
+                    size: h / 19,
+                  ),
+                  Container(
+                    width: 5.0,
+                  ),
+                  Text(
+                    "328",
+                    style: TextStyle(
+                      fontSize: h / 25,
+                      fontFamily: 'Quicksand',
+                      fontWeight: FontWeight.bold,
+                    ),
+                  )
+                ],
+              )
             ],
-          );
-        })));
+          ),
+        ],
+      );
+    })));
   }
 
   Widget allUserItems(DocumentSnapshot ds) {
@@ -313,102 +311,102 @@ class HomePageState extends State<HomePage> {
       navigateToDetail(ds.documentID);
     }, child: new Container(child: new LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
-          double h = constraints.maxHeight;
-          double w = constraints.maxWidth;
-          Icon icon = Icon(Icons.info_outline);
-          switch (ds['type']) {
-            case 'Tool':
-              icon = Icon(
-                Icons.build,
-                size: h / 20,
-              );
-              break;
-            case 'Leisure':
-              icon = Icon(Icons.golf_course, size: h / 20);
-              break;
-            case 'Home':
-              icon = Icon(Icons.home, size: h / 20);
-              break;
-            case 'Other':
-              icon = Icon(Icons.device_unknown, size: h / 20);
-              break;
-          }
-          return Column(
+      double h = constraints.maxHeight;
+      double w = constraints.maxWidth;
+      Icon icon = Icon(Icons.info_outline);
+      switch (ds['type']) {
+        case 'Tool':
+          icon = Icon(
+            Icons.build,
+            size: h / 20,
+          );
+          break;
+        case 'Leisure':
+          icon = Icon(Icons.golf_course, size: h / 20);
+          break;
+        case 'Home':
+          icon = Icon(Icons.home, size: h / 20);
+          break;
+        case 'Other':
+          icon = Icon(Icons.device_unknown, size: h / 20);
+          break;
+      }
+      return Column(
+        children: <Widget>[
+          Container(
+              height: 2 * h / 3,
+              width: w,
+              child: FittedBox(fit: BoxFit.cover, child: image)),
+          SizedBox(
+            height: 10.0,
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Container(
-                  height: 2 * h / 3,
-                  width: w,
-                  child: FittedBox(fit: BoxFit.cover, child: image)),
-              SizedBox(
-                height: 10.0,
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Row(
                 children: <Widget>[
-                  Row(
-                    children: <Widget>[
-                      icon,
-                      SizedBox(
-                        width: 5.0,
-                      ),
-                      ds['type'] != null
-                          ? Text(
-                        '${ds['type']}'.toUpperCase(),
-                        style: TextStyle(
-                            fontSize: h / 25,
-                            fontFamily: 'Quicksand',
-                            fontWeight: FontWeight.bold),
-                      )
-                          : Text(''),
-                    ],
+                  icon,
+                  SizedBox(
+                    width: 5.0,
                   ),
-                  Text(ds['name'],
-                      style: TextStyle(
-                          fontSize: h / 20,
-                          fontFamily: 'Quicksand',
-                          fontWeight: FontWeight.bold)),
-                  Text("\$${ds['price']} per day",
-                      style: TextStyle(fontSize: h / 21, fontFamily: 'Quicksand')),
-                  Row(
-                    children: <Widget>[
-                      Icon(
-                        Icons.star_border,
-                        size: h / 19,
-                      ),
-                      Icon(
-                        Icons.star_border,
-                        size: h / 19,
-                      ),
-                      Icon(
-                        Icons.star_border,
-                        size: h / 19,
-                      ),
-                      Icon(
-                        Icons.star_border,
-                        size: h / 19,
-                      ),
-                      Icon(
-                        Icons.star_border,
-                        size: h / 19,
-                      ),
-                      Container(
-                        width: 5.0,
-                      ),
-                      Text(
-                        "328",
-                        style: TextStyle(
-                          fontSize: h / 25,
-                          fontFamily: 'Quicksand',
-                          fontWeight: FontWeight.bold,
-                        ),
-                      )
-                    ],
-                  )
+                  ds['type'] != null
+                      ? Text(
+                          '${ds['type']}'.toUpperCase(),
+                          style: TextStyle(
+                              fontSize: h / 25,
+                              fontFamily: 'Quicksand',
+                              fontWeight: FontWeight.bold),
+                        )
+                      : Text(''),
                 ],
               ),
+              Text(ds['name'],
+                  style: TextStyle(
+                      fontSize: h / 20,
+                      fontFamily: 'Quicksand',
+                      fontWeight: FontWeight.bold)),
+              Text("\$${ds['price']} per day",
+                  style: TextStyle(fontSize: h / 21, fontFamily: 'Quicksand')),
+              Row(
+                children: <Widget>[
+                  Icon(
+                    Icons.star_border,
+                    size: h / 19,
+                  ),
+                  Icon(
+                    Icons.star_border,
+                    size: h / 19,
+                  ),
+                  Icon(
+                    Icons.star_border,
+                    size: h / 19,
+                  ),
+                  Icon(
+                    Icons.star_border,
+                    size: h / 19,
+                  ),
+                  Icon(
+                    Icons.star_border,
+                    size: h / 19,
+                  ),
+                  Container(
+                    width: 5.0,
+                  ),
+                  Text(
+                    "328",
+                    style: TextStyle(
+                      fontSize: h / 25,
+                      fontFamily: 'Quicksand',
+                      fontWeight: FontWeight.bold,
+                    ),
+                  )
+                ],
+              )
             ],
-          );
-        })));
+          ),
+        ],
+      );
+    })));
   }
 
   Widget cardItemRentals(ds, ownerDS, rentalDS) {
@@ -420,81 +418,81 @@ class HomePageState extends State<HomePage> {
     );
     return new Container(child: new LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
-          double h = constraints.maxHeight;
-          double w = constraints.maxWidth;
+      double h = constraints.maxHeight;
+      double w = constraints.maxWidth;
 
-          return InkWell(
-            onTap: () {
-              navigateToDetail(ds.documentID);
-            },
-            child: Column(
+      return InkWell(
+        onTap: () {
+          navigateToDetail(ds.documentID);
+        },
+        child: Column(
+          children: <Widget>[
+            Container(
+                height: 1.5 * h / 3,
+                width: w,
+                child: FittedBox(fit: BoxFit.cover, child: image)),
+            SizedBox(
+              height: 10.0,
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Container(
-                    height: 1.5 * h / 3,
-                    width: w,
-                    child: FittedBox(fit: BoxFit.cover, child: image)),
-                SizedBox(
-                  height: 10.0,
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Row(
                   children: <Widget>[
-                    Row(
-                      children: <Widget>[
-                        ds['type'] != null
-                            ? Text(
-                          '${ds['type']}'.toUpperCase(),
-                          style: TextStyle(
-                              fontSize: h / 25,
-                              fontFamily: 'Quicksand',
-                              fontWeight: FontWeight.bold),
-                        )
-                            : Text(''),
-                      ],
-                    ),
-                    Text('${ownerDS['name']}\'s ${ds['name']}',
-                        style: TextStyle(
-                            fontSize: h / 20,
-                            fontFamily: 'Quicksand',
-                            fontWeight: FontWeight.bold)),
-                    Text("\$${ds['price']} per day",
-                        style:
-                        TextStyle(fontSize: h / 21, fontFamily: 'Quicksand')),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: <Widget>[
-                        IconButton(
-                          icon: Icon(Icons.shopping_cart),
-                          onPressed: () {
-                            Navigator.pushNamed(
-                              context,
-                              RentalDetail.routeName,
-                              arguments: RentalDetailArgs(
-                                rentalDS.documentID,
-                              ),
-                            );
-                          },
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.message),
-                          onPressed: () {
-                            Navigator.pushNamed(
-                              context,
-                              Chat.routeName,
-                              arguments: ChatArgs(
-                                rentalDS.documentID,
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    )
+                    ds['type'] != null
+                        ? Text(
+                            '${ds['type']}'.toUpperCase(),
+                            style: TextStyle(
+                                fontSize: h / 25,
+                                fontFamily: 'Quicksand',
+                                fontWeight: FontWeight.bold),
+                          )
+                        : Text(''),
                   ],
                 ),
+                Text('${ownerDS['name']}\'s ${ds['name']}',
+                    style: TextStyle(
+                        fontSize: h / 20,
+                        fontFamily: 'Quicksand',
+                        fontWeight: FontWeight.bold)),
+                Text("\$${ds['price']} per day",
+                    style:
+                        TextStyle(fontSize: h / 21, fontFamily: 'Quicksand')),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: <Widget>[
+                    IconButton(
+                      icon: Icon(Icons.shopping_cart),
+                      onPressed: () {
+                        Navigator.pushNamed(
+                          context,
+                          RentalDetail.routeName,
+                          arguments: RentalDetailArgs(
+                            rentalDS.documentID,
+                          ),
+                        );
+                      },
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.message),
+                      onPressed: () {
+                        Navigator.pushNamed(
+                          context,
+                          Chat.routeName,
+                          arguments: ChatArgs(
+                            rentalDS.documentID,
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                )
               ],
             ),
-          );
-        }));
+          ],
+        ),
+      );
+    }));
   }
 
   Widget searchPage() {
@@ -507,7 +505,9 @@ class HomePageState extends State<HomePage> {
         // shrinkWrap: true,
         children: <Widget>[
           introImageAndSearch(),
-          SizedBox( height: 30.0,),
+          SizedBox(
+            height: 30.0,
+          ),
           categories(),
           divider(),
           lookingFor()
@@ -516,26 +516,39 @@ class HomePageState extends State<HomePage> {
     );
   }
 
-  Widget lookingFor(){
+  Widget lookingFor() {
     double h = MediaQuery.of(context).size.height;
-    Widget _searchItem(item, user, description){
+    Widget _searchItem(item, user, description) {
       return Card(
         elevation: 0.7,
         child: ExpansionTile(
           title: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
-              Text(item, style: TextStyle(color: Colors.black),),
-              Text(user, style: TextStyle(color: Colors.black),),
+              Text(
+                item,
+                style: TextStyle(color: Colors.black),
+              ),
+              Text(
+                user,
+                style: TextStyle(color: Colors.black),
+              ),
             ],
           ),
           trailing: Container(height: 0, width: 0),
           children: <Widget>[
-            Container(padding: EdgeInsets.symmetric(horizontal: 10.0), child: Text(description, style: TextStyle(fontFamily: 'Quicksand'),)),
+            Container(
+                padding: EdgeInsets.symmetric(horizontal: 10.0),
+                child: Text(
+                  description,
+                  style: TextStyle(fontFamily: 'Quicksand'),
+                )),
             Container(
               padding: EdgeInsets.only(right: 10.0),
               alignment: Alignment.bottomRight,
-              child: IconButton(icon: Icon(Icons.chat_bubble_outline), onPressed: () => null,
+              child: IconButton(
+                icon: Icon(Icons.chat_bubble_outline),
+                onPressed: () => null,
               ),
             ),
           ],
@@ -544,24 +557,40 @@ class HomePageState extends State<HomePage> {
     }
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: h/55),
+      padding: EdgeInsets.symmetric(horizontal: h / 55),
       child: Column(
         children: <Widget>[
           Container(
               alignment: Alignment.centerLeft,
-              child: Text("People Are Looking For...", style: TextStyle(fontFamily: 'Quicksand', fontSize: h/40, fontWeight: FontWeight.bold),)
+              child: Text(
+                "People Are Looking For...",
+                style: TextStyle(
+                    fontFamily: 'Quicksand',
+                    fontSize: h / 40,
+                    fontWeight: FontWeight.bold),
+              )),
+          SizedBox(
+            height: 10.0,
           ),
-          SizedBox(height: 10.0,),
-          _searchItem("Keurig Coffee Maker", "Rohith", "I'm looking for a Keurig coffee maker because I have excess k-cups but no Keurig."),
-          _searchItem("40\"+ TV", "Bob", "I'm hosting a football watching party this weekend. I need a big tv, preferably OLED and 4K Resolution."),
-          _searchItem("Balloon Pump", "Trent", "Need a balloon pump to fill balloons. Manual pump."),
-          Align(alignment: Alignment.bottomRight, child: FlatButton(child: Text("View all"), onPressed: navToAllItems,),)
+          _searchItem("Keurig Coffee Maker", "Rohith",
+              "I'm looking for a Keurig coffee maker because I have excess k-cups but no Keurig."),
+          _searchItem("40\"+ TV", "Bob",
+              "I'm hosting a football watching party this weekend. I need a big tv, preferably OLED and 4K Resolution."),
+          _searchItem("Balloon Pump", "Trent",
+              "Need a balloon pump to fill balloons. Manual pump."),
+          Align(
+            alignment: Alignment.bottomRight,
+            child: FlatButton(
+              child: Text("View all"),
+              onPressed: navToAllItems,
+            ),
+          )
         ],
       ),
     );
   }
 
-  Widget introImageAndSearch(){
+  Widget introImageAndSearch() {
     double h = MediaQuery.of(context).size.height;
 
     Widget _searchField() {
@@ -574,10 +603,13 @@ class HomePageState extends State<HomePage> {
           child: Row(
             children: <Widget>[
               Icon(Icons.search),
-              SizedBox( width: 10.0,),
+              SizedBox(
+                width: 10.0,
+              ),
               Text(
                 "Try \"Basketball\"",
-                style: TextStyle( fontFamily: 'Quicksand', fontWeight: FontWeight.w400),
+                style: TextStyle(
+                    fontFamily: 'Quicksand', fontWeight: FontWeight.w400),
               )
             ],
           ),
@@ -587,14 +619,17 @@ class HomePageState extends State<HomePage> {
     }
 
     return Container(
-      height: h/3,
-      child: Stack(children: <Widget>[
-        Container(height: h/3.2, child: SizedBox.expand(child: Image.asset('assets/surfing.jpg', fit: BoxFit.cover))),
-        Container(height: h/3.2, color: Colors.black12),
-        Align(
-            alignment: Alignment.bottomCenter,
-            child: _searchField()),
-      ],),
+      height: h / 3,
+      child: Stack(
+        children: <Widget>[
+          Container(
+              height: h / 3.2,
+              child: SizedBox.expand(
+                  child: Image.asset('assets/surfing.jpg', fit: BoxFit.cover))),
+          Container(height: h / 3.2, color: Colors.black12),
+          Align(alignment: Alignment.bottomCenter, child: _searchField()),
+        ],
+      ),
     );
   }
 
@@ -612,8 +647,15 @@ class HomePageState extends State<HomePage> {
             child: Stack(
               children: <Widget>[
                 SizedBox.expand(child: Image.asset(image, fit: BoxFit.cover)),
-                SizedBox.expand( child: Container(color: Colors.black45),),
-                Center( child: Text(category, style: TextStyle(color: Colors.white, fontFamily: 'Quicksand', fontSize: h/60)))
+                SizedBox.expand(
+                  child: Container(color: Colors.black45),
+                ),
+                Center(
+                    child: Text(category,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'Quicksand',
+                            fontSize: h / 60)))
               ],
             ),
           ),
@@ -729,14 +771,14 @@ class HomePageState extends State<HomePage> {
 
   Widget buildItemList([type = 'all', bool status]) {
     CollectionReference collectionReference =
-    Firestore.instance.collection('items');
+        Firestore.instance.collection('items');
     int tilerows = MediaQuery.of(context).size.width > 500 ? 3 : 2;
     Stream stream = collectionReference.snapshots();
     if (type == 'listings') {
       stream = collectionReference
           .where('creator',
-          isEqualTo:
-          Firestore.instance.collection('users').document(userID))
+              isEqualTo:
+                  Firestore.instance.collection('users').document(userID))
           .snapshots();
     }
     return Expanded(
@@ -761,8 +803,8 @@ class HomePageState extends State<HomePage> {
                     crossAxisSpacing: MediaQuery.of(context).size.width / 15,
                     children: items
                         .map((DocumentSnapshot ds) => type == 'listings'
-                        ? allUserItems(ds)
-                        : cardItem(ds))
+                            ? allUserItems(ds)
+                            : cardItem(ds))
                         .toList());
               } else {
                 return Container();
@@ -809,10 +851,13 @@ class HomePageState extends State<HomePage> {
   Widget messagesTabPage() {
     double h = MediaQuery.of(context).size.height;
     return Container(
-      padding: EdgeInsets.only(top: h/15, left: 30.0),
+      padding: EdgeInsets.only(top: h / 15, left: 30.0),
       child: Column(
         children: <Widget>[
-          Align(alignment: Alignment.topLeft, child: Text("Messages", style: TextStyle(fontSize: 30.0, fontFamily: 'Quicksand'))),
+          Align(
+              alignment: Alignment.topLeft,
+              child: Text("Messages",
+                  style: TextStyle(fontSize: 30.0, fontFamily: 'Quicksand'))),
           buildMessagesList(),
         ],
       ),
@@ -838,7 +883,7 @@ class HomePageState extends State<HomePage> {
   Widget profileIntroStream() {
     return StreamBuilder<DocumentSnapshot>(
       stream:
-      Firestore.instance.collection('users').document(userID).snapshots(),
+          Firestore.instance.collection('users').document(userID).snapshots(),
       builder:
           (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
         if (snapshot.hasError) {
@@ -1031,7 +1076,7 @@ class HomePageState extends State<HomePage> {
           details.add(ds.documentID);
           details.add(ds['email']);
           var date1 =
-          new DateTime.fromMillisecondsSinceEpoch(ds['creationDate']);
+              new DateTime.fromMillisecondsSinceEpoch(ds['creationDate']);
           details.add(date1.toString());
 
           var date2 = new DateTime.fromMillisecondsSinceEpoch(ds['lastActive']);
@@ -1075,7 +1120,7 @@ class HomePageState extends State<HomePage> {
 
   Widget buildRentalsList(bool requesting) {
     CollectionReference collectionReference =
-    Firestore.instance.collection('users');
+        Firestore.instance.collection('users');
     int tilerows = MediaQuery.of(context).size.width > 500 ? 3 : 2;
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
@@ -1122,7 +1167,7 @@ class HomePageState extends State<HomePage> {
                                     stream: itemDR.snapshots(),
                                     builder: (BuildContext context,
                                         AsyncSnapshot<DocumentSnapshot>
-                                        snapshot) {
+                                            snapshot) {
                                       if (snapshot.hasError) {
                                         return new Text('${snapshot.error}');
                                       }
@@ -1134,17 +1179,17 @@ class HomePageState extends State<HomePage> {
                                             DocumentSnapshot itemDS =
                                                 snapshot.data;
                                             DocumentReference ownerDR =
-                                            itemDS['creator'];
+                                                itemDS['creator'];
 
                                             if (requesting ^
-                                            (rentalDS['status'] == 1)) {
+                                                (rentalDS['status'] == 1)) {
                                               return StreamBuilder<
                                                   DocumentSnapshot>(
                                                 stream: ownerDR.snapshots(),
                                                 builder: (BuildContext context,
                                                     AsyncSnapshot<
-                                                        DocumentSnapshot>
-                                                    snapshot) {
+                                                            DocumentSnapshot>
+                                                        snapshot) {
                                                   if (snapshot.hasError) {
                                                     return new Text(
                                                         '${snapshot.error}');
@@ -1157,14 +1202,14 @@ class HomePageState extends State<HomePage> {
                                                     default:
                                                       if (snapshot.hasData) {
                                                         DocumentSnapshot
-                                                        ownerDS =
+                                                            ownerDS =
                                                             snapshot.data;
 
                                                         String created = 'Created: ' +
                                                             timeago.format(DateTime
                                                                 .fromMillisecondsSinceEpoch(
-                                                                rentalDS[
-                                                                'created']));
+                                                                    rentalDS[
+                                                                        'created']));
 
                                                         return cardItemRentals(
                                                             itemDS,
@@ -1206,7 +1251,7 @@ class HomePageState extends State<HomePage> {
 
   Widget buildMessagesList() {
     CollectionReference collectionReference =
-    Firestore.instance.collection('users');
+        Firestore.instance.collection('users');
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
         stream: collectionReference
@@ -1224,7 +1269,7 @@ class HomePageState extends State<HomePage> {
                   itemCount: snapshot.data.documents.length,
                   itemBuilder: (context, index) {
                     DocumentSnapshot userRentalDS =
-                    snapshot.data.documents[index];
+                        snapshot.data.documents[index];
                     DocumentReference otherUserDR = userRentalDS['otherUser'];
                     DocumentReference rentalDR = userRentalDS['rental'];
 
@@ -1251,15 +1296,15 @@ class HomePageState extends State<HomePage> {
                                         DocumentSnapshot rentalDS =
                                             snapshot.data;
                                         DocumentReference itemDR =
-                                        rentalDS['item'];
+                                            rentalDS['item'];
                                         DocumentReference chatDR =
-                                        rentalDS['chat'];
+                                            rentalDS['chat'];
 
                                         return StreamBuilder<DocumentSnapshot>(
                                           stream: itemDR.snapshots(),
                                           builder: (BuildContext context,
                                               AsyncSnapshot<DocumentSnapshot>
-                                              snapshot) {
+                                                  snapshot) {
                                             if (snapshot.hasError) {
                                               return new Text(
                                                   '${snapshot.error}');
@@ -1277,63 +1322,145 @@ class HomePageState extends State<HomePage> {
                                                     stream: Firestore.instance
                                                         .collection('rentals')
                                                         .document(
-                                                        rentalDS.documentID)
+                                                            rentalDS.documentID)
                                                         .collection('chat')
                                                         .orderBy('timestamp',
-                                                        descending: true)
+                                                            descending: true)
                                                         .limit(1)
                                                         .snapshots(),
                                                     builder: (BuildContext
-                                                    context,
+                                                            context,
                                                         AsyncSnapshot<
-                                                            QuerySnapshot>
-                                                        snapshot) {
+                                                                QuerySnapshot>
+                                                            snapshot) {
                                                       switch (snapshot
                                                           .connectionState) {
                                                         case ConnectionState
                                                             .waiting:
 
                                                         default:
-                                                          if (snapshot .hasData) {
-                                                            DocumentSnapshot lastMessageDS = snapshot.data .documents[0];
-                                                            Text title = Text( otherUserDS['name'], style: TextStyle( fontWeight: FontWeight.bold, fontFamily: 'Quicksand'),);
-                                                            Text lastActive = Text(('Last seen: ' + timeago.format(DateTime .fromMillisecondsSinceEpoch( otherUserDS[ 'lastActive']))), style: TextStyle(fontFamily: 'Quicksand',));
-                                                            Text itemName = Text('Item: ${itemDS['name']}', style: TextStyle(fontFamily: 'Quicksand'));
-                                                            String imageURL = otherUserDS[ 'avatar'];
-                                                            String lastMessage = lastMessageDS[ 'content'];
+                                                          if (snapshot
+                                                              .hasData) {
+                                                            DocumentSnapshot
+                                                                lastMessageDS =
+                                                                snapshot.data
+                                                                    .documents[0];
+                                                            Text title = Text(
+                                                              otherUserDS[
+                                                                  'name'],
+                                                              style: TextStyle(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
+                                                                  fontFamily:
+                                                                      'Quicksand'),
+                                                            );
+                                                            Text lastActive = Text(
+                                                                ('Last seen: ' +
+                                                                    timeago.format(DateTime.fromMillisecondsSinceEpoch(
+                                                                        otherUserDS[
+                                                                            'lastActive']))),
+                                                                style:
+                                                                    TextStyle(
+                                                                  fontFamily:
+                                                                      'Quicksand',
+                                                                ));
+                                                            Text itemName = Text(
+                                                                'Item: ${itemDS['name']}',
+                                                                style: TextStyle(
+                                                                    fontFamily:
+                                                                        'Quicksand'));
+                                                            String imageURL =
+                                                                otherUserDS[
+                                                                    'avatar'];
+                                                            String lastMessage =
+                                                                lastMessageDS[
+                                                                    'content'];
                                                             int cutoff = 30;
-                                                            String lastMessageCrop;
+                                                            String
+                                                                lastMessageCrop;
 
-                                                            if (lastMessage .length > cutoff) {
-                                                              lastMessageCrop = lastMessage.substring( 0, cutoff);
-                                                              lastMessageCrop += '...';
+                                                            if (lastMessage
+                                                                    .length >
+                                                                cutoff) {
+                                                              lastMessageCrop =
+                                                                  lastMessage
+                                                                      .substring(
+                                                                          0,
+                                                                          cutoff);
+                                                              lastMessageCrop +=
+                                                                  '...';
                                                             } else {
-                                                              lastMessageCrop = lastMessage;
+                                                              lastMessageCrop =
+                                                                  lastMessage;
                                                             }
 
                                                             return ListTile(
-                                                              leading: Container(
+                                                              leading:
+                                                                  Container(
                                                                 height: 50,
                                                                 child: ClipOval(
-                                                                  child: CachedNetworkImage(
-                                                                    key: new ValueKey< String>(DateTime .now() .millisecondsSinceEpoch .toString()),
-                                                                    imageUrl: imageURL,
-                                                                    placeholder: (context, url) => new Container(),
+                                                                  child:
+                                                                      CachedNetworkImage(
+                                                                    key: new ValueKey<
+                                                                        String>(DateTime
+                                                                            .now()
+                                                                        .millisecondsSinceEpoch
+                                                                        .toString()),
+                                                                    imageUrl:
+                                                                        imageURL,
+                                                                    placeholder:
+                                                                        (context,
+                                                                                url) =>
+                                                                            new Container(),
                                                                   ),
                                                                 ),
                                                               ),
                                                               title: title,
-                                                              subtitle: Container(
-                                                                alignment: Alignment.centerLeft,
-                                                                child: Column(children: <Widget>[
-                                                                  Align(alignment: Alignment.centerLeft, child: lastActive),
-                                                                  Align(alignment: Alignment.centerLeft, child: itemName),
-                                                                  Align(alignment: Alignment.centerLeft, child: Text(lastMessageCrop, style: TextStyle(fontFamily: "Quicksand"),)),
-                                                                ],),
+                                                              subtitle:
+                                                                  Container(
+                                                                alignment: Alignment
+                                                                    .centerLeft,
+                                                                child: Column(
+                                                                  children: <
+                                                                      Widget>[
+                                                                    Align(
+                                                                        alignment:
+                                                                            Alignment
+                                                                                .centerLeft,
+                                                                        child:
+                                                                            lastActive),
+                                                                    Align(
+                                                                        alignment:
+                                                                            Alignment
+                                                                                .centerLeft,
+                                                                        child:
+                                                                            itemName),
+                                                                    Align(
+                                                                        alignment:
+                                                                            Alignment
+                                                                                .centerLeft,
+                                                                        child:
+                                                                            Text(
+                                                                          lastMessageCrop,
+                                                                          style:
+                                                                              TextStyle(fontFamily: "Quicksand"),
+                                                                        )),
+                                                                  ],
+                                                                ),
                                                               ),
                                                               //subtitle: Text( '$lastActive\n$itemName\n$lastMessageCrop'),
                                                               onTap: () {
-                                                                Navigator .pushNamed( context, Chat.routeName, arguments: ChatArgs( userRentalDS .documentID,),);
+                                                                Navigator
+                                                                    .pushNamed(
+                                                                  context,
+                                                                  Chat.routeName,
+                                                                  arguments:
+                                                                      ChatArgs(
+                                                                    userRentalDS
+                                                                        .documentID,
+                                                                  ),
+                                                                );
                                                               },
                                                             );
                                                           } else {
@@ -1394,7 +1521,7 @@ class HomePageState extends State<HomePage> {
   Future<UserEdit> getUserEdit() async {
     UserEdit out;
     DocumentSnapshot ds =
-    await Firestore.instance.collection('users').document(userID).get();
+        await Firestore.instance.collection('users').document(userID).get();
     if (ds != null) {
       out = new UserEdit(
           id: userID, photoUrl: ds['avatar'], displayName: ds['name']);
@@ -1404,15 +1531,11 @@ class HomePageState extends State<HomePage> {
   }
 
   void navToAllItems() async {
-    await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (BuildContext context) => AllItems(
-
-          ),
-
-        ));
-
+    Navigator.pushNamed(
+      context,
+      AllItems.routeName,
+      arguments: AllItemsArgs(),
+    );
   }
 
   void navToProfileEdit() async {
@@ -1422,8 +1545,8 @@ class HomePageState extends State<HomePage> {
         context,
         MaterialPageRoute(
           builder: (BuildContext context) => ProfileEdit(
-            userEdit: userEdit,
-          ),
+                userEdit: userEdit,
+              ),
           fullscreenDialog: true,
         ));
 
@@ -1437,54 +1560,54 @@ class HomePageState extends State<HomePage> {
 
   Future<bool> deleteItemError() async {
     return await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Error'),
-          content: Text(
-              'Item is currently being rented, so it cannot be deleted'),
-          actions: <Widget>[
-            FlatButton(
-              child: const Text('Ok'),
-              onPressed: () {
-                Navigator.of(context).pop(false);
-                // Pops the confirmation dialog but not the page.
-              },
-            ),
-          ],
-        );
-      },
-    ) ??
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Error'),
+              content: Text(
+                  'Item is currently being rented, so it cannot be deleted'),
+              actions: <Widget>[
+                FlatButton(
+                  child: const Text('Ok'),
+                  onPressed: () {
+                    Navigator.of(context).pop(false);
+                    // Pops the confirmation dialog but not the page.
+                  },
+                ),
+              ],
+            );
+          },
+        ) ??
         false;
   }
 
   Future<bool> deleteItemDialog(DocumentSnapshot ds) async {
     return await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Delete item?'),
-          content: Text('${ds['name']}'),
-          actions: <Widget>[
-            FlatButton(
-              child: const Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop(
-                    false); // Pops the confirmation dialog but not the page.
-              },
-            ),
-            FlatButton(
-              child: const Text('Delete'),
-              onPressed: () {
-                Navigator.of(context).pop(false);
-                deleteItem(ds);
-                // Pops the confirmation dialog but not the page.
-              },
-            ),
-          ],
-        );
-      },
-    ) ??
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Delete item?'),
+              content: Text('${ds['name']}'),
+              actions: <Widget>[
+                FlatButton(
+                  child: const Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(context).pop(
+                        false); // Pops the confirmation dialog but not the page.
+                  },
+                ),
+                FlatButton(
+                  child: const Text('Delete'),
+                  onPressed: () {
+                    Navigator.of(context).pop(false);
+                    deleteItem(ds);
+                    // Pops the confirmation dialog but not the page.
+                  },
+                ),
+              ],
+            );
+          },
+        ) ??
         false;
   }
 
@@ -1512,7 +1635,7 @@ class HomePageState extends State<HomePage> {
 
   Future<DocumentSnapshot> getUserFromFirestore(String userID) async {
     DocumentSnapshot ds =
-    await Firestore.instance.collection('users').document(userID).get();
+        await Firestore.instance.collection('users').document(userID).get();
 
     return ds;
   }
