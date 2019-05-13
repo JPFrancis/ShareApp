@@ -47,6 +47,8 @@ class HomePageState extends State<HomePage> {
   EdgeInsets edgeInset;
   double padding;
 
+  Color primaryColor = Color.fromRGBO(52, 117, 115, 1);
+
   @override
   void initState() {
     // TODO: implement initState
@@ -151,6 +153,7 @@ class HomePageState extends State<HomePage> {
             ),
       floatingActionButton: showFAB(),
       bottomNavigationBar: BottomNavigationBar(
+        selectedItemColor: primaryColor,
         items: bottomNavBarTiles,
         currentIndex: currentTabIndex,
         type: BottomNavigationBarType.fixed,
@@ -166,13 +169,15 @@ class HomePageState extends State<HomePage> {
   RaisedButton showFAB() {
     return currentTabIndex == 2
         ? RaisedButton(
+          elevation: 3,
+          color: primaryColor,
+          textColor: Colors.white,
             onPressed: () {
               navigateToEdit(
                 Item(
                   id: null,
                   status: true,
-                  creator:
-                      Firestore.instance.collection('users').document(userID),
+                  creator: Firestore.instance.collection('users').document(userID),
                   name: '',
                   description: '',
                   type: null,
@@ -185,185 +190,9 @@ class HomePageState extends State<HomePage> {
                 ),
               );
             },
-            child: Text("Add Item"))
+            child: Text("Add Item", style: TextStyle(fontFamily: 'Quicksand', fontWeight: FontWeight.normal)),
+          )
         : null;
-  }
-
-  Widget cardItem(DocumentSnapshot ds) {
-    CachedNetworkImage image = CachedNetworkImage(
-      key: new ValueKey<String>(
-          DateTime.now().millisecondsSinceEpoch.toString()),
-      imageUrl: ds['images'][0],
-      placeholder: (context, url) => new CircularProgressIndicator(),
-    );
-    return InkWell(onTap: () {
-      navigateToDetail(ds.documentID);
-    }, onLongPress: () {
-      ds['rental'] == null ? deleteItemDialog(ds) : deleteItemError();
-    }, child: new Container(child: new LayoutBuilder(
-        builder: (BuildContext context, BoxConstraints constraints) {
-      double h = constraints.maxHeight;
-      double w = constraints.maxWidth;
-      Icon icon = Icon(Icons.info_outline);
-      switch (ds['type']) {
-        case 'Tool':
-          icon = Icon(Icons.build, size: h / 20,);
-          break;
-        case 'Leisure':
-          icon = Icon(Icons.golf_course, size: h / 20);
-          break;
-        case 'Home':
-          icon = Icon(Icons.home, size: h / 20);
-          break;
-        case 'Other':
-          icon = Icon(Icons.device_unknown, size: h / 20);
-          break;
-      }
-      return Column(
-        children: <Widget>[
-          Container(
-              height: 2 * h / 3,
-              width: w,
-              child: FittedBox(fit: BoxFit.cover, child: image)),
-          SizedBox( height: 10.0,),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Row(
-                children: <Widget>[
-                  icon,
-                  SizedBox( width: 5.0,),
-                  ds['type'] != null ? Text( '${ds['type']}'.toUpperCase(), style: TextStyle( fontSize: h / 25, fontFamily: 'Quicksand', fontWeight: FontWeight.bold),) : Text(''),
-                ],
-              ),
-              Text(ds['name'], style: TextStyle( fontSize: h / 20, fontFamily: 'Quicksand', fontWeight: FontWeight.bold)),
-              Text("\$${ds['price']} per day", style: TextStyle(fontSize: h / 21, fontFamily: 'Quicksand')),
-              Row(
-                children: <Widget>[
-                  Icon( Icons.star_border, size: h / 19,),
-                  Icon( Icons.star_border, size: h / 19,),
-                  Icon( Icons.star_border, size: h / 19,),
-                  Icon( Icons.star_border, size: h / 19,),
-                  Icon( Icons.star_border, size: h / 19,),
-                  SizedBox( width: 5.0,),
-                  Text( "328", style: TextStyle( fontSize: h / 25, fontFamily: 'Quicksand', fontWeight: FontWeight.bold,),
-                  )
-                ],
-              )
-            ],
-          ),
-        ],
-      );
-    })));
-  }
-
-  Widget allUserItems(DocumentSnapshot ds) {
-    CachedNetworkImage image = CachedNetworkImage(
-      key: new ValueKey<String>(
-          DateTime.now().millisecondsSinceEpoch.toString()),
-      imageUrl: ds['images'][0],
-      placeholder: (context, url) => new CircularProgressIndicator(),
-    );
-    return InkWell(onTap: () {
-      navigateToDetail(ds.documentID);
-    }, child: new Container(child: new LayoutBuilder(
-        builder: (BuildContext context, BoxConstraints constraints) {
-      double h = constraints.maxHeight;
-      double w = constraints.maxWidth;
-      Icon icon = Icon(Icons.info_outline);
-      switch (ds['type']) {
-        case 'Tool':
-          icon = Icon(
-            Icons.build,
-            size: h / 20,
-          );
-          break;
-        case 'Leisure':
-          icon = Icon(Icons.golf_course, size: h / 20);
-          break;
-        case 'Home':
-          icon = Icon(Icons.home, size: h / 20);
-          break;
-        case 'Other':
-          icon = Icon(Icons.device_unknown, size: h / 20);
-          break;
-      }
-      return Column(
-        children: <Widget>[
-          Container(
-              height: 2 * h / 3,
-              width: w,
-              child: FittedBox(fit: BoxFit.cover, child: image)),
-          SizedBox(
-            height: 10.0,
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Row(
-                children: <Widget>[
-                  icon,
-                  SizedBox(
-                    width: 5.0,
-                  ),
-                  ds['type'] != null
-                      ? Text(
-                          '${ds['type']}'.toUpperCase(),
-                          style: TextStyle(
-                              fontSize: h / 25,
-                              fontFamily: 'Quicksand',
-                              fontWeight: FontWeight.bold),
-                        )
-                      : Text(''),
-                ],
-              ),
-              Text(ds['name'],
-                  style: TextStyle(
-                      fontSize: h / 20,
-                      fontFamily: 'Quicksand',
-                      fontWeight: FontWeight.bold)),
-              Text("\$${ds['price']} per day",
-                  style: TextStyle(fontSize: h / 21, fontFamily: 'Quicksand')),
-              Row(
-                children: <Widget>[
-                  Icon(
-                    Icons.star_border,
-                    size: h / 19,
-                  ),
-                  Icon(
-                    Icons.star_border,
-                    size: h / 19,
-                  ),
-                  Icon(
-                    Icons.star_border,
-                    size: h / 19,
-                  ),
-                  Icon(
-                    Icons.star_border,
-                    size: h / 19,
-                  ),
-                  Icon(
-                    Icons.star_border,
-                    size: h / 19,
-                  ),
-                  Container(
-                    width: 5.0,
-                  ),
-                  Text(
-                    "328",
-                    style: TextStyle(
-                      fontSize: h / 25,
-                      fontFamily: 'Quicksand',
-                      fontWeight: FontWeight.bold,
-                    ),
-                  )
-                ],
-              )
-            ],
-          ),
-        ],
-      );
-    })));
   }
 
   Widget cardItemRentals(ds, ownerDS, rentalDS) {
@@ -379,74 +208,81 @@ class HomePageState extends State<HomePage> {
       double w = constraints.maxWidth;
 
       return InkWell(
-        onTap: () {
-          navigateToDetail(ds.documentID);
-        },
-        child: Column(
-          children: <Widget>[
-            Container(
-                height: 1.5 * h / 3,
-                width: w,
-                child: FittedBox(fit: BoxFit.cover, child: image)),
-            SizedBox(
-              height: 10.0,
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Row(
+        onTap: () { navigateToDetail(ds.documentID); },
+        child: Container(
+          decoration: new BoxDecoration( 
+            boxShadow: <BoxShadow>[
+              CustomBoxShadow(
+                color: Colors.black45,
+                blurRadius: 3.0,
+                blurStyle: BlurStyle.outer
+              ),
+            ],
+          ),
+          child: Column(
+            children: <Widget>[
+              Container( height: 1.9 * h / 3,
+                  width: w,
+                  child: FittedBox(fit: BoxFit.cover, child: image)),
+              SizedBox( height: 10.0,),
+              Container(
+                padding: EdgeInsets.only(left: 5.0, right: 5.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    ds['type'] != null
-                        ? Text(
-                            '${ds['type']}'.toUpperCase(),
-                            style: TextStyle(
-                                fontSize: h / 25,
-                                fontFamily: 'Quicksand',
-                                fontWeight: FontWeight.bold),
-                          )
-                        : Text(''),
+                    Row( children: <Widget>[
+                        ds['type'] != null
+                            ? Text( '${ds['type']}'.toUpperCase(), style: TextStyle( fontSize: h / 25, fontFamily: 'Quicksand', fontWeight: FontWeight.bold),)
+                            : Text(''),
+                      ],
+                    ),
+                    Text('${ownerDS['name']}\'s ${ds['name']}', style: TextStyle( fontSize: h / 21, fontFamily: 'Quicksand', fontWeight: FontWeight.bold)),
+                    Text("\$${ds['price']} per day", style: TextStyle(fontSize: h / 22, fontFamily: 'Quicksand')),
+                    Divider(height:15),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: <Widget>[
+                        ButtonTheme(
+                          minWidth: w/5,
+                          height: h/13,
+                          child: FlatButton(
+                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            child: Icon(Icons.add_shopping_cart, size: h/13,),
+                            onPressed: () {
+                              Navigator.pushNamed(
+                                context,
+                                RentalDetail.routeName,
+                                arguments: RentalDetailArgs(
+                                  rentalDS.documentID,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        ButtonTheme(
+                          minWidth: w/5,
+                          height: h/13,
+                          child: FlatButton(
+                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            child: Icon(Icons.chat_bubble_outline, size: h/13,),
+                            onPressed: () {
+                              Navigator.pushNamed(
+                                context,
+                                Chat.routeName,
+                                arguments: ChatArgs(
+                                  rentalDS.documentID,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    )
                   ],
                 ),
-                Text('${ownerDS['name']}\'s ${ds['name']}',
-                    style: TextStyle(
-                        fontSize: h / 20,
-                        fontFamily: 'Quicksand',
-                        fontWeight: FontWeight.bold)),
-                Text("\$${ds['price']} per day",
-                    style:
-                        TextStyle(fontSize: h / 21, fontFamily: 'Quicksand')),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    IconButton(
-                      icon: Icon(Icons.shopping_cart),
-                      onPressed: () {
-                        Navigator.pushNamed(
-                          context,
-                          RentalDetail.routeName,
-                          arguments: RentalDetailArgs(
-                            rentalDS.documentID,
-                          ),
-                        );
-                      },
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.message),
-                      onPressed: () {
-                        Navigator.pushNamed(
-                          context,
-                          Chat.routeName,
-                          arguments: ChatArgs(
-                            rentalDS.documentID,
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                )
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       );
     }));
@@ -644,34 +480,26 @@ class HomePageState extends State<HomePage> {
     );
   }
 
-  Widget homeTabPage() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        //  searchField(),
-        Padding(
-          padding: const EdgeInsets.only(left: 20.0),
-          child: Text("Items near you",
-              style: TextStyle(
-                  fontFamily: 'Quicksand',
-                  fontWeight: FontWeight.bold,
-                  fontSize: 30.0)),
-        ),
-        buildItemList('all'),
-      ],
-    );
-  }
-
   Widget myRentalsPage() {
+    double h = MediaQuery.of(context).size.height;
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        appBar: AppBar(
-          bottom: TabBar(
-            tabs: [
-              Tab(text: "renting"),
-              Tab(text: "requesting"),
-            ],
+        appBar: PreferredSize(
+          preferredSize: Size.fromHeight(h/10),
+          child: AppBar(
+            backgroundColor: primaryColor,
+            elevation: 1.0,
+            title: Text("Items Available For You To Rent", style: TextStyle(fontFamily: 'Quicksand', fontSize: h/45, color: Colors.white, fontWeight: FontWeight.normal)),
+            centerTitle: false,
+            bottom: TabBar(
+              indicatorColor: Colors.black45,
+              labelStyle: TextStyle(fontFamily: 'Quicksand'),
+              tabs: [
+                Tab(text: "Renting"),
+                Tab(text: "Requesting"),
+              ],
+            ),
           ),
         ),
         body: TabBarView(
@@ -692,48 +520,14 @@ class HomePageState extends State<HomePage> {
     );
   }
 
-  Widget reusableObjList(String heading, displayList) {
-    return Expanded(
-      child: Column(
-        children: <Widget>[
-          Container(
-            alignment: Alignment.centerLeft,
-            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            child: Text(
-              heading,
-              style: TextStyle(
-                fontSize: 16,
-              ),
-            ),
-            decoration: BoxDecoration(
-              color: Colors.grey[350],
-              border: Border.all(
-                color: Colors.black,
-                width: 2,
-              ),
-            ),
-          ),
-          Container(
-            height: 12,
-          ),
-          displayList,
-        ],
-      ),
-    );
-  }
-
-  Widget buildItemList([type = 'all', bool status]) {
-    CollectionReference collectionReference =
-        Firestore.instance.collection('items');
+  Widget buildListingsList() {
+    CollectionReference collectionReference = Firestore.instance.collection('items');
     int tilerows = MediaQuery.of(context).size.width > 500 ? 3 : 2;
-    Stream stream = collectionReference.snapshots();
-    if (type == 'listings') {
-      stream = collectionReference
+    Stream stream = collectionReference
           .where('creator',
               isEqualTo:
                   Firestore.instance.collection('users').document(userID))
           .snapshots();
-    }
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
         stream: stream,
@@ -748,16 +542,14 @@ class HomePageState extends State<HomePage> {
               if (snapshot.hasData) {
                 List<DocumentSnapshot> items = snapshot.data.documents.toList();
                 return GridView.count(
+                    padding: const EdgeInsets.all(20.0),
                     shrinkWrap: true,
+                    mainAxisSpacing: 15,
                     crossAxisCount: tilerows,
                     childAspectRatio: (2 / 3),
-                    padding: const EdgeInsets.all(20.0),
-//                  mainAxisSpacing: 10.0,
-                    crossAxisSpacing: MediaQuery.of(context).size.width / 15,
+                    crossAxisSpacing: MediaQuery.of(context).size.width / 20,
                     children: items
-                        .map((DocumentSnapshot ds) => type == 'listings'
-                            ? allUserItems(ds)
-                            : cardItem(ds))
+                        .map((DocumentSnapshot ds) => itemCard(ds, context))
                         .toList());
               } else {
                 return Container();
@@ -769,22 +561,32 @@ class HomePageState extends State<HomePage> {
   }
 
   Widget myListingsPage() {
+    double h = MediaQuery.of(context).size.height;
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        appBar: AppBar(
-          bottom: TabBar(
-            tabs: [
-              Tab(text: "all items"),
-              Tab(text: "transactions"),
-            ],
+        appBar: PreferredSize(
+          preferredSize: Size.fromHeight(h/10),
+          child: AppBar(
+           backgroundColor: primaryColor,
+            elevation: 1.0,
+            title: Text("Your Items Available For Others To Rent", style: TextStyle(fontFamily: 'Quicksand', fontSize: h/45, color: Colors.white, fontWeight: FontWeight.normal)),
+            centerTitle: false,
+            bottom: TabBar(
+              indicatorColor: Colors.black45,
+              labelStyle: TextStyle(fontFamily: 'Quicksand'),
+              tabs: [
+                Tab(text: "All My Items"),
+                Tab(text: "Transactions"),
+              ],
+            ),
           ),
         ),
         body: TabBarView(
           children: [
             Column(
               children: <Widget>[
-                buildItemList('listings'),
+                buildListingsList(),
               ],
             ),
             Column(
@@ -804,13 +606,11 @@ class HomePageState extends State<HomePage> {
   Widget messagesTabPage() {
     double h = MediaQuery.of(context).size.height;
     return Container(
-      padding: EdgeInsets.only(top: h / 15, left: 30.0),
+      padding: EdgeInsets.only(top: h / 15),
       child: Column(
         children: <Widget>[
-          Align(
-              alignment: Alignment.topLeft,
-              child: Text("Messages",
-                  style: TextStyle(fontSize: 30.0, fontFamily: 'Quicksand'))),
+          Align( alignment: Alignment.topLeft, child: Container(padding: EdgeInsets.only(left: 30.0, bottom: 10.0), child: Text("Messages", style: TextStyle(fontSize: 30.0, fontFamily: 'Quicksand')))),
+          Divider(),
           buildMessagesList(),
         ],
       ),
@@ -985,40 +785,6 @@ class HomePageState extends State<HomePage> {
     );
   }
 
-  Widget reusableCategory(text) {
-    return Container(
-        padding: EdgeInsets.only(left: 15.0, top: 10.0),
-        alignment: Alignment.centerLeft,
-        child: Text(text,
-            style: TextStyle(fontSize: 11.0, fontWeight: FontWeight.w100)));
-  }
-
-  Widget reusableFlatButton(text, icon, action) {
-    return Column(
-      children: <Widget>[
-        Container(
-          child: FlatButton(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                Text(text, style: TextStyle(fontFamily: 'Quicksand')),
-                Icon(icon)
-              ],
-            ),
-            onPressed: () => action(),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(
-            left: 15.0,
-            right: 15.0,
-          ),
-          child: Divider(),
-        )
-      ],
-    );
-  }
-
   Widget getProfileDetails() {
     return FutureBuilder(
       future: Firestore.instance.collection('users').document(userID).get(),
@@ -1092,10 +858,12 @@ class HomePageState extends State<HomePage> {
               if (snapshot.hasData) {
                 List<DocumentSnapshot> items = snapshot.data.documents.toList();
                 return GridView.count(
+                    padding: EdgeInsets.all(20.0),
+                    mainAxisSpacing: 15,
                     shrinkWrap: true,
                     crossAxisCount: tilerows,
                     childAspectRatio: (2 / 3),
-                    crossAxisSpacing: MediaQuery.of(context).size.width / 15,
+                    crossAxisSpacing: MediaQuery.of(context).size.width / 20,
                     children: items.map((DocumentSnapshot userRentalDS) {
                       DocumentReference rentalDR = userRentalDS['rental'];
 
@@ -1219,6 +987,7 @@ class HomePageState extends State<HomePage> {
               if (snapshot.hasData) {
                 return new ListView.builder(
                   shrinkWrap: true,
+                  padding: EdgeInsets.symmetric(horizontal: 15),
                   itemCount: snapshot.data.documents.length,
                   itemBuilder: (context, index) {
                     DocumentSnapshot userRentalDS =
@@ -1292,129 +1061,56 @@ class HomePageState extends State<HomePage> {
                                                             .waiting:
 
                                                         default:
-                                                          if (snapshot
-                                                              .hasData) {
-                                                            DocumentSnapshot
-                                                                lastMessageDS =
-                                                                snapshot.data
-                                                                    .documents[0];
-                                                            Text title = Text(
-                                                              otherUserDS[
-                                                                  'name'],
-                                                              style: TextStyle(
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold,
-                                                                  fontFamily:
-                                                                      'Quicksand'),
-                                                            );
-                                                            Text lastActive = Text(
-                                                                ('Last seen: ' +
-                                                                    timeago.format(DateTime.fromMillisecondsSinceEpoch(
-                                                                        otherUserDS[
-                                                                            'lastActive']))),
-                                                                style:
-                                                                    TextStyle(
-                                                                  fontFamily:
-                                                                      'Quicksand',
-                                                                ));
-                                                            Text itemName = Text(
-                                                                'Item: ${itemDS['name']}',
-                                                                style: TextStyle(
-                                                                    fontFamily:
-                                                                        'Quicksand'));
-                                                            String imageURL =
-                                                                otherUserDS[
-                                                                    'avatar'];
-                                                            String lastMessage =
-                                                                lastMessageDS[
-                                                                    'content'];
+                                                          if (snapshot .hasData) {
+                                                            DocumentSnapshot lastMessageDS = snapshot.data .documents[0];
+                                                            Text title = Text( otherUserDS[ 'name'], style: TextStyle( fontWeight: FontWeight .bold, fontFamily: 'Quicksand'),);
+                                                            Text lastActive = Text( ('Last seen: ' + timeago.format(DateTime.fromMillisecondsSinceEpoch( otherUserDS[ 'lastActive']))), style: TextStyle( fontFamily: 'Quicksand',));
+                                                            Text itemName = Text( 'Item: ${itemDS['name']}', style: TextStyle( fontFamily: 'Quicksand'));
+                                                            String imageURL = otherUserDS[ 'avatar'];
+                                                            String lastMessage = lastMessageDS[ 'content'];
                                                             int cutoff = 30;
-                                                            String
-                                                                lastMessageCrop;
+                                                            String lastMessageCrop;
 
-                                                            if (lastMessage
-                                                                    .length >
-                                                                cutoff) {
-                                                              lastMessageCrop =
-                                                                  lastMessage
-                                                                      .substring(
-                                                                          0,
-                                                                          cutoff);
-                                                              lastMessageCrop +=
-                                                                  '...';
+                                                            if (lastMessage .length > cutoff) { 
+                                                              lastMessageCrop = lastMessage .substring( 0, cutoff); lastMessageCrop += '...';
                                                             } else {
-                                                              lastMessageCrop =
-                                                                  lastMessage;
+                                                              lastMessageCrop = lastMessage;
                                                             }
 
-                                                            return ListTile(
-                                                              leading:
-                                                                  Container(
-                                                                height: 50,
-                                                                child: ClipOval(
-                                                                  child:
-                                                                      CachedNetworkImage(
-                                                                    key: new ValueKey<
-                                                                        String>(DateTime
-                                                                            .now()
-                                                                        .millisecondsSinceEpoch
-                                                                        .toString()),
-                                                                    imageUrl:
-                                                                        imageURL,
-                                                                    placeholder:
-                                                                        (context,
-                                                                                url) =>
-                                                                            new Container(),
+                                                            return Column(
+                                                              children: <Widget>[
+                                                                ListTile(
+                                                                  leading: Container(
+                                                                    height: 50,
+                                                                    child: ClipOval(
+                                                                      child: CachedNetworkImage(
+                                                                        key: new ValueKey< String>(DateTime .now() .millisecondsSinceEpoch .toString()),
+                                                                        imageUrl: imageURL,
+                                                                        placeholder: (context, url) => new Container(),
+                                                                      ),
+                                                                    ),
                                                                   ),
-                                                                ),
-                                                              ),
-                                                              title: title,
-                                                              subtitle:
-                                                                  Container(
-                                                                alignment: Alignment
-                                                                    .centerLeft,
-                                                                child: Column(
-                                                                  children: <
-                                                                      Widget>[
-                                                                    Align(
-                                                                        alignment:
-                                                                            Alignment
-                                                                                .centerLeft,
-                                                                        child:
-                                                                            lastActive),
-                                                                    Align(
-                                                                        alignment:
-                                                                            Alignment
-                                                                                .centerLeft,
-                                                                        child:
-                                                                            itemName),
-                                                                    Align(
-                                                                        alignment:
-                                                                            Alignment
-                                                                                .centerLeft,
-                                                                        child:
-                                                                            Text(
-                                                                          lastMessageCrop,
-                                                                          style:
-                                                                              TextStyle(fontFamily: "Quicksand"),
-                                                                        )),
-                                                                  ],
-                                                                ),
-                                                              ),
-                                                              //subtitle: Text( '$lastActive\n$itemName\n$lastMessageCrop'),
-                                                              onTap: () {
-                                                                Navigator
-                                                                    .pushNamed(
-                                                                  context,
-                                                                  Chat.routeName,
-                                                                  arguments:
-                                                                      ChatArgs(
-                                                                    userRentalDS
-                                                                        .documentID,
+                                                                  title: title,
+                                                                  subtitle: Container(
+                                                                    alignment: Alignment.centerLeft,
+                                                                    child: Column( children: <Widget>[
+                                                                        Align(alignment: Alignment.centerLeft, child: lastActive),
+                                                                        Align(alignment: Alignment.centerLeft, child: itemName),
+                                                                        Align(alignment: Alignment.centerLeft, child: Text( lastMessageCrop, style: TextStyle(fontFamily: "Quicksand"),)),
+                                                                      ],
+                                                                    ),
                                                                   ),
-                                                                );
-                                                              },
+                                                                  //subtitle: Text( '$lastActive\n$itemName\n$lastMessageCrop'),
+                                                                  onTap: () {
+                                                                    Navigator.pushNamed(
+                                                                      context,
+                                                                      Chat.routeName,
+                                                                      arguments: ChatArgs( userRentalDS .documentID,),
+                                                                    );
+                                                                  },
+                                                                ),
+                                                                Divider(),
+                                                              ],
                                                             );
                                                           } else {
                                                             return Container();
