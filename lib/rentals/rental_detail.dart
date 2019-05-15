@@ -156,13 +156,13 @@ class RentalDetailState extends State<RentalDetail> {
         ),
         body: isLoading
             ? Container(
-                child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      Center(child: CircularProgressIndicator())
-                    ]),
-              )
+          child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                Center(child: CircularProgressIndicator())
+              ]),
+        )
             : showBody(),
         floatingActionButton: showFAB(),
       ),
@@ -391,45 +391,45 @@ class RentalDetailState extends State<RentalDetail> {
 
   Widget showRequestButtons() {
     return (isRenter && rentalDS['status'] == 1) ||
-            (!isRenter && rentalDS['status'] == 0)
+        (!isRenter && rentalDS['status'] == 0)
         ? Container(
-            child: Column(
-              children: <Widget>[
-                Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: reusableButton('Accept', Colors.green, () {
-                        updateStatus(2);
-                      }),
-                    ),
-                    Container(
-                      width: 10,
-                    ),
-                    Expanded(
-                      child: reusableButton('Propose new time',
-                          Colors.orange[700], newPickupProposal),
-                    ),
-                    Container(
-                      width: 10,
-                    ),
-                    Expanded(
-                      child: reusableButton('Reject', Colors.red[800], null),
-                    ),
-                  ],
-                ),
-                Container(
-                  padding: EdgeInsets.only(top: 15),
-                  child: Text(
-                    'Pickup note: ${rentalDS['note']}',
-                    textAlign: TextAlign.left,
-                    style: TextStyle(
-                      fontSize: 20,
-                    ),
-                  ),
-                ),
-              ],
+      child: Column(
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: reusableButton('Accept', Colors.green, () {
+                  updateStatus(2);
+                }),
+              ),
+              Container(
+                width: 10,
+              ),
+              Expanded(
+                child: reusableButton('Propose new time',
+                    Colors.orange[700], newPickupProposal),
+              ),
+              Container(
+                width: 10,
+              ),
+              Expanded(
+                child: reusableButton('Reject', Colors.red[800], null),
+              ),
+            ],
+          ),
+          Container(
+            padding: EdgeInsets.only(top: 15),
+            child: Text(
+              'Pickup note: ${rentalDS['note']}',
+              textAlign: TextAlign.left,
+              style: TextStyle(
+                fontSize: 20,
+              ),
             ),
-          )
+          ),
+        ],
+      ),
+    )
         : Container();
   }
 
@@ -458,21 +458,21 @@ class RentalDetailState extends State<RentalDetail> {
   Widget showReceiveItemButton() {
     return rentalDS['status'] == 2
         ? Container(
-            child: RaisedButton(
-              shape: new RoundedRectangleBorder(
-                  borderRadius: new BorderRadius.circular(5.0)),
-              color: Colors.green,
-              textColor: Colors.white,
-              child: Text(
-                "Simulate start of rental",
-                //addButton + " Images",
-                textScaleFactor: 1.25,
-              ),
-              onPressed: () {
-                updateStatus(3);
-              },
-            ),
-          )
+      child: RaisedButton(
+        shape: new RoundedRectangleBorder(
+            borderRadius: new BorderRadius.circular(5.0)),
+        color: Colors.green,
+        textColor: Colors.white,
+        child: Text(
+          "Simulate start of rental",
+          //addButton + " Images",
+          textScaleFactor: 1.25,
+        ),
+        onPressed: () {
+          updateStatus(3);
+        },
+      ),
+    )
         : Container();
   }
 
@@ -481,56 +481,56 @@ class RentalDetailState extends State<RentalDetail> {
 
     return rentalDS['status'] == 2
         ? Container(
-            child: RaisedButton(
-              shape: new RoundedRectangleBorder(
-                  borderRadius: new BorderRadius.circular(5.0)),
-              color: Colors.green,
-              textColor: Colors.white,
-              child: Text(
-                '$buttonText Credit Card',
-                //addButton + " Images",
-                textScaleFactor: 1.25,
-              ),
-              onPressed: () {
-                navToCreditCard();
-                //updateStatus(3);
-              },
-            ),
-          )
+      child: RaisedButton(
+        shape: new RoundedRectangleBorder(
+            borderRadius: new BorderRadius.circular(5.0)),
+        color: Colors.green,
+        textColor: Colors.white,
+        child: Text(
+          '$buttonText Credit Card',
+          //addButton + " Images",
+          textScaleFactor: 1.25,
+        ),
+        onPressed: () {
+          navToCreditCard();
+          //updateStatus(3);
+        },
+      ),
+    )
         : Container();
   }
 
   Widget showReturnedItemButton() {
     return rentalDS['status'] == 3
         ? Container(
-            child: RaisedButton(
-              shape: new RoundedRectangleBorder(
-                  borderRadius: new BorderRadius.circular(5.0)),
-              color: Colors.green,
-              textColor: Colors.white,
-              child: Text(
-                'Simulate end of rental',
-                //addButton + " Images",
-                textScaleFactor: 1.25,
-              ),
-              onPressed: () {
-                updateStatus(4);
-              },
-            ),
-          )
+      child: RaisedButton(
+        shape: new RoundedRectangleBorder(
+            borderRadius: new BorderRadius.circular(5.0)),
+        color: Colors.green,
+        textColor: Colors.white,
+        child: Text(
+          'Simulate end of rental',
+          //addButton + " Images",
+          textScaleFactor: 1.25,
+        ),
+        onPressed: () {
+          updateStatus(4);
+        },
+      ),
+    )
         : Container();
   }
 
   Widget showWriteReview() {
     return isRenter && rentalDS['status'] == 4
         ? Container(
-            child: Column(
-              children: <Widget>[
-                showWriteReviewTextBox(),
-                showSubmitReviewButton(),
-              ],
-            ),
-          )
+      child: Column(
+        children: <Widget>[
+          showWriteReviewTextBox(),
+          showSubmitReviewButton(),
+        ],
+      ),
+    )
         : Container();
   }
 
@@ -588,30 +588,30 @@ class RentalDetailState extends State<RentalDetail> {
     final ThemeData theme = Theme.of(context);
 
     return await showDialog<bool>(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text('Delete rental?'),
-              actions: <Widget>[
-                FlatButton(
-                  child: const Text('Cancel'),
-                  onPressed: () {
-                    Navigator.of(context).pop(
-                        false); // Pops the confirmation dialog but not the page.
-                  },
-                ),
-                FlatButton(
-                  child: const Text('Delete'),
-                  onPressed: () {
-                    Navigator.of(context).pop(false);
-                    deleteRental();
-                    // Pops the confirmation dialog but not the page.
-                  },
-                ),
-              ],
-            );
-          },
-        ) ??
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Delete rental?'),
+          actions: <Widget>[
+            FlatButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop(
+                    false); // Pops the confirmation dialog but not the page.
+              },
+            ),
+            FlatButton(
+              child: const Text('Delete'),
+              onPressed: () {
+                Navigator.of(context).pop(false);
+                deleteRental();
+                // Pops the confirmation dialog but not the page.
+              },
+            ),
+          ],
+        );
+      },
+    ) ??
         false;
   }
 
@@ -685,17 +685,17 @@ class RentalDetailState extends State<RentalDetail> {
           userID, new Map<String, dynamic>.from(userDS['cc']));
     }
 
-    bool ret = await Navigator.push(
+    Future<void> ret = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (BuildContext context) => CreditCardInfo(
-              creditCard: temp,
-            ),
+          creditCard: temp,
+        ),
         fullscreenDialog: true,
       ),
     );
 
-    if (ret) {
+    if (ret != null) {
       getSnapshots();
     }
   }

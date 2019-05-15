@@ -14,11 +14,17 @@ environment:
 
 dependencies:
 
-  #stripe_payment:
+  square_in_app_payments:
+
+  uuid:
+
+  #dio:
+
+  stripe_payment:
 
   #barcode_scan:
 
-  #square_in_app_payments:
+
 
   #square_reader_sdk: ^2.0.1
 
@@ -50,7 +56,7 @@ dependencies:
 
   firestore_helpers:
 
-  location: 
+  location:
 
   #location:
 
@@ -90,7 +96,6 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
 
 # For information on the generic Dart part of this file, see the
 # following page: https://www.dartlang.org/tools/pub/pubspec

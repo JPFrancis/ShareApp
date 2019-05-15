@@ -169,15 +169,16 @@ class HomePageState extends State<HomePage> {
   RaisedButton showFAB() {
     return currentTabIndex == 2
         ? RaisedButton(
-          elevation: 3,
-          color: primaryColor,
-          textColor: Colors.white,
+            elevation: 3,
+            color: primaryColor,
+            textColor: Colors.white,
             onPressed: () {
               navigateToEdit(
                 Item(
                   id: null,
                   status: true,
-                  creator: Firestore.instance.collection('users').document(userID),
+                  creator:
+                      Firestore.instance.collection('users').document(userID),
                   name: '',
                   description: '',
                   type: null,
@@ -190,7 +191,9 @@ class HomePageState extends State<HomePage> {
                 ),
               );
             },
-            child: Text("Add Item", style: TextStyle(fontFamily: 'Quicksand', fontWeight: FontWeight.normal)),
+            child: Text("Add Item",
+                style: TextStyle(
+                    fontFamily: 'Quicksand', fontWeight: FontWeight.normal)),
           )
         : null;
   }
@@ -208,46 +211,67 @@ class HomePageState extends State<HomePage> {
       double w = constraints.maxWidth;
 
       return InkWell(
-        onTap: () { navigateToDetail(ds.documentID); },
+        onTap: () {
+          navigateToDetail(ds.documentID);
+        },
         child: Container(
-          decoration: new BoxDecoration( 
+          decoration: new BoxDecoration(
             boxShadow: <BoxShadow>[
               CustomBoxShadow(
-                color: Colors.black45,
-                blurRadius: 3.0,
-                blurStyle: BlurStyle.outer
-              ),
+                  color: Colors.black45,
+                  blurRadius: 3.0,
+                  blurStyle: BlurStyle.outer),
             ],
           ),
           child: Column(
             children: <Widget>[
-              Container( height: 1.9 * h / 3,
+              Container(
+                  height: 1.9 * h / 3,
                   width: w,
                   child: FittedBox(fit: BoxFit.cover, child: image)),
-              SizedBox( height: 10.0,),
+              SizedBox(
+                height: 10.0,
+              ),
               Container(
                 padding: EdgeInsets.only(left: 5.0, right: 5.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Row( children: <Widget>[
+                    Row(
+                      children: <Widget>[
                         ds['type'] != null
-                            ? Text( '${ds['type']}'.toUpperCase(), style: TextStyle( fontSize: h / 25, fontFamily: 'Quicksand', fontWeight: FontWeight.bold),)
+                            ? Text(
+                                '${ds['type']}'.toUpperCase(),
+                                style: TextStyle(
+                                    fontSize: h / 25,
+                                    fontFamily: 'Quicksand',
+                                    fontWeight: FontWeight.bold),
+                              )
                             : Text(''),
                       ],
                     ),
-                    Text('${ownerDS['name']}\'s ${ds['name']}', style: TextStyle( fontSize: h / 21, fontFamily: 'Quicksand', fontWeight: FontWeight.bold)),
-                    Text("\$${ds['price']} per day", style: TextStyle(fontSize: h / 22, fontFamily: 'Quicksand')),
-                    Divider(height:15),
+                    Text('${ownerDS['name']}\'s ${ds['name']}',
+                        style: TextStyle(
+                            fontSize: h / 21,
+                            fontFamily: 'Quicksand',
+                            fontWeight: FontWeight.bold)),
+                    Text("\$${ds['price']} per day",
+                        style: TextStyle(
+                            fontSize: h / 22, fontFamily: 'Quicksand')),
+                    Divider(height: 15),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: <Widget>[
                         ButtonTheme(
-                          minWidth: w/5,
-                          height: h/13,
+                          minWidth: w / 5,
+                          height: h / 13,
                           child: FlatButton(
-                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            child: Icon(Icons.add_shopping_cart, size: h/13,),
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
+                            child: Icon(
+                              Icons.add_shopping_cart,
+                              size: h / 13,
+                            ),
                             onPressed: () {
                               Navigator.pushNamed(
                                 context,
@@ -260,11 +284,15 @@ class HomePageState extends State<HomePage> {
                           ),
                         ),
                         ButtonTheme(
-                          minWidth: w/5,
-                          height: h/13,
+                          minWidth: w / 5,
+                          height: h / 13,
                           child: FlatButton(
-                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            child: Icon(Icons.chat_bubble_outline, size: h/13,),
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
+                            child: Icon(
+                              Icons.chat_bubble_outline,
+                              size: h / 13,
+                            ),
                             onPressed: () {
                               Navigator.pushNamed(
                                 context,
@@ -302,7 +330,7 @@ class HomePageState extends State<HomePage> {
             height: 30.0,
           ),
           categories(),
-          //lookingFor()
+          lookingFor()
         ],
       ),
     );
@@ -391,7 +419,18 @@ class HomePageState extends State<HomePage> {
         child: RaisedButton(
           elevation: 10.0,
           color: Colors.white,
-          onPressed: () => print,
+          onPressed: () async {
+            final int selected = await showSearch<int>(
+              context: context,
+              //delegate: _delegate,
+            );
+            /*
+            if (selected != null && selected != _lastIntegerSelected) {
+              setState(() {
+                _lastIntegerSelected = selected;
+              });
+            }*/
+          },
           child: Row(
             children: <Widget>[
               Icon(Icons.search),
@@ -472,7 +511,9 @@ class HomePageState extends State<HomePage> {
             children: <Widget>[
               _categoryTile("Equipment", 'assets/lawnmower.jpg'),
               _categoryTile("Miscellaneous", 'assets/lawnchair.jpg'),
-              InkWell(onTap: navToAllItems, child: _categoryTile( "More", 'assets/misc.jpg')),
+              InkWell(
+                  onTap: navToAllItems,
+                  child: _categoryTile("More", 'assets/misc.jpg')),
             ],
           ),
         ],
@@ -486,11 +527,16 @@ class HomePageState extends State<HomePage> {
       length: 2,
       child: Scaffold(
         appBar: PreferredSize(
-          preferredSize: Size.fromHeight(h/10),
+          preferredSize: Size.fromHeight(h / 10),
           child: AppBar(
             backgroundColor: primaryColor,
             elevation: 1.0,
-            title: Text("Items Available For You To Rent", style: TextStyle(fontFamily: 'Quicksand', fontSize: h/45, color: Colors.white, fontWeight: FontWeight.normal)),
+            title: Text("Items Available For You To Rent",
+                style: TextStyle(
+                    fontFamily: 'Quicksand',
+                    fontSize: h / 45,
+                    color: Colors.white,
+                    fontWeight: FontWeight.normal)),
             centerTitle: false,
             bottom: TabBar(
               indicatorColor: Colors.black45,
@@ -521,13 +567,13 @@ class HomePageState extends State<HomePage> {
   }
 
   Widget buildListingsList() {
-    CollectionReference collectionReference = Firestore.instance.collection('items');
+    CollectionReference collectionReference =
+        Firestore.instance.collection('items');
     int tilerows = MediaQuery.of(context).size.width > 500 ? 3 : 2;
     Stream stream = collectionReference
-          .where('creator',
-              isEqualTo:
-                  Firestore.instance.collection('users').document(userID))
-          .snapshots();
+        .where('creator',
+            isEqualTo: Firestore.instance.collection('users').document(userID))
+        .snapshots();
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
         stream: stream,
@@ -566,11 +612,16 @@ class HomePageState extends State<HomePage> {
       length: 2,
       child: Scaffold(
         appBar: PreferredSize(
-          preferredSize: Size.fromHeight(h/10),
+          preferredSize: Size.fromHeight(h / 10),
           child: AppBar(
-           backgroundColor: primaryColor,
+            backgroundColor: primaryColor,
             elevation: 1.0,
-            title: Text("Your Items Available For Others To Rent", style: TextStyle(fontFamily: 'Quicksand', fontSize: h/45, color: Colors.white, fontWeight: FontWeight.normal)),
+            title: Text("Your Items Available For Others To Rent",
+                style: TextStyle(
+                    fontFamily: 'Quicksand',
+                    fontSize: h / 45,
+                    color: Colors.white,
+                    fontWeight: FontWeight.normal)),
             centerTitle: false,
             bottom: TabBar(
               indicatorColor: Colors.black45,
@@ -609,7 +660,13 @@ class HomePageState extends State<HomePage> {
       padding: EdgeInsets.only(top: h / 15),
       child: Column(
         children: <Widget>[
-          Align( alignment: Alignment.topLeft, child: Container(padding: EdgeInsets.only(left: 30.0, bottom: 10.0), child: Text("Messages", style: TextStyle(fontSize: 30.0, fontFamily: 'Quicksand')))),
+          Align(
+              alignment: Alignment.topLeft,
+              child: Container(
+                  padding: EdgeInsets.only(left: 30.0, bottom: 10.0),
+                  child: Text("Messages",
+                      style:
+                          TextStyle(fontSize: 30.0, fontFamily: 'Quicksand')))),
           Divider(),
           buildMessagesList(),
         ],
@@ -1061,51 +1118,125 @@ class HomePageState extends State<HomePage> {
                                                             .waiting:
 
                                                         default:
-                                                          if (snapshot .hasData) {
-                                                            DocumentSnapshot lastMessageDS = snapshot.data .documents[0];
-                                                            Text title = Text( otherUserDS[ 'name'], style: TextStyle( fontWeight: FontWeight .bold, fontFamily: 'Quicksand'),);
-                                                            Text lastActive = Text( ('Last seen: ' + timeago.format(DateTime.fromMillisecondsSinceEpoch( otherUserDS[ 'lastActive']))), style: TextStyle( fontFamily: 'Quicksand',));
-                                                            Text itemName = Text( 'Item: ${itemDS['name']}', style: TextStyle( fontFamily: 'Quicksand'));
-                                                            String imageURL = otherUserDS[ 'avatar'];
-                                                            String lastMessage = lastMessageDS[ 'content'];
+                                                          if (snapshot
+                                                              .hasData) {
+                                                            DocumentSnapshot
+                                                                lastMessageDS =
+                                                                snapshot.data
+                                                                    .documents[0];
+                                                            Text title = Text(
+                                                              otherUserDS[
+                                                                  'name'],
+                                                              style: TextStyle(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
+                                                                  fontFamily:
+                                                                      'Quicksand'),
+                                                            );
+                                                            Text lastActive = Text(
+                                                                ('Last seen: ' +
+                                                                    timeago.format(DateTime.fromMillisecondsSinceEpoch(
+                                                                        otherUserDS[
+                                                                            'lastActive']))),
+                                                                style:
+                                                                    TextStyle(
+                                                                  fontFamily:
+                                                                      'Quicksand',
+                                                                ));
+                                                            Text itemName = Text(
+                                                                'Item: ${itemDS['name']}',
+                                                                style: TextStyle(
+                                                                    fontFamily:
+                                                                        'Quicksand'));
+                                                            String imageURL =
+                                                                otherUserDS[
+                                                                    'avatar'];
+                                                            String lastMessage =
+                                                                lastMessageDS[
+                                                                    'content'];
                                                             int cutoff = 30;
-                                                            String lastMessageCrop;
+                                                            String
+                                                                lastMessageCrop;
 
-                                                            if (lastMessage .length > cutoff) { 
-                                                              lastMessageCrop = lastMessage .substring( 0, cutoff); lastMessageCrop += '...';
+                                                            if (lastMessage
+                                                                    .length >
+                                                                cutoff) {
+                                                              lastMessageCrop =
+                                                                  lastMessage
+                                                                      .substring(
+                                                                          0,
+                                                                          cutoff);
+                                                              lastMessageCrop +=
+                                                                  '...';
                                                             } else {
-                                                              lastMessageCrop = lastMessage;
+                                                              lastMessageCrop =
+                                                                  lastMessage;
                                                             }
 
                                                             return Column(
-                                                              children: <Widget>[
+                                                              children: <
+                                                                  Widget>[
                                                                 ListTile(
-                                                                  leading: Container(
+                                                                  leading:
+                                                                      Container(
                                                                     height: 50,
-                                                                    child: ClipOval(
-                                                                      child: CachedNetworkImage(
-                                                                        key: new ValueKey< String>(DateTime .now() .millisecondsSinceEpoch .toString()),
-                                                                        imageUrl: imageURL,
-                                                                        placeholder: (context, url) => new Container(),
+                                                                    child:
+                                                                        ClipOval(
+                                                                      child:
+                                                                          CachedNetworkImage(
+                                                                        key: new ValueKey<
+                                                                            String>(DateTime
+                                                                                .now()
+                                                                            .millisecondsSinceEpoch
+                                                                            .toString()),
+                                                                        imageUrl:
+                                                                            imageURL,
+                                                                        placeholder:
+                                                                            (context, url) =>
+                                                                                new Container(),
                                                                       ),
                                                                     ),
                                                                   ),
                                                                   title: title,
-                                                                  subtitle: Container(
-                                                                    alignment: Alignment.centerLeft,
-                                                                    child: Column( children: <Widget>[
-                                                                        Align(alignment: Alignment.centerLeft, child: lastActive),
-                                                                        Align(alignment: Alignment.centerLeft, child: itemName),
-                                                                        Align(alignment: Alignment.centerLeft, child: Text( lastMessageCrop, style: TextStyle(fontFamily: "Quicksand"),)),
+                                                                  subtitle:
+                                                                      Container(
+                                                                    alignment:
+                                                                        Alignment
+                                                                            .centerLeft,
+                                                                    child:
+                                                                        Column(
+                                                                      children: <
+                                                                          Widget>[
+                                                                        Align(
+                                                                            alignment:
+                                                                                Alignment.centerLeft,
+                                                                            child: lastActive),
+                                                                        Align(
+                                                                            alignment:
+                                                                                Alignment.centerLeft,
+                                                                            child: itemName),
+                                                                        Align(
+                                                                            alignment:
+                                                                                Alignment.centerLeft,
+                                                                            child: Text(
+                                                                              lastMessageCrop,
+                                                                              style: TextStyle(fontFamily: "Quicksand"),
+                                                                            )),
                                                                       ],
                                                                     ),
                                                                   ),
                                                                   //subtitle: Text( '$lastActive\n$itemName\n$lastMessageCrop'),
                                                                   onTap: () {
-                                                                    Navigator.pushNamed(
+                                                                    Navigator
+                                                                        .pushNamed(
                                                                       context,
                                                                       Chat.routeName,
-                                                                      arguments: ChatArgs( userRentalDS .documentID,),
+                                                                      arguments:
+                                                                          ChatArgs(
+                                                                        userRentalDS
+                                                                            .documentID,
+                                                                      ),
                                                                     );
                                                                   },
                                                                 ),

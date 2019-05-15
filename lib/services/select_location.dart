@@ -238,7 +238,7 @@ class SelectLocationState extends State<SelectLocation> {
                   ),
                   Text(
                     "Getting current location ...\n"
-                        "Press \'Reset\' if\nit takes too long",
+                    "Press \'Reset\' if\nit takes too long",
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
                   ),
@@ -358,10 +358,10 @@ class SelectLocationState extends State<SelectLocation> {
         title: const Text('Help'),
         content: Text(
           'Search for your address or use your current '
-              'location. When the marker is placed, '
-              'click on it to show navigation button. '
-              '\'Reset\' will remove the marker, and '
-              'press \'Done\' when you are finished.',
+          'location. When the marker is placed, '
+          'click on it to show navigation button. '
+          '\'Reset\' will remove the marker, and '
+          'press \'Done\' when you are finished.',
           style: Theme.of(context)
               .textTheme
               .subhead

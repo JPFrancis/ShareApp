@@ -746,9 +746,9 @@ class ItemEditState extends State<ItemEdit> {
               title: Text('Warning!'),
               content: Text(
                 'You are currently editing an item. '
-                    'Deleting its images will delete '
-                    'the images in the database, even '
-                    'if you don\'t press save',
+                'Deleting its images will delete '
+                'the images in the database, even '
+                'if you don\'t press save',
                 style: dialogTextStyle,
               ),
               actions: <Widget>[

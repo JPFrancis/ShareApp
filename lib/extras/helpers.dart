@@ -137,7 +137,9 @@ Widget itemCard(DocumentSnapshot ds, context) {
   }));
 
   return InkWell(
-      onTap: () { navigateToDetail(ds.documentID, context); },
+      onTap: () {
+        navigateToDetail(ds.documentID, context);
+      },
       child: card);
 }
 

@@ -191,11 +191,11 @@ class ItemRequestState extends State<ItemRequest> {
       padding: EdgeInsets.all(10),
       child: Text(
         'TESTING PURPOSES ONLY\n'
-            'Start: ${pickupTime}\n'
-            'End: ${pickupTime.add(Duration(hours: 1))}\n'
-            'Window: $window\n'
-            'amPm: $amPm\n'
-            'duration: $duration',
+        'Start: ${pickupTime}\n'
+        'End: ${pickupTime.add(Duration(hours: 1))}\n'
+        'Window: $window\n'
+        'amPm: $amPm\n'
+        'duration: $duration',
         style: theme.textTheme.caption,
       ),
     );
@@ -250,7 +250,7 @@ class ItemRequestState extends State<ItemRequest> {
             color: Color(0x00000000),
             child: Text(
               'Item daily rate: \$${itemDS['price']}\n'
-                  'Total due: \$${itemDS['price'] * duration}',
+              'Total due: \$${itemDS['price'] * duration}',
               //itemName,
               style: TextStyle(color: Colors.black, fontSize: 20.0),
               textAlign: TextAlign.left,

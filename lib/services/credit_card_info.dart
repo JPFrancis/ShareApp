@@ -4,6 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shareapp/models/credit_card.dart';
+import 'package:shareapp/services/payment_service.dart';
+import 'package:stripe_payment/stripe_payment.dart';
 
 enum DismissDialogAction {
   cancel,
@@ -57,6 +59,14 @@ class CreditCardInfoState extends State<CreditCardInfo> {
   void init() async {
     isLoading = true;
 
+    Firestore.instance
+        .collection('keys')
+        .document('stripe_pk')
+        .get()
+        .then((DocumentSnapshot ds) {
+      StripeSource.setPublishableKey(ds['key']);
+    });
+
     DocumentSnapshot ds = await Firestore.instance
         .collection('users')
         .document(widget.creditCard.userID)
@@ -89,7 +99,7 @@ class CreditCardInfoState extends State<CreditCardInfo> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Credit Card Info'),
+        title: Text('Add Credit Card'),
         actions: <Widget>[
           FlatButton(
             child: Text('SAVE',
@@ -117,24 +127,29 @@ class CreditCardInfoState extends State<CreditCardInfo> {
   }
 
   Widget showBody() {
-    double height = MediaQuery.of(context).size.height;
-    double width = MediaQuery.of(context).size.width;
-
-    return Form(
-      key: formKey,
-      onWillPop: onWillPop,
+    return Padding(
+      padding: EdgeInsets.all(10.0),
       child: ListView(
-        shrinkWrap: true,
-        padding:
-            EdgeInsets.only(top: 10, bottom: 10.0, left: 18.0, right: 18.0),
         children: <Widget>[
-          reusableTextEntry(
-              'Name on card', true, nameController, 'name', TextInputType.text),
-          reusableTextEntry('Card number', true, numberController, 'number'),
-          reusableTextEntry('Month', true, monthController, 'month'),
-          reusableTextEntry('Year', true, yearController, 'year'),
-          reusableTextEntry('CVV', true, cvvController, 'cvv'),
-          reusableTextEntry('Zip code', true, zipController, 'zip'),
+          RaisedButton(
+            shape: new RoundedRectangleBorder(
+                borderRadius: new BorderRadius.circular(5.0)),
+            color: Colors.green,
+            textColor: Colors.white,
+            child: Text(
+              'Add card',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+              ),
+            ),
+            onPressed: () {
+              StripeSource.addSource().then((token){
+                PaymentService().addCard(token);
+              });
+            },
+          ),
+
         ],
       ),
     );
