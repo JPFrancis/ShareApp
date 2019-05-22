@@ -1,7 +1,8 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:async';
-import 'package:shareapp/stripe/utilities/CurrentUser.dart';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shareapp/stripe/utilities/CurrentUser.dart';
 
 Future<void> fetchUser() async {
   final user = await FirebaseAuth.instance.currentUser();

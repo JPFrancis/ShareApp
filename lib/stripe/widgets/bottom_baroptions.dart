@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:shareapp/stripe/utilities/CommonFunctions.dart';
-import 'package:shareapp/stripe/utilities/CurrentUser.dart';
-import 'package:shareapp/stripe/widgets/buy_dialog.dart';
 import 'package:shareapp/stripe/streams/transactions.dart';
+import 'package:shareapp/stripe/utilities/CommonFunctions.dart';
+import 'package:shareapp/stripe/widgets/buy_dialog.dart';
 
 class Options extends StatefulWidget {
   @override

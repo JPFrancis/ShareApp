@@ -9,10 +9,10 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:shareapp/extras/helpers.dart';
+import 'package:shareapp/main.dart';
+import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:shareapp/rentals/rental_detail.dart';
-import 'package:shareapp/main.dart';
 
 class Chat extends StatelessWidget {
   static const routeName = '/chat';

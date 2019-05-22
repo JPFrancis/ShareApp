@@ -541,6 +541,7 @@ class RentalDetailState extends State<RentalDetail> {
                               }
                               switch (snapshot.connectionState) {
                                 case ConnectionState.waiting:
+                                  return Container();
                                 default:
                                   List documents = snapshot.data.documents;
                                   bool hasCard = documents.length > 0;
@@ -696,7 +697,7 @@ class RentalDetailState extends State<RentalDetail> {
           )
         : Container();
   }
-  
+
   double getRating(int indicator) {
     switch (indicator) {
       case 1:
