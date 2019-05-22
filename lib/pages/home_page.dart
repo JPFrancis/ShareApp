@@ -330,7 +330,6 @@ class HomePageState extends State<HomePage> {
             height: 30.0,
           ),
           categories(),
-          lookingFor()
         ],
       ),
     );
