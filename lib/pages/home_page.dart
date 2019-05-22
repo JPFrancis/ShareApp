@@ -100,6 +100,11 @@ class HomePageState extends State<HomePage> {
           'creationDate': widget.firebaseUser.metadata.creationTimestamp,
           'cc': null,
         });
+
+        Firestore.instance.collection('cards').document(userID).setData({
+          'custId': 'new',
+          'email': widget.firebaseUser.email,
+        });
       }
 
       // if user is already in db
@@ -330,7 +335,7 @@ class HomePageState extends State<HomePage> {
             height: 30.0,
           ),
           categories(),
-          lookingFor()
+          //lookingFor()
         ],
       ),
     );

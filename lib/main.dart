@@ -1,7 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shareapp/login/root_page.dart';
-import 'package:shareapp/models/credit_card.dart';
 import 'package:shareapp/models/item.dart';
 import 'package:shareapp/pages/all_items.dart';
 import 'package:shareapp/pages/home_page.dart';
@@ -12,7 +11,6 @@ import 'package:shareapp/rentals/item_request.dart';
 import 'package:shareapp/rentals/new_pickup.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/auth.dart';
-import 'package:shareapp/services/credit_card_info.dart';
 
 void main() => runApp(MyApp());
 
@@ -125,19 +123,6 @@ class MyApp extends StatelessWidget {
               );
             }
 
-          case CreditCardInfo.routeName:
-            {
-              final CreditCardInfoArgs args = settings.arguments;
-
-              return MaterialPageRoute(
-                builder: (context) {
-                  return CreditCardInfo(
-                    creditCard: args.creditCard,
-                  );
-                },
-              );
-            }
-
           case AllItems.routeName:
             {
               final AllItemsArgs args = settings.arguments;
@@ -210,12 +195,6 @@ class NewPickupArgs {
     this.rentalID,
     this.isRenter,
   );
-}
-
-class CreditCardInfoArgs {
-  final CreditCard creditCard;
-
-  CreditCardInfoArgs(this.creditCard);
 }
 
 class AllItemsArgs {
