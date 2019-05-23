@@ -830,7 +830,6 @@ class HomePageState extends State<HomePage> {
         child: ListView(
           shrinkWrap: true,
           children: <Widget>[
-            /// I'll remove this later, I'm just using it to quickly switch accounts
             reusableCategory("ACCOUNT SETTINGS"),
             reusableFlatButton(
                 "Personal information", Icons.person_outline, null),
@@ -965,7 +964,8 @@ class HomePageState extends State<HomePage> {
                                                 itemDS['creator'];
 
                                             if (requesting ^
-                                                (rentalDS['status'] == 1)) {
+                                                (rentalDS['status'] == 0 ||
+                                                    rentalDS['status'] == 1)) {
                                               return StreamBuilder<
                                                   DocumentSnapshot>(
                                                 stream: ownerDR.snapshots(),
@@ -1044,7 +1044,6 @@ class HomePageState extends State<HomePage> {
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           switch (snapshot.connectionState) {
             case ConnectionState.waiting:
-
             default:
               if (snapshot.hasData) {
                 return new ListView.builder(
@@ -1079,187 +1078,148 @@ class HomePageState extends State<HomePage> {
                                       if (snapshot.hasData) {
                                         DocumentSnapshot rentalDS =
                                             snapshot.data;
-                                        DocumentReference itemDR =
-                                            rentalDS['item'];
-                                        DocumentReference chatDR =
-                                            rentalDS['chat'];
+                                        if (snapshot.hasData) {
+                                          return StreamBuilder<QuerySnapshot>(
+                                            stream: Firestore.instance
+                                                .collection('rentals')
+                                                .document(rentalDS.documentID)
+                                                .collection('chat')
+                                                .orderBy('timestamp',
+                                                    descending: true)
+                                                .limit(1)
+                                                .snapshots(),
+                                            builder: (BuildContext context,
+                                                AsyncSnapshot<QuerySnapshot>
+                                                    snapshot) {
+                                              switch (
+                                                  snapshot.connectionState) {
+                                                case ConnectionState.waiting:
 
-                                        return StreamBuilder<DocumentSnapshot>(
-                                          stream: itemDR.snapshots(),
-                                          builder: (BuildContext context,
-                                              AsyncSnapshot<DocumentSnapshot>
-                                                  snapshot) {
-                                            if (snapshot.hasError) {
-                                              return new Text(
-                                                  '${snapshot.error}');
-                                            }
-                                            switch (snapshot.connectionState) {
-                                              case ConnectionState.waiting:
+                                                default:
+                                                  if (snapshot.hasData) {
+                                                    DocumentSnapshot
+                                                        lastMessageDS = snapshot
+                                                            .data.documents[0];
+                                                    Text title = Text(
+                                                      otherUserDS['name'],
+                                                      style: TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontFamily:
+                                                              'Quicksand'),
+                                                    );
+                                                    Text lastActive = Text(
+                                                        ('Last seen: ' +
+                                                            timeago.format(DateTime
+                                                                .fromMillisecondsSinceEpoch(
+                                                                    otherUserDS[
+                                                                        'lastActive']))),
+                                                        style: TextStyle(
+                                                          fontFamily:
+                                                              'Quicksand',
+                                                        ));
+                                                    Text itemName = Text(
+                                                        'Item: ${rentalDS['itemName']}',
+                                                        style: TextStyle(
+                                                            fontFamily:
+                                                                'Quicksand'));
+                                                    String imageURL =
+                                                        otherUserDS['avatar'];
+                                                    String lastMessage =
+                                                        lastMessageDS[
+                                                            'content'];
+                                                    int cutoff = 30;
+                                                    String lastMessageCrop;
 
-                                              default:
-                                                if (snapshot.hasData) {
-                                                  DocumentSnapshot itemDS =
-                                                      snapshot.data;
+                                                    if (lastMessage.length >
+                                                        cutoff) {
+                                                      lastMessageCrop =
+                                                          lastMessage.substring(
+                                                              0, cutoff);
+                                                      lastMessageCrop += '...';
+                                                    } else {
+                                                      lastMessageCrop =
+                                                          lastMessage;
+                                                    }
 
-                                                  return StreamBuilder<
-                                                      QuerySnapshot>(
-                                                    stream: Firestore.instance
-                                                        .collection('rentals')
-                                                        .document(
-                                                            rentalDS.documentID)
-                                                        .collection('chat')
-                                                        .orderBy('timestamp',
-                                                            descending: true)
-                                                        .limit(1)
-                                                        .snapshots(),
-                                                    builder: (BuildContext
-                                                            context,
-                                                        AsyncSnapshot<
-                                                                QuerySnapshot>
-                                                            snapshot) {
-                                                      switch (snapshot
-                                                          .connectionState) {
-                                                        case ConnectionState
-                                                            .waiting:
-
-                                                        default:
-                                                          if (snapshot
-                                                              .hasData) {
-                                                            DocumentSnapshot
-                                                                lastMessageDS =
-                                                                snapshot.data
-                                                                    .documents[0];
-                                                            Text title = Text(
-                                                              otherUserDS[
-                                                                  'name'],
-                                                              style: TextStyle(
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold,
-                                                                  fontFamily:
-                                                                      'Quicksand'),
-                                                            );
-                                                            Text lastActive = Text(
-                                                                ('Last seen: ' +
-                                                                    timeago.format(DateTime.fromMillisecondsSinceEpoch(
-                                                                        otherUserDS[
-                                                                            'lastActive']))),
-                                                                style:
-                                                                    TextStyle(
-                                                                  fontFamily:
-                                                                      'Quicksand',
-                                                                ));
-                                                            Text itemName = Text(
-                                                                'Item: ${itemDS['name']}',
-                                                                style: TextStyle(
-                                                                    fontFamily:
-                                                                        'Quicksand'));
-                                                            String imageURL =
-                                                                otherUserDS[
-                                                                    'avatar'];
-                                                            String lastMessage =
-                                                                lastMessageDS[
-                                                                    'content'];
-                                                            int cutoff = 30;
-                                                            String
-                                                                lastMessageCrop;
-
-                                                            if (lastMessage
-                                                                    .length >
-                                                                cutoff) {
-                                                              lastMessageCrop =
-                                                                  lastMessage
-                                                                      .substring(
-                                                                          0,
-                                                                          cutoff);
-                                                              lastMessageCrop +=
-                                                                  '...';
-                                                            } else {
-                                                              lastMessageCrop =
-                                                                  lastMessage;
-                                                            }
-
-                                                            return Column(
+                                                    return Column(
+                                                      children: <Widget>[
+                                                        ListTile(
+                                                          leading: Container(
+                                                            height: 50,
+                                                            child: ClipOval(
+                                                              child:
+                                                                  CachedNetworkImage(
+                                                                key: new ValueKey<
+                                                                    String>(DateTime
+                                                                        .now()
+                                                                    .millisecondsSinceEpoch
+                                                                    .toString()),
+                                                                imageUrl:
+                                                                    imageURL,
+                                                                placeholder: (context,
+                                                                        url) =>
+                                                                    new Container(),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          title: title,
+                                                          subtitle: Container(
+                                                            alignment: Alignment
+                                                                .centerLeft,
+                                                            child: Column(
                                                               children: <
                                                                   Widget>[
-                                                                ListTile(
-                                                                  leading:
-                                                                      Container(
-                                                                    height: 50,
-                                                                    child:
-                                                                        ClipOval(
-                                                                      child:
-                                                                          CachedNetworkImage(
-                                                                        key: new ValueKey<
-                                                                            String>(DateTime
-                                                                                .now()
-                                                                            .millisecondsSinceEpoch
-                                                                            .toString()),
-                                                                        imageUrl:
-                                                                            imageURL,
-                                                                        placeholder:
-                                                                            (context, url) =>
-                                                                                new Container(),
-                                                                      ),
-                                                                    ),
-                                                                  ),
-                                                                  title: title,
-                                                                  subtitle:
-                                                                      Container(
+                                                                Align(
                                                                     alignment:
                                                                         Alignment
                                                                             .centerLeft,
                                                                     child:
-                                                                        Column(
-                                                                      children: <
-                                                                          Widget>[
-                                                                        Align(
-                                                                            alignment:
-                                                                                Alignment.centerLeft,
-                                                                            child: lastActive),
-                                                                        Align(
-                                                                            alignment:
-                                                                                Alignment.centerLeft,
-                                                                            child: itemName),
-                                                                        Align(
-                                                                            alignment:
-                                                                                Alignment.centerLeft,
-                                                                            child: Text(
-                                                                              lastMessageCrop,
-                                                                              style: TextStyle(fontFamily: "Quicksand"),
-                                                                            )),
-                                                                      ],
-                                                                    ),
-                                                                  ),
-                                                                  //subtitle: Text( '$lastActive\n$itemName\n$lastMessageCrop'),
-                                                                  onTap: () {
-                                                                    Navigator
-                                                                        .pushNamed(
-                                                                      context,
-                                                                      Chat.routeName,
-                                                                      arguments:
-                                                                          ChatArgs(
-                                                                        userRentalDS
-                                                                            .documentID,
-                                                                      ),
-                                                                    );
-                                                                  },
-                                                                ),
-                                                                Divider(),
+                                                                        lastActive),
+                                                                Align(
+                                                                    alignment:
+                                                                        Alignment
+                                                                            .centerLeft,
+                                                                    child:
+                                                                        itemName),
+                                                                Align(
+                                                                    alignment:
+                                                                        Alignment
+                                                                            .centerLeft,
+                                                                    child: Text(
+                                                                      lastMessageCrop,
+                                                                      style: TextStyle(
+                                                                          fontFamily:
+                                                                              "Quicksand"),
+                                                                    )),
                                                               ],
+                                                            ),
+                                                          ),
+                                                          //subtitle: Text( '$lastActive\n$itemName\n$lastMessageCrop'),
+                                                          onTap: () {
+                                                            Navigator.pushNamed(
+                                                              context,
+                                                              Chat.routeName,
+                                                              arguments:
+                                                                  ChatArgs(
+                                                                userRentalDS
+                                                                    .documentID,
+                                                              ),
                                                             );
-                                                          } else {
-                                                            return Container();
-                                                          }
-                                                      }
-                                                    },
-                                                  );
-                                                } else {
-                                                  return Container();
-                                                }
-                                            }
-                                          },
-                                        );
+                                                          },
+                                                        ),
+                                                        Divider(),
+                                                      ],
+                                                    );
+                                                  } else {
+                                                    return Container();
+                                                  }
+                                              }
+                                            },
+                                          );
+                                        } else {
+                                          return Container();
+                                        }
                                       } else {
                                         return Container();
                                       }

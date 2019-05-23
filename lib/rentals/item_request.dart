@@ -352,6 +352,7 @@ class ItemRequestState extends State<ItemRequest> {
         await Firestore.instance.collection("rentals").add({
       'status': 0,
       'item': Firestore.instance.collection('items').document(widget.itemID),
+      'itemName': itemDS['name'],
       'owner':
           Firestore.instance.collection('users').document(creatorDS.documentID),
       'renter': Firestore.instance.collection('users').document(myUserID),
@@ -363,6 +364,7 @@ class ItemRequestState extends State<ItemRequest> {
       'note': note,
       'renterCC': null,
       'ownerCC': null,
+      'review': null,
     });
 
     if (rentalDR != null) {
