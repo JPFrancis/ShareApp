@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:shareapp/stripe/widgets/ExpansionItem.dart';
 import 'package:shareapp/stripe/classes/PaymentItem.dart';
+import 'package:shareapp/stripe/widgets/ExpansionItem.dart';
 
 class PaymentsList extends StatefulWidget {
   const PaymentsList(this.data);

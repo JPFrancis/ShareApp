@@ -6,11 +6,12 @@ import 'package:flutter/rendering.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:shareapp/main.dart';
-import 'package:shareapp/models/credit_card.dart';
 import 'package:shareapp/rentals/chat.dart';
 import 'package:shareapp/rentals/new_pickup.dart';
-import 'package:shareapp/services/credit_card_info.dart';
+import 'package:shareapp/services/payment_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:smooth_star_rating/smooth_star_rating.dart';
+import 'package:stripe_payment/stripe_payment.dart';
 
 enum Status {
   requested,
@@ -24,7 +25,6 @@ class RentalDetail extends StatefulWidget {
   static const routeName = '/itemRental';
   final String rentalID;
 
-  //ItemDetail(this.itemID, this.isMyItem);
   RentalDetail({Key key, this.rentalID}) : super(key: key);
 
   @override
@@ -37,16 +37,19 @@ class RentalDetailState extends State<RentalDetail> {
   GoogleMapController googleMapController;
 
   SharedPreferences prefs;
-  String userID;
+  String myUserId;
   String url;
+  String rentalCC;
   bool isLoading;
   bool isRenter;
+  bool stripeInit;
 
   DocumentSnapshot rentalDS;
   DocumentSnapshot itemDS;
   DocumentSnapshot ownerDS;
   DocumentSnapshot renterDS;
   DocumentSnapshot userDS;
+  DocumentSnapshot cardDS;
 
   TextStyle textStyle;
   double padding = 5.0;
@@ -54,17 +57,26 @@ class RentalDetailState extends State<RentalDetail> {
   TextEditingController reviewController = TextEditingController();
   String review;
 
+  double communicationRating;
+  double itemQualityRating;
+  double overallExpRating;
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+    stripeInit = false;
+    communicationRating = 0.0;
+    itemQualityRating = 0.0;
+    overallExpRating = 0.0;
+
     getMyUserID();
     getSnapshots();
   }
 
   void getMyUserID() async {
     prefs = await SharedPreferences.getInstance();
-    userID = prefs.getString('userID') ?? '';
+    myUserId = prefs.getString('userID') ?? '';
   }
 
   void getSnapshots() async {
@@ -109,17 +121,27 @@ class RentalDetailState extends State<RentalDetail> {
 
       if (ds != null) {
         renterDS = ds;
-      }
 
-      if (prefs != null &&
-          itemDS != null &&
-          ownerDS != null &&
-          renterDS != null) {
-        setState(() {
-          isRenter = userID == renterDS.documentID ? true : false;
-          userDS = isRenter ? renterDS : ownerDS;
-          isLoading = false;
-        });
+        ds = await Firestore.instance
+            .collection('cards')
+            .document(myUserId)
+            .get();
+
+        if (ds != null) {
+          cardDS = ds;
+
+          if (prefs != null &&
+              itemDS != null &&
+              ownerDS != null &&
+              renterDS != null) {
+            setState(() {
+              isRenter = myUserId == renterDS.documentID ? true : false;
+              rentalCC = isRenter ? 'renterCC' : 'ownerCC';
+              userDS = isRenter ? renterDS : ownerDS;
+              isLoading = false;
+            });
+          }
+        }
       }
     }
   }
@@ -156,13 +178,13 @@ class RentalDetailState extends State<RentalDetail> {
         ),
         body: isLoading
             ? Container(
-          child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: <Widget>[
-                Center(child: CircularProgressIndicator())
-              ]),
-        )
+                child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      Center(child: CircularProgressIndicator())
+                    ]),
+              )
             : showBody(),
         floatingActionButton: showFAB(),
       ),
@@ -204,9 +226,6 @@ class RentalDetailState extends State<RentalDetail> {
         }
         switch (snapshot.connectionState) {
           case ConnectionState.waiting:
-            return Center(
-              child: new Container(),
-            );
           default:
             if (snapshot.hasData) {
               rentalDS = snapshot.data;
@@ -225,9 +244,10 @@ class RentalDetailState extends State<RentalDetail> {
                     ),
                     showRequestButtons(),
                     showCreditCardButton(),
+                    showPaymentInfo(),
                     showReceiveItemButton(),
                     showReturnedItemButton(),
-                    showWriteReview(),
+                    showReview(),
                   ],
                 ),
               );
@@ -249,8 +269,8 @@ class RentalDetailState extends State<RentalDetail> {
     return Container(
       child: Text(
         'Item name: ${itemDS['name']}\n'
-            '$itemOwner\n'
-            '$itemRenter',
+        '$itemOwner\n'
+        '$itemRenter',
         style: TextStyle(
           fontSize: 20,
         ),
@@ -391,45 +411,45 @@ class RentalDetailState extends State<RentalDetail> {
 
   Widget showRequestButtons() {
     return (isRenter && rentalDS['status'] == 1) ||
-        (!isRenter && rentalDS['status'] == 0)
+            (!isRenter && rentalDS['status'] == 0)
         ? Container(
-      child: Column(
-        children: <Widget>[
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: reusableButton('Accept', Colors.green, () {
-                  updateStatus(2);
-                }),
-              ),
-              Container(
-                width: 10,
-              ),
-              Expanded(
-                child: reusableButton('Propose new time',
-                    Colors.orange[700], newPickupProposal),
-              ),
-              Container(
-                width: 10,
-              ),
-              Expanded(
-                child: reusableButton('Reject', Colors.red[800], null),
-              ),
-            ],
-          ),
-          Container(
-            padding: EdgeInsets.only(top: 15),
-            child: Text(
-              'Pickup note: ${rentalDS['note']}',
-              textAlign: TextAlign.left,
-              style: TextStyle(
-                fontSize: 20,
-              ),
+            child: Column(
+              children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: reusableButton('Accept', Colors.green, () {
+                        updateStatus(2);
+                      }),
+                    ),
+                    Container(
+                      width: 10,
+                    ),
+                    Expanded(
+                      child: reusableButton('Propose new time',
+                          Colors.orange[700], newPickupProposal),
+                    ),
+                    Container(
+                      width: 10,
+                    ),
+                    Expanded(
+                      child: reusableButton('Reject', Colors.red[800], null),
+                    ),
+                  ],
+                ),
+                Container(
+                  padding: EdgeInsets.only(top: 15),
+                  child: Text(
+                    'Pickup note: ${rentalDS['note']}',
+                    textAlign: TextAlign.left,
+                    style: TextStyle(
+                      fontSize: 20,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
-      ),
-    )
+          )
         : Container();
   }
 
@@ -458,96 +478,275 @@ class RentalDetailState extends State<RentalDetail> {
   Widget showReceiveItemButton() {
     return rentalDS['status'] == 2
         ? Container(
-      child: RaisedButton(
-        shape: new RoundedRectangleBorder(
-            borderRadius: new BorderRadius.circular(5.0)),
-        color: Colors.green,
-        textColor: Colors.white,
-        child: Text(
-          "Simulate start of rental",
-          //addButton + " Images",
-          textScaleFactor: 1.25,
-        ),
-        onPressed: () {
-          updateStatus(3);
-        },
-      ),
-    )
+            child: RaisedButton(
+              shape: new RoundedRectangleBorder(
+                  borderRadius: new BorderRadius.circular(5.0)),
+              color: Colors.green,
+              textColor: Colors.white,
+              child: Text(
+                "Simulate start of rental",
+                //addButton + " Images",
+                textScaleFactor: 1.25,
+              ),
+              onPressed: () {
+                updateStatus(3);
+              },
+            ),
+          )
         : Container();
   }
 
   Widget showCreditCardButton() {
-    String buttonText = userDS['cc'] == null ? 'Add' : 'Edit';
+    return rentalDS['status'] == 2
+        ? Container(
+            child: RaisedButton(
+              shape: new RoundedRectangleBorder(
+                  borderRadius: new BorderRadius.circular(5.0)),
+              color: Colors.green,
+              textColor: Colors.white,
+              child: Text(
+                'Confirm payment method',
+                textScaleFactor: 1.25,
+              ),
+              onPressed: () {
+                if (!stripeInit) {
+                  Firestore.instance
+                      .collection('keys')
+                      .document('stripe_pk')
+                      .get()
+                      .then((DocumentSnapshot ds) {
+                    StripeSource.setPublishableKey(ds['key']);
+                  });
+
+                  stripeInit = true;
+                }
+
+                showDialog<String>(
+                  context: context,
+                  builder: (BuildContext context) => AlertDialog(
+                        title: const Text('Credit Card'),
+                        content: Container(
+                          height: 175,
+                          child: StreamBuilder<QuerySnapshot>(
+                            stream: Firestore.instance
+                                .collection('cards')
+                                .document(myUserId)
+                                .collection('sources')
+                                .limit(1)
+                                .snapshots(),
+                            builder: (BuildContext context,
+                                AsyncSnapshot<QuerySnapshot> snapshot) {
+                              if (snapshot.hasError) {
+                                return new Text('${snapshot.error}');
+                              }
+                              switch (snapshot.connectionState) {
+                                case ConnectionState.waiting:
+                                  return Container();
+                                default:
+                                  List documents = snapshot.data.documents;
+                                  bool hasCard = documents.length > 0;
+
+                                  return Column(
+                                    children: <Widget>[
+                                      RaisedButton(
+                                        shape: new RoundedRectangleBorder(
+                                            borderRadius:
+                                                new BorderRadius.circular(5.0)),
+                                        color: Colors.green,
+                                        textColor: Colors.white,
+                                        child: Text(
+                                          'Add card',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                        onPressed: hasCard
+                                            ? null
+                                            : () {
+                                                StripeSource.addSource()
+                                                    .then((token) {
+                                                  PaymentService()
+                                                      .addCard(token);
+                                                });
+                                              },
+                                      ),
+                                      Text('Or use card on file'),
+                                      hasCard
+                                          ? ListTile(
+                                              leading: Icon(Icons.credit_card),
+                                              title: Text(
+                                                documents[0]['card']['last4']
+                                                    .toString(),
+                                                style: TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
+                                              subtitle: Text(documents[0]
+                                                      ['card']['brand']
+                                                  .toString()),
+                                              onTap: () {
+                                                Firestore.instance
+                                                    .collection('rentals')
+                                                    .document(widget.rentalID)
+                                                    .updateData({
+                                                  '$rentalCC': documents[0]
+                                                          ['card']['last4']
+                                                      .toString()
+                                                });
+                                                Navigator.pop(context);
+                                              },
+                                            )
+                                          : Text('No cards yet'),
+                                    ],
+                                  );
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+                ).then<String>((returnVal) {
+                  if (returnVal != null) {
+                    Scaffold.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('You clicked: $returnVal'),
+                        action: SnackBarAction(label: 'OK', onPressed: () {}),
+                      ),
+                    );
+                  }
+                });
+              },
+            ),
+
+            /*
+            RaisedButton(
+
+              shape: new RoundedRectangleBorder(
+                  borderRadius: new BorderRadius.circular(5.0)),
+              color: Colors.green,
+              textColor: Colors.white,
+              child: Text(
+                'Add payment method',
+                //addButton + " Images",
+                textScaleFactor: 1.25,
+              ),
+              onPressed: () {
+                navToCreditCard();
+                //updateStatus(3);
+              },
+            ),
+    */
+          )
+        : Container();
+  }
+
+  Widget showPaymentInfo() {
+    String confirmedCC = rentalDS['$rentalCC'];
+    String displayText = confirmedCC == null
+        ? 'Payment not confirmed yet'
+        : 'Payment confirmed: card ending in $confirmedCC';
 
     return rentalDS['status'] == 2
         ? Container(
-      child: RaisedButton(
-        shape: new RoundedRectangleBorder(
-            borderRadius: new BorderRadius.circular(5.0)),
-        color: Colors.green,
-        textColor: Colors.white,
-        child: Text(
-          '$buttonText Credit Card',
-          //addButton + " Images",
-          textScaleFactor: 1.25,
-        ),
-        onPressed: () {
-          navToCreditCard();
-          //updateStatus(3);
-        },
-      ),
-    )
+            padding: EdgeInsets.all(5),
+            child: Text(
+              '${displayText}',
+              style: TextStyle(fontSize: 20),
+            ),
+          )
         : Container();
   }
 
   Widget showReturnedItemButton() {
     return rentalDS['status'] == 3
         ? Container(
-      child: RaisedButton(
-        shape: new RoundedRectangleBorder(
-            borderRadius: new BorderRadius.circular(5.0)),
-        color: Colors.green,
-        textColor: Colors.white,
-        child: Text(
-          'Simulate end of rental',
-          //addButton + " Images",
-          textScaleFactor: 1.25,
-        ),
-        onPressed: () {
-          updateStatus(4);
-        },
-      ),
-    )
+            child: RaisedButton(
+              shape: new RoundedRectangleBorder(
+                  borderRadius: new BorderRadius.circular(5.0)),
+              color: Colors.green,
+              textColor: Colors.white,
+              child: Text(
+                'Simulate end of rental',
+                //addButton + " Images",
+                textScaleFactor: 1.25,
+              ),
+              onPressed: () {
+                updateStatus(4);
+              },
+            ),
+          )
         : Container();
   }
 
-  Widget showWriteReview() {
+  Widget showReview() {
     return isRenter && rentalDS['status'] == 4
         ? Container(
-      child: Column(
-        children: <Widget>[
-          showWriteReviewTextBox(),
-          showSubmitReviewButton(),
-        ],
-      ),
-    )
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                starRating('How was the communication?', 1),
+                starRating('How was the quality of the item?', 2),
+                starRating('How was your overal experience?', 3),
+                showWriteReviewTextBox(),
+                Align(
+                  alignment: AlignmentDirectional(0, 0),
+                  child: showSubmitReviewButton(),
+                ),
+              ],
+            ),
+          )
         : Container();
   }
 
-  Widget showSubmitReviewButton() {
-    return RaisedButton(
-      shape: new RoundedRectangleBorder(
-          borderRadius: new BorderRadius.circular(5.0)),
-      color: Colors.green,
-      textColor: Colors.white,
-      child: Text(
-        'Submit Review',
-        //addButton + " Images",
-        textScaleFactor: 1.25,
-      ),
-      onPressed: () {
-        updateStatus(5);
-      },
+  double getRating(int indicator) {
+    switch (indicator) {
+      case 1:
+        return communicationRating;
+        break;
+      case 2:
+        return itemQualityRating;
+        break;
+      case 3:
+        return overallExpRating;
+        break;
+    }
+  }
+
+  Widget starRating(String text, int indicator) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          text,
+          style: TextStyle(fontSize: 18),
+        ),
+        SmoothStarRating(
+          allowHalfRating: false,
+          onRatingChanged: (double value) {
+            switch (indicator) {
+              case 1:
+                communicationRating = value;
+                debugPrint('Communication: $communicationRating');
+                break;
+              case 2:
+                itemQualityRating = value;
+                debugPrint('item quality: $itemQualityRating');
+                break;
+              case 3:
+                overallExpRating = value;
+                debugPrint('overal exp: $overallExpRating');
+                break;
+            }
+
+            setState(() {});
+          },
+          starCount: 5,
+          rating: getRating(indicator),
+          size: 35.0,
+          color: Colors.yellow[800],
+          borderColor: Colors.black,
+        )
+      ],
     );
   }
 
@@ -566,6 +765,23 @@ class RentalDetailState extends State<RentalDetail> {
           filled: true,
         ),
       ),
+    );
+  }
+
+  Widget showSubmitReviewButton() {
+    return RaisedButton(
+      shape: new RoundedRectangleBorder(
+          borderRadius: new BorderRadius.circular(5.0)),
+      color: Colors.green,
+      textColor: Colors.white,
+      child: Text(
+        'Submit Review',
+        //addButton + " Images",
+        textScaleFactor: 1.25,
+      ),
+      onPressed: () {
+        //updateStatus(5);
+      },
     );
   }
 
@@ -588,30 +804,30 @@ class RentalDetailState extends State<RentalDetail> {
     final ThemeData theme = Theme.of(context);
 
     return await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Delete rental?'),
-          actions: <Widget>[
-            FlatButton(
-              child: const Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop(
-                    false); // Pops the confirmation dialog but not the page.
-              },
-            ),
-            FlatButton(
-              child: const Text('Delete'),
-              onPressed: () {
-                Navigator.of(context).pop(false);
-                deleteRental();
-                // Pops the confirmation dialog but not the page.
-              },
-            ),
-          ],
-        );
-      },
-    ) ??
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Delete rental?'),
+              actions: <Widget>[
+                FlatButton(
+                  child: const Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(context).pop(
+                        false); // Pops the confirmation dialog but not the page.
+                  },
+                ),
+                FlatButton(
+                  child: const Text('Delete'),
+                  onPressed: () {
+                    Navigator.of(context).pop(false);
+                    deleteRental();
+                    // Pops the confirmation dialog but not the page.
+                  },
+                ),
+              ],
+            );
+          },
+        ) ??
         false;
   }
 
@@ -665,39 +881,6 @@ class RentalDetailState extends State<RentalDetail> {
         .updateData({'rental': null});
 
     goToLastScreen();
-  }
-
-  void navToCreditCard() async {
-    CreditCard temp;
-
-    if (userDS['cc'] == null) {
-      temp = new CreditCard(
-        userID: userID,
-        name: '',
-        number: '',
-        month: '',
-        year: '',
-        cvv: '',
-        zip: '',
-      );
-    } else {
-      temp = CreditCard.fromMap(
-          userID, new Map<String, dynamic>.from(userDS['cc']));
-    }
-
-    Future<void> ret = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (BuildContext context) => CreditCardInfo(
-          creditCard: temp,
-        ),
-        fullscreenDialog: true,
-      ),
-    );
-
-    if (ret != null) {
-      getSnapshots();
-    }
   }
 
   void goToLastScreen() {

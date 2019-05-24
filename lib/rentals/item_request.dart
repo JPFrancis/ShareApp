@@ -361,6 +361,8 @@ class ItemRequestState extends State<ItemRequest> {
       'created': DateTime.now().millisecondsSinceEpoch,
       'duration': duration,
       'note': note,
+      'renterCC': null,
+      'ownerCC': null,
     });
 
     if (rentalDR != null) {

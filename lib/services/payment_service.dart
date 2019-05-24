@@ -9,7 +9,7 @@ class PaymentService {
           .document(user.uid)
           .collection('tokens')
           .add({'tokenId': token}).then((val) {
-        print('saved');
+        //print('saved');
       });
     });
   }

@@ -13,6 +13,7 @@ class PaymentWidget extends StatefulWidget {
 
 class PaymentListState extends State<PaymentWidget> {
   PaymentListState(this.data);
+
   final List<PaymentItem> data;
 
   @override
@@ -37,7 +38,12 @@ class PaymentListState extends State<PaymentWidget> {
                   trailing: Text(item.status),
                 ),
                 onTap: () {
-                  Navigator.pop(context, item.body.key.toString().replaceAll('[<\'', '').replaceAll('\'>]', ''));
+                  Navigator.pop(
+                      context,
+                      item.body.key
+                          .toString()
+                          .replaceAll('[<\'', '')
+                          .replaceAll('\'>]', ''));
                 },
               );
             },

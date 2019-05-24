@@ -11,4 +11,4 @@ final refundDocument = fInstance
     .collection('users')
     .document(CurrentUser.uid)
     .collection('refunds')
-    .document();    
+    .document();

@@ -26,8 +26,7 @@ class ArticlesScreen extends State<DetailScreen> {
   void initState() {
     super.initState();
     fetchUser();
-    StripeSource.setPublishableKey(
-        '');
+    StripeSource.setPublishableKey('');
   }
 
   @override

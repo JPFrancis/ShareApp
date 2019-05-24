@@ -1,12 +1,13 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
-import 'package:stripe_payment/stripe_payment.dart';
+import 'package:http/http.dart' as http;
+import 'package:shareapp/stripe/classes/PaymentItem.dart';
+import 'package:shareapp/stripe/responses/charges_resp.dart';
 import 'package:shareapp/stripe/utilities/CommonFunctions.dart';
 import 'package:shareapp/stripe/utilities/CurrentUser.dart';
-import 'package:http/http.dart' as http;
-import 'package:shareapp/stripe/responses/charges_resp.dart';
-import 'dart:convert';
 import 'package:shareapp/stripe/widgets/payment_list.dart';
-import 'package:shareapp/stripe/classes/PaymentItem.dart';
+import 'package:stripe_payment/stripe_payment.dart';
 
 class FABwithOptions extends StatefulWidget {
   @override
