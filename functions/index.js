@@ -3,7 +3,7 @@ const admin = require('firebase-admin');
 
 admin.initializeApp(functions.config().firebase);
 
-const firestore = admin.firestore()
+const firestore = admin.firestore();
 const settings = { timestampInSnapshots: true };
 firestore.settings(settings);
 

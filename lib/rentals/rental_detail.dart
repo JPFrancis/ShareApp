@@ -45,7 +45,6 @@ class RentalDetailState extends State<RentalDetail> {
   bool stripeInit;
 
   DocumentSnapshot rentalDS;
-  DocumentSnapshot itemDS;
   DocumentSnapshot ownerDS;
   DocumentSnapshot renterDS;
   DocumentSnapshot userDS;
@@ -55,7 +54,6 @@ class RentalDetailState extends State<RentalDetail> {
   double padding = 5.0;
 
   TextEditingController reviewController = TextEditingController();
-  String review;
 
   double communicationRating;
   double itemQualityRating;
@@ -90,17 +88,6 @@ class RentalDetailState extends State<RentalDetail> {
     if (ds != null) {
       rentalDS = ds;
 
-      dr = rentalDS['item'];
-
-      ds = await Firestore.instance
-          .collection('items')
-          .document(dr.documentID)
-          .get();
-
-      if (ds != null) {
-        itemDS = ds;
-      }
-
       dr = rentalDS['owner'];
 
       ds = await Firestore.instance
@@ -110,36 +97,33 @@ class RentalDetailState extends State<RentalDetail> {
 
       if (ds != null) {
         ownerDS = ds;
-      }
 
-      dr = rentalDS['renter'];
-
-      ds = await Firestore.instance
-          .collection('users')
-          .document(dr.documentID)
-          .get();
-
-      if (ds != null) {
-        renterDS = ds;
+        dr = rentalDS['renter'];
 
         ds = await Firestore.instance
-            .collection('cards')
-            .document(myUserId)
+            .collection('users')
+            .document(dr.documentID)
             .get();
 
         if (ds != null) {
-          cardDS = ds;
+          renterDS = ds;
 
-          if (prefs != null &&
-              itemDS != null &&
-              ownerDS != null &&
-              renterDS != null) {
-            setState(() {
-              isRenter = myUserId == renterDS.documentID ? true : false;
-              rentalCC = isRenter ? 'renterCC' : 'ownerCC';
-              userDS = isRenter ? renterDS : ownerDS;
-              isLoading = false;
-            });
+          ds = await Firestore.instance
+              .collection('cards')
+              .document(myUserId)
+              .get();
+
+          if (ds != null) {
+            cardDS = ds;
+
+            if (prefs != null && ownerDS != null && renterDS != null) {
+              setState(() {
+                isRenter = myUserId == renterDS.documentID ? true : false;
+                rentalCC = isRenter ? 'renterCC' : 'ownerCC';
+                userDS = isRenter ? renterDS : ownerDS;
+                isLoading = false;
+              });
+            }
           }
         }
       }
@@ -268,7 +252,7 @@ class RentalDetailState extends State<RentalDetail> {
 
     return Container(
       child: Text(
-        'Item name: ${itemDS['name']}\n'
+        'Item name: ${rentalDS['itemName']}\n'
         '$itemOwner\n'
         '$itemRenter',
         style: TextStyle(
@@ -338,12 +322,12 @@ class RentalDetailState extends State<RentalDetail> {
           break;
         case 3: // active
           statusMessage = 'Status: active\n'
-              'Happy renting your ${itemDS['name']}!\n'
+              'Happy renting your ${rentalDS['itemName']}!\n'
               'Return the item when you are done';
           break;
         case 4: // returned
           statusMessage = 'Status: returned\n'
-              '${itemDS['name']} has been returned to you\n'
+              '${rentalDS['itemName']} has been returned to you\n'
               'Please write a review of the item';
           break;
         case 5: // completed
@@ -757,9 +741,6 @@ class RentalDetailState extends State<RentalDetail> {
         maxLines: 3,
         controller: reviewController,
         style: textStyle,
-        onChanged: (value) {
-          review = reviewController.text;
-        },
         decoration: InputDecoration(
           labelText: 'Write review',
           filled: true,
@@ -780,7 +761,8 @@ class RentalDetailState extends State<RentalDetail> {
         textScaleFactor: 1.25,
       ),
       onPressed: () {
-        //updateStatus(5);
+        updateStatus(5);
+        submitReview();
       },
     );
   }
@@ -798,6 +780,22 @@ class RentalDetailState extends State<RentalDetail> {
       NewPickup.routeName,
       arguments: NewPickupArgs(widget.rentalID, isRenter),
     );
+  }
+
+  void submitReview() async {
+    var review = {
+      'communication': communicationRating,
+      'itemQuality': itemQualityRating,
+      'overall': overallExpRating,
+      'reviewNote': reviewController.text
+    };
+
+    Firestore.instance
+        .collection('rentals')
+        .document(widget.rentalID)
+        .updateData({'review': review});
+
+    /// UPDATE USER RATINGS
   }
 
   Future<bool> deleteRentalDialog() async {
@@ -877,7 +875,7 @@ class RentalDetailState extends State<RentalDetail> {
 
     Firestore.instance
         .collection('items')
-        .document(itemDS.documentID)
+        .document(rentalDS['item'].documentID)
         .updateData({'rental': null});
 
     goToLastScreen();
