@@ -486,7 +486,7 @@ class ChatScreenState extends State<ChatScreen> {
                         Align(
                           alignment: Alignment.bottomCenter,
                           child: Text(
-                            '${renterDS['name']}',
+                            '${ownerDS['name']}',
                             style: TextStyle(
                                 fontSize: 20.0, fontFamily: 'Quicksand'),
                           ),
