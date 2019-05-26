@@ -362,108 +362,61 @@ class ItemRequestState extends State<ItemRequest> {
       'created': DateTime.now().millisecondsSinceEpoch,
       'duration': duration,
       'note': note,
+      'users': [
+        Firestore.instance.collection('users').document(creatorDS.documentID),
+        Firestore.instance.collection('users').document(myUserID),
+      ],
       'renterCC': null,
       'ownerCC': null,
       'review': null,
     });
 
     if (rentalDR != null) {
-      await new Future.delayed(Duration(milliseconds: delay));
-
       rentalID = rentalDR.documentID;
 
-      // create rental document in renter's 'rentals' collection
-      var myUserDR = Firestore.instance
-          .collection('users')
-          .document(myUserID)
-          .collection('rentals')
-          .document(rentalDR.documentID);
+      await new Future.delayed(Duration(milliseconds: delay));
 
-      Future userRental =
-          Firestore.instance.runTransaction((transaction) async {
-        await transaction.set(
-          myUserDR,
-          {
-            'rental': rentalDR,
-            'isRenter': true,
-            'otherUser': Firestore.instance
-                .collection('users')
-                .document(creatorDS.documentID),
-          },
-        );
+      Future itemRental = Firestore.instance
+          .collection('items')
+          .document(widget.itemID)
+          .updateData({
+        'rental': Firestore.instance.collection('rentals').document(rentalID)
       });
 
-      if (userRental != null) {
+      if (itemRental != null) {
         await new Future.delayed(Duration(milliseconds: delay));
 
-        // create rental document in item owner's 'rentals' collection
-        var creatorDR = Firestore.instance
-            .collection('users')
-            .document(creatorDS.documentID)
+        // create chat and send the default request message
+        var dr = Firestore.instance
             .collection('rentals')
-            .document(rentalDR.documentID);
+            .document(rentalID)
+            .collection('chat')
+            .document(DateTime.now().millisecondsSinceEpoch.toString());
 
-        Future ownerRental =
-            Firestore.instance.runTransaction((transaction) async {
+        Future chat = Firestore.instance.runTransaction((transaction) async {
           await transaction.set(
-            creatorDR,
+            dr,
             {
-              'rental': rentalDR,
-              'isRenter': false,
-              'otherUser':
-                  Firestore.instance.collection('users').document(myUserID),
+              'idFrom': myUserID,
+              'idTo': creatorDS.documentID,
+              'timestamp': DateTime.now().millisecondsSinceEpoch,
+              'content': message,
+              'type': 0,
             },
           );
         });
 
-        if (ownerRental != null) {
+        if (chat != null) {
           await new Future.delayed(Duration(milliseconds: delay));
 
-          Future itemRental = Firestore.instance
-              .collection('items')
-              .document(widget.itemID)
-              .updateData({
-            'rental':
-                Firestore.instance.collection('rentals').document(rentalID)
-          });
-
-          if (itemRental != null) {
-            await new Future.delayed(Duration(milliseconds: delay));
-
-            // create chat and send the default request message
-            var dr = Firestore.instance
-                .collection('rentals')
-                .document(rentalID)
-                .collection('chat')
-                .document(DateTime.now().millisecondsSinceEpoch.toString());
-
-            Future chat =
-                Firestore.instance.runTransaction((transaction) async {
-              await transaction.set(
-                dr,
-                {
-                  'idFrom': myUserID,
-                  'idTo': creatorDS.documentID,
-                  'timestamp': DateTime.now().millisecondsSinceEpoch,
-                  'content': message,
-                  'type': 0,
-                },
-              );
-            });
-
-            if (chat != null) {
-              await new Future.delayed(Duration(milliseconds: delay));
-
-              if (rentalID != null) {
-                Navigator.pushNamed(
-                  context,
-                  RentalDetail.routeName,
-                  arguments: RentalDetailArgs(
-                    rentalID,
-                  ),
-                );
-              }
-            }
+          if (rentalID != null) {
+            Navigator.pushNamed(
+              context,
+              RentalDetail.routeName,
+              arguments: RentalDetailArgs(
+                rentalID,
+              ),
+            );
           }
         }
       }
