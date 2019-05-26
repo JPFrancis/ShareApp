@@ -11,6 +11,7 @@ import 'package:shareapp/models/item.dart';
 import 'package:shareapp/pages/item_edit.dart';
 import 'package:shareapp/rentals/item_request.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
+import 'package:shareapp/services/const.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ItemDetail extends StatefulWidget {
@@ -112,23 +113,15 @@ class ItemDetailState extends State<ItemDetail> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () {
-        goToLastScreen();
-      },
-      child: Scaffold(
-        body: RefreshIndicator(
-          key: refreshIndicatorKey,
-          onRefresh: getSnapshots,
-          child: isLoading ? Container() : showBody(),
-        ),
-        //floatingActionButton: showFAB(),
-        bottomNavigationBar: isLoading
-            ? Container(
-                height: 0,
-              )
-            : bottomDetails(),
+    return Scaffold(
+      body: RefreshIndicator(
+        key: refreshIndicatorKey,
+        onRefresh: getSnapshots,
+        child: isLoading ? Container() : showBody(),
       ),
+      bottomNavigationBar: isLoading ? Container( height: 0,) : bottomDetails(),
+      floatingActionButton: Container(padding: EdgeInsets.only(top: 100.0), child: IconButton(icon: Icon(Icons.arrow_back_ios), onPressed: ()=>Navigator.pop(context), color: primaryColor,)) ,
+      floatingActionButtonLocation: FloatingActionButtonLocation.startTop,
     );
   }
 
@@ -187,18 +180,6 @@ class ItemDetailState extends State<ItemDetail> {
             style: TextStyle(color: Colors.white, fontFamily: 'Quicksand')));
   }
 
-  Widget showFAB() {
-    return Padding(
-      padding: const EdgeInsets.only(right: 10.0),
-      child: RaisedButton(
-        onPressed: () => navigateToEdit(),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5.0)),
-        color: Colors.red,
-        child: Icon(Icons.edit),
-      ),
-    );
-  }
-
   Future<DocumentSnapshot> getItemFromFirestore() async {
     DocumentSnapshot ds = await Firestore.instance
         .collection('items')
@@ -211,10 +192,7 @@ class ItemDetailState extends State<ItemDetail> {
   Widget showBody() {
     return ListView(
       children: <Widget>[
-        Stack(children: <Widget>[
-          showItemImages(),
-          backButton(context),
-        ]),
+        showItemImages(),
         showItemType(),
         showItemName(),
         showItemCondition(),

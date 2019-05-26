@@ -243,6 +243,7 @@ class HomePageState extends State<HomePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: <Widget>[
                         ds['type'] != null
                             ? Text(
@@ -253,9 +254,16 @@ class HomePageState extends State<HomePage> {
                                     fontWeight: FontWeight.bold),
                               )
                             : Text(''),
+                        ownerDS['name'] != null
+                            ? Text('by ${ownerDS['name']}',
+                                style: TextStyle(
+                                    fontSize: h / 25,
+                                    fontFamily: 'Quicksand',
+                                    fontWeight: FontWeight.w500))
+                            : Text(''),
                       ],
                     ),
-                    Text('${ownerDS['name']}\'s ${ds['name']}',
+                    Text('${ds['name']}',
                         style: TextStyle(
                             fontSize: h / 21,
                             fontFamily: 'Quicksand',
@@ -503,9 +511,9 @@ class HomePageState extends State<HomePage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
-              _categoryTile("Tools", 'assets/hammer.jpg'),
+              _categoryTile("Tools", 'assets/tools.jpg'),
               _categoryTile("Leisure", 'assets/golfclub.jpg'),
-              _categoryTile("Household", 'assets/vacuum2.jpg'),
+              _categoryTile("Household", 'assets/vacuum3.jpg'),
             ],
           ),
           SizedBox(
@@ -918,6 +926,7 @@ class HomePageState extends State<HomePage> {
             default:
               if (snapshot.hasData) {
                 List<DocumentSnapshot> items = snapshot.data.documents.toList();
+   
                 return GridView.count(
                     padding: EdgeInsets.all(20.0),
                     mainAxisSpacing: 15,
@@ -937,7 +946,6 @@ class HomePageState extends State<HomePage> {
                           }
                           switch (snapshot.connectionState) {
                             case ConnectionState.waiting:
-
                             default:
                               if (snapshot.hasData) {
                                 DocumentSnapshot rentalDS = snapshot.data;
@@ -955,7 +963,6 @@ class HomePageState extends State<HomePage> {
                                       }
                                       switch (snapshot.connectionState) {
                                         case ConnectionState.waiting:
-
                                         default:
                                           if (snapshot.hasData) {
                                             DocumentSnapshot itemDS =
@@ -981,7 +988,6 @@ class HomePageState extends State<HomePage> {
                                                       .connectionState) {
                                                     case ConnectionState
                                                         .waiting:
-
                                                     default:
                                                       if (snapshot.hasData) {
                                                         DocumentSnapshot
@@ -993,7 +999,6 @@ class HomePageState extends State<HomePage> {
                                                                 .fromMillisecondsSinceEpoch(
                                                                     rentalDS[
                                                                         'created']));
-
                                                         return cardItemRentals(
                                                             itemDS,
                                                             ownerDS,
@@ -1005,8 +1010,7 @@ class HomePageState extends State<HomePage> {
                                                 },
                                               );
                                             } else {
-                                              return Container();
-                                            }
+                                              return Container(); }
                                           } else {
                                             return Container();
                                           }
@@ -1147,6 +1151,7 @@ class HomePageState extends State<HomePage> {
                                                         ListTile(
                                                           leading: Container(
                                                             height: 50,
+                                                            width: 50,
                                                             child: ClipOval(
                                                               child:
                                                                   CachedNetworkImage(

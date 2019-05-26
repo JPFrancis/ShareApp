@@ -21,14 +21,9 @@ class AllItems extends StatefulWidget {
 class AllItemsState extends State<AllItems> {
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () {
-        goBack();
-      },
-      child: Scaffold(
-        body: allItemsPage(),
-        //floatingActionButton: showFAB(),
-      ),
+    return Scaffold(
+      body: allItemsPage(),
+      //floatingActionButton: showFAB(),
     );
   }
 
