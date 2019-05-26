@@ -838,24 +838,6 @@ class RentalDetailState extends State<RentalDetail> {
 
     await new Future.delayed(Duration(milliseconds: delay));
 
-    Firestore.instance
-        .collection('users')
-        .document(renterDS.documentID)
-        .collection('rentals')
-        .document(widget.rentalID)
-        .delete();
-
-    await new Future.delayed(Duration(milliseconds: delay));
-
-    Firestore.instance
-        .collection('users')
-        .document(ownerDS.documentID)
-        .collection('rentals')
-        .document(widget.rentalID)
-        .delete();
-
-    await new Future.delayed(Duration(milliseconds: delay));
-
     Firestore.instance.collection('rentals').document(widget.rentalID).delete();
 
     await new Future.delayed(Duration(milliseconds: delay));

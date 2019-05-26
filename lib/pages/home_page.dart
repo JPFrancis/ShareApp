@@ -36,7 +36,7 @@ class HomePage extends StatefulWidget {
 
 class HomePageState extends State<HomePage> {
   SharedPreferences prefs;
-  String userID;
+  String myUserID;
   List<Item> itemList;
 
   List bottomNavBarTiles;
@@ -71,7 +71,7 @@ class HomePageState extends State<HomePage> {
     edgeInset = EdgeInsets.only(
         left: padding, right: padding, bottom: padding, top: 30);
 
-    userID = widget.firebaseUser.uid;
+    myUserID = widget.firebaseUser.uid;
 
     setPrefs();
     handleInitUser();
@@ -79,7 +79,7 @@ class HomePageState extends State<HomePage> {
 
   void setPrefs() async {
     prefs = await SharedPreferences.getInstance();
-    await prefs.setString('userID', userID);
+    await prefs.setString('userID', myUserID);
   }
 
   void handleInitUser() async {
@@ -87,13 +87,13 @@ class HomePageState extends State<HomePage> {
     // get user object from firestore
     Firestore.instance
         .collection('users')
-        .document(userID)
+        .document(myUserID)
         .get()
         .then((DocumentSnapshot ds) {
       // if user is not in database, create user
       if (!ds.exists) {
-        Firestore.instance.collection('users').document(userID).setData({
-          'name': widget.firebaseUser.displayName ?? 'new user $userID',
+        Firestore.instance.collection('users').document(myUserID).setData({
+          'name': widget.firebaseUser.displayName ?? 'new user $myUserID',
           'avatar': widget.firebaseUser.photoUrl ?? 'https://bit.ly/2vcmALY',
           'email': widget.firebaseUser.email,
           'lastActive': DateTime.now().millisecondsSinceEpoch,
@@ -101,7 +101,7 @@ class HomePageState extends State<HomePage> {
           'cc': null,
         });
 
-        Firestore.instance.collection('cards').document(userID).setData({
+        Firestore.instance.collection('cards').document(myUserID).setData({
           'custId': 'new',
           'email': widget.firebaseUser.email,
         });
@@ -122,10 +122,10 @@ class HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     Firestore.instance
         .collection('users')
-        .document(userID)
+        .document(myUserID)
         .get()
         .then((DocumentSnapshot ds) {
-      Firestore.instance.collection('users').document(userID).updateData({
+      Firestore.instance.collection('users').document(myUserID).updateData({
         'lastActive': DateTime.now().millisecondsSinceEpoch,
       });
     });
@@ -183,7 +183,7 @@ class HomePageState extends State<HomePage> {
                   id: null,
                   status: true,
                   creator:
-                      Firestore.instance.collection('users').document(userID),
+                      Firestore.instance.collection('users').document(myUserID),
                   name: '',
                   description: '',
                   type: null,
@@ -577,7 +577,8 @@ class HomePageState extends State<HomePage> {
     int tilerows = MediaQuery.of(context).size.width > 500 ? 3 : 2;
     Stream stream = collectionReference
         .where('creator',
-            isEqualTo: Firestore.instance.collection('users').document(userID))
+            isEqualTo:
+                Firestore.instance.collection('users').document(myUserID))
         .snapshots();
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
@@ -592,6 +593,66 @@ class HomePageState extends State<HomePage> {
             default:
               if (snapshot.hasData) {
                 List<DocumentSnapshot> items = snapshot.data.documents.toList();
+                return GridView.count(
+                    padding: const EdgeInsets.all(20.0),
+                    shrinkWrap: true,
+                    mainAxisSpacing: 15,
+                    crossAxisCount: tilerows,
+                    childAspectRatio: (2 / 3),
+                    crossAxisSpacing: MediaQuery.of(context).size.width / 20,
+                    children: items
+                        .map((DocumentSnapshot ds) => itemCard(ds, context))
+                        .toList());
+              } else {
+                return Container();
+              }
+          }
+        },
+      ),
+    );
+  }
+
+  Widget buildListingsRentalsList(String rentalStatus) {
+    int status;
+
+    switch (rentalStatus) {
+      case 'requesting':
+        status = 0;
+        break;
+      case 'upcoming':
+        status = 2;
+        break;
+      case 'current':
+        status = 3;
+        break;
+      case 'past':
+        status = 5;
+        break;
+    }
+
+    CollectionReference collectionReference =
+        Firestore.instance.collection('items');
+    int tilerows = MediaQuery.of(context).size.width > 500 ? 3 : 2;
+    Stream stream = collectionReference
+        .where('creator',
+            isEqualTo:
+                Firestore.instance.collection('users').document(myUserID))
+        .snapshots();
+    return Expanded(
+      child: StreamBuilder<QuerySnapshot>(
+        stream: stream,
+        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          if (snapshot.hasError) {
+            return new Text('${snapshot.error}');
+          }
+          switch (snapshot.connectionState) {
+            case ConnectionState.waiting:
+
+            default:
+              if (snapshot.hasData) {
+                List<DocumentSnapshot> items = snapshot.data.documents.toList();
+                items.forEach((ds) {});
+
                 return GridView.count(
                     padding: const EdgeInsets.all(20.0),
                     shrinkWrap: true,
@@ -698,7 +759,7 @@ class HomePageState extends State<HomePage> {
   Widget profileIntroStream() {
     return StreamBuilder<DocumentSnapshot>(
       stream:
-          Firestore.instance.collection('users').document(userID).snapshots(),
+          Firestore.instance.collection('users').document(myUserID).snapshots(),
       builder:
           (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
         if (snapshot.hasError) {
@@ -762,7 +823,7 @@ class HomePageState extends State<HomePage> {
 
   Widget profileIntro() {
     return FutureBuilder(
-      future: Firestore.instance.collection('users').document(userID).get(),
+      future: Firestore.instance.collection('users').document(myUserID).get(),
       builder: (BuildContext context, AsyncSnapshot snapshot) {
         if (snapshot.hasData) {
           DocumentSnapshot ds = snapshot.data;
@@ -848,7 +909,7 @@ class HomePageState extends State<HomePage> {
 
   Widget getProfileDetails() {
     return FutureBuilder(
-      future: Firestore.instance.collection('users').document(userID).get(),
+      future: Firestore.instance.collection('users').document(myUserID).get(),
       builder: (BuildContext context, AsyncSnapshot snapshot) {
         if (snapshot.hasData) {
           DocumentSnapshot ds = snapshot.data;
@@ -899,14 +960,15 @@ class HomePageState extends State<HomePage> {
   }
 
   Widget buildRentalsList(bool requesting) {
-    CollectionReference collectionReference =
-        Firestore.instance.collection('users');
-    int tilerows = MediaQuery.of(context).size.width > 500 ? 3 : 2;
+    int tileRows = MediaQuery.of(context).size.width > 500 ? 3 : 2;
+
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
-        stream: collectionReference
-            .document(userID)
+        stream: Firestore.instance
             .collection('rentals')
+            .where('renter',
+                isEqualTo:
+                    Firestore.instance.collection('users').document(myUserID))
             .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
@@ -922,106 +984,72 @@ class HomePageState extends State<HomePage> {
                     padding: EdgeInsets.all(20.0),
                     mainAxisSpacing: 15,
                     shrinkWrap: true,
-                    crossAxisCount: tilerows,
+                    crossAxisCount: tileRows,
                     childAspectRatio: (2 / 3),
                     crossAxisSpacing: MediaQuery.of(context).size.width / 20,
-                    children: items.map((DocumentSnapshot userRentalDS) {
-                      DocumentReference rentalDR = userRentalDS['rental'];
+                    children: items.map((DocumentSnapshot rentalDS) {
+                      if (snapshot.hasData) {
+                        DocumentReference itemDR = rentalDS['item'];
 
-                      return StreamBuilder<DocumentSnapshot>(
-                        stream: rentalDR.snapshots(),
-                        builder: (BuildContext context,
-                            AsyncSnapshot<DocumentSnapshot> snapshot) {
-                          if (snapshot.hasError) {
-                            return new Text('${snapshot.error}');
-                          }
-                          switch (snapshot.connectionState) {
-                            case ConnectionState.waiting:
+                        return StreamBuilder<DocumentSnapshot>(
+                          stream: itemDR.snapshots(),
+                          builder: (BuildContext context,
+                              AsyncSnapshot<DocumentSnapshot> snapshot) {
+                            if (snapshot.hasError) {
+                              return new Text('${snapshot.error}');
+                            }
+                            switch (snapshot.connectionState) {
+                              case ConnectionState.waiting:
 
-                            default:
-                              if (snapshot.hasData) {
-                                DocumentSnapshot rentalDS = snapshot.data;
-                                DocumentReference itemDR = rentalDS['item'];
-                                DocumentReference renterDR = rentalDS['renter'];
+                              default:
+                                if (snapshot.hasData) {
+                                  DocumentSnapshot itemDS = snapshot.data;
+                                  DocumentReference ownerDR = itemDS['creator'];
 
-                                if (userID == renterDR.documentID) {
-                                  return StreamBuilder<DocumentSnapshot>(
-                                    stream: itemDR.snapshots(),
-                                    builder: (BuildContext context,
-                                        AsyncSnapshot<DocumentSnapshot>
-                                            snapshot) {
-                                      if (snapshot.hasError) {
-                                        return new Text('${snapshot.error}');
-                                      }
-                                      switch (snapshot.connectionState) {
-                                        case ConnectionState.waiting:
+                                  if (requesting ^
+                                      (rentalDS['status'] == 0 ||
+                                          rentalDS['status'] == 1)) {
+                                    return StreamBuilder<DocumentSnapshot>(
+                                      stream: ownerDR.snapshots(),
+                                      builder: (BuildContext context,
+                                          AsyncSnapshot<DocumentSnapshot>
+                                              snapshot) {
+                                        if (snapshot.hasError) {
+                                          return new Text('${snapshot.error}');
+                                        }
+                                        switch (snapshot.connectionState) {
+                                          case ConnectionState.waiting:
 
-                                        default:
-                                          if (snapshot.hasData) {
-                                            DocumentSnapshot itemDS =
-                                                snapshot.data;
-                                            DocumentReference ownerDR =
-                                                itemDS['creator'];
+                                          default:
+                                            if (snapshot.hasData) {
+                                              DocumentSnapshot ownerDS =
+                                                  snapshot.data;
 
-                                            if (requesting ^
-                                                (rentalDS['status'] == 0 ||
-                                                    rentalDS['status'] == 1)) {
-                                              return StreamBuilder<
-                                                  DocumentSnapshot>(
-                                                stream: ownerDR.snapshots(),
-                                                builder: (BuildContext context,
-                                                    AsyncSnapshot<
-                                                            DocumentSnapshot>
-                                                        snapshot) {
-                                                  if (snapshot.hasError) {
-                                                    return new Text(
-                                                        '${snapshot.error}');
-                                                  }
-                                                  switch (snapshot
-                                                      .connectionState) {
-                                                    case ConnectionState
-                                                        .waiting:
+                                              String created = 'Created: ' +
+                                                  timeago.format(DateTime
+                                                      .fromMillisecondsSinceEpoch(
+                                                          rentalDS['created']));
 
-                                                    default:
-                                                      if (snapshot.hasData) {
-                                                        DocumentSnapshot
-                                                            ownerDS =
-                                                            snapshot.data;
-
-                                                        String created = 'Created: ' +
-                                                            timeago.format(DateTime
-                                                                .fromMillisecondsSinceEpoch(
-                                                                    rentalDS[
-                                                                        'created']));
-
-                                                        return cardItemRentals(
-                                                            itemDS,
-                                                            ownerDS,
-                                                            rentalDS);
-                                                      } else {
-                                                        return Container();
-                                                      }
-                                                  }
-                                                },
-                                              );
+                                              return cardItemRentals(
+                                                  itemDS, ownerDS, rentalDS);
                                             } else {
                                               return Container();
                                             }
-                                          } else {
-                                            return Container();
-                                          }
-                                      }
-                                    },
-                                  );
+                                        }
+                                      },
+                                    );
+                                  } else {
+                                    return Container();
+                                  }
                                 } else {
                                   return Container();
                                 }
-                              } else {
-                                return Container();
-                              }
-                          }
-                        },
-                      );
+                            }
+                          },
+                        );
+                      } else {
+                        return Container();
+                      }
                     }).toList());
               } else {
                 return Container();
@@ -1033,13 +1061,13 @@ class HomePageState extends State<HomePage> {
   }
 
   Widget buildMessagesList() {
-    CollectionReference collectionReference =
-        Firestore.instance.collection('users');
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
-        stream: collectionReference
-            .document(userID)
+        stream: Firestore.instance
             .collection('rentals')
+            .where('users',
+                arrayContains:
+                    Firestore.instance.collection('users').document(myUserID))
             .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           switch (snapshot.connectionState) {
@@ -1051,10 +1079,11 @@ class HomePageState extends State<HomePage> {
                   padding: EdgeInsets.symmetric(horizontal: 15),
                   itemCount: snapshot.data.documents.length,
                   itemBuilder: (context, index) {
-                    DocumentSnapshot userRentalDS =
-                        snapshot.data.documents[index];
-                    DocumentReference otherUserDR = userRentalDS['otherUser'];
-                    DocumentReference rentalDR = userRentalDS['rental'];
+                    DocumentSnapshot rentalDS = snapshot.data.documents[index];
+                    DocumentReference otherUserDR =
+                        myUserID == rentalDS['users'][0].documentID
+                            ? rentalDS['users'][1]
+                            : rentalDS['users'][0];
 
                     return StreamBuilder<DocumentSnapshot>(
                       stream: otherUserDR.snapshots(),
@@ -1067,159 +1096,114 @@ class HomePageState extends State<HomePage> {
                             if (snapshot.hasData) {
                               DocumentSnapshot otherUserDS = snapshot.data;
 
-                              return StreamBuilder<DocumentSnapshot>(
-                                stream: rentalDR.snapshots(),
+                              return StreamBuilder<QuerySnapshot>(
+                                stream: Firestore.instance
+                                    .collection('rentals')
+                                    .document(rentalDS.documentID)
+                                    .collection('chat')
+                                    .orderBy('timestamp', descending: true)
+                                    .limit(1)
+                                    .snapshots(),
                                 builder: (BuildContext context,
-                                    AsyncSnapshot<DocumentSnapshot> snapshot) {
+                                    AsyncSnapshot<QuerySnapshot> snapshot) {
                                   switch (snapshot.connectionState) {
                                     case ConnectionState.waiting:
 
                                     default:
                                       if (snapshot.hasData) {
-                                        DocumentSnapshot rentalDS =
-                                            snapshot.data;
-                                        if (snapshot.hasData) {
-                                          return StreamBuilder<QuerySnapshot>(
-                                            stream: Firestore.instance
-                                                .collection('rentals')
-                                                .document(rentalDS.documentID)
-                                                .collection('chat')
-                                                .orderBy('timestamp',
-                                                    descending: true)
-                                                .limit(1)
-                                                .snapshots(),
-                                            builder: (BuildContext context,
-                                                AsyncSnapshot<QuerySnapshot>
-                                                    snapshot) {
-                                              switch (
-                                                  snapshot.connectionState) {
-                                                case ConnectionState.waiting:
+                                        DocumentSnapshot lastMessageDS =
+                                            snapshot.data.documents[0];
+                                        Text title = Text(
+                                          otherUserDS['name'],
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontFamily: 'Quicksand'),
+                                        );
+                                        Text lastActive = Text(
+                                            ('Last seen: ' +
+                                                timeago.format(DateTime
+                                                    .fromMillisecondsSinceEpoch(
+                                                        otherUserDS[
+                                                            'lastActive']))),
+                                            style: TextStyle(
+                                              fontFamily: 'Quicksand',
+                                            ));
+                                        Text itemName = Text(
+                                            'Item: ${rentalDS['itemName']}',
+                                            style: TextStyle(
+                                                fontFamily: 'Quicksand'));
+                                        String imageURL = otherUserDS['avatar'];
+                                        String lastMessage =
+                                            lastMessageDS['content'];
+                                        int cutoff = 30;
+                                        String lastMessageCrop;
 
-                                                default:
-                                                  if (snapshot.hasData) {
-                                                    DocumentSnapshot
-                                                        lastMessageDS = snapshot
-                                                            .data.documents[0];
-                                                    Text title = Text(
-                                                      otherUserDS['name'],
-                                                      style: TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          fontFamily:
-                                                              'Quicksand'),
-                                                    );
-                                                    Text lastActive = Text(
-                                                        ('Last seen: ' +
-                                                            timeago.format(DateTime
-                                                                .fromMillisecondsSinceEpoch(
-                                                                    otherUserDS[
-                                                                        'lastActive']))),
-                                                        style: TextStyle(
-                                                          fontFamily:
-                                                              'Quicksand',
-                                                        ));
-                                                    Text itemName = Text(
-                                                        'Item: ${rentalDS['itemName']}',
-                                                        style: TextStyle(
-                                                            fontFamily:
-                                                                'Quicksand'));
-                                                    String imageURL =
-                                                        otherUserDS['avatar'];
-                                                    String lastMessage =
-                                                        lastMessageDS[
-                                                            'content'];
-                                                    int cutoff = 30;
-                                                    String lastMessageCrop;
-
-                                                    if (lastMessage.length >
-                                                        cutoff) {
-                                                      lastMessageCrop =
-                                                          lastMessage.substring(
-                                                              0, cutoff);
-                                                      lastMessageCrop += '...';
-                                                    } else {
-                                                      lastMessageCrop =
-                                                          lastMessage;
-                                                    }
-
-                                                    return Column(
-                                                      children: <Widget>[
-                                                        ListTile(
-                                                          leading: Container(
-                                                            height: 50,
-                                                            child: ClipOval(
-                                                              child:
-                                                                  CachedNetworkImage(
-                                                                key: new ValueKey<
-                                                                    String>(DateTime
-                                                                        .now()
-                                                                    .millisecondsSinceEpoch
-                                                                    .toString()),
-                                                                imageUrl:
-                                                                    imageURL,
-                                                                placeholder: (context,
-                                                                        url) =>
-                                                                    new Container(),
-                                                              ),
-                                                            ),
-                                                          ),
-                                                          title: title,
-                                                          subtitle: Container(
-                                                            alignment: Alignment
-                                                                .centerLeft,
-                                                            child: Column(
-                                                              children: <
-                                                                  Widget>[
-                                                                Align(
-                                                                    alignment:
-                                                                        Alignment
-                                                                            .centerLeft,
-                                                                    child:
-                                                                        lastActive),
-                                                                Align(
-                                                                    alignment:
-                                                                        Alignment
-                                                                            .centerLeft,
-                                                                    child:
-                                                                        itemName),
-                                                                Align(
-                                                                    alignment:
-                                                                        Alignment
-                                                                            .centerLeft,
-                                                                    child: Text(
-                                                                      lastMessageCrop,
-                                                                      style: TextStyle(
-                                                                          fontFamily:
-                                                                              "Quicksand"),
-                                                                    )),
-                                                              ],
-                                                            ),
-                                                          ),
-                                                          //subtitle: Text( '$lastActive\n$itemName\n$lastMessageCrop'),
-                                                          onTap: () {
-                                                            Navigator.pushNamed(
-                                                              context,
-                                                              Chat.routeName,
-                                                              arguments:
-                                                                  ChatArgs(
-                                                                userRentalDS
-                                                                    .documentID,
-                                                              ),
-                                                            );
-                                                          },
-                                                        ),
-                                                        Divider(),
-                                                      ],
-                                                    );
-                                                  } else {
-                                                    return Container();
-                                                  }
-                                              }
-                                            },
-                                          );
+                                        if (lastMessage.length > cutoff) {
+                                          lastMessageCrop =
+                                              lastMessage.substring(0, cutoff);
+                                          lastMessageCrop += '...';
                                         } else {
-                                          return Container();
+                                          lastMessageCrop = lastMessage;
                                         }
+
+                                        return Column(
+                                          children: <Widget>[
+                                            ListTile(
+                                              leading: Container(
+                                                height: 50,
+                                                child: ClipOval(
+                                                  child: CachedNetworkImage(
+                                                    key: new ValueKey<
+                                                        String>(DateTime
+                                                            .now()
+                                                        .millisecondsSinceEpoch
+                                                        .toString()),
+                                                    imageUrl: imageURL,
+                                                    placeholder:
+                                                        (context, url) =>
+                                                            new Container(),
+                                                  ),
+                                                ),
+                                              ),
+                                              title: title,
+                                              subtitle: Container(
+                                                alignment: Alignment.centerLeft,
+                                                child: Column(
+                                                  children: <Widget>[
+                                                    Align(
+                                                        alignment: Alignment
+                                                            .centerLeft,
+                                                        child: lastActive),
+                                                    Align(
+                                                        alignment: Alignment
+                                                            .centerLeft,
+                                                        child: itemName),
+                                                    Align(
+                                                        alignment: Alignment
+                                                            .centerLeft,
+                                                        child: Text(
+                                                          lastMessageCrop,
+                                                          style: TextStyle(
+                                                              fontFamily:
+                                                                  "Quicksand"),
+                                                        )),
+                                                  ],
+                                                ),
+                                              ),
+                                              //subtitle: Text( '$lastActive\n$itemName\n$lastMessageCrop'),
+                                              onTap: () {
+                                                Navigator.pushNamed(
+                                                  context,
+                                                  Chat.routeName,
+                                                  arguments: ChatArgs(
+                                                    rentalDS.documentID,
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                            Divider(),
+                                          ],
+                                        );
                                       } else {
                                         return Container();
                                       }
@@ -1266,10 +1250,10 @@ class HomePageState extends State<HomePage> {
   Future<UserEdit> getUserEdit() async {
     UserEdit out;
     DocumentSnapshot ds =
-        await Firestore.instance.collection('users').document(userID).get();
+        await Firestore.instance.collection('users').document(myUserID).get();
     if (ds != null) {
       out = new UserEdit(
-          id: userID, photoUrl: ds['avatar'], displayName: ds['name']);
+          id: myUserID, photoUrl: ds['avatar'], displayName: ds['name']);
     }
 
     return out;
@@ -1296,7 +1280,7 @@ class HomePageState extends State<HomePage> {
         ));
 
     if (result != null) {
-      Firestore.instance.collection('users').document(userID).updateData({
+      Firestore.instance.collection('users').document(myUserID).updateData({
         'name': result.displayName,
         'avatar': result.photoUrl,
       });
@@ -1358,7 +1342,7 @@ class HomePageState extends State<HomePage> {
 
   void deleteItem(DocumentSnapshot ds) {
     DocumentReference documentReference = ds.reference;
-    Firestore.instance.collection('users').document(userID).updateData({
+    Firestore.instance.collection('users').document(myUserID).updateData({
       'items': FieldValue.arrayRemove([documentReference])
     });
 

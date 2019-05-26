@@ -49,7 +49,7 @@ class AllItemsState extends State<AllItems> {
                 style: TextStyle(fontFamily: 'Quicksand', fontSize: 30.0)),
           ],
         ),
-        buildItemList(),
+        buildItemListTemp(),
       ],
     );
   }
@@ -82,6 +82,48 @@ class AllItemsState extends State<AllItems> {
                     children: items
                         .map((DocumentSnapshot ds) => itemCard(ds, context))
                         .toList());
+              } else {
+                return Container();
+              }
+          }
+        },
+      ),
+    );
+  }
+
+  Widget buildItemListTemp() {
+    CollectionReference collectionReference =
+        Firestore.instance.collection('items');
+    Stream stream = collectionReference.orderBy('name', descending: false).snapshots();
+    return Expanded(
+      child: StreamBuilder<QuerySnapshot>(
+        stream: stream,
+        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          if (snapshot.hasError) {
+            return new Text('${snapshot.error}');
+          }
+          switch (snapshot.connectionState) {
+            case ConnectionState.waiting:
+
+            default:
+              if (snapshot.hasData) {
+                return ListView.builder(
+                    itemCount: snapshot.data.documents.length,
+                    itemBuilder: (context, index) {
+                      DocumentSnapshot ds = snapshot.data.documents[index];
+
+                      return ListTile(
+                        leading: Icon(Icons.build),
+                        title: Text(
+                          ds['name'],
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Text(ds['description']),
+                        onTap: () {
+                          navigateToDetail(ds.documentID, context);
+                        },
+                      );
+                    });
               } else {
                 return Container();
               }

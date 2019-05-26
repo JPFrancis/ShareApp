@@ -484,6 +484,10 @@ class ItemEditState extends State<ItemEdit> {
       isUploading = true;
     });
 
+    // Trim spaces and capitlize first letter of item name
+    itemCopy.name = (itemCopy.name.trim())[0].toUpperCase() +
+        (itemCopy.name.trim()).substring(1);
+
     // new item
     if (itemCopy.id == null) {
       final DocumentReference documentReference =
@@ -775,7 +779,9 @@ class ItemEditState extends State<ItemEdit> {
   }
 
   Future<bool> saveWarning() async {
-    if (itemCopy.location != null && itemCopy.numImages > 0) {
+    if (itemCopy.location != null &&
+        itemCopy.numImages > 0 &&
+        itemCopy.name.length > 0) {
       saveItem();
       return true;
     }
