@@ -613,28 +613,28 @@ class HomePageState extends State<HomePage> {
   }
 
   Widget buildListingsRentalsList(String rentalStatus) {
-    int status;
+    List status;
 
     switch (rentalStatus) {
       case 'requesting':
-        status = 0;
+        status = [0, 1];
         break;
       case 'upcoming':
-        status = 2;
+        status = [2];
         break;
       case 'current':
-        status = 3;
+        status = [3, 4];
         break;
       case 'past':
-        status = 5;
+        status = [5];
         break;
     }
 
     CollectionReference collectionReference =
-        Firestore.instance.collection('items');
-    int tilerows = MediaQuery.of(context).size.width > 500 ? 3 : 2;
+        Firestore.instance.collection('rentals');
+    int tileRows = MediaQuery.of(context).size.width > 500 ? 3 : 2;
     Stream stream = collectionReference
-        .where('creator',
+        .where('owner',
             isEqualTo:
                 Firestore.instance.collection('users').document(myUserID))
         .snapshots();
@@ -650,19 +650,43 @@ class HomePageState extends State<HomePage> {
 
             default:
               if (snapshot.hasData) {
-                List<DocumentSnapshot> items = snapshot.data.documents.toList();
-                items.forEach((ds) {});
-
-                return GridView.count(
-                    padding: const EdgeInsets.all(20.0),
-                    shrinkWrap: true,
-                    mainAxisSpacing: 15,
-                    crossAxisCount: tilerows,
-                    childAspectRatio: (2 / 3),
+                return GridView.builder(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: tileRows,
                     crossAxisSpacing: MediaQuery.of(context).size.width / 20,
-                    children: items
-                        .map((DocumentSnapshot ds) => itemCard(ds, context))
-                        .toList());
+                    childAspectRatio: (2 / 3),
+                    mainAxisSpacing: 15,
+                  ),
+                  itemCount: snapshot.data.documents.length,
+                  itemBuilder: (context, index) {
+                    DocumentSnapshot rentalDS = snapshot.data.documents[index];
+                    DocumentReference itemDR = rentalDS['item'];
+
+                    return StreamBuilder<DocumentSnapshot>(
+                      stream: itemDR.snapshots(),
+                      builder: (BuildContext context,
+                          AsyncSnapshot<DocumentSnapshot> snapshot) {
+                        if (snapshot.hasError) {
+                          return new Text('${snapshot.error}');
+                        }
+                        switch (snapshot.connectionState) {
+                          case ConnectionState.waiting:
+
+                          default:
+                            if (snapshot.hasData) {
+                              DocumentSnapshot itemDS = snapshot.data;
+
+                              return status.contains(rentalDS['status'])
+                                  ? itemCard(itemDS, context)
+                                  : Container();
+                            } else {
+                              return Container();
+                            }
+                        }
+                      },
+                    );
+                  },
+                );
               } else {
                 return Container();
               }
@@ -709,9 +733,13 @@ class HomePageState extends State<HomePage> {
             Column(
               children: <Widget>[
                 reusableCategory("REQUESTS"),
+                buildListingsRentalsList('requesting'),
                 reusableCategory("UPCOMING"),
+                buildListingsRentalsList('upcoming'),
                 reusableCategory("CURRENT"),
+                buildListingsRentalsList('current'),
                 reusableCategory("PAST"),
+                buildListingsRentalsList('past'),
               ],
             ),
           ],
