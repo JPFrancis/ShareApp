@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/rentals/chat.dart';
@@ -23,9 +22,9 @@ enum Status {
 
 class RentalDetail extends StatefulWidget {
   static const routeName = '/itemRental';
-  final String rentalID;
+  final DocumentSnapshot initRentalDS;
 
-  RentalDetail({Key key, this.rentalID}) : super(key: key);
+  RentalDetail({Key key, this.initRentalDS}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
@@ -34,8 +33,6 @@ class RentalDetail extends StatefulWidget {
 }
 
 class RentalDetailState extends State<RentalDetail> {
-  GoogleMapController googleMapController;
-
   SharedPreferences prefs;
   String myUserId;
   String url;
@@ -68,6 +65,8 @@ class RentalDetailState extends State<RentalDetail> {
     itemQualityRating = 0.0;
     overallExpRating = 0.0;
 
+    rentalDS = widget.initRentalDS;
+
     getMyUserID();
     getSnapshots();
   }
@@ -80,14 +79,9 @@ class RentalDetailState extends State<RentalDetail> {
   void getSnapshots() async {
     isLoading = true;
     DocumentReference dr;
-    DocumentSnapshot ds = await Firestore.instance
-        .collection('rentals')
-        .document(widget.rentalID)
-        .get();
+    DocumentSnapshot ds = rentalDS;
 
     if (ds != null) {
-      rentalDS = ds;
-
       dr = rentalDS['owner'];
 
       ds = await Firestore.instance
@@ -182,7 +176,7 @@ class RentalDetailState extends State<RentalDetail> {
           context,
           Chat.routeName,
           arguments: ChatArgs(
-            widget.rentalID,
+            rentalDS,
           ),
         );
       },
@@ -194,7 +188,7 @@ class RentalDetailState extends State<RentalDetail> {
   Future<DocumentSnapshot> getRentalFromFirestore() async {
     DocumentSnapshot ds = await Firestore.instance
         .collection('rentals')
-        .document(widget.rentalID)
+        .document(rentalDS.documentID)
         .get();
 
     return ds;
@@ -572,7 +566,8 @@ class RentalDetailState extends State<RentalDetail> {
                                               onTap: () {
                                                 Firestore.instance
                                                     .collection('rentals')
-                                                    .document(widget.rentalID)
+                                                    .document(
+                                                        rentalDS.documentID)
                                                     .updateData({
                                                   '$rentalCC': documents[0]
                                                           ['card']['last4']
@@ -770,7 +765,7 @@ class RentalDetailState extends State<RentalDetail> {
   void updateStatus(int status) async {
     Firestore.instance
         .collection('rentals')
-        .document(widget.rentalID)
+        .document(rentalDS.documentID)
         .updateData({'status': status});
   }
 
@@ -778,7 +773,7 @@ class RentalDetailState extends State<RentalDetail> {
     Navigator.pushNamed(
       context,
       NewPickup.routeName,
-      arguments: NewPickupArgs(widget.rentalID, isRenter),
+      arguments: NewPickupArgs(rentalDS.documentID, isRenter),
     );
   }
 
@@ -792,7 +787,7 @@ class RentalDetailState extends State<RentalDetail> {
 
     Firestore.instance
         .collection('rentals')
-        .document(widget.rentalID)
+        .document(rentalDS.documentID)
         .updateData({'review': review});
 
     /// UPDATE USER RATINGS
@@ -838,13 +833,16 @@ class RentalDetailState extends State<RentalDetail> {
 
     await new Future.delayed(Duration(milliseconds: delay));
 
-    Firestore.instance.collection('rentals').document(widget.rentalID).delete();
+    Firestore.instance
+        .collection('rentals')
+        .document(rentalDS.documentID)
+        .delete();
 
     await new Future.delayed(Duration(milliseconds: delay));
 
     Firestore.instance
         .collection('rentals')
-        .document(widget.rentalID)
+        .document(rentalDS.documentID)
         .collection('chat')
         .getDocuments()
         .then((snapshot) {

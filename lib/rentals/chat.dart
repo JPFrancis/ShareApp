@@ -16,34 +16,30 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class Chat extends StatelessWidget {
   static const routeName = '/chat';
-  final String rentalID;
+  final DocumentSnapshot rentalDS;
 
-  Chat({
-    Key key,
-    this.rentalID,
-  }) : super(key: key);
+  Chat({Key key, this.rentalDS}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
       body: new ChatScreen(
-        rentalID: rentalID,
+        rentalDS: rentalDS,
       ),
     );
   }
 }
 
 class ChatScreen extends StatefulWidget {
-  final String rentalID;
+  final DocumentSnapshot rentalDS;
 
-  ChatScreen({Key key, this.rentalID}) : super(key: key);
+  ChatScreen({Key key, this.rentalDS}) : super(key: key);
 
   @override
   State createState() => new ChatScreenState();
 }
 
 class ChatScreenState extends State<ChatScreen> {
-  DocumentSnapshot rentalDS;
   DocumentSnapshot itemDS;
   DocumentSnapshot ownerDS;
   DocumentSnapshot renterDS;
@@ -84,15 +80,10 @@ class ChatScreenState extends State<ChatScreen> {
   void getSnapshots() async {
     isLoading = true;
     DocumentReference dr;
-    DocumentSnapshot ds = await Firestore.instance
-        .collection('rentals')
-        .document(widget.rentalID)
-        .get();
+    DocumentSnapshot ds = widget.rentalDS;
 
     if (ds != null) {
-      rentalDS = ds;
-
-      dr = rentalDS['item'];
+      dr = widget.rentalDS['item'];
 
       ds = await Firestore.instance
           .collection('items')
@@ -103,7 +94,7 @@ class ChatScreenState extends State<ChatScreen> {
         itemDS = ds;
       }
 
-      dr = rentalDS['owner'];
+      dr = widget.rentalDS['owner'];
 
       ds = await Firestore.instance
           .collection('users')
@@ -114,7 +105,7 @@ class ChatScreenState extends State<ChatScreen> {
         ownerDS = ds;
       }
 
-      dr = rentalDS['renter'];
+      dr = widget.rentalDS['renter'];
 
       ds = await Firestore.instance
           .collection('users')
@@ -175,7 +166,7 @@ class ChatScreenState extends State<ChatScreen> {
 
       var documentReference = Firestore.instance
           .collection('rentals')
-          .document(widget.rentalID)
+          .document(widget.rentalDS.documentID)
           .collection('chat')
           .document(DateTime.now().millisecondsSinceEpoch.toString());
 
@@ -722,14 +713,14 @@ class ChatScreenState extends State<ChatScreen> {
   Widget buildListMessage() {
     return Expanded(
       flex: 5,
-      child: widget.rentalID == ''
+      child: widget.rentalDS.documentID == ''
           ? Center(
               child: CircularProgressIndicator(
                   valueColor: AlwaysStoppedAnimation<Color>(red)))
           : StreamBuilder(
               stream: Firestore.instance
                   .collection('rentals')
-                  .document(widget.rentalID)
+                  .document(widget.rentalDS.documentID)
                   .collection('chat')
                   .orderBy('timestamp', descending: true)
                   .limit(20)
@@ -760,7 +751,7 @@ class ChatScreenState extends State<ChatScreen> {
       context,
       RentalDetail.routeName,
       arguments: RentalDetailArgs(
-        rentalDS.documentID,
+        widget.rentalDS,
       ),
     );
   }

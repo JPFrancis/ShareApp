@@ -15,9 +15,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class ItemDetail extends StatefulWidget {
   static const routeName = '/itemDetail';
-  final String itemID;
+  final DocumentSnapshot initItemDS;
 
-  ItemDetail({Key key, this.itemID}) : super(key: key);
+  ItemDetail({Key key, this.initItemDS}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
@@ -42,18 +42,17 @@ class ItemDetailState extends State<ItemDetail> {
   String myUserID;
   String itemCreator;
 
-  bool isLoading;
+  bool isLoading = true;
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
 
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) => refreshIndicatorKey.currentState.show());
+    itemDS = widget.initItemDS;
 
     getMyUserID();
-    getSnapshots();
+    getSnapshots(false);
   }
 
   void getMyUserID() async {
@@ -64,20 +63,21 @@ class ItemDetailState extends State<ItemDetail> {
   void getItemCreatorID() async {
     Firestore.instance
         .collection('items')
-        .document(widget.itemID)
+        .document(itemDS.documentID)
         .get()
         .then((DocumentSnapshot ds) {
       itemCreator = ds['creatorID'];
     });
   }
 
-  Future<Null> getSnapshots() async {
+  Future<Null> getSnapshots(bool refreshItemDS) async {
     isLoading = true;
-
-    DocumentSnapshot ds = await Firestore.instance
-        .collection('items')
-        .document(widget.itemID)
-        .get();
+    DocumentSnapshot ds = refreshItemDS
+        ? await Firestore.instance
+            .collection('items')
+            .document(itemDS.documentID)
+            .get()
+        : itemDS;
 
     if (ds != null) {
       itemDS = ds;
@@ -119,7 +119,7 @@ class ItemDetailState extends State<ItemDetail> {
       child: Scaffold(
         body: RefreshIndicator(
           key: refreshIndicatorKey,
-          onRefresh: getSnapshots,
+          onRefresh: () => getSnapshots(true),
           child: isLoading ? Container() : showBody(),
         ),
         //floatingActionButton: showFAB(),
@@ -202,7 +202,7 @@ class ItemDetailState extends State<ItemDetail> {
   Future<DocumentSnapshot> getItemFromFirestore() async {
     DocumentSnapshot ds = await Firestore.instance
         .collection('items')
-        .document(widget.itemID)
+        .document(itemDS.documentID)
         .get();
 
     return ds;
@@ -520,14 +520,14 @@ class ItemDetailState extends State<ItemDetail> {
     if (result != null) {
       setState(
         () {
-          getSnapshots();
+          getSnapshots(true);
         },
       );
     }
   }
 
   void handleRequestItemPressed() async {
-    getSnapshots().then(
+    getSnapshots(true).then(
       (_) {
         itemDS['rental'] != null
             ? showRequestErrorDialog()
@@ -535,7 +535,7 @@ class ItemDetailState extends State<ItemDetail> {
                 context,
                 ItemRequest.routeName,
                 arguments: ItemRequestArgs(
-                  widget.itemID,
+                  itemDS.documentID,
                 ),
               );
       },
@@ -543,13 +543,13 @@ class ItemDetailState extends State<ItemDetail> {
   }
 
   void handleViewRentalPressed() async {
-    getSnapshots().then(
+    getSnapshots(true).then(
       (_) {
         Navigator.pushNamed(
           context,
           RentalDetail.routeName,
           arguments: RentalDetailArgs(
-            rentalDS.documentID,
+            rentalDS,
           ),
         );
       },

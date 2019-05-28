@@ -49,6 +49,14 @@ class HomePageState extends State<HomePage> {
 
   Color primaryColor = Color.fromRGBO(52, 117, 115, 1);
 
+  TextEditingController searchController = TextEditingController();
+  List<String> searchList = [
+    'Shovel',
+    'Vacuum',
+    'Tennis racket',
+    'Basketball',
+  ];
+
   @override
   void initState() {
     // TODO: implement initState
@@ -217,7 +225,7 @@ class HomePageState extends State<HomePage> {
 
       return InkWell(
         onTap: () {
-          navigateToDetail(ds.documentID);
+          navigateToDetail(ds);
         },
         child: Container(
           decoration: new BoxDecoration(
@@ -418,35 +426,44 @@ class HomePageState extends State<HomePage> {
   Widget introImageAndSearch() {
     double h = MediaQuery.of(context).size.height;
 
-    Widget _searchField() {
+    Widget searchField() {
       return Container(
         padding: EdgeInsets.symmetric(horizontal: 10.0),
         child: RaisedButton(
           elevation: 10.0,
           color: Colors.white,
-          onPressed: () async {
-            final int selected = await showSearch<int>(
-              context: context,
-              //delegate: _delegate,
-            );
-            /*
-            if (selected != null && selected != _lastIntegerSelected) {
-              setState(() {
-                _lastIntegerSelected = selected;
-              });
-            }*/
-          },
+          onPressed: () {},
           child: Row(
             children: <Widget>[
               Icon(Icons.search),
               SizedBox(
                 width: 10.0,
               ),
+              Expanded(
+                child: TextField(
+                  keyboardType: TextInputType.text,
+                  controller: searchController,
+                  onTap: () {
+                    debugPrint('============== PRESSED');
+                  },
+                  onChanged: (value) {
+                    setState(() {});
+                  },
+                  decoration: InputDecoration(
+                    labelStyle: TextStyle(
+                      color: Colors.black54,
+                    ),
+                    //labelText: "Try \"Basketball\"",
+                  ),
+                ),
+              )
+              /*
               Text(
                 "Try \"Basketball\"",
                 style: TextStyle(
                     fontFamily: 'Quicksand', fontWeight: FontWeight.w400),
-              )
+              ),
+              */
             ],
           ),
         ),
@@ -463,7 +480,42 @@ class HomePageState extends State<HomePage> {
               child: SizedBox.expand(
                   child: Image.asset('assets/surfing.jpg', fit: BoxFit.cover))),
           Container(height: h / 3.2, color: Colors.black12),
-          Align(alignment: Alignment.bottomCenter, child: _searchField()),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Column(
+              children: <Widget>[
+                Container(
+                  height: 10,
+                ),
+                searchField(),
+                searchController.text.isEmpty
+                    ? Container()
+                    : Expanded(
+                        child: Container(
+                          color: Colors.white,
+                          child: ListView.builder(
+                            itemCount:
+                                searchList == null || searchList.length == 0
+                                    ? 0
+                                    : searchList.length,
+                            itemBuilder: (BuildContext context, int index) {
+                              return new ListTile(
+                                leading: Icon(Icons.build),
+                                title: Text(
+                                  searchList[index],
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                subtitle: Text('Description'),
+                                onTap: () =>
+                                    print('${searchList[index]} pressed'),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -662,29 +714,53 @@ class HomePageState extends State<HomePage> {
                     DocumentSnapshot rentalDS = snapshot.data.documents[index];
                     DocumentReference itemDR = rentalDS['item'];
 
-                    return StreamBuilder<DocumentSnapshot>(
-                      stream: itemDR.snapshots(),
-                      builder: (BuildContext context,
-                          AsyncSnapshot<DocumentSnapshot> snapshot) {
-                        if (snapshot.hasError) {
-                          return new Text('${snapshot.error}');
-                        }
-                        switch (snapshot.connectionState) {
-                          case ConnectionState.waiting:
+                    return status.contains(rentalDS['status'])
+                        ? StreamBuilder<DocumentSnapshot>(
+                            stream: itemDR.snapshots(),
+                            builder: (BuildContext context,
+                                AsyncSnapshot<DocumentSnapshot> snapshot) {
+                              if (snapshot.hasError) {
+                                return new Text('${snapshot.error}');
+                              }
+                              switch (snapshot.connectionState) {
+                                case ConnectionState.waiting:
 
-                          default:
-                            if (snapshot.hasData) {
-                              DocumentSnapshot itemDS = snapshot.data;
+                                default:
+                                  if (snapshot.hasData) {
+                                    DocumentSnapshot itemDS = snapshot.data;
+                                    return StreamBuilder<DocumentSnapshot>(
+                                      stream: rentalDS['renter'].snapshots(),
+                                      builder: (BuildContext context,
+                                          AsyncSnapshot<DocumentSnapshot>
+                                              snapshot) {
+                                        if (snapshot.hasError) {
+                                          return new Text('${snapshot.error}');
+                                        }
+                                        switch (snapshot.connectionState) {
+                                          case ConnectionState.waiting:
 
-                              return status.contains(rentalDS['status'])
-                                  ? itemCard(itemDS, context)
-                                  : Container();
-                            } else {
-                              return Container();
-                            }
-                        }
-                      },
-                    );
+                                          default:
+                                            if (snapshot.hasData) {
+                                              DocumentSnapshot renterDS =
+                                                  snapshot.data;
+
+                                              return status.contains(
+                                                      rentalDS['status'])
+                                                  ? itemCard(itemDS, context)
+                                                  : Container();
+                                            } else {
+                                              return Container();
+                                            }
+                                        }
+                                      },
+                                    );
+                                  } else {
+                                    return Container();
+                                  }
+                              }
+                            },
+                          )
+                        : Container();
                   },
                 );
               } else {
@@ -1032,7 +1108,7 @@ class HomePageState extends State<HomePage> {
                               default:
                                 if (snapshot.hasData) {
                                   DocumentSnapshot itemDS = snapshot.data;
-                                  DocumentReference ownerDR = itemDS['creator'];
+                                  DocumentReference ownerDR = rentalDS['owner'];
 
                                   if (requesting ^
                                       (rentalDS['status'] == 0 ||
@@ -1138,7 +1214,8 @@ class HomePageState extends State<HomePage> {
                                     case ConnectionState.waiting:
 
                                     default:
-                                      if (snapshot.hasData) {
+                                      if (snapshot.hasData &&
+                                          snapshot.data.documents.length > 0) {
                                         DocumentSnapshot lastMessageDS =
                                             snapshot.data.documents[0];
                                         Text title = Text(
@@ -1224,7 +1301,7 @@ class HomePageState extends State<HomePage> {
                                                   context,
                                                   Chat.routeName,
                                                   arguments: ChatArgs(
-                                                    rentalDS.documentID,
+                                                    rentalDS,
                                                   ),
                                                 );
                                               },
@@ -1265,12 +1342,12 @@ class HomePageState extends State<HomePage> {
     );
   }
 
-  void navigateToDetail(String itemID) async {
+  void navigateToDetail(DocumentSnapshot itemDS) async {
     Navigator.pushNamed(
       context,
       ItemDetail.routeName,
       arguments: ItemDetailArgs(
-        itemID,
+        itemDS,
       ),
     );
   }
@@ -1287,7 +1364,7 @@ class HomePageState extends State<HomePage> {
     return out;
   }
 
-  void navToAllItems() async {
+  void navToAllItems() {
     Navigator.pushNamed(
       context,
       AllItems.routeName,
