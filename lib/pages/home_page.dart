@@ -36,6 +36,9 @@ class HomePage extends StatefulWidget {
 }
 
 class HomePageState extends State<HomePage> {
+  final GlobalKey<RefreshIndicatorState> refreshIndicatorKey =
+      new GlobalKey<RefreshIndicatorState>();
+
   SharedPreferences prefs;
   String myUserID;
   List<Item> itemList;
@@ -51,12 +54,7 @@ class HomePageState extends State<HomePage> {
   Color primaryColor = Color.fromRGBO(52, 117, 115, 1);
 
   TextEditingController searchController = TextEditingController();
-  List<String> searchList = [
-    'Shovel',
-    'Vacuum',
-    'Tennis racket',
-    'Basketball',
-  ];
+  List<DocumentSnapshot> searchList;
 
   @override
   void initState() {
@@ -84,6 +82,7 @@ class HomePageState extends State<HomePage> {
 
     setPrefs();
     handleInitUser();
+    getAllItems();
   }
 
   void setPrefs() async {
@@ -127,18 +126,16 @@ class HomePageState extends State<HomePage> {
     });
   }
 
+  Future<Null> getAllItems() async {
+    QuerySnapshot querySnapshot = await Firestore.instance
+        .collection('items')
+        .orderBy('name', descending: false)
+        .getDocuments();
+    searchList = querySnapshot.documents;
+  }
+
   @override
   Widget build(BuildContext context) {
-    Firestore.instance
-        .collection('users')
-        .document(myUserID)
-        .get()
-        .then((DocumentSnapshot ds) {
-      Firestore.instance.collection('users').document(myUserID).updateData({
-        'lastActive': DateTime.now().millisecondsSinceEpoch,
-      });
-    });
-
     bottomTabPages = <Widget>[
       searchPage(),
       //homeTabPage(),
@@ -149,7 +146,15 @@ class HomePageState extends State<HomePage> {
       profileTabPage(),
     ];
 
-    assert(bottomTabPages.length == bottomNavBarTiles.length);
+    Firestore.instance
+        .collection('users')
+        .document(myUserID)
+        .get()
+        .then((DocumentSnapshot ds) {
+      Firestore.instance.collection('users').document(myUserID).updateData({
+        'lastActive': DateTime.now().millisecondsSinceEpoch,
+      });
+    });
 
     return Scaffold(
       body: isLoading
@@ -331,21 +336,26 @@ class HomePageState extends State<HomePage> {
   }
 
   Widget searchPage() {
-    return MediaQuery.removePadding(
-      removeTop: true,
-      context: context,
-      child: ListView(
-        physics: const ClampingScrollPhysics(),
+    return Container(
+      child: MediaQuery.removePadding(
+        removeTop: true,
+        context: context,
+        child: RefreshIndicator(
+          onRefresh: getAllItems,
+          child: ListView(
+            //physics: const ClampingScrollPhysics(),
 
-        // shrinkWrap: true,
-        children: <Widget>[
-          introImageAndSearch(),
-          SizedBox(
-            height: 30.0,
+            // shrinkWrap: true,
+            children: <Widget>[
+              introImageAndSearch(),
+              SizedBox(
+                height: 30.0,
+              ),
+              categories(),
+              //lookingFor()
+            ],
           ),
-          categories(),
-          //lookingFor()
-        ],
+        ),
       ),
     );
   }
@@ -430,10 +440,9 @@ class HomePageState extends State<HomePage> {
     Widget searchField() {
       return Container(
         padding: EdgeInsets.symmetric(horizontal: 10.0),
-        child: RaisedButton(
-          elevation: 10.0,
+        child: Container(
+          padding: EdgeInsets.only(left: 10),
           color: Colors.white,
-          onPressed: () {},
           child: Row(
             children: <Widget>[
               Icon(Icons.search),
@@ -444,9 +453,7 @@ class HomePageState extends State<HomePage> {
                 child: TextField(
                   keyboardType: TextInputType.text,
                   controller: searchController,
-                  onTap: () {
-                    debugPrint('============== PRESSED');
-                  },
+                  onTap: () {},
                   onChanged: (value) {
                     setState(() {});
                   },
@@ -454,17 +461,20 @@ class HomePageState extends State<HomePage> {
                     labelStyle: TextStyle(
                       color: Colors.black54,
                     ),
-                    //labelText: "Try \"Basketball\"",
                   ),
                 ),
-              )
-              /*
-              Text(
-                "Try \"Basketball\"",
-                style: TextStyle(
-                    fontFamily: 'Quicksand', fontWeight: FontWeight.w400),
               ),
-              */
+              Container(
+                width: 40,
+                child: FlatButton(
+                  onPressed: () {
+                    setState(() {
+                      searchController.clear();
+                    });
+                  },
+                  child: Icon(Icons.clear),
+                ),
+              ),
             ],
           ),
         ),
@@ -479,14 +489,18 @@ class HomePageState extends State<HomePage> {
           Container(
               height: h / 3.2,
               child: SizedBox.expand(
-                  child: Image.asset('assets/surfing.jpg', fit: BoxFit.cover))),
+                  child: Image.asset(
+                'assets/surfing.jpg',
+                fit: BoxFit.cover,
+                gaplessPlayback: true,
+              ))),
           Container(height: h / 3.2, color: Colors.black12),
           Align(
             alignment: Alignment.bottomCenter,
             child: Column(
               children: <Widget>[
                 Container(
-                  height: 10,
+                  height: 30,
                 ),
                 searchField(),
                 searchController.text.isEmpty
@@ -495,21 +509,25 @@ class HomePageState extends State<HomePage> {
                         child: Container(
                           color: Colors.white,
                           child: ListView.builder(
-                            itemCount:
-                                searchList == null || searchList.length == 0
-                                    ? 0
-                                    : searchList.length,
-                            itemBuilder: (BuildContext context, int index) {
-                              return new ListTile(
-                                leading: Icon(Icons.build),
-                                title: Text(
-                                  searchList[index],
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                                subtitle: Text('Description'),
-                                onTap: () =>
-                                    print('${searchList[index]} pressed'),
-                              );
+                            itemCount: searchList.length,
+                            itemBuilder: (context, index) {
+                              return searchList[index]['name']
+                                      .toLowerCase()
+                                      .contains(
+                                          searchController.text.toLowerCase())
+                                  ? ListTile(
+                                      leading: Icon(Icons.build),
+                                      title: Text(
+                                        '${searchList[index]['name']}',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      subtitle: Text(
+                                          '${searchList[index]['description']}'),
+                                      onTap: () =>
+                                          navigateToDetail(searchList[index]),
+                                    )
+                                  : Container();
                             },
                           ),
                         ),
@@ -533,7 +551,12 @@ class HomePageState extends State<HomePage> {
           width: h / 7.5,
           child: Stack(
             children: <Widget>[
-              SizedBox.expand(child: Image.asset(image, fit: BoxFit.cover)),
+              SizedBox.expand(
+                  child: Image.asset(
+                image,
+                fit: BoxFit.cover,
+                gaplessPlayback: true,
+              )),
               SizedBox.expand(
                 child: Container(color: Colors.black45),
               ),
@@ -924,7 +947,7 @@ class HomePageState extends State<HomePage> {
                       style:
                           TextStyle(fontSize: 30.0, fontFamily: 'Quicksand')))),
           Divider(),
-          buildMessagesList(),
+          //buildMessagesList(),
         ],
       ),
     );
@@ -1430,12 +1453,26 @@ class HomePageState extends State<HomePage> {
     return out;
   }
 
-  void navToAllItems() {
+  void navToAllItems() async {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (BuildContext context) => AllItems(
+            allItemsList: searchList,
+          ),
+          fullscreenDialog: true,
+        )).then((value){
+          searchList = value;
+    });
+    /*
     Navigator.pushNamed(
       context,
       AllItems.routeName,
-      arguments: AllItemsArgs(),
+      arguments: AllItemsArgs(
+        searchList,
+      ),
     );
+    */
   }
 
   void navToProfileEdit() async {

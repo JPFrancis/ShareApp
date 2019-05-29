@@ -35,7 +35,7 @@ Widget itemCard(DocumentSnapshot ds, context) {
   CachedNetworkImage image = CachedNetworkImage(
     key: new ValueKey<String>(DateTime.now().millisecondsSinceEpoch.toString()),
     imageUrl: ds['images'][0],
-    placeholder: (context, url) => new CircularProgressIndicator(),
+    placeholder: (context, url) => Container(),
   );
 
   var card = new Container(child: new LayoutBuilder(
