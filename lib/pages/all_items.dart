@@ -8,9 +8,9 @@ import 'package:shareapp/extras/helpers.dart';
 class AllItems extends StatefulWidget {
   static const routeName = '/allItems';
 
-  AllItems({
-    Key key,
-  }) : super(key: key);
+  final List<DocumentSnapshot> allItemsList;
+
+  AllItems({Key key, this.allItemsList}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
@@ -19,6 +19,16 @@ class AllItems extends StatefulWidget {
 }
 
 class AllItemsState extends State<AllItems> {
+  List<DocumentSnapshot> allItems;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+
+    allItems = widget.allItemsList;
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -27,7 +37,6 @@ class AllItemsState extends State<AllItems> {
       },
       child: Scaffold(
         body: allItemsPage(),
-        //floatingActionButton: showFAB(),
       ),
     );
   }
@@ -92,49 +101,38 @@ class AllItemsState extends State<AllItems> {
   }
 
   Widget buildItemListTemp() {
-    CollectionReference collectionReference =
-        Firestore.instance.collection('items');
-    Stream stream =
-        collectionReference.orderBy('name', descending: false).snapshots();
     return Expanded(
-      child: StreamBuilder<QuerySnapshot>(
-        stream: stream,
-        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.hasError) {
-            return new Text('${snapshot.error}');
-          }
-          switch (snapshot.connectionState) {
-            case ConnectionState.waiting:
-
-            default:
-              if (snapshot.hasData) {
-                return ListView.builder(
-                    itemCount: snapshot.data.documents.length,
-                    itemBuilder: (context, index) {
-                      DocumentSnapshot ds = snapshot.data.documents[index];
-
-                      return ListTile(
-                        leading: Icon(Icons.build),
-                        title: Text(
-                          ds['name'],
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        subtitle: Text(ds['description']),
-                        onTap: () {
-                          navigateToDetail(ds, context);
-                        },
-                      );
-                    });
-              } else {
-                return Container();
-              }
-          }
-        },
+      child: RefreshIndicator(
+        onRefresh: () => getAllItems(),
+        child: ListView.builder(
+          itemCount: allItems.length,
+          itemBuilder: (context, index) {
+            return ListTile(
+              leading: Icon(Icons.build),
+              title: Text(
+                '${allItems[index]['name']}',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              subtitle: Text('${allItems[index]['description']}'),
+              onTap: () => navigateToDetail(allItems[index], context),
+            );
+          },
+        ),
       ),
     );
   }
 
+  Future<Null> getAllItems() async {
+    QuerySnapshot querySnapshot = await Firestore.instance
+        .collection('items')
+        .orderBy('name', descending: false)
+        .getDocuments();
+    setState(() {
+      allItems = querySnapshot.documents;
+    });
+  }
+
   void goBack() {
-    Navigator.pop(context);
+    Navigator.pop(context, allItems);
   }
 }

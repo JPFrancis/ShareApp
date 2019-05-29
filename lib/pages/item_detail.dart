@@ -118,7 +118,6 @@ class ItemDetailState extends State<ItemDetail> {
       },
       child: Scaffold(
         body: RefreshIndicator(
-          key: refreshIndicatorKey,
           onRefresh: () => getSnapshots(true),
           child: isLoading ? Container() : showBody(),
         ),
