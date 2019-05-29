@@ -138,7 +138,7 @@ Widget itemCard(DocumentSnapshot ds, context) {
 
   return InkWell(
       onTap: () {
-        navigateToDetail(ds.documentID, context);
+        navigateToDetail(ds, context);
       },
       child: card);
 }
@@ -194,12 +194,12 @@ Widget backButton(context) {
 
 // helper methods
 
-void navigateToDetail(String itemID, context) async {
+void navigateToDetail(DocumentSnapshot itemDS, context) async {
   Navigator.pushNamed(
     context,
     ItemDetail.routeName,
     arguments: ItemDetailArgs(
-      itemID,
+      itemDS,
     ),
   );
 }

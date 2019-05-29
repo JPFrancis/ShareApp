@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shareapp/login/root_page.dart';
@@ -49,7 +50,7 @@ class MyApp extends StatelessWidget {
               return MaterialPageRoute(
                 builder: (context) {
                   return ItemDetail(
-                    itemID: args.itemID,
+                    initItemDS: args.initItemDS,
                   );
                 },
               );
@@ -90,7 +91,7 @@ class MyApp extends StatelessWidget {
               return MaterialPageRoute(
                 builder: (context) {
                   return RentalDetail(
-                    rentalID: args.rentalID,
+                    initRentalDS: args.initRentalDS,
                   );
                 },
               );
@@ -103,7 +104,7 @@ class MyApp extends StatelessWidget {
               return MaterialPageRoute(
                 builder: (context) {
                   return Chat(
-                    rentalID: args.rentalID,
+                    rentalDS: args.rentalDS,
                   );
                 },
               );
@@ -148,10 +149,10 @@ class HomePageArgs {
 }
 
 class ItemDetailArgs {
-  final String itemID;
+  final DocumentSnapshot initItemDS;
 
   ItemDetailArgs(
-    this.itemID,
+    this.initItemDS,
   );
 }
 
@@ -172,18 +173,18 @@ class ItemRequestArgs {
 }
 
 class RentalDetailArgs {
-  final String rentalID;
+  final DocumentSnapshot initRentalDS;
 
   RentalDetailArgs(
-    this.rentalID,
+    this.initRentalDS,
   );
 }
 
 class ChatArgs {
-  final String rentalID;
+  final DocumentSnapshot rentalDS;
 
   ChatArgs(
-    this.rentalID,
+    this.rentalDS,
   );
 }
 

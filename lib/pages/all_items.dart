@@ -21,9 +21,14 @@ class AllItems extends StatefulWidget {
 class AllItemsState extends State<AllItems> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: allItemsPage(),
-      //floatingActionButton: showFAB(),
+    return WillPopScope(
+      onWillPop: () {
+        goBack();
+      },
+      child: Scaffold(
+        body: allItemsPage(),
+        //floatingActionButton: showFAB(),
+      ),
     );
   }
 
@@ -89,7 +94,8 @@ class AllItemsState extends State<AllItems> {
   Widget buildItemListTemp() {
     CollectionReference collectionReference =
         Firestore.instance.collection('items');
-    Stream stream = collectionReference.orderBy('name', descending: false).snapshots();
+    Stream stream =
+        collectionReference.orderBy('name', descending: false).snapshots();
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
         stream: stream,
@@ -115,7 +121,7 @@ class AllItemsState extends State<AllItems> {
                         ),
                         subtitle: Text(ds['description']),
                         onTap: () {
-                          navigateToDetail(ds.documentID, context);
+                          navigateToDetail(ds, context);
                         },
                       );
                     });

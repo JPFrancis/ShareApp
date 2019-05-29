@@ -14,7 +14,11 @@ environment:
 
 dependencies:
 
+  dio:
+
   smooth_star_rating:
+
+  fluttertoast:
 
   uuid:
 
@@ -25,8 +29,6 @@ dependencies:
   timeago:
 
   flutter_picker:
-
-  fluttertoast:
 
   shared_preferences:
 
@@ -58,7 +60,7 @@ dependencies:
 
   http:
 
-  multi_image_picker: ^4.2.0
+  multi_image_picker:
 
   google_sign_in:
 

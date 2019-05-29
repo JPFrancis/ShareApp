@@ -409,15 +409,17 @@ class ItemRequestState extends State<ItemRequest> {
         if (chat != null) {
           await new Future.delayed(Duration(milliseconds: delay));
 
-          if (rentalID != null) {
-            Navigator.pushNamed(
-              context,
-              RentalDetail.routeName,
-              arguments: RentalDetailArgs(
-                rentalID,
-              ),
-            );
-          }
+          rentalDR.get().then((ds) {
+            if (rentalID != null) {
+              Navigator.pushNamed(
+                context,
+                RentalDetail.routeName,
+                arguments: RentalDetailArgs(
+                  ds,
+                ),
+              );
+            }
+          });
         }
       }
     }
