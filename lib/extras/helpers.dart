@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/pages/item_detail.dart';
+import 'package:shareapp/services/const.dart';
 
 // Reusable Classes
 
@@ -149,6 +150,19 @@ Widget reusableCategory(text) {
       alignment: Alignment.centerLeft,
       child: Text(text,
           style: TextStyle(fontSize: 11.0, fontWeight: FontWeight.w100)));
+}
+
+Widget reusableCategoryWithAll(text, action) {
+  return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[ 
+    Container(
+      padding: EdgeInsets.only(left: 15.0),
+      child: Text(text, style: TextStyle(fontSize: 11.0, fontWeight: FontWeight.w400, fontFamily: 'Quicksand'))
+    ),
+    
+    Container(
+      child: FlatButton(materialTapTargetSize: MaterialTapTargetSize.shrinkWrap, child: Text("View All", style: TextStyle(fontSize: 12.0, fontFamily: 'Quicksand', color: primaryColor, fontWeight: FontWeight.w400),), onPressed: action,)
+    ),
+  ],);
 }
 
 Widget reusableFlatButton(text, icon, action) {

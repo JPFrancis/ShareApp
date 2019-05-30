@@ -244,39 +244,20 @@ class HomePageState extends State<HomePage> {
           ),
           child: Column(
             children: <Widget>[
-              Container(
-                  height: 1.9 * h / 3,
-                  width: w,
-                  child: FittedBox(fit: BoxFit.cover, child: image)),
-              SizedBox(
-                height: 10.0,
-              ),
-              Container(
-                padding: EdgeInsets.only(left: 5.0, right: 5.0),
+              Container(height: 1.9 * h / 3, width: w, child: FittedBox(fit: BoxFit.cover, child: image)),
+              SizedBox( height: 10.0,),
+              Container( padding: EdgeInsets.only(left: 5.0, right: 5.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Row(
+                    Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: <Widget>[
-                        ds['type'] != null
-                            ? Text(
-                                '${ds['type']}'.toUpperCase(),
-                                style: TextStyle(
-                                    fontSize: h / 25,
-                                    fontFamily: 'Quicksand',
-                                    fontWeight: FontWeight.bold),
-                              )
-                            : Text(''),
+                        ds['type'] != null ? Text( '${ds['type']}'.toUpperCase(), style: TextStyle( fontSize: h / 25, fontFamily: 'Quicksand', fontWeight: FontWeight.bold),) : Text(''),
+                        Text('${ownerDS['name']}', style: TextStyle( fontSize: h / 24, fontFamily: 'Quicksand')),
                       ],
                     ),
-                    Text('${ownerDS['name']}\'s ${ds['name']}',
-                        style: TextStyle(
-                            fontSize: h / 21,
-                            fontFamily: 'Quicksand',
-                            fontWeight: FontWeight.bold)),
-                    Text("\$${ds['price']} per day",
-                        style: TextStyle(
-                            fontSize: h / 22, fontFamily: 'Quicksand')),
+                    Text('${ds['name']}', style: TextStyle( fontSize: h / 21, fontFamily: 'Quicksand', fontWeight: FontWeight.bold)),
+                    Text("\$${ds['price']} per day", style: TextStyle( fontSize: h / 22, fontFamily: 'Quicksand')),
                     Divider(height: 15),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -846,7 +827,7 @@ class HomePageState extends State<HomePage> {
                                           key: new ValueKey<String>(DateTime.now().millisecondsSinceEpoch.toString()),
                                           imageUrl: ds['images'][0],
                                           placeholder: (context, url) => new CircularProgressIndicator(),
-                                          fit: BoxFit.fill,
+                                          fit: BoxFit.cover,
                                         );
                                           return Container(
                                             padding: EdgeInsets.only(left: 10.0),
@@ -855,11 +836,10 @@ class HomePageState extends State<HomePage> {
                                               children: <Widget>[
                                                 SizedBox.expand(child: image),
                                                 SizedBox.expand(child: Container(color: Colors.black.withOpacity(0.4),)),
-                                                Center(
-                                                  child: Column(children: <Widget>[
-                                                    Text(ds['name'], style: TextStyle(color: Colors.white))
-                                                  ],),
-                                                )
+                                                Center(child: Column(children: <Widget>[
+                                                  Text(ds['name'], style: TextStyle(color: Colors.white)),
+                                                  Text("Pickup Time: \n" + DateTime.fromMillisecondsSinceEpoch(rentalDS['pickupStart'].millisecondsSinceEpoch).toString(), style: TextStyle(color: Colors.white)),
+                                                ],),)
                                               ],
                                             ),
                                           );
@@ -895,12 +875,7 @@ class HomePageState extends State<HomePage> {
           child: AppBar(
             backgroundColor: primaryColor,
             elevation: 1.0,
-            title: Text("Your Items Available For Others To Rent",
-                style: TextStyle(
-                    fontFamily: 'Quicksand',
-                    fontSize: h / 45,
-                    color: Colors.white,
-                    fontWeight: FontWeight.normal)),
+            title: Text("Your Items Available For Others To Rent", style: TextStyle( fontFamily: 'Quicksand', fontSize: h / 45, color: Colors.white, fontWeight: FontWeight.normal)),
             centerTitle: false,
             bottom: TabBar(
               indicatorColor: Colors.black45,
@@ -916,14 +891,13 @@ class HomePageState extends State<HomePage> {
           children: [
             Column(
               children: <Widget>[
-                reusableCategory("REQUESTS"),
-                SizedBox(height: 5.0,),
+                reusableCategoryWithAll("REQUESTS", ()=>debugPrint),
                 buildRequestsTransactionsList(),
-                reusableCategory("UPCOMING"),
+                reusableCategoryWithAll("UPCOMING", ()=>debugPrint),
                 buildListingsTransactions('upcoming'),
-                reusableCategory("CURRENT"),
+                reusableCategoryWithAll("CURRENT", ()=>debugPrint),
                 buildListingsTransactions('current'),
-                reusableCategory("PAST"),
+                reusableCategoryWithAll("PAST", ()=>debugPrint),
                 buildListingsTransactions('past'),
               ],
             ),
