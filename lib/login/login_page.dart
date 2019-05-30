@@ -86,7 +86,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _changeFormToSignUp() {
-    formKey.currentState.reset();
+    //formKey.currentState.reset();
     errorMessage = "";
     setState(() {
       _formMode = FormMode.SIGNUP;
@@ -94,7 +94,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _changeFormToLogin() {
-    formKey.currentState.reset();
+    //formKey.currentState.reset();
     errorMessage = "";
     setState(() {
       _formMode = FormMode.LOGIN;

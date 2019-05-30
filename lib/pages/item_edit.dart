@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -504,7 +505,24 @@ class ItemEditState extends State<ItemEdit> {
         'location': itemCopy.location,
         'rental': itemCopy.rental,
       });
-
+/*
+      CloudFunctions.instance.getHttpsCallable(
+        functionName: 'addItem',
+        parameters: {
+          'id': null,
+          'status': itemCopy.status,
+          'creator': itemCopy.creator,
+          'name': itemCopy.name,
+          'description': itemCopy.description,
+          'type': itemCopy.type,
+          'condition': itemCopy.condition,
+          'price': itemCopy.price,
+          'numImages': itemCopy.numImages,
+          'location': itemCopy.location,
+          'rental': itemCopy.rental,
+        },
+      );
+*/
       // update the newly added item with the updated doc id
       final String returnedID = documentReference.documentID;
 
