@@ -551,15 +551,8 @@ class HomePageState extends State<HomePage> {
           width: h / 7.5,
           child: Stack(
             children: <Widget>[
-              SizedBox.expand(
-                  child: Image.asset(
-                image,
-                fit: BoxFit.cover,
-                gaplessPlayback: true,
-              )),
-              SizedBox.expand(
-                child: Container(color: Colors.black45),
-              ),
+              SizedBox.expand( child: Image.asset( image, fit: BoxFit.cover, gaplessPlayback: true,)),
+              SizedBox.expand( child: Container(color: Colors.black45),),
               Center(
                   child: Text(category,
                       style: TextStyle(
@@ -721,7 +714,6 @@ class HomePageState extends State<HomePage> {
                           default:
                             if (snapshot.hasData) {
                               DocumentSnapshot itemDS = snapshot.data;
-                              DocumentReference ownerDR = itemDS['creator'];
                               int durationDays = rentalDS['duration'];
                               String duration = '${durationDays > 1 ? '$durationDays days' : '$durationDays day'}';
 
@@ -749,7 +741,7 @@ class HomePageState extends State<HomePage> {
                                                 ],
                                               ),
                                               child: InkWell(
-                                                onTap: ()=>debugPrint("should go to rental detail of this item"),
+                                                onTap: () { Navigator.pushNamed( context, RentalDetail.routeName, arguments: RentalDetailArgs( rentalDS,),); },
                                                 child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: <Widget>[
                                                   Column(children: <Widget>[
                                                     SizedBox(height: 6.0,),
@@ -759,13 +751,17 @@ class HomePageState extends State<HomePage> {
                                                         color: Colors.white, 
                                                         image: DecorationImage(image: NetworkImage(renterDS['avatar']), fit: BoxFit.fill)
                                                       )),
-                                                    Text(renterDS['name'], style: TextStyle(color: Colors.white, fontFamily: 'Quicksand'),),
+                                                    Text(renterDS['name'], style: TextStyle(color: Colors.white, fontFamily: 'Quicksand', fontWeight: FontWeight.bold),),
                                                   ],),
                                                   Column(children: <Widget>[
-                                                    Text("Request Sent: " + timeago.format(DateTime.fromMillisecondsSinceEpoch(rentalDS['created'])), 
-                                                      style: TextStyle(color: Colors.white, fontFamily: 'Quicksand'),),
-                                                    Text("Requested Duration: " + duration, 
-                                                      style: TextStyle(color: Colors.white, fontFamily: 'Quicksand'),),
+                                                    Row(children: <Widget>[
+                                                      Text("Request Sent: ", style: TextStyle(color: Colors.white, fontFamily: 'Quicksand', ),),
+                                                      Text(timeago.format((DateTime.fromMillisecondsSinceEpoch(rentalDS['created']))), style: TextStyle(color: Colors.white, fontFamily: 'Quicksand', fontWeight: FontWeight.bold),)
+                                                    ],),
+                                                    Row(children: <Widget>[
+                                                      Text("Requested Duration: ", style: TextStyle(color: Colors.white, fontFamily: 'Quicksand'),),
+                                                      Text(duration, style: TextStyle(color: Colors.white, fontFamily: 'Quicksand', fontWeight: FontWeight.bold,))
+                                                    ],)
                                                   ],),
                                                 ],),
                                               ),
@@ -795,7 +791,6 @@ class HomePageState extends State<HomePage> {
 
   Widget buildListingsTransactions(String rentalStatus){
     List status;
-
     switch (rentalStatus) {
       case 'upcoming':
         status = [2];
@@ -847,18 +842,28 @@ class HomePageState extends State<HomePage> {
                                     default:
                                       if (snapshot.hasData) {
                                         DocumentSnapshot renterDS = snapshot.data;
-                                        Widget _tile(){
-                                          CachedNetworkImage image = CachedNetworkImage(
-                                            key: new ValueKey<String>(DateTime.now().millisecondsSinceEpoch.toString()),
-                                            imageUrl: ds['images'][0],
-                                            placeholder: (context, url) => new CircularProgressIndicator(),
-                                          );
+                                        CachedNetworkImage image = CachedNetworkImage(
+                                          key: new ValueKey<String>(DateTime.now().millisecondsSinceEpoch.toString()),
+                                          imageUrl: ds['images'][0],
+                                          placeholder: (context, url) => new CircularProgressIndicator(),
+                                          fit: BoxFit.fill,
+                                        );
                                           return Container(
-                                            height: 100.0,
-                                            child: image,
+                                            padding: EdgeInsets.only(left: 10.0),
+                                            width: MediaQuery.of(context).size.width/2,
+                                            child: Stack(
+                                              children: <Widget>[
+                                                SizedBox.expand(child: image),
+                                                SizedBox.expand(child: Container(color: Colors.black.withOpacity(0.4),)),
+                                                Center(
+                                                  child: Column(children: <Widget>[
+                                                    Text(ds['name'], style: TextStyle(color: Colors.white))
+                                                  ],),
+                                                )
+                                              ],
+                                            ),
                                           );
-                                        }
-                                        return _tile();
+                                       // return Container(width: MediaQuery.of(context).size.width/2, padding: EdgeInsets.only(left: 10.0), child: _tile());
                                       } else {
                                         return Container();
                                       }
