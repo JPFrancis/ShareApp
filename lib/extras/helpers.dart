@@ -52,96 +52,38 @@ Widget itemCard(DocumentSnapshot ds, context) {
               blurStyle: BlurStyle.outer),
         ],
       ),
-      child: Column(
-        children: <Widget>[
-          Container(
-              height: 2 * h / 3,
-              width: w,
-              child: FittedBox(fit: BoxFit.cover, child: image)),
-          SizedBox(
-            height: 10.0,
-          ),
-          Container(
-            padding: EdgeInsets.only(left: 5.0, right: 5.0),
+      child: Column(children: <Widget>[
+          Container(height: 2 * h / 3, width: w, 
+            child: FittedBox(fit: BoxFit.cover, child: image)), 
+          SizedBox( height: 10.0,),
+          Container(height: h/3.5, width: w, padding: EdgeInsets.symmetric(horizontal: 5.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Text(ds['name'],
-                        style: TextStyle(
-                            fontSize: h / 20,
-                            fontFamily: 'Quicksand',
-                            fontWeight: FontWeight.bold)),
-                    ds['type'] != null
-                        ? Text(
-                            '${ds['type']}'.toUpperCase(),
-                            style: TextStyle(
-                                fontSize: h / 25,
-                                fontFamily: 'Quicksand',
-                                fontWeight: FontWeight.bold),
-                          )
-                        : Text(''),
-                  ],
-                ),
-                SizedBox(
-                  height: 2.0,
-                ),
-                Text("\$${ds['price']} per day",
-                    style:
-                        TextStyle(fontSize: h / 21, fontFamily: 'Quicksand')),
-                SizedBox(
-                  height: 2.0,
-                ),
-                Row(
-                  children: <Widget>[
-                    Icon(
-                      Icons.star_border,
-                      size: h / 19,
-                    ),
-                    Icon(
-                      Icons.star_border,
-                      size: h / 19,
-                    ),
-                    Icon(
-                      Icons.star_border,
-                      size: h / 19,
-                    ),
-                    Icon(
-                      Icons.star_border,
-                      size: h / 19,
-                    ),
-                    Icon(
-                      Icons.star_border,
-                      size: h / 19,
-                    ),
-                    SizedBox(
-                      width: 5.0,
-                    ),
-                    Text(
-                      "328",
-                      style: TextStyle(
-                        fontSize: h / 25,
-                        fontFamily: 'Quicksand',
-                        fontWeight: FontWeight.bold,
-                      ),
-                    )
-                  ],
-                )
+                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
+                    Text(ds['name'], style: TextStyle( fontSize: h / 20, fontFamily: 'Quicksand', fontWeight: FontWeight.bold)),
+                    Text( '${ds['type']}'.toUpperCase(), style: TextStyle( fontSize: h / 25, fontFamily: 'Quicksand', fontWeight: FontWeight.bold),)
+                ],),
+                SizedBox( height: 2.0,),
+                Text("\$${ds['price']} per day", style: TextStyle(fontSize: h / 21, fontFamily: 'Quicksand')),
+                SizedBox( height: 2.0,),
+                Row( children: <Widget>[
+                  Icon( Icons.star_border, size: h / 19,),
+                  Icon( Icons.star_border, size: h / 19,),
+                  Icon( Icons.star_border, size: h / 19,),
+                  Icon( Icons.star_border, size: h / 19,),
+                  Icon( Icons.star_border, size: h / 19,),
+                  SizedBox( width: 5.0,),
+                  Text( "328", style: TextStyle( fontSize: h / 25, fontFamily: 'Quicksand', fontWeight: FontWeight.bold,),)
+                ],)
               ],
             ),
           ),
-        ],
-      ),
+        ],),
     );
   }));
 
-  return InkWell(
-      onTap: () {
-        navigateToDetail(ds, context);
-      },
-      child: card);
+  return InkWell( onTap: () { navigateToDetail(ds, context); }, child: card);
 }
 
 Widget reusableCategory(text) {
@@ -153,16 +95,31 @@ Widget reusableCategory(text) {
 }
 
 Widget reusableCategoryWithAll(text, action) {
-  return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[ 
-    Container(
-      padding: EdgeInsets.only(left: 15.0),
-      child: Text(text, style: TextStyle(fontSize: 11.0, fontWeight: FontWeight.w400, fontFamily: 'Quicksand'))
-    ),
-    
-    Container(
-      child: FlatButton(materialTapTargetSize: MaterialTapTargetSize.shrinkWrap, child: Text("View All", style: TextStyle(fontSize: 12.0, fontFamily: 'Quicksand', color: primaryColor, fontWeight: FontWeight.w400),), onPressed: action,)
-    ),
-  ],);
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: <Widget>[
+      Container(
+          padding: EdgeInsets.only(left: 15.0),
+          child: Text(text,
+              style: TextStyle(
+                  fontSize: 11.0,
+                  fontWeight: FontWeight.w400,
+                  fontFamily: 'Quicksand'))),
+      Container(
+          child: FlatButton(
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        child: Text(
+          "View All",
+          style: TextStyle(
+              fontSize: 12.0,
+              fontFamily: 'Quicksand',
+              color: primaryColor,
+              fontWeight: FontWeight.w400),
+        ),
+        onPressed: action,
+      )),
+    ],
+  );
 }
 
 Widget reusableFlatButton(text, icon, action) {

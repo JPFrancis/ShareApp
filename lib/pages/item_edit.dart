@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -488,6 +487,7 @@ class ItemEditState extends State<ItemEdit> {
     // Trim spaces and capitlize first letter of item name
     itemCopy.name = (itemCopy.name.trim())[0].toUpperCase() +
         (itemCopy.name.trim()).substring(1);
+    itemCopy.description = itemCopy.description.trim();
 
     // new item
     if (itemCopy.id == null) {

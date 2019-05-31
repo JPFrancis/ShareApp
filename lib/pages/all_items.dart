@@ -36,7 +36,9 @@ class AllItemsState extends State<AllItems> {
         goBack();
       },
       child: Scaffold(
-        body: allItemsPage(),
+        body: allItems != null && allItems.length > 0
+            ? allItemsPage()
+            : Container(),
       ),
     );
   }
@@ -58,7 +60,7 @@ class AllItemsState extends State<AllItems> {
                 style: TextStyle(fontFamily: 'Quicksand', fontSize: 30.0)),
           ],
         ),
-        buildItemListTemp(),
+        buildItemList(),
       ],
     );
   }

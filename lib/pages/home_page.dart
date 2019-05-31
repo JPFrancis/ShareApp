@@ -5,7 +5,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/models/item.dart';
@@ -14,6 +13,7 @@ import 'package:shareapp/pages/all_items.dart';
 import 'package:shareapp/pages/item_detail.dart';
 import 'package:shareapp/pages/item_edit.dart';
 import 'package:shareapp/pages/profile_edit.dart';
+import 'package:shareapp/pages/search_results.dart';
 import 'package:shareapp/rentals/chat.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/auth.dart';
@@ -219,8 +219,7 @@ class HomePageState extends State<HomePage> {
 
   Widget cardItemRentals(ds, ownerDS, rentalDS) {
     CachedNetworkImage image = CachedNetworkImage(
-      key: new ValueKey<String>(
-          DateTime.now().millisecondsSinceEpoch.toString()),
+      //key: new ValueKey<String>(DateTime.now().millisecondsSinceEpoch.toString()),
       imageUrl: ds['images'][0],
       placeholder: (context, url) => new CircularProgressIndicator(),
     );
@@ -443,7 +442,6 @@ class HomePageState extends State<HomePage> {
 
     Widget searchField() {
       return Container(
-        padding: EdgeInsets.symmetric(horizontal: 10.0),
         child: Container(
           padding: EdgeInsets.only(left: 10),
           color: Colors.white,
@@ -455,6 +453,11 @@ class HomePageState extends State<HomePage> {
               ),
               Expanded(
                 child: TextField(
+                  onSubmitted: (value) {
+                    if (value.length > 0) {
+                      navToSearchResults(value);
+                    }
+                  },
                   keyboardType: TextInputType.text,
                   controller: searchController,
                   onTap: () {},
@@ -500,7 +503,8 @@ class HomePageState extends State<HomePage> {
                 gaplessPlayback: true,
               ))),
           Container(height: h / 3.2, color: Colors.black12),
-          Align(
+          Container(
+            padding: EdgeInsets.only(left: 5, right: 5),
             alignment: Alignment.bottomCenter,
             child: Column(
               children: <Widget>[
@@ -516,19 +520,26 @@ class HomePageState extends State<HomePage> {
                           child: ListView.builder(
                             itemCount: searchList.length,
                             itemBuilder: (context, index) {
-                              return searchList[index]['name']
-                                      .toLowerCase()
-                                      .contains(
-                                          searchController.text.toLowerCase())
+                              String name = searchList[index]['name'];
+                              String description =
+                                  searchList[index]['description'];
+
+                              return name
+                                          .toLowerCase()
+                                          .contains(searchController.text
+                                              .toLowerCase()) ||
+                                      description
+                                          .toLowerCase()
+                                          .contains(searchController.text
+                                              .toLowerCase())
                                   ? ListTile(
                                       leading: Icon(Icons.build),
                                       title: Text(
-                                        '${searchList[index]['name']}',
+                                        '$name',
                                         style: TextStyle(
                                             fontWeight: FontWeight.bold),
                                       ),
-                                      subtitle: Text(
-                                          '${searchList[index]['description']}'),
+                                      subtitle: Text('$description'),
                                       onTap: () =>
                                           navigateToDetail(searchList[index]),
                                     )
@@ -673,17 +684,25 @@ class HomePageState extends State<HomePage> {
 
             default:
               if (snapshot.hasData) {
-                List<DocumentSnapshot> items = snapshot.data.documents.toList();
-                return GridView.count(
-                    padding: const EdgeInsets.all(20.0),
-                    shrinkWrap: true,
-                    mainAxisSpacing: 15,
-                    crossAxisCount: tilerows,
-                    childAspectRatio: (2 / 3),
-                    crossAxisSpacing: MediaQuery.of(context).size.width / 20,
-                    children: items
-                        .map((DocumentSnapshot ds) => itemCard(ds, context))
-                        .toList());
+                List snapshots = snapshot.data.documents;
+                return ListView.builder(
+                  itemCount: snapshots.length,
+                  itemBuilder: (context, index) {
+                    DocumentSnapshot ds = snapshots[index];
+
+                    return ListTile(
+                      leading: Icon(Icons.build),
+                      title: Text(
+                        '${ds['name']}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      subtitle: Text('${ds['description']}'),
+                      onTap: () => navigateToDetail(ds),
+                    );
+                  },
+                );
               } else {
                 return Container();
               }
@@ -714,9 +733,7 @@ class HomePageState extends State<HomePage> {
 
             default:
               if (snapshot.hasData) {
-                var updated = snapshot.data.documents
-                    .where((d) => d['status'] == 0)
-                    .toList();
+                var updated = snapshot.data.documents .where((d) => d['status'] == 0) .toList();
                 return ListView.builder(
                   shrinkWrap: true,
                   physics: NeverScrollableScrollPhysics(),
@@ -985,10 +1002,7 @@ class HomePageState extends State<HomePage> {
                                             snapshot.data;
                                         CachedNetworkImage image =
                                             CachedNetworkImage(
-                                          key: new ValueKey<String>(
-                                              DateTime.now()
-                                                  .millisecondsSinceEpoch
-                                                  .toString()),
+                                          //key: new ValueKey<String>(DateTime.now().millisecondsSinceEpoch.toString()),
                                           imageUrl: ds['images'][0],
                                           placeholder: (context, url) =>
                                               new CircularProgressIndicator(),
@@ -1169,8 +1183,7 @@ class HomePageState extends State<HomePage> {
                       height: 60.0,
                       child: ClipOval(
                         child: CachedNetworkImage(
-                          key: new ValueKey<String>(
-                              DateTime.now().millisecondsSinceEpoch.toString()),
+                          //key: new ValueKey<String>(DateTime.now().millisecondsSinceEpoch.toString()),
                           imageUrl: ds['avatar'],
                           placeholder: (context, url) => new Container(),
                         ),
@@ -1226,8 +1239,7 @@ class HomePageState extends State<HomePage> {
                   height: 60.0,
                   child: ClipOval(
                     child: CachedNetworkImage(
-                      key: new ValueKey<String>(
-                          DateTime.now().millisecondsSinceEpoch.toString()),
+                      //key: new ValueKey<String>(DateTime.now().millisecondsSinceEpoch.toString()),
                       imageUrl: ds['avatar'],
                       placeholder: (context, url) => new Container(),
                     ),
@@ -1281,8 +1293,7 @@ class HomePageState extends State<HomePage> {
           shrinkWrap: true,
           children: <Widget>[
             reusableCategory("ACCOUNT SETTINGS"),
-            reusableFlatButton(
-                "Personal information", Icons.person_outline, null),
+            reusableFlatButton( "Personal information", Icons.person_outline, null),
             reusableFlatButton("Payments and payouts", Icons.payment, null),
             reusableFlatButton("Notifications", Icons.notifications, null),
             reusableCategory("SUPPORT"),
@@ -1353,12 +1364,7 @@ class HomePageState extends State<HomePage> {
 
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
-        stream: Firestore.instance
-            .collection('rentals')
-            .where('renter',
-                isEqualTo:
-                    Firestore.instance.collection('users').document(myUserID))
-            .snapshots(),
+        stream: Firestore.instance .collection('rentals') .where('renter', isEqualTo: Firestore.instance.collection('users').document(myUserID)) .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
             return new Text('${snapshot.error}');
@@ -1368,7 +1374,7 @@ class HomePageState extends State<HomePage> {
 
             default:
               if (snapshot.hasData) {
-                List<DocumentSnapshot> items = snapshot.data.documents.toList();
+                List<DocumentSnapshot> items = snapshot.data.documents.where((d)=>requesting ^ (d['status']==0 || d['status']==1)).toList();
                 return GridView.count(
                     padding: EdgeInsets.all(20.0),
                     mainAxisSpacing: 15,
@@ -1395,9 +1401,6 @@ class HomePageState extends State<HomePage> {
                                   DocumentSnapshot itemDS = snapshot.data;
                                   DocumentReference ownerDR = rentalDS['owner'];
 
-                                  if (requesting ^
-                                      (rentalDS['status'] == 0 ||
-                                          rentalDS['status'] == 1)) {
                                     return StreamBuilder<DocumentSnapshot>(
                                       stream: ownerDR.snapshots(),
                                       builder: (BuildContext context,
@@ -1414,22 +1417,15 @@ class HomePageState extends State<HomePage> {
                                               DocumentSnapshot ownerDS =
                                                   snapshot.data;
 
-                                              String created = 'Created: ' +
-                                                  timeago.format(DateTime
-                                                      .fromMillisecondsSinceEpoch(
-                                                          rentalDS['created']));
+                                              String created = 'Created: ' + timeago.format(DateTime .fromMillisecondsSinceEpoch( rentalDS['created']));
 
-                                              return cardItemRentals(
-                                                  itemDS, ownerDS, rentalDS);
+                                              return cardItemRentals( itemDS, ownerDS, rentalDS);
                                             } else {
                                               return Container();
                                             }
                                         }
                                       },
                                     );
-                                  } else {
-                                    return Container();
-                                  }
                                 } else {
                                   return Container();
                                 }
@@ -1544,11 +1540,7 @@ class HomePageState extends State<HomePage> {
                                                 width: 50,
                                                 child: ClipOval(
                                                   child: CachedNetworkImage(
-                                                    key: new ValueKey<
-                                                        String>(DateTime
-                                                            .now()
-                                                        .millisecondsSinceEpoch
-                                                        .toString()),
+                                                    //key: new ValueKey<String>(DateTime.now().millisecondsSinceEpoch.toString()),
                                                     imageUrl: imageURL,
                                                     placeholder:
                                                         (context, url) =>
@@ -1655,21 +1647,24 @@ class HomePageState extends State<HomePage> {
         context,
         MaterialPageRoute(
           builder: (BuildContext context) => AllItems(
-            allItemsList: searchList,
+                allItemsList: searchList,
               ),
-              fullscreenDialog: true,
-        )).then((value){
-          searchList =  value;
-});
-    /*
-    Navigator.pushNamed(
-      context,
-      AllItems.routeName,
-      arguments: AllItemsArgs(
-        searchList,
-      ),
-    );
-    */
+        )).then((value) {
+      searchList = value;
+    });
+  }
+
+  void navToSearchResults(String searchQuery) async {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (BuildContext context) => SearchResults(
+                searchList: searchList,
+                searchQuery: searchQuery,
+              ),
+        )).then((value) {
+      searchList = value;
+    });
   }
 
   void navToProfileEdit() async {
