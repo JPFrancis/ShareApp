@@ -23,9 +23,9 @@ import 'package:timeago/timeago.dart' as timeago;
 class HomePage extends StatefulWidget {
   static const routeName = '/homePage';
 
-  BaseAuth auth;
-  FirebaseUser firebaseUser;
-  VoidCallback onSignOut;
+  final BaseAuth auth;
+  final FirebaseUser firebaseUser;
+  final VoidCallback onSignOut;
 
   HomePage({this.auth, this.firebaseUser, this.onSignOut});
 
@@ -46,7 +46,7 @@ class HomePageState extends State<HomePage> {
   List bottomNavBarTiles;
   List bottomTabPages;
   int currentTabIndex;
-  bool isLoading;
+  bool isLoading = false;
 
   EdgeInsets edgeInset;
   double padding;
@@ -67,9 +67,55 @@ class HomePageState extends State<HomePage> {
       BottomNavigationBarItem(icon: Icon(Icons.search), title: Text('Search')),
       BottomNavigationBarItem(
           icon: Icon(Icons.shopping_cart), title: Text('Rentals')),
+      BottomNavigationBarItem(icon: Icon(Icons.style), title: Text('My Listings')),
+    /*
       BottomNavigationBarItem(
-          icon: Icon(Icons.style), title: Text('My Listings')),
+        title: Text('My Listings'),
+        icon: Stack(children: <Widget>[
+          Icon(Icons.style),
+          Positioned(
+            top: 0.0,
+            right: 0.0,
+            child: Icon(Icons.brightness_1, size: 8.0, color: Colors.redAccent),
+          )
+        ]),
+      ),
+      */
       BottomNavigationBarItem(icon: Icon(Icons.forum), title: Text('Messages')),
+      /*
+      BottomNavigationBarItem(
+        icon: Stack(
+          children: <Widget>[
+            Icon(Icons.forum),
+            Positioned(
+              top: 0,
+              right: 0,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                constraints: BoxConstraints(
+                  minWidth: 13,
+                  minHeight: 13,
+                ),
+                child: Center(
+                  child: Text(
+                    '3',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            )
+          ],
+        ),
+        title: Text('Messages'),
+      ),
+      */
       BottomNavigationBarItem(
           icon: Icon(Icons.account_circle), title: Text('Profile')),
     ];
@@ -81,13 +127,26 @@ class HomePageState extends State<HomePage> {
     myUserID = widget.firebaseUser.uid;
 
     setPrefs();
-    handleInitUser();
+    updateLastActive();
+    //handleInitUser();
     getAllItems();
   }
 
   void setPrefs() async {
     prefs = await SharedPreferences.getInstance();
     await prefs.setString('userID', myUserID);
+  }
+
+  void updateLastActive() async {
+    Firestore.instance
+        .collection('users')
+        .document(myUserID)
+        .get()
+        .then((DocumentSnapshot ds) {
+      Firestore.instance.collection('users').document(myUserID).updateData({
+        'lastActive': DateTime.now().millisecondsSinceEpoch,
+      });
+    });
   }
 
   void handleInitUser() async {
@@ -146,15 +205,7 @@ class HomePageState extends State<HomePage> {
       profileTabPage(),
     ];
 
-    Firestore.instance
-        .collection('users')
-        .document(myUserID)
-        .get()
-        .then((DocumentSnapshot ds) {
-      Firestore.instance.collection('users').document(myUserID).updateData({
-        'lastActive': DateTime.now().millisecondsSinceEpoch,
-      });
-    });
+    //updateLastActive();
 
     return Scaffold(
       body: isLoading
@@ -511,9 +562,8 @@ class HomePageState extends State<HomePage> {
                   height: 30,
                 ),
                 searchField(),
-                searchController.text.isEmpty
-                    ? Container()
-                    : Expanded(
+                searchController.text.isNotEmpty && searchList != null
+                    ? Expanded(
                         child: Container(
                           color: Colors.white,
                           child: ListView.builder(
@@ -523,14 +573,11 @@ class HomePageState extends State<HomePage> {
                               String description =
                                   searchList[index]['description'];
 
-                              return name
-                                          .toLowerCase()
-                                          .contains(searchController.text
+                              return name.toLowerCase().contains(
+                                          searchController.text
                                               .toLowerCase()) ||
-                                      description
-                                          .toLowerCase()
-                                          .contains(searchController.text
-                                              .toLowerCase())
+                                      description.toLowerCase().contains(
+                                          searchController.text.toLowerCase())
                                   ? ListTile(
                                       leading: Icon(Icons.build),
                                       title: Text(
@@ -546,7 +593,8 @@ class HomePageState extends State<HomePage> {
                             },
                           ),
                         ),
-                      ),
+                      )
+                    : Container(),
               ],
             ),
           ),
@@ -608,8 +656,9 @@ class HomePageState extends State<HomePage> {
               _categoryTile("Equipment", 'assets/lawnmower.jpg'),
               _categoryTile("Miscellaneous", 'assets/lawnchair.jpg'),
               InkWell(
-                  onTap: navToAllItems,
-                  child: _categoryTile("More", 'assets/misc.jpg')),
+                onTap: navToAllItems,
+                child: _categoryTile("More", 'assets/misc.jpg'),
+              ),
             ],
           ),
         ],

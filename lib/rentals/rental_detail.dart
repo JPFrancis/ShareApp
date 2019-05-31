@@ -268,8 +268,7 @@ class RentalDetailState extends State<RentalDetail> {
           child: Container(
             height: 50,
             child: CachedNetworkImage(
-              key: new ValueKey<String>(
-                  DateTime.now().millisecondsSinceEpoch.toString()),
+              //key: new ValueKey<String>(DateTime.now().millisecondsSinceEpoch.toString()),
               imageUrl: ownerDS['avatar'],
               placeholder: (context, url) => new CircularProgressIndicator(),
             ),

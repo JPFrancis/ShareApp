@@ -31,37 +31,34 @@ class AllItemsState extends State<AllItems> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () {
-        goBack();
-      },
-      child: Scaffold(
-        body: allItems != null && allItems.length > 0
-            ? allItemsPage()
-            : Container(),
-      ),
+    return Scaffold(
+      body: allItems != null && allItems.isNotEmpty
+          ? allItemsPage()
+          : Container(),
     );
   }
 
   Widget allItemsPage() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        SizedBox(
-          height: 25.0,
-        ),
-        Row(
-          children: <Widget>[
-            FlatButton(
-              child: BackButton(),
-              onPressed: () => Navigator.pop(context),
-            ),
-            Text("Items near you",
-                style: TextStyle(fontFamily: 'Quicksand', fontSize: 30.0)),
-          ],
-        ),
-        buildItemListTemp(),
-      ],
+    return WillPopScope(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          SizedBox(
+            height: 25.0,
+          ),
+          Row(
+            children: <Widget>[
+              FlatButton(
+                child: BackButton(),
+                onPressed: () => goBack(),
+              ),
+              Text("Items near you",
+                  style: TextStyle(fontFamily: 'Quicksand', fontSize: 30.0)),
+            ],
+          ),
+          buildItemListTemp(),
+        ],
+      ),
     );
   }
 

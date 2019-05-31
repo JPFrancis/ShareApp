@@ -32,34 +32,31 @@ class SearchResultsState extends State<SearchResults> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () {
-        goBack();
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text('Search Results Page'),
-        ),
-        body: searchList != null && searchList.length > 0
-            ? showBody()
-            : Container(),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Search Results Page'),
       ),
+      body: searchList != null && searchList.length > 0
+          ? showBody()
+          : Container(),
     );
   }
 
   Widget showBody() {
-    return Container(
-      padding: EdgeInsets.all(10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            'Search results for \"${widget.searchQuery}\"',
-            style: TextStyle(fontSize: 18),
-          ),
-          buildSearchResultsList(),
-          //buildItemListTEST(),
-        ],
+    return WillPopScope(
+      child: Container(
+        padding: EdgeInsets.all(10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              'Search results for \"${widget.searchQuery}\"',
+              style: TextStyle(fontSize: 18),
+            ),
+            buildSearchResultsList(),
+            //buildItemListTEST(),
+          ],
+        ),
       ),
     );
   }

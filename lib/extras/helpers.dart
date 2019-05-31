@@ -34,7 +34,7 @@ class CustomBoxShadow extends BoxShadow {
 
 Widget itemCard(DocumentSnapshot ds, context) {
   CachedNetworkImage image = CachedNetworkImage(
-    key: new ValueKey<String>(DateTime.now().millisecondsSinceEpoch.toString()),
+    //key: new ValueKey<String>(DateTime.now().millisecondsSinceEpoch.toString()),
     imageUrl: ds['images'][0],
     placeholder: (context, url) => Container(),
   );
@@ -231,4 +231,8 @@ void navigateToDetail(DocumentSnapshot itemDS, context) async {
       itemDS,
     ),
   );
+}
+
+void delayPage() async{
+  await Future.delayed(Duration(milliseconds: 500));
 }
