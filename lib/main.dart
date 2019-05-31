@@ -7,6 +7,7 @@ import 'package:shareapp/pages/all_items.dart';
 import 'package:shareapp/pages/home_page.dart';
 import 'package:shareapp/pages/item_detail.dart';
 import 'package:shareapp/pages/item_edit.dart';
+import 'package:shareapp/pages/search_results.dart';
 import 'package:shareapp/rentals/chat.dart';
 import 'package:shareapp/rentals/item_request.dart';
 import 'package:shareapp/rentals/new_pickup.dart';
@@ -136,6 +137,19 @@ class MyApp extends StatelessWidget {
                 },
               );
             }
+          case SearchResults.routeName:
+            {
+              final SearchResults args = settings.arguments;
+
+              return MaterialPageRoute(
+                builder: (context) {
+                  return SearchResults(
+                    searchList: args.searchList,
+                    searchQuery: args.searchQuery,
+                  );
+                },
+              );
+            }
         }
       },
     );
@@ -153,57 +167,49 @@ class HomePageArgs {
 class ItemDetailArgs {
   final DocumentSnapshot initItemDS;
 
-  ItemDetailArgs(
-    this.initItemDS,
-  );
+  ItemDetailArgs(this.initItemDS);
 }
 
 class ItemEditArgs {
   final Item item;
 
-  ItemEditArgs(
-    this.item,
-  );
+  ItemEditArgs(this.item);
 }
 
 class ItemRequestArgs {
   final String itemID;
 
-  ItemRequestArgs(
-    this.itemID,
-  );
+  ItemRequestArgs(this.itemID);
 }
 
 class RentalDetailArgs {
   final DocumentSnapshot initRentalDS;
 
-  RentalDetailArgs(
-    this.initRentalDS,
-  );
+  RentalDetailArgs(this.initRentalDS);
 }
 
 class ChatArgs {
   final DocumentSnapshot rentalDS;
 
-  ChatArgs(
-    this.rentalDS,
-  );
+  ChatArgs(this.rentalDS);
 }
 
 class NewPickupArgs {
   final String rentalID;
   final bool isRenter;
 
-  NewPickupArgs(
-    this.rentalID,
-    this.isRenter,
-  );
+  NewPickupArgs(this.rentalID, this.isRenter);
 }
 
 class AllItemsArgs {
   final List<DocumentSnapshot> allItemsList;
 
-  AllItemsArgs(
-    this.allItemsList,
-  );
+  AllItemsArgs(this.allItemsList);
+}
+
+class SearchResultsArgs {
+  final List<DocumentSnapshot> searchList;
+  final String searchQuery;
+
+  SearchResultsArgs(this.searchList, this.searchQuery);
 }
