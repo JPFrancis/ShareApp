@@ -112,22 +112,17 @@ class ItemDetailState extends State<ItemDetail> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () {
-        goToLastScreen();
-      },
-      child: Scaffold(
-        body: RefreshIndicator(
-          onRefresh: () => getSnapshots(true),
-          child: isLoading ? Container() : showBody(),
-        ),
-        //floatingActionButton: showFAB(),
-        bottomNavigationBar: isLoading
-            ? Container(
-                height: 0,
-              )
-            : bottomDetails(),
+    return Scaffold(
+      body: RefreshIndicator(
+        onRefresh: () => getSnapshots(true),
+        child: isLoading ? Container() : showBody(),
       ),
+      //floatingActionButton: showFAB(),
+      bottomNavigationBar: isLoading
+          ? Container(
+        height: 0,
+      )
+          : bottomDetails(),
     );
   }
 
@@ -208,20 +203,26 @@ class ItemDetailState extends State<ItemDetail> {
   }
 
   Widget showBody() {
-    return ListView(
-      children: <Widget>[
-        Stack(children: <Widget>[
-          showItemImages(),
-          backButton(context),
-        ]),
-        showItemType(),
-        showItemName(),
-        showItemCondition(),
-        showItemCreator(),
-        showItemDescription(),
-        divider(),
-        showItemLocation(),
-      ],
+    return WillPopScope(
+      child: ListView(
+        children: <Widget>[
+          Stack(children: <Widget>[
+            showItemImages(),
+            IconButton(
+              alignment: Alignment.topLeft,
+              icon: BackButton(),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ]),
+          showItemType(),
+          showItemName(),
+          showItemCondition(),
+          showItemCreator(),
+          showItemDescription(),
+          divider(),
+          showItemLocation(),
+        ],
+      ),
     );
   }
 
@@ -249,8 +250,7 @@ class ItemDetailState extends State<ItemDetail> {
             height: 50.0,
             child: ClipOval(
               child: CachedNetworkImage(
-                key: new ValueKey<String>(
-                    DateTime.now().millisecondsSinceEpoch.toString()),
+                //key: new ValueKey<String>(DateTime.now().millisecondsSinceEpoch.toString()),
                 imageUrl: creatorDS['avatar'],
                 placeholder: (context, url) => new CircularProgressIndicator(),
               ),
@@ -483,8 +483,7 @@ class ItemDetailState extends State<ItemDetail> {
           width: widthOfScreen,
           child: sizedContainer(
             new CachedNetworkImage(
-              key: new ValueKey<String>(
-                  DateTime.now().millisecondsSinceEpoch.toString()),
+              //key: new ValueKey<String>(DateTime.now().millisecondsSinceEpoch.toString()),
               imageUrl: imagesList[index],
               placeholder: (context, url) => new CircularProgressIndicator(),
             ),

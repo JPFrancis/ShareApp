@@ -23,9 +23,9 @@ import 'package:timeago/timeago.dart' as timeago;
 class HomePage extends StatefulWidget {
   static const routeName = '/homePage';
 
-  BaseAuth auth;
-  FirebaseUser firebaseUser;
-  VoidCallback onSignOut;
+  final BaseAuth auth;
+  final FirebaseUser firebaseUser;
+  final VoidCallback onSignOut;
 
   HomePage({this.auth, this.firebaseUser, this.onSignOut});
 
@@ -46,7 +46,7 @@ class HomePageState extends State<HomePage> {
   List bottomNavBarTiles;
   List bottomTabPages;
   int currentTabIndex;
-  bool isLoading;
+  bool isLoading = false;
 
   EdgeInsets edgeInset;
   double padding;
@@ -67,9 +67,55 @@ class HomePageState extends State<HomePage> {
       BottomNavigationBarItem(icon: Icon(Icons.search), title: Text('Search')),
       BottomNavigationBarItem(
           icon: Icon(Icons.shopping_cart), title: Text('Rentals')),
+      BottomNavigationBarItem(icon: Icon(Icons.style), title: Text('My Listings')),
+    /*
       BottomNavigationBarItem(
-          icon: Icon(Icons.style), title: Text('My Listings')),
+        title: Text('My Listings'),
+        icon: Stack(children: <Widget>[
+          Icon(Icons.style),
+          Positioned(
+            top: 0.0,
+            right: 0.0,
+            child: Icon(Icons.brightness_1, size: 8.0, color: Colors.redAccent),
+          )
+        ]),
+      ),
+      */
       BottomNavigationBarItem(icon: Icon(Icons.forum), title: Text('Messages')),
+      /*
+      BottomNavigationBarItem(
+        icon: Stack(
+          children: <Widget>[
+            Icon(Icons.forum),
+            Positioned(
+              top: 0,
+              right: 0,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                constraints: BoxConstraints(
+                  minWidth: 13,
+                  minHeight: 13,
+                ),
+                child: Center(
+                  child: Text(
+                    '3',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            )
+          ],
+        ),
+        title: Text('Messages'),
+      ),
+      */
       BottomNavigationBarItem(
           icon: Icon(Icons.account_circle), title: Text('Profile')),
     ];
@@ -81,13 +127,26 @@ class HomePageState extends State<HomePage> {
     myUserID = widget.firebaseUser.uid;
 
     setPrefs();
-    handleInitUser();
+    updateLastActive();
+    //handleInitUser();
     getAllItems();
   }
 
   void setPrefs() async {
     prefs = await SharedPreferences.getInstance();
     await prefs.setString('userID', myUserID);
+  }
+
+  void updateLastActive() async {
+    Firestore.instance
+        .collection('users')
+        .document(myUserID)
+        .get()
+        .then((DocumentSnapshot ds) {
+      Firestore.instance.collection('users').document(myUserID).updateData({
+        'lastActive': DateTime.now().millisecondsSinceEpoch,
+      });
+    });
   }
 
   void handleInitUser() async {
@@ -146,15 +205,7 @@ class HomePageState extends State<HomePage> {
       profileTabPage(),
     ];
 
-    Firestore.instance
-        .collection('users')
-        .document(myUserID)
-        .get()
-        .then((DocumentSnapshot ds) {
-      Firestore.instance.collection('users').document(myUserID).updateData({
-        'lastActive': DateTime.now().millisecondsSinceEpoch,
-      });
-    });
+    //updateLastActive();
 
     return Scaffold(
       body: isLoading
@@ -512,9 +563,8 @@ class HomePageState extends State<HomePage> {
                   height: 30,
                 ),
                 searchField(),
-                searchController.text.isEmpty
-                    ? Container()
-                    : Expanded(
+                searchController.text.isNotEmpty && searchList != null
+                    ? Expanded(
                         child: Container(
                           color: Colors.white,
                           child: ListView.builder(
@@ -524,14 +574,11 @@ class HomePageState extends State<HomePage> {
                               String description =
                                   searchList[index]['description'];
 
-                              return name
-                                          .toLowerCase()
-                                          .contains(searchController.text
+                              return name.toLowerCase().contains(
+                                          searchController.text
                                               .toLowerCase()) ||
-                                      description
-                                          .toLowerCase()
-                                          .contains(searchController.text
-                                              .toLowerCase())
+                                      description.toLowerCase().contains(
+                                          searchController.text.toLowerCase())
                                   ? ListTile(
                                       leading: Icon(Icons.build),
                                       title: Text(
@@ -547,7 +594,8 @@ class HomePageState extends State<HomePage> {
                             },
                           ),
                         ),
-                      ),
+                      )
+                    : Container(),
               ],
             ),
           ),
@@ -609,8 +657,9 @@ class HomePageState extends State<HomePage> {
               _categoryTile("Equipment", 'assets/lawnmower.jpg'),
               _categoryTile("Miscellaneous", 'assets/lawnchair.jpg'),
               InkWell(
-                  onTap: navToAllItems,
-                  child: _categoryTile("More", 'assets/misc.jpg')),
+                onTap: navToAllItems,
+                child: _categoryTile("More", 'assets/misc.jpg'),
+              ),
             ],
           ),
         ],
@@ -647,16 +696,19 @@ class HomePageState extends State<HomePage> {
         ),
         body: TabBarView(
           children: [
-            Column(
-              children: <Widget>[
-                buildRentalsList(true),
-              ],
-            ),
-            Column(
-              children: <Widget>[
-                buildRentalsList(false),
-              ],
-            ),
+            Column(children: <Widget>[
+              reusableCategoryWithAll("REQUESTING", () => debugPrint),
+              buildRequests("renter"),
+              reusableCategoryWithAll("UPCOMING", () => debugPrint),
+              buildTransactions("upcoming", "renter"),
+              reusableCategoryWithAll("CURRENT", () => debugPrint),
+              buildTransactions("current", "renter"),
+              reusableCategoryWithAll("PAST", () => debugPrint),
+              buildTransactions("past", "renter"),
+            ],),
+            Column(children: <Widget>[
+              buildRentalsList(false),
+            ],),
           ],
         ),
       ),
@@ -712,226 +764,112 @@ class HomePageState extends State<HomePage> {
     );
   }
 
-  Widget buildRequestsTransactionsList() {
-    CollectionReference collectionReference =
-        Firestore.instance.collection('rentals');
-    Stream stream = collectionReference
-        .where('owner',
-            isEqualTo:
-                Firestore.instance.collection('users').document(myUserID))
-        .snapshots();
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10),
-      child: StreamBuilder<QuerySnapshot>(
-        stream: stream,
-        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.hasError) {
-            return new Text('${snapshot.error}');
-          }
-          switch (snapshot.connectionState) {
-            case ConnectionState.waiting:
+  Widget buildRequests(person) {
+  Stream stream = Firestore.instance.collection('rentals').where(person, isEqualTo: Firestore.instance.collection('users').document(myUserID)) .snapshots();
+  return Container(
+    padding: EdgeInsets.symmetric(horizontal: 10),
+    child: StreamBuilder<QuerySnapshot>(
+      stream: stream,
+      builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+        if (snapshot.hasError) { return new Text('${snapshot.error}'); }
+        switch (snapshot.connectionState) {
+          case ConnectionState.waiting:
 
-            default:
-              if (snapshot.hasData) {
-                var updated = snapshot.data.documents .where((d) => d['status'] == 0) .toList();
-                return ListView.builder(
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
-                  itemCount: updated.length,
-                  itemBuilder: (context, index) {
-                    DocumentSnapshot rentalDS = updated[index];
-                    DocumentReference itemDR = rentalDS['item'];
+          default:
+            if (snapshot.hasData) {
+              var updated = snapshot.data.documents .where((d) => d['status'] == 1 || d['status'] == 0) .toList();
+              return ListView.builder(
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
+                itemCount: updated.length,
+                itemBuilder: (context, index) {
+                  DocumentSnapshot rentalDS = updated[index];
+                  DocumentReference itemDR = rentalDS['item'];
 
-                    return StreamBuilder<DocumentSnapshot>(
-                      stream: itemDR.snapshots(),
-                      builder: (BuildContext context,
-                          AsyncSnapshot<DocumentSnapshot> snapshot) {
-                        if (snapshot.hasError) {
-                          return new Text('${snapshot.error}');
-                        }
-                        switch (snapshot.connectionState) {
-                          case ConnectionState.waiting:
+                  return StreamBuilder<DocumentSnapshot>(
+                    stream: itemDR.snapshots(),
+                    builder: (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+                      if (snapshot.hasError) { return new Text('${snapshot.error}'); }
+                      switch (snapshot.connectionState) {
+                        case ConnectionState.waiting:
 
-                          default:
-                            if (snapshot.hasData) {
-                              DocumentSnapshot itemDS = snapshot.data;
-                              int durationDays = rentalDS['duration'];
-                              String duration =
-                                  '${durationDays > 1 ? '$durationDays days' : '$durationDays day'}';
+                        default:
+                          if (snapshot.hasData) {
+                            DocumentSnapshot itemDS = snapshot.data;
+                            int durationDays = rentalDS['duration'];
+                            String duration = '${durationDays > 1 ? '$durationDays days' : '$durationDays day'}';
 
-                              return StreamBuilder<DocumentSnapshot>(
-                                stream: rentalDS['renter'].snapshots(),
-                                builder: (BuildContext context,
-                                    AsyncSnapshot<DocumentSnapshot> snapshot) {
-                                  if (snapshot.hasError) {
-                                    return new Text('${snapshot.error}');
-                                  }
-                                  switch (snapshot.connectionState) {
-                                    case ConnectionState.waiting:
+                            return StreamBuilder<DocumentSnapshot>(
+                              stream: person=="renter" ? rentalDS["owner"].snapshots() : rentalDS["renter"].snapshots(),
+                              builder: (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+                                if (snapshot.hasError) { return new Text('${snapshot.error}'); }
+                                switch (snapshot.connectionState) {
+                                  case ConnectionState.waiting:
 
-                                    default:
-                                      if (snapshot.hasData) {
-                                        DocumentSnapshot renterDS =
-                                            snapshot.data;
-                                        return Column(
-                                          children: <Widget>[
-                                            Container(
-                                              decoration: new BoxDecoration(
-                                                image: DecorationImage(
-                                                  image: NetworkImage(
-                                                      itemDS['images'][0]),
-                                                  fit: BoxFit.cover,
-                                                  colorFilter:
-                                                      new ColorFilter.mode(
-                                                          Colors.black
-                                                              .withOpacity(
-                                                                  0.45),
-                                                          BlendMode.srcATop),
-                                                ),
-                                                boxShadow: <BoxShadow>[
-                                                  CustomBoxShadow(
-                                                      color: Colors.black38,
-                                                      blurRadius: 3.0,
-                                                      blurStyle:
-                                                          BlurStyle.outer),
+                                  default:
+                                    if (snapshot.hasData) {
+                                      DocumentSnapshot ownerDS = snapshot.data;
+                                      return Column(children: <Widget>[
+                                          Container(
+                                            decoration: new BoxDecoration(
+                                              image: DecorationImage(
+                                                image: NetworkImage(itemDS['images'][0]),
+                                                fit: BoxFit.cover,
+                                                colorFilter: new ColorFilter.mode( Colors.black .withOpacity( 0.45), BlendMode.srcATop),
+                                              ),
+                                              boxShadow: <BoxShadow>[
+                                                CustomBoxShadow(
+                                                    color: Colors.black38,
+                                                    blurRadius: 3.0,
+                                                    blurStyle: BlurStyle.outer),
+                                              ],),
+                                            child: InkWell(
+                                              onTap: () { Navigator.pushNamed(context, RentalDetail.routeName, arguments: RentalDetailArgs(rentalDS,),); },
+                                              child: Row(mainAxisAlignment: MainAxisAlignment .spaceAround, children: <Widget>[
+                                                  Column(children: <Widget>[
+                                                    SizedBox( height: 6.0,),
+                                                    Container( height: 30, width: 30,
+                                                        decoration: BoxDecoration(
+                                                            shape: BoxShape .circle,
+                                                            color: Colors .white,
+                                                            image: DecorationImage( image: NetworkImage( ownerDS['avatar']), fit: BoxFit .fill))),
+                                                    Text(ownerDS['name'], style: TextStyle( color: Colors.white, fontFamily: 'Quicksand', fontWeight: FontWeight .bold),),
+                                                  ],),
+                                                  Column(children: <Widget>[
+                                                    Row(children: <Widget>[
+                                                      Text("Request Sent: ", style: TextStyle( color: Colors .white, fontFamily: 'Quicksand',),),
+                                                      Text(timeago.format((DateTime.fromMillisecondsSinceEpoch( rentalDS[ 'created']))), style: TextStyle( color: Colors .white, fontFamily: 'Quicksand', fontWeight: FontWeight .bold),)
+                                                    ],),
+                                                    Row(children: <Widget>[
+                                                      Text( "Requested Duration: ", style: TextStyle( color: Colors .white, fontFamily: 'Quicksand'),),
+                                                      Text(duration, style: TextStyle( color: Colors .white, fontFamily: 'Quicksand', fontWeight: FontWeight .bold,))
+                                                    ],)
+                                                  ],),
                                                 ],
                                               ),
-                                              child: InkWell(
-                                                onTap: () {
-                                                  Navigator.pushNamed(
-                                                    context,
-                                                    RentalDetail.routeName,
-                                                    arguments: RentalDetailArgs(
-                                                      rentalDS,
-                                                    ),
-                                                  );
-                                                },
-                                                child: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceAround,
-                                                  children: <Widget>[
-                                                    Column(
-                                                      children: <Widget>[
-                                                        SizedBox(
-                                                          height: 6.0,
-                                                        ),
-                                                        Container(
-                                                            height: 30,
-                                                            width: 30,
-                                                            decoration: BoxDecoration(
-                                                                shape: BoxShape
-                                                                    .circle,
-                                                                color: Colors
-                                                                    .white,
-                                                                image: DecorationImage(
-                                                                    image: NetworkImage(
-                                                                        renterDS[
-                                                                            'avatar']),
-                                                                    fit: BoxFit
-                                                                        .fill))),
-                                                        Text(
-                                                          renterDS['name'],
-                                                          style: TextStyle(
-                                                              color:
-                                                                  Colors.white,
-                                                              fontFamily:
-                                                                  'Quicksand',
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    Column(
-                                                      children: <Widget>[
-                                                        Row(
-                                                          children: <Widget>[
-                                                            Text(
-                                                              "Request Sent: ",
-                                                              style: TextStyle(
-                                                                color: Colors
-                                                                    .white,
-                                                                fontFamily:
-                                                                    'Quicksand',
-                                                              ),
-                                                            ),
-                                                            Text(
-                                                              timeago.format((DateTime
-                                                                  .fromMillisecondsSinceEpoch(
-                                                                      rentalDS[
-                                                                          'created']))),
-                                                              style: TextStyle(
-                                                                  color: Colors
-                                                                      .white,
-                                                                  fontFamily:
-                                                                      'Quicksand',
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold),
-                                                            )
-                                                          ],
-                                                        ),
-                                                        Row(
-                                                          children: <Widget>[
-                                                            Text(
-                                                              "Requested Duration: ",
-                                                              style: TextStyle(
-                                                                  color: Colors
-                                                                      .white,
-                                                                  fontFamily:
-                                                                      'Quicksand'),
-                                                            ),
-                                                            Text(duration,
-                                                                style:
-                                                                    TextStyle(
-                                                                  color: Colors
-                                                                      .white,
-                                                                  fontFamily:
-                                                                      'Quicksand',
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold,
-                                                                ))
-                                                          ],
-                                                        )
-                                                      ],
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
                                             ),
-                                            SizedBox(
-                                              height: 5.0,
-                                            )
-                                          ],
-                                        );
-                                      } else {
-                                        return Container();
-                                      }
-                                  }
-                                },
-                              );
-                            } else {
-                              return Container(
-                                color: Colors.pink,
-                              );
-                            }
-                        }
-                      },
-                    );
-                  },
-                );
-              } else {
-                return Container();
-              }
-          }
-        },
-      ),
-    );
-  }
+                                          ),
+                                          SizedBox( height: 5.0,)
+                                        ],
+                                      );
+                                    } else { return Container(); }
+                                }
+                              },
+                            );
+                          } else { return Container( color: Colors.pink,); }
+                      }
+                    },
+                  );
+                },
+              );
+            } else { return Container(); }
+        }
+      },
+    ),
+  );
+}
 
-  Widget buildListingsTransactions(String rentalStatus) {
+  Widget buildTransactions(String rentalStatus, person) {
     List status;
     switch (rentalStatus) {
       case 'upcoming':
@@ -944,13 +882,8 @@ class HomePageState extends State<HomePage> {
         status = [5];
         break;
     }
-    CollectionReference collectionReference =
-        Firestore.instance.collection('rentals');
-    Stream stream = collectionReference
-        .where('owner',
-            isEqualTo:
-                Firestore.instance.collection('users').document(myUserID))
-        .snapshots();
+    CollectionReference collectionReference = Firestore.instance.collection('rentals');
+    Stream stream = collectionReference .where(person, isEqualTo: Firestore.instance.collection('users').document(myUserID)) .snapshots();
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
         stream: stream,
@@ -1103,13 +1036,13 @@ class HomePageState extends State<HomePage> {
             Column(
               children: <Widget>[
                 reusableCategoryWithAll("REQUESTS", () => debugPrint),
-                buildRequestsTransactionsList(),
+                buildRequests("owner"),
                 reusableCategoryWithAll("UPCOMING", () => debugPrint),
-                buildListingsTransactions('upcoming'),
+                buildTransactions('upcoming', "owner"),
                 reusableCategoryWithAll("CURRENT", () => debugPrint),
-                buildListingsTransactions('current'),
+                buildTransactions('current', "owner"),
                 reusableCategoryWithAll("PAST", () => debugPrint),
-                buildListingsTransactions('past'),
+                buildTransactions('past', "owner"),
               ],
             ),
             Column(

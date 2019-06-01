@@ -34,7 +34,6 @@ class CustomBoxShadow extends BoxShadow {
 
 Widget itemCard(DocumentSnapshot ds, context) {
   CachedNetworkImage image = CachedNetworkImage(
-    key: new ValueKey<String>(DateTime.now().millisecondsSinceEpoch.toString()),
     imageUrl: ds['images'][0],
     placeholder: (context, url) => Container(),
   );
@@ -53,10 +52,9 @@ Widget itemCard(DocumentSnapshot ds, context) {
         ],
       ),
       child: Column(children: <Widget>[
-          Container(height: 2 * h / 3, width: w, 
-            child: FittedBox(fit: BoxFit.cover, child: image)), 
+          //Container(height: 2 * h / 3, width: w, child: FittedBox(fit: BoxFit.cover, child: image)), 
           SizedBox( height: 10.0,),
-          Container(height: h/3.5, width: w, padding: EdgeInsets.symmetric(horizontal: 5.0),
+          Container(height: h/4, width: w, padding: EdgeInsets.symmetric(horizontal: 5.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
@@ -173,4 +171,8 @@ void navigateToDetail(DocumentSnapshot itemDS, context) async {
       itemDS,
     ),
   );
+}
+
+void delayPage() async{
+  await Future.delayed(Duration(milliseconds: 500));
 }

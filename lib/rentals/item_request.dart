@@ -230,8 +230,7 @@ class ItemRequestState extends State<ItemRequest> {
           child: Container(
             height: 50,
             child: CachedNetworkImage(
-              key: new ValueKey<String>(
-                  DateTime.now().millisecondsSinceEpoch.toString()),
+              //key: new ValueKey<String>(DateTime.now().millisecondsSinceEpoch.toString()),
               imageUrl: creatorDS['avatar'],
               placeholder: (context, url) => new CircularProgressIndicator(),
             ),
