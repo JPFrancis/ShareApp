@@ -56,43 +56,35 @@ class AllItemsState extends State<AllItems> {
                   style: TextStyle(fontFamily: 'Quicksand', fontSize: 30.0)),
             ],
           ),
-          buildItemListTemp(),
+          buildItemList(),
         ],
       ),
     );
   }
 
   Widget buildItemList() {
-    CollectionReference collectionReference =
-        Firestore.instance.collection('items');
     int tilerows = MediaQuery.of(context).size.width > 500 ? 3 : 2;
-    Stream stream = collectionReference.snapshots();
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
-        stream: stream,
+        stream: Firestore.instance.collection('items').snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.hasError) {
-            return new Text('${snapshot.error}');
-          }
+          if (snapshot.hasError) { return new Text('${snapshot.error}'); }
           switch (snapshot.connectionState) {
             case ConnectionState.waiting:
 
             default:
               if (snapshot.hasData) {
-                List<DocumentSnapshot> items = snapshot.data.documents.toList();
+                List<DocumentSnapshot> items = snapshot.data.documents;
                 return GridView.count(
-                    shrinkWrap: true,
-                    mainAxisSpacing: 15.0,
-                    crossAxisCount: tilerows,
-                    childAspectRatio: (2 / 3),
-                    padding: const EdgeInsets.all(20.0),
-                    crossAxisSpacing: MediaQuery.of(context).size.width / 20,
-                    children: items
-                        .map((DocumentSnapshot ds) => itemCard(ds, context))
-                        .toList());
-              } else {
-                return Container();
-              }
+                  shrinkWrap: true,
+                  mainAxisSpacing: 15.0,
+                  crossAxisCount: tilerows,
+                  childAspectRatio: (2 / 3),
+                  padding: const EdgeInsets.all(20.0),
+                  crossAxisSpacing: MediaQuery.of(context).size.width / 20,
+                  children: items.map((DocumentSnapshot ds) => itemCard(ds, context, 3.5)).toList()
+                );
+              } else { return Container(); }
           }
         },
       ),

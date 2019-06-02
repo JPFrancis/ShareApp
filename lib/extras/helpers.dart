@@ -30,9 +30,32 @@ class CustomBoxShadow extends BoxShadow {
   }
 }
 
+class StarRating extends StatelessWidget {
+  final int starCount;
+  final double rating;
+  final Color color;
+  final double sz;
+
+  StarRating({this.starCount = 5, this.rating = .0, this.color, this.sz});
+
+  Widget buildStar(BuildContext context, int index, h) {
+    Icon icon;
+    if (index >= rating) {
+      icon = new Icon(Icons.star_border, color: primaryColor, size: sz,);
+    } else if (index > rating - 1 && index < rating) {
+      icon = new Icon(Icons.star_half, color: primaryColor, size: sz,);
+    } else {
+      icon = new Icon(Icons.star, color: primaryColor, size: sz,);
+    }
+    return icon;
+  }
+  Widget build(BuildContext context) {
+    return new Row(children: new List.generate(starCount, (index) => buildStar(context, index, sz)));
+  }
+}
 // Reusable Widgets
 
-Widget itemCard(DocumentSnapshot ds, context) {
+Widget itemCard(DocumentSnapshot ds, context, rating) {
   CachedNetworkImage image = CachedNetworkImage(
     imageUrl: ds['images'][0],
     placeholder: (context, url) => Container(),
@@ -52,7 +75,7 @@ Widget itemCard(DocumentSnapshot ds, context) {
         ],
       ),
       child: Column(children: <Widget>[
-          //Container(height: 2 * h / 3, width: w, child: FittedBox(fit: BoxFit.cover, child: image)), 
+          Container(height: 2 * h / 3, width: w, child: FittedBox(fit: BoxFit.cover, child: image)), 
           SizedBox( height: 10.0,),
           Container(height: h/4, width: w, padding: EdgeInsets.symmetric(horizontal: 5.0),
             child: Column(
@@ -64,16 +87,8 @@ Widget itemCard(DocumentSnapshot ds, context) {
                 ],),
                 SizedBox( height: 2.0,),
                 Text("\$${ds['price']} per day", style: TextStyle(fontSize: h / 21, fontFamily: 'Quicksand')),
-                SizedBox( height: 2.0,),
-                Row( children: <Widget>[
-                  Icon( Icons.star_border, size: h / 19,),
-                  Icon( Icons.star_border, size: h / 19,),
-                  Icon( Icons.star_border, size: h / 19,),
-                  Icon( Icons.star_border, size: h / 19,),
-                  Icon( Icons.star_border, size: h / 19,),
-                  SizedBox( width: 5.0,),
-                  Text( "328", style: TextStyle( fontSize: h / 25, fontFamily: 'Quicksand', fontWeight: FontWeight.bold,),)
-                ],)
+                SizedBox(height: 2.0,),
+                StarRating(rating: rating, sz: h/15)
               ],
             ),
           ),

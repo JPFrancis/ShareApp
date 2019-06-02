@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:shareapp/extras/helpers.dart';
+import 'package:shareapp/extras/helpers.dart' as prefix0;
 import 'package:shareapp/main.dart';
 import 'package:shareapp/models/item.dart';
 import 'package:shareapp/models/user_edit.dart';
@@ -197,9 +198,7 @@ class HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     bottomTabPages = <Widget>[
       searchPage(),
-      //homeTabPage(),
       myRentalsPage(),
-      //myListingsTabPage(),
       myListingsPage(),
       messagesTabPage(),
       profileTabPage(),
@@ -716,48 +715,28 @@ class HomePageState extends State<HomePage> {
   }
 
   Widget buildListingsList() {
-    CollectionReference collectionReference =
-        Firestore.instance.collection('items');
     int tilerows = MediaQuery.of(context).size.width > 500 ? 3 : 2;
-    Stream stream = collectionReference
-        .where('creator',
-            isEqualTo:
-                Firestore.instance.collection('users').document(myUserID))
-        .snapshots();
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
-        stream: stream,
+        stream: Firestore.instance.collection('items').where('creator', isEqualTo: Firestore.instance.collection('users').document(myUserID)).snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.hasError) {
-            return new Text('${snapshot.error}');
-          }
+          if (snapshot.hasError) { return new Text('${snapshot.error}'); }
           switch (snapshot.connectionState) {
             case ConnectionState.waiting:
 
             default:
               if (snapshot.hasData) {
                 List snapshots = snapshot.data.documents;
-                return ListView.builder(
-                  itemCount: snapshots.length,
-                  itemBuilder: (context, index) {
-                    DocumentSnapshot ds = snapshots[index];
-
-                    return ListTile(
-                      leading: Icon(Icons.build),
-                      title: Text(
-                        '${ds['name']}',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      subtitle: Text('${ds['description']}'),
-                      onTap: () => navigateToDetail(ds),
-                    );
-                  },
+                return GridView.count(
+                  shrinkWrap: true,
+                  mainAxisSpacing: 15.0,
+                  crossAxisCount: tilerows,
+                  childAspectRatio: (2 / 3),
+                  padding: const EdgeInsets.all(15.0),
+                  crossAxisSpacing: MediaQuery.of(context).size.width / 25,
+                  children: snapshots.map((snapshot) => itemCard(snapshot, context, 3.5)).toList()
                 );
-              } else {
-                return Container();
-              }
+              } else { return Container(); }
           }
         },
       ),
@@ -931,30 +910,19 @@ class HomePageState extends State<HomePage> {
 
                                     default:
                                       if (snapshot.hasData) {
-                                        DocumentSnapshot renterDS =
-                                            snapshot.data;
-                                        CachedNetworkImage image =
-                                            CachedNetworkImage(
-                                          //key: new ValueKey<String>(DateTime.now().millisecondsSinceEpoch.toString()),
+                                        DocumentSnapshot renterDS = snapshot.data;
+                                        CachedNetworkImage image = CachedNetworkImage(
                                           imageUrl: ds['images'][0],
-                                          placeholder: (context, url) =>
-                                              new CircularProgressIndicator(),
+                                          placeholder: (context, url) => new CircularProgressIndicator(),
                                           fit: BoxFit.cover,
                                         );
                                         return Container(
                                           padding: EdgeInsets.only(left: 10.0),
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width /
-                                              2,
+                                          width: MediaQuery.of(context) .size .width / 2,
                                           child: Stack(
                                             children: <Widget>[
                                               SizedBox.expand(child: image),
-                                              SizedBox.expand(
-                                                  child: Container(
-                                                color: Colors.black
-                                                    .withOpacity(0.4),
-                                              )),
+                                              SizedBox.expand( child: Container( color: Colors.black .withOpacity(0.4),)),
                                               Center(
                                                 child: Column(
                                                   children: <Widget>[
