@@ -283,9 +283,9 @@ class ProfileEditState extends State<ProfileEdit> {
       child: FittedBox(
         fit: BoxFit.cover,
         child: CachedNetworkImage(
-          //key: new ValueKey<String>(DateTime.now().millisecondsSinceEpoch.toString()),
+          key: ValueKey<String>(userEditCopy.photoUrl),
           imageUrl: userEditCopy.photoUrl,
-          placeholder: (context, url) => new CircularProgressIndicator(),
+          placeholder: (context, url) => CircularProgressIndicator(),
         ),
       ),
     );

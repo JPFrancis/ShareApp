@@ -20,21 +20,30 @@ class AllItems extends StatefulWidget {
 
 class AllItemsState extends State<AllItems> {
   List<DocumentSnapshot> allItems;
+  bool isLoading;
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
 
-    allItems = widget.allItemsList;
+    delayPage();
+  }
+
+  void delayPage() async {
+    isLoading = true;
+    Future.delayed(Duration(milliseconds: 750)).then((_) {
+      setState(() {
+        allItems = widget.allItemsList;
+        isLoading = false;
+      });
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: allItems != null && allItems.isNotEmpty
-          ? allItemsPage()
-          : Container(),
+      body: isLoading ? Container() : allItemsPage(),
     );
   }
 
@@ -56,7 +65,14 @@ class AllItemsState extends State<AllItems> {
                   style: TextStyle(fontFamily: 'Quicksand', fontSize: 30.0)),
             ],
           ),
-          buildItemListTemp(),
+          allItems != null && allItems.isNotEmpty
+              ? buildItemListTemp()
+              : Center(
+                  child: RaisedButton(
+                    child: Text('Refresh'),
+                    onPressed: () => getAllItems(),
+                  ),
+                ),
         ],
       ),
     );
@@ -132,6 +148,6 @@ class AllItemsState extends State<AllItems> {
   }
 
   void goBack() {
-    Navigator.pop(context, allItems);
+    Navigator.pop(context);
   }
 }

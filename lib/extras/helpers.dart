@@ -34,7 +34,7 @@ class CustomBoxShadow extends BoxShadow {
 
 Widget itemCard(DocumentSnapshot ds, context) {
   CachedNetworkImage image = CachedNetworkImage(
-    //key: new ValueKey<String>(DateTime.now().millisecondsSinceEpoch.toString()),
+    key: ValueKey<String>(ds['images'][0]),
     imageUrl: ds['images'][0],
     placeholder: (context, url) => Container(),
   );
@@ -54,15 +54,14 @@ Widget itemCard(DocumentSnapshot ds, context) {
       ),
       child: Column(
         children: <Widget>[
-          Container(
-              height: 2 * h / 3,
-              width: w,
-              child: FittedBox(fit: BoxFit.cover, child: image)),
+          //Container(height: 2 * h / 3, width: w,child: FittedBox(fit: BoxFit.cover, child: image)),
           SizedBox(
             height: 10.0,
           ),
           Container(
-            padding: EdgeInsets.only(left: 5.0, right: 5.0),
+            height: h / 3.5,
+            width: w,
+            padding: EdgeInsets.symmetric(horizontal: 5.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
@@ -74,15 +73,13 @@ Widget itemCard(DocumentSnapshot ds, context) {
                             fontSize: h / 20,
                             fontFamily: 'Quicksand',
                             fontWeight: FontWeight.bold)),
-                    ds['type'] != null
-                        ? Text(
-                            '${ds['type']}'.toUpperCase(),
-                            style: TextStyle(
-                                fontSize: h / 25,
-                                fontFamily: 'Quicksand',
-                                fontWeight: FontWeight.bold),
-                          )
-                        : Text(''),
+                    Text(
+                      '${ds['type']}'.toUpperCase(),
+                      style: TextStyle(
+                          fontSize: h / 25,
+                          fontFamily: 'Quicksand',
+                          fontWeight: FontWeight.bold),
+                    )
                   ],
                 ),
                 SizedBox(
@@ -233,6 +230,6 @@ void navigateToDetail(DocumentSnapshot itemDS, context) async {
   );
 }
 
-void delayPage() async{
+void delayPage() async {
   await Future.delayed(Duration(milliseconds: 500));
 }

@@ -533,13 +533,6 @@ class ItemEditState extends State<ItemEdit> {
           .document(returnedID)
           .updateData({'id': returnedID});
 
-      Firestore.instance
-          .collection('users')
-          .document(widget.item.creator.documentID)
-          .updateData({
-        'items': FieldValue.arrayUnion([documentReference])
-      });
-
       if (imageAssets.length == 0) {
         Firestore.instance
             .collection('items')

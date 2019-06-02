@@ -70,6 +70,16 @@ class ChatScreenState extends State<ChatScreen> {
     imageUrl = '';
     getMyUserID();
     getSnapshots();
+    delayPage();
+  }
+
+  void delayPage() async {
+    isLoading = true;
+    Future.delayed(Duration(milliseconds: 750)).then((_) {
+      setState(() {
+        isLoading = false;
+      });
+    });
   }
 
   void getMyUserID() async {
@@ -78,7 +88,6 @@ class ChatScreenState extends State<ChatScreen> {
   }
 
   void getSnapshots() async {
-    isLoading = true;
     DocumentReference dr;
     DocumentSnapshot ds = widget.rentalDS;
 
@@ -117,7 +126,7 @@ class ChatScreenState extends State<ChatScreen> {
       }
 
       otherUserDS = myUserID == ownerDS.documentID ? renterDS : ownerDS;
-
+      /*
       if (prefs != null &&
           itemDS != null &&
           ownerDS != null &&
@@ -126,6 +135,7 @@ class ChatScreenState extends State<ChatScreen> {
           isLoading = false;
         });
       }
+      */
     }
   }
 
@@ -452,14 +462,7 @@ class ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return WillPopScope(
       child: isLoading
-          ? Container(
-              child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: <Widget>[
-                    Center(child: CircularProgressIndicator())
-                  ]),
-            )
+          ? Container()
           : Stack(
               children: <Widget>[
                 Column(

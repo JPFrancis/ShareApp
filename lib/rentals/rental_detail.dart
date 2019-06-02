@@ -37,7 +37,7 @@ class RentalDetailState extends State<RentalDetail> {
   String myUserId;
   String url;
   String rentalCC;
-  bool isLoading;
+  bool isLoading = true;
   bool isRenter;
   bool stripeInit;
 
@@ -69,6 +69,15 @@ class RentalDetailState extends State<RentalDetail> {
 
     getMyUserID();
     getSnapshots();
+    delayPage();
+  }
+
+  void delayPage() async {
+    Future.delayed(Duration(milliseconds: 750)).then((_) {
+      setState(() {
+        isLoading = false;
+      });
+    });
   }
 
   void getMyUserID() async {
@@ -77,7 +86,6 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   void getSnapshots() async {
-    isLoading = true;
     DocumentReference dr;
     DocumentSnapshot ds = rentalDS;
 
@@ -111,12 +119,9 @@ class RentalDetailState extends State<RentalDetail> {
             cardDS = ds;
 
             if (prefs != null && ownerDS != null && renterDS != null) {
-              setState(() {
-                isRenter = myUserId == renterDS.documentID ? true : false;
-                rentalCC = isRenter ? 'renterCC' : 'ownerCC';
-                userDS = isRenter ? renterDS : ownerDS;
-                isLoading = false;
-              });
+              isRenter = myUserId == renterDS.documentID ? true : false;
+              rentalCC = isRenter ? 'renterCC' : 'ownerCC';
+              userDS = isRenter ? renterDS : ownerDS;
             }
           }
         }
@@ -268,7 +273,7 @@ class RentalDetailState extends State<RentalDetail> {
           child: Container(
             height: 50,
             child: CachedNetworkImage(
-              //key: new ValueKey<String>(DateTime.now().millisecondsSinceEpoch.toString()),
+              key: ValueKey<String>(ownerDS['avatar']),
               imageUrl: ownerDS['avatar'],
               placeholder: (context, url) => new CircularProgressIndicator(),
             ),
