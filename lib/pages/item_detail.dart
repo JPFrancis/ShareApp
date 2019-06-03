@@ -5,7 +5,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/models/item.dart';
 import 'package:shareapp/pages/item_edit.dart';
@@ -55,6 +54,14 @@ class ItemDetailState extends State<ItemDetail> {
     getSnapshots(false);
   }
 
+  void delayPage() async {
+    Future.delayed(Duration(milliseconds: 750)).then((_) {
+      setState(() {
+        isLoading = false;
+      });
+    });
+  }
+
   void getMyUserID() async {
     prefs = await SharedPreferences.getInstance();
     myUserID = prefs.getString('userID') ?? '';
@@ -71,7 +78,6 @@ class ItemDetailState extends State<ItemDetail> {
   }
 
   Future<Null> getSnapshots(bool refreshItemDS) async {
-    isLoading = true;
     DocumentSnapshot ds = refreshItemDS
         ? await Firestore.instance
             .collection('items')
@@ -103,9 +109,7 @@ class ItemDetailState extends State<ItemDetail> {
       }
 
       if (prefs != null && itemDS != null && creatorDS != null) {
-        setState(() {
-          isLoading = false;
-        });
+        delayPage();
       }
     }
   }
@@ -120,8 +124,8 @@ class ItemDetailState extends State<ItemDetail> {
       //floatingActionButton: showFAB(),
       bottomNavigationBar: isLoading
           ? Container(
-        height: 0,
-      )
+              height: 0,
+            )
           : bottomDetails(),
     );
   }
@@ -250,7 +254,7 @@ class ItemDetailState extends State<ItemDetail> {
             height: 50.0,
             child: ClipOval(
               child: CachedNetworkImage(
-                //key: new ValueKey<String>(DateTime.now().millisecondsSinceEpoch.toString()),
+                key: ValueKey<String>(creatorDS['avatar']),
                 imageUrl: creatorDS['avatar'],
                 placeholder: (context, url) => new CircularProgressIndicator(),
               ),
@@ -483,7 +487,7 @@ class ItemDetailState extends State<ItemDetail> {
           width: widthOfScreen,
           child: sizedContainer(
             new CachedNetworkImage(
-              //key: new ValueKey<String>(DateTime.now().millisecondsSinceEpoch.toString()),
+              key: ValueKey<String>(imagesList[index]),
               imageUrl: imagesList[index],
               placeholder: (context, url) => new CircularProgressIndicator(),
             ),

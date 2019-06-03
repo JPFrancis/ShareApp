@@ -57,6 +57,7 @@ class StarRating extends StatelessWidget {
 
 Widget itemCard(DocumentSnapshot ds, context, rating) {
   CachedNetworkImage image = CachedNetworkImage(
+    key: ValueKey<String>(ds['images'][0]),
     imageUrl: ds['images'][0],
     placeholder: (context, url) => Container(),
   );
@@ -92,11 +93,16 @@ Widget itemCard(DocumentSnapshot ds, context, rating) {
               ],
             ),
           ),
-        ],),
+        ],
+      ),
     );
   }));
 
-  return InkWell( onTap: () { navigateToDetail(ds, context); }, child: card);
+  return InkWell(
+      onTap: () {
+        navigateToDetail(ds, context);
+      },
+      child: card);
 }
 
 Widget reusableCategory(text) {
@@ -188,6 +194,6 @@ void navigateToDetail(DocumentSnapshot itemDS, context) async {
   );
 }
 
-void delayPage() async{
+void delayPage() async {
   await Future.delayed(Duration(milliseconds: 500));
 }

@@ -40,6 +40,8 @@ class HomePageState extends State<HomePage> {
   final GlobalKey<RefreshIndicatorState> refreshIndicatorKey =
       new GlobalKey<RefreshIndicatorState>();
 
+  StreamSubscription<QuerySnapshot> subscription;
+
   SharedPreferences prefs;
   String myUserID;
   List<Item> itemList;
@@ -47,12 +49,12 @@ class HomePageState extends State<HomePage> {
   List bottomNavBarTiles;
   List bottomTabPages;
   int currentTabIndex;
-  bool isLoading = false;
-
-  EdgeInsets edgeInset;
-  double padding;
+  int badge;
+  bool isLoading = true;
 
   Color primaryColor = Color.fromRGBO(52, 117, 115, 1);
+  EdgeInsets edgeInset;
+  double padding;
 
   TextEditingController searchController = TextEditingController();
   List<DocumentSnapshot> searchList;
@@ -64,73 +66,48 @@ class HomePageState extends State<HomePage> {
 
     currentTabIndex = 0;
 
-    bottomNavBarTiles = <BottomNavigationBarItem>[
-      BottomNavigationBarItem(icon: Icon(Icons.search), title: Text('Search')),
-      BottomNavigationBarItem(
-          icon: Icon(Icons.shopping_cart), title: Text('Rentals')),
-      BottomNavigationBarItem(icon: Icon(Icons.style), title: Text('My Listings')),
-    /*
-      BottomNavigationBarItem(
-        title: Text('My Listings'),
-        icon: Stack(children: <Widget>[
-          Icon(Icons.style),
-          Positioned(
-            top: 0.0,
-            right: 0.0,
-            child: Icon(Icons.brightness_1, size: 8.0, color: Colors.redAccent),
-          )
-        ]),
-      ),
-      */
-      BottomNavigationBarItem(icon: Icon(Icons.forum), title: Text('Messages')),
-      /*
-      BottomNavigationBarItem(
-        icon: Stack(
-          children: <Widget>[
-            Icon(Icons.forum),
-            Positioned(
-              top: 0,
-              right: 0,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.red,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                constraints: BoxConstraints(
-                  minWidth: 13,
-                  minHeight: 13,
-                ),
-                child: Center(
-                  child: Text(
-                    '3',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ),
-            )
-          ],
-        ),
-        title: Text('Messages'),
-      ),
-      */
-      BottomNavigationBarItem(
-          icon: Icon(Icons.account_circle), title: Text('Profile')),
-    ];
-
     padding = 18;
     edgeInset = EdgeInsets.only(
         left: padding, right: padding, bottom: padding, top: 30);
 
     myUserID = widget.firebaseUser.uid;
 
+    bottomNavBarTiles = <BottomNavigationBarItem>[
+      bottomNavTile('Search', Icon(Icons.search), false),
+      bottomNavTile('Rentals', Icon(Icons.shopping_cart), false),
+      bottomNavTile('My Listings', Icon(Icons.style), true),
+      bottomNavTile('Messages', Icon(Icons.forum), false),
+      bottomNavTile('Profile', Icon(Icons.account_circle), false),
+    ];
+/*
+    subscription = Firestore.instance
+        .collection('rentals')
+        .where('owner',
+            isEqualTo:
+                Firestore.instance.collection('users').document(myUserID))
+        .where('status', isEqualTo: 0)
+        .snapshots()
+        .listen((data) {
+      badge = data.documents.toList().length;
+
+    }, onDone: () {
+      print("Task Done");
+    }, onError: (error) {
+      print("Some Error");
+    });
+*/
     setPrefs();
     updateLastActive();
-    //handleInitUser();
     getAllItems();
+    delayPage();
+  }
+
+  void delayPage() async {
+    Future.delayed(Duration(milliseconds: 750)).then((_) {
+      setState(() {
+        isLoading = false;
+      });
+    });
   }
 
   void setPrefs() async {
@@ -147,42 +124,6 @@ class HomePageState extends State<HomePage> {
       Firestore.instance.collection('users').document(myUserID).updateData({
         'lastActive': DateTime.now().millisecondsSinceEpoch,
       });
-    });
-  }
-
-  void handleInitUser() async {
-    isLoading = true;
-    // get user object from firestore
-    Firestore.instance
-        .collection('users')
-        .document(myUserID)
-        .get()
-        .then((DocumentSnapshot ds) {
-      // if user is not in database, create user
-      if (!ds.exists) {
-        Firestore.instance.collection('users').document(myUserID).setData({
-          'name': widget.firebaseUser.displayName ?? 'new user $myUserID',
-          'avatar': widget.firebaseUser.photoUrl ?? 'https://bit.ly/2vcmALY',
-          'email': widget.firebaseUser.email,
-          'lastActive': DateTime.now().millisecondsSinceEpoch,
-          'creationDate': widget.firebaseUser.metadata.creationTimestamp,
-          'cc': null,
-        });
-
-        Firestore.instance.collection('cards').document(myUserID).setData({
-          'custId': 'new',
-          'email': widget.firebaseUser.email,
-        });
-      }
-
-      // if user is already in db
-      else {
-        //Firestore.instance.collection('users').document(userID).updateData({});
-      }
-    });
-
-    setState(() {
-      isLoading = false;
     });
   }
 
@@ -267,12 +208,80 @@ class HomePageState extends State<HomePage> {
         : null;
   }
 
+  BottomNavigationBarItem bottomNavTile(
+      String label, Icon icon, bool showBadge) {
+    return BottomNavigationBarItem(
+      icon: Stack(
+        children: <Widget>[
+          icon,
+          showBadge
+              ? StreamBuilder<QuerySnapshot>(
+                  stream: Firestore.instance
+                      .collection('rentals')
+                      .where('owner',
+                          isEqualTo: Firestore.instance
+                              .collection('users')
+                              .document(myUserID))
+                      .where('status', isEqualTo: 0)
+                      .snapshots(),
+                  builder: (BuildContext context,
+                      AsyncSnapshot<QuerySnapshot> snapshot) {
+                    if (snapshot.hasError) {
+                      return new Text('${snapshot.error}');
+                    }
+                    switch (snapshot.connectionState) {
+                      case ConnectionState.waiting:
+
+                      default:
+                        if (snapshot.hasData) {
+                          var updated = snapshot.data.documents.toList().length;
+                          return Positioned(
+                            top: 0,
+                            right: 0,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.red[600],
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              constraints: BoxConstraints(
+                                minWidth: 13,
+                                minHeight: 13,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  '$updated',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                          );
+                        } else {
+                          return Container();
+                        }
+                    }
+                  },
+                )
+              : Container(
+                  width: 0,
+                  height: 0,
+                ),
+        ],
+      ),
+      title: Text(label),
+    );
+  }
+
   Widget cardItemRentals(ds, ownerDS, rentalDS) {
     CachedNetworkImage image = CachedNetworkImage(
-      //key: new ValueKey<String>(DateTime.now().millisecondsSinceEpoch.toString()),
+      key: ValueKey<String>(ds['images'][0]),
       imageUrl: ds['images'][0],
       placeholder: (context, url) => new CircularProgressIndicator(),
     );
+
     return new Container(child: new LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
       double h = constraints.maxHeight;
@@ -349,7 +358,7 @@ class HomePageState extends State<HomePage> {
                                 context,
                                 RentalDetail.routeName,
                                 arguments: RentalDetailArgs(
-                                  rentalDS.documentID,
+                                  rentalDS,
                                 ),
                               );
                             },
@@ -370,7 +379,7 @@ class HomePageState extends State<HomePage> {
                                 context,
                                 Chat.routeName,
                                 arguments: ChatArgs(
-                                  rentalDS.documentID,
+                                  rentalDS,
                                 ),
                               );
                             },
@@ -538,7 +547,6 @@ class HomePageState extends State<HomePage> {
         height: h / 20,
       );
     }
-
 
     return Container(
       height: h / 3,
@@ -912,6 +920,7 @@ class HomePageState extends State<HomePage> {
                                       if (snapshot.hasData) {
                                         DocumentSnapshot renterDS = snapshot.data;
                                         CachedNetworkImage image = CachedNetworkImage(
+                                          key: ValueKey<String>(ds['images'][0]),
                                           imageUrl: ds['images'][0],
                                           placeholder: (context, url) => new CircularProgressIndicator(),
                                           fit: BoxFit.cover,
@@ -1084,7 +1093,7 @@ class HomePageState extends State<HomePage> {
                       height: 60.0,
                       child: ClipOval(
                         child: CachedNetworkImage(
-                          //key: new ValueKey<String>(DateTime.now().millisecondsSinceEpoch.toString()),
+                          key: ValueKey<String>(ds['avatar']),
                           imageUrl: ds['avatar'],
                           placeholder: (context, url) => new Container(),
                         ),
@@ -1140,7 +1149,7 @@ class HomePageState extends State<HomePage> {
                   height: 60.0,
                   child: ClipOval(
                     child: CachedNetworkImage(
-                      //key: new ValueKey<String>(DateTime.now().millisecondsSinceEpoch.toString()),
+                      key: ValueKey<String>(ds['avatar']),
                       imageUrl: ds['avatar'],
                       placeholder: (context, url) => new Container(),
                     ),
@@ -1194,7 +1203,8 @@ class HomePageState extends State<HomePage> {
           shrinkWrap: true,
           children: <Widget>[
             reusableCategory("ACCOUNT SETTINGS"),
-            reusableFlatButton( "Personal information", Icons.person_outline, null),
+            reusableFlatButton(
+                "Personal information", Icons.person_outline, null),
             reusableFlatButton("Payments and payouts", Icons.payment, null),
             reusableFlatButton("Notifications", Icons.notifications, null),
             reusableCategory("SUPPORT"),
@@ -1265,7 +1275,12 @@ class HomePageState extends State<HomePage> {
 
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
-        stream: Firestore.instance .collection('rentals') .where('renter', isEqualTo: Firestore.instance.collection('users').document(myUserID)) .snapshots(),
+        stream: Firestore.instance
+            .collection('rentals')
+            .where('renter',
+                isEqualTo:
+                    Firestore.instance.collection('users').document(myUserID))
+            .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
             return new Text('${snapshot.error}');
@@ -1275,7 +1290,10 @@ class HomePageState extends State<HomePage> {
 
             default:
               if (snapshot.hasData) {
-                List<DocumentSnapshot> items = snapshot.data.documents.where((d)=>requesting ^ (d['status']==0 || d['status']==1)).toList();
+                List<DocumentSnapshot> items = snapshot.data.documents
+                    .where((d) =>
+                        requesting ^ (d['status'] == 0 || d['status'] == 1))
+                    .toList();
                 return GridView.count(
                     padding: EdgeInsets.all(20.0),
                     mainAxisSpacing: 15,
@@ -1302,31 +1320,35 @@ class HomePageState extends State<HomePage> {
                                   DocumentSnapshot itemDS = snapshot.data;
                                   DocumentReference ownerDR = rentalDS['owner'];
 
-                                    return StreamBuilder<DocumentSnapshot>(
-                                      stream: ownerDR.snapshots(),
-                                      builder: (BuildContext context,
-                                          AsyncSnapshot<DocumentSnapshot>
-                                              snapshot) {
-                                        if (snapshot.hasError) {
-                                          return new Text('${snapshot.error}');
-                                        }
-                                        switch (snapshot.connectionState) {
-                                          case ConnectionState.waiting:
+                                  return StreamBuilder<DocumentSnapshot>(
+                                    stream: ownerDR.snapshots(),
+                                    builder: (BuildContext context,
+                                        AsyncSnapshot<DocumentSnapshot>
+                                            snapshot) {
+                                      if (snapshot.hasError) {
+                                        return new Text('${snapshot.error}');
+                                      }
+                                      switch (snapshot.connectionState) {
+                                        case ConnectionState.waiting:
 
-                                          default:
-                                            if (snapshot.hasData) {
-                                              DocumentSnapshot ownerDS =
-                                                  snapshot.data;
+                                        default:
+                                          if (snapshot.hasData) {
+                                            DocumentSnapshot ownerDS =
+                                                snapshot.data;
 
-                                              String created = 'Created: ' + timeago.format(DateTime .fromMillisecondsSinceEpoch( rentalDS['created']));
+                                            String created = 'Created: ' +
+                                                timeago.format(DateTime
+                                                    .fromMillisecondsSinceEpoch(
+                                                        rentalDS['created']));
 
-                                              return cardItemRentals( itemDS, ownerDS, rentalDS);
-                                            } else {
-                                              return Container();
-                                            }
-                                        }
-                                      },
-                                    );
+                                            return cardItemRentals(
+                                                itemDS, ownerDS, rentalDS);
+                                          } else {
+                                            return Container();
+                                          }
+                                      }
+                                    },
+                                  );
                                 } else {
                                   return Container();
                                 }
@@ -1441,7 +1463,8 @@ class HomePageState extends State<HomePage> {
                                                 width: 50,
                                                 child: ClipOval(
                                                   child: CachedNetworkImage(
-                                                    //key: new ValueKey<String>(DateTime.now().millisecondsSinceEpoch.toString()),
+                                                    key: ValueKey<String>(
+                                                        imageURL),
                                                     imageUrl: imageURL,
                                                     placeholder:
                                                         (context, url) =>
@@ -1550,9 +1573,7 @@ class HomePageState extends State<HomePage> {
           builder: (BuildContext context) => AllItems(
                 allItemsList: searchList,
               ),
-        )).then((value) {
-      searchList = value;
-    });
+        ));
   }
 
   void navToSearchResults(String searchQuery) async {
@@ -1642,11 +1663,6 @@ class HomePageState extends State<HomePage> {
   }
 
   void deleteItem(DocumentSnapshot ds) {
-    DocumentReference documentReference = ds.reference;
-    Firestore.instance.collection('users').document(myUserID).updateData({
-      'items': FieldValue.arrayRemove([documentReference])
-    });
-
     deleteImages(ds.documentID, ds['numImages']);
     Firestore.instance.collection('items').document(ds.documentID).delete();
   }
