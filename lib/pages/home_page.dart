@@ -5,8 +5,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:shareapp/extras/helpers.dart';
-import 'package:shareapp/extras/helpers.dart' as prefix0;
 import 'package:shareapp/main.dart';
 import 'package:shareapp/models/item.dart';
 import 'package:shareapp/models/user_edit.dart';
@@ -875,17 +875,13 @@ class HomePageState extends State<HomePage> {
       child: StreamBuilder<QuerySnapshot>(
         stream: stream,
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.hasError) {
-            return new Text('${snapshot.error}');
-          }
+          if (snapshot.hasError) { return new Text('${snapshot.error}'); }
           switch (snapshot.connectionState) {
             case ConnectionState.waiting:
 
             default:
               if (snapshot.hasData) {
-                var updated = snapshot.data.documents
-                    .where((d) => status.contains(d['status']))
-                    .toList();
+                var updated = snapshot.data.documents.where((d) => status.contains(d['status'])).toList();
                 return ListView.builder(
                   scrollDirection: Axis.horizontal,
                   itemCount: updated.length,
@@ -910,9 +906,7 @@ class HomePageState extends State<HomePage> {
                                 stream: rentalDS['renter'].snapshots(),
                                 builder: (BuildContext context,
                                     AsyncSnapshot<DocumentSnapshot> snapshot) {
-                                  if (snapshot.hasError) {
-                                    return new Text('${snapshot.error}');
-                                  }
+                                  if (snapshot.hasError) { return new Text('${snapshot.error}'); }
                                   switch (snapshot.connectionState) {
                                     case ConnectionState.waiting:
 
@@ -925,34 +919,38 @@ class HomePageState extends State<HomePage> {
                                           placeholder: (context, url) => new CircularProgressIndicator(),
                                           fit: BoxFit.cover,
                                         );
-                                        return Container(
-                                          padding: EdgeInsets.only(left: 10.0),
-                                          width: MediaQuery.of(context) .size .width / 2,
-                                          child: Stack(
-                                            children: <Widget>[
-                                              SizedBox.expand(child: image),
-                                              SizedBox.expand( child: Container( color: Colors.black .withOpacity(0.4),)),
-                                              Center(
-                                                child: Column(
-                                                  children: <Widget>[
-                                                    Text(ds['name'],
-                                                        style: TextStyle(
-                                                            color:
-                                                                Colors.white)),
-                                                    Text(
-                                                        "Pickup Time: \n" +
-                                                            DateTime.fromMillisecondsSinceEpoch(
-                                                                    rentalDS[
-                                                                            'pickupStart']
-                                                                        .millisecondsSinceEpoch)
-                                                                .toString(),
-                                                        style: TextStyle(
-                                                            color:
-                                                                Colors.white)),
-                                                  ],
-                                                ),
-                                              )
-                                            ],
+                                        return InkWell(
+                                          onTap: ()=>navigateToDetail(ds),
+                                          child: Container(
+                                            padding: EdgeInsets.only(left: 10.0),
+                                            width: MediaQuery.of(context) .size .width / 2,
+                                            child: Stack(
+                                              children: <Widget>[
+                                                SizedBox.expand(child: image),
+                                                SizedBox.expand( child: Container( color: Colors.black .withOpacity(0.4),)),
+                                                Center(
+                                                  child: Column(
+                                                    children: <Widget>[
+                                                      Text(ds['name'], style: TextStyle( color: Colors.white)),
+                                                     // Text("Pickup Time: \n" + DateTime.fromMillisecondsSinceEpoch(rentalDS[ 'pickupStart'].millisecondsSinceEpoch).toString(), style: TextStyle(color:Colors.white)),
+                                                      StreamBuilder(
+                                                        stream: Stream.periodic(Duration(seconds: 1), (i) => i),
+                                                        builder: (BuildContext context, AsyncSnapshot<int> snapshot) {
+                                                          DateFormat format = DateFormat("hh 'hours,' mm 'minutes until pickup'");
+                                                          int now = DateTime.now().millisecondsSinceEpoch;
+                                                          int pickupTime = rentalDS['pickupStart'].millisecondsSinceEpoch;
+                                                          print(pickupTime);
+                                                          Duration remaining = Duration(milliseconds: (pickupTime - now));;
+                                                          var dateString;
+                                                          remaining.inDays == 0 ? dateString = '${format.format(DateTime.fromMillisecondsSinceEpoch(remaining.inMilliseconds))}'
+                                                            : dateString = '${remaining.inDays} days, ${format.format(DateTime.fromMillisecondsSinceEpoch(remaining.inMilliseconds))}';
+                                                          return Container(child: Text(dateString, style: TextStyle(color: Colors.white),),);
+                                                      })
+                                                    ],
+                                                  ),
+                                                )
+                                              ],
+                                            ),
                                           ),
                                         );
                                         // return Container(width: MediaQuery.of(context).size.width/2, padding: EdgeInsets.only(left: 10.0), child: _tile());
