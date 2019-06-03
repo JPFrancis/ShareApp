@@ -131,9 +131,7 @@ class MyApp extends StatelessWidget {
 
               return MaterialPageRoute(
                 builder: (context) {
-                  return AllItems(
-                    allItemsList: args.allItemsList,
-                  );
+                  return AllItems();
                 },
               );
             }
@@ -202,9 +200,7 @@ class NewPickupArgs {
 }
 
 class AllItemsArgs {
-  final List<DocumentSnapshot> allItemsList;
-
-  AllItemsArgs(this.allItemsList);
+  AllItemsArgs();
 }
 
 class SearchResultsArgs {

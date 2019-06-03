@@ -8,9 +8,7 @@ import 'package:shareapp/extras/helpers.dart';
 class AllItems extends StatefulWidget {
   static const routeName = '/allItems';
 
-  final List<DocumentSnapshot> allItemsList;
-
-  AllItems({Key key, this.allItemsList}) : super(key: key);
+  AllItems({Key key}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
@@ -19,7 +17,6 @@ class AllItems extends StatefulWidget {
 }
 
 class AllItemsState extends State<AllItems> {
-  List<DocumentSnapshot> allItems;
   bool isLoading;
 
   @override
@@ -34,7 +31,6 @@ class AllItemsState extends State<AllItems> {
     isLoading = true;
     Future.delayed(Duration(milliseconds: 750)).then((_) {
       setState(() {
-        allItems = widget.allItemsList;
         isLoading = false;
       });
     });
@@ -65,14 +61,7 @@ class AllItemsState extends State<AllItems> {
                   style: TextStyle(fontFamily: 'Quicksand', fontSize: 30.0)),
             ],
           ),
-          allItems != null && allItems.isNotEmpty
-              ? buildItemListTemp()
-              : Center(
-                  child: RaisedButton(
-                    child: Text('Refresh'),
-                    onPressed: () => getAllItems(),
-                  ),
-                ),
+          buildItemListTemp(),
         ],
       ),
     );
@@ -117,34 +106,42 @@ class AllItemsState extends State<AllItems> {
 
   Widget buildItemListTemp() {
     return Expanded(
-      child: RefreshIndicator(
-        onRefresh: () => getAllItems(),
-        child: ListView.builder(
-          itemCount: allItems.length,
-          itemBuilder: (context, index) {
-            return ListTile(
-              leading: Icon(Icons.build),
-              title: Text(
-                '${allItems[index]['name']}',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              subtitle: Text('${allItems[index]['description']}'),
-              onTap: () => navigateToDetail(allItems[index], context),
-            );
-          },
-        ),
+      child: StreamBuilder<QuerySnapshot>(
+        stream: Firestore.instance
+            .collection('items')
+            .orderBy('name', descending: false)
+            .snapshots(),
+        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          if (snapshot.hasError) {
+            return new Text('${snapshot.error}');
+          }
+          switch (snapshot.connectionState) {
+            case ConnectionState.waiting:
+
+            default:
+              if (snapshot.hasData) {
+                List<DocumentSnapshot> allItems = snapshot.data.documents;
+                return ListView.builder(
+                  itemCount: allItems.length,
+                  itemBuilder: (context, index) {
+                    return ListTile(
+                      leading: Icon(Icons.build),
+                      title: Text(
+                        '${allItems[index]['name']}',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: Text('${allItems[index]['description']}'),
+                      onTap: () => navigateToDetail(allItems[index], context),
+                    );
+                  },
+                );
+              } else {
+                return Container();
+              }
+          }
+        },
       ),
     );
-  }
-
-  Future<Null> getAllItems() async {
-    QuerySnapshot querySnapshot = await Firestore.instance
-        .collection('items')
-        .orderBy('name', descending: false)
-        .getDocuments();
-    setState(() {
-      allItems = querySnapshot.documents;
-    });
   }
 
   void goBack() {

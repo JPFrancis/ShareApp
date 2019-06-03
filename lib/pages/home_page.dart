@@ -278,7 +278,7 @@ class HomePageState extends State<HomePage> {
 
   Widget cardItemRentals(ds, ownerDS, rentalDS) {
     CachedNetworkImage image = CachedNetworkImage(
-      key: ValueKey<String>(ds['images'][0]),
+      key: ValueKey(DateTime.now().millisecondsSinceEpoch),
       imageUrl: ds['images'][0],
       placeholder: (context, url) => new CircularProgressIndicator(),
     );
@@ -1062,8 +1062,7 @@ class HomePageState extends State<HomePage> {
                                             snapshot.data;
                                         CachedNetworkImage image =
                                             CachedNetworkImage(
-                                          key:
-                                              ValueKey<String>(ds['images'][0]),
+                                          key: ValueKey(DateTime.now().millisecondsSinceEpoch),
                                           imageUrl: ds['images'][0],
                                           placeholder: (context, url) =>
                                               new CircularProgressIndicator(),
@@ -1244,7 +1243,7 @@ class HomePageState extends State<HomePage> {
                       height: 60.0,
                       child: ClipOval(
                         child: CachedNetworkImage(
-                          key: ValueKey<String>(ds['avatar']),
+                          key: ValueKey(DateTime.now().millisecondsSinceEpoch),
                           imageUrl: ds['avatar'],
                           placeholder: (context, url) => new Container(),
                         ),
@@ -1300,7 +1299,7 @@ class HomePageState extends State<HomePage> {
                   height: 60.0,
                   child: ClipOval(
                     child: CachedNetworkImage(
-                      key: ValueKey<String>(ds['avatar']),
+                      key: ValueKey(DateTime.now().millisecondsSinceEpoch),
                       imageUrl: ds['avatar'],
                       placeholder: (context, url) => new Container(),
                     ),
@@ -1614,8 +1613,7 @@ class HomePageState extends State<HomePage> {
                                                 width: 50,
                                                 child: ClipOval(
                                                   child: CachedNetworkImage(
-                                                    key: ValueKey<String>(
-                                                        imageURL),
+                                                    key: ValueKey(DateTime.now().millisecondsSinceEpoch),
                                                     imageUrl: imageURL,
                                                     placeholder:
                                                         (context, url) =>
@@ -1721,9 +1719,7 @@ class HomePageState extends State<HomePage> {
     Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (BuildContext context) => AllItems(
-                allItemsList: searchList,
-              ),
+          builder: (BuildContext context) => AllItems(),
         ));
   }
 

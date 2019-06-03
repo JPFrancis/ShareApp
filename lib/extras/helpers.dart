@@ -34,7 +34,7 @@ class CustomBoxShadow extends BoxShadow {
 
 Widget itemCard(DocumentSnapshot ds, context) {
   CachedNetworkImage image = CachedNetworkImage(
-    key: ValueKey<String>(ds['images'][0]),
+    key: ValueKey(DateTime.now().millisecondsSinceEpoch),
     imageUrl: ds['images'][0],
     placeholder: (context, url) => Container(),
   );
