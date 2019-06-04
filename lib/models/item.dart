@@ -30,6 +30,8 @@ class Item {
   String description;
   String type;
   String condition;
+  double rating;
+  double numRatings;
   int price;
   int numImages;
   List images;
@@ -44,6 +46,8 @@ class Item {
     this.description,
     this.type,
     this.condition,
+    this.rating,
+    this.numRatings,
     this.price,
     this.numImages,
     this.images,
@@ -60,6 +64,8 @@ class Item {
           description: data['description'],
           type: data['type'],
           condition: data['condition'],
+          rating: data['rating'],
+          numRatings: data['numRatings'],
           price: data['price'],
           numImages: data['numImages'],
           images: data['images'],
@@ -76,6 +82,8 @@ class Item {
           description: other.description,
           type: other.type,
           condition: other.condition,
+          rating: other.rating,
+          numRatings: other.numRatings,
           price: other.price,
           numImages: other.numImages,
           images: other.images.toList(),
@@ -101,6 +109,8 @@ class Item {
       description: other.description,
       type: other.type,
       condition: other.condition,
+      rating: other.rating,
+      numRatings: other.numRatings,
       price: other.price,
       numImages: other.numImages,
       images: other.images.toList(),

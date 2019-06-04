@@ -277,7 +277,7 @@ class HomePageState extends State<HomePage> {
 
   Widget cardItemRentals(ds, ownerDS, rentalDS) {
     CachedNetworkImage image = CachedNetworkImage(
-      key: ValueKey<String>(ds['images'][0]),
+      key: ValueKey(DateTime.now().millisecondsSinceEpoch),
       imageUrl: ds['images'][0],
       placeholder: (context, url) => new CircularProgressIndicator(),
     );
@@ -742,7 +742,7 @@ class HomePageState extends State<HomePage> {
                   childAspectRatio: (2 / 3),
                   padding: const EdgeInsets.all(15.0),
                   crossAxisSpacing: MediaQuery.of(context).size.width / 25,
-                  children: snapshots.map((snapshot) => itemCard(snapshot, context, 3.5)).toList()
+                  children: snapshots.map((snapshot) => itemCard(snapshot, context)).toList()
                 );
               } else { return Container(); }
           }
@@ -939,7 +939,6 @@ class HomePageState extends State<HomePage> {
                                                           DateFormat format = DateFormat("hh 'hours,' mm 'minutes until pickup'");
                                                           int now = DateTime.now().millisecondsSinceEpoch;
                                                           int pickupTime = rentalDS['pickupStart'].millisecondsSinceEpoch;
-                                                          print(pickupTime);
                                                           Duration remaining = Duration(milliseconds: (pickupTime - now));;
                                                           var dateString;
                                                           remaining.inDays == 0 ? dateString = '${format.format(DateTime.fromMillisecondsSinceEpoch(remaining.inMilliseconds))}'
@@ -1091,7 +1090,7 @@ class HomePageState extends State<HomePage> {
                       height: 60.0,
                       child: ClipOval(
                         child: CachedNetworkImage(
-                          key: ValueKey<String>(ds['avatar']),
+                          key: ValueKey(DateTime.now().millisecondsSinceEpoch),
                           imageUrl: ds['avatar'],
                           placeholder: (context, url) => new Container(),
                         ),
@@ -1147,7 +1146,7 @@ class HomePageState extends State<HomePage> {
                   height: 60.0,
                   child: ClipOval(
                     child: CachedNetworkImage(
-                      key: ValueKey<String>(ds['avatar']),
+                      key: ValueKey(DateTime.now().millisecondsSinceEpoch),
                       imageUrl: ds['avatar'],
                       placeholder: (context, url) => new Container(),
                     ),
@@ -1461,8 +1460,7 @@ class HomePageState extends State<HomePage> {
                                                 width: 50,
                                                 child: ClipOval(
                                                   child: CachedNetworkImage(
-                                                    key: ValueKey<String>(
-                                                        imageURL),
+                                                    key: ValueKey(DateTime.now().millisecondsSinceEpoch),
                                                     imageUrl: imageURL,
                                                     placeholder:
                                                         (context, url) =>
@@ -1568,9 +1566,7 @@ class HomePageState extends State<HomePage> {
     Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (BuildContext context) => AllItems(
-                allItemsList: searchList,
-              ),
+          builder: (BuildContext context) => AllItems(),
         ));
   }
 

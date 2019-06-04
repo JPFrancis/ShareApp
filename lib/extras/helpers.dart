@@ -55,18 +55,21 @@ class StarRating extends StatelessWidget {
 }
 // Reusable Widgets
 
-Widget itemCard(DocumentSnapshot ds, context, rating) {
+Widget itemCard(DocumentSnapshot ds, context) {
   CachedNetworkImage image = CachedNetworkImage(
-    key: ValueKey<String>(ds['images'][0]),
+    key: ValueKey(DateTime.now().millisecondsSinceEpoch),
     imageUrl: ds['images'][0],
     placeholder: (context, url) => Container(),
   );
+  
+  var img = ds['images'][0];
 
-  var card = new Container(child: new LayoutBuilder(
-      builder: (BuildContext context, BoxConstraints constraints) {
+  var card = new Container(child: new LayoutBuilder(builder: (BuildContext context, BoxConstraints constraints) {
     double h = constraints.maxHeight;
     double w = constraints.maxWidth;
     return Container(
+      height: h,
+      width: w,
       decoration: new BoxDecoration(
         boxShadow: <BoxShadow>[
           CustomBoxShadow(
@@ -76,9 +79,9 @@ Widget itemCard(DocumentSnapshot ds, context, rating) {
         ],
       ),
       child: Column(children: <Widget>[
-          Container(height: 2 * h / 3, width: w, child: FittedBox(fit: BoxFit.cover, child: image)), 
+          Container(height: 2 * h / 3, width: w, decoration: BoxDecoration(image: DecorationImage(image: NetworkImage(img), fit: BoxFit.cover))),
           SizedBox( height: 10.0,),
-          Container(height: h/4, width: w, padding: EdgeInsets.symmetric(horizontal: 5.0),
+          Container(height: h/3.5, width: w, padding: EdgeInsets.symmetric(horizontal: 5.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
@@ -89,7 +92,10 @@ Widget itemCard(DocumentSnapshot ds, context, rating) {
                 SizedBox( height: 2.0,),
                 Text("\$${ds['price']} per day", style: TextStyle(fontSize: h / 21, fontFamily: 'Quicksand')),
                 SizedBox(height: 2.0,),
-                StarRating(rating: rating, sz: h/15)
+                Row(children: <Widget>[
+                  StarRating(rating: ds['rating'].toDouble(), sz: h/15),
+                  Text(ds['numRatings'].toString())
+                ],)
               ],
             ),
           ),

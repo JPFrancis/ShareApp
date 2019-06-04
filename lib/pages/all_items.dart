@@ -8,9 +8,7 @@ import 'package:shareapp/extras/helpers.dart';
 class AllItems extends StatefulWidget {
   static const routeName = '/allItems';
 
-  final List<DocumentSnapshot> allItemsList;
-
-  AllItems({Key key, this.allItemsList}) : super(key: key);
+  AllItems({Key key}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
@@ -19,22 +17,29 @@ class AllItems extends StatefulWidget {
 }
 
 class AllItemsState extends State<AllItems> {
-  List<DocumentSnapshot> allItems;
+  bool isLoading;
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
 
-    allItems = widget.allItemsList;
+    delayPage();
+  }
+
+  void delayPage() async {
+    isLoading = true;
+    Future.delayed(Duration(milliseconds: 750)).then((_) {
+      setState(() {
+        isLoading = false;
+      });
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: allItems != null && allItems.isNotEmpty
-          ? allItemsPage()
-          : Container(),
+      body: isLoading ? Container() : allItemsPage(),
     );
   }
 
@@ -62,6 +67,7 @@ class AllItemsState extends State<AllItems> {
     );
   }
 
+
   Widget buildItemList() {
     int tilerows = MediaQuery.of(context).size.width > 500 ? 3 : 2;
     return Expanded(
@@ -82,7 +88,7 @@ class AllItemsState extends State<AllItems> {
                   childAspectRatio: (2 / 3),
                   padding: const EdgeInsets.all(20.0),
                   crossAxisSpacing: MediaQuery.of(context).size.width / 20,
-                  children: items.map((DocumentSnapshot ds) => itemCard(ds, context, 3.5)).toList()
+                  children: items.map((DocumentSnapshot ds) => itemCard(ds, context)).toList()
                 );
               } else { return Container(); }
           }
@@ -93,37 +99,43 @@ class AllItemsState extends State<AllItems> {
 
   Widget buildItemListTemp() {
     return Expanded(
-      child: RefreshIndicator(
-        onRefresh: () => getAllItems(),
-        child: ListView.builder(
-          itemCount: allItems.length,
-          itemBuilder: (context, index) {
-            return ListTile(
-              leading: Icon(Icons.build),
-              title: Text(
-                '${allItems[index]['name']}',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              subtitle: Text('${allItems[index]['description']}'),
-              onTap: () => navigateToDetail(allItems[index], context),
-            );
-          },
-        ),
+      child: StreamBuilder<QuerySnapshot>(
+        stream: Firestore.instance
+            .collection('items')
+            .orderBy('name', descending: false)
+            .snapshots(),
+        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          if (snapshot.hasError) {
+            return new Text('${snapshot.error}');
+          }
+          switch (snapshot.connectionState) {
+            case ConnectionState.waiting:
+
+            default:
+              if (snapshot.hasData) {
+                List<DocumentSnapshot> allItems = snapshot.data.documents;
+                return ListView.builder(
+                  itemCount: allItems.length,
+                  itemBuilder: (context, index) {
+                    return ListTile(
+                      leading: Icon(Icons.build),
+                      title: Text( '${allItems[index]['name']}', style: TextStyle(fontWeight: FontWeight.bold),),
+                      subtitle: Text('${allItems[index]['description']}'),
+                      onTap: () => navigateToDetail(allItems[index], context),
+                      trailing: StarRating(rating: 3.5, sz: MediaQuery.of(context).size.height/15),
+                    );
+                  },
+                );
+              } else {
+                return Container();
+              }
+          }
+        },
       ),
     );
   }
 
-  Future<Null> getAllItems() async {
-    QuerySnapshot querySnapshot = await Firestore.instance
-        .collection('items')
-        .orderBy('name', descending: false)
-        .getDocuments();
-    setState(() {
-      allItems = querySnapshot.documents;
-    });
-  }
-
   void goBack() {
-    Navigator.pop(context, allItems);
+    Navigator.pop(context);
   }
 }
