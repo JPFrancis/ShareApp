@@ -61,20 +61,17 @@ class AllItemsState extends State<AllItems> {
                   style: TextStyle(fontFamily: 'Quicksand', fontSize: 30.0)),
             ],
           ),
-          buildItemListTemp(),
+          buildItemList(),
         ],
       ),
     );
   }
 
   Widget buildItemList() {
-    CollectionReference collectionReference =
-        Firestore.instance.collection('items');
     int tilerows = MediaQuery.of(context).size.width > 500 ? 3 : 2;
-    Stream stream = collectionReference.snapshots();
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
-        stream: stream,
+        stream: Firestore.instance.collection('items').snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
             return new Text('${snapshot.error}');
@@ -84,7 +81,7 @@ class AllItemsState extends State<AllItems> {
 
             default:
               if (snapshot.hasData) {
-                List<DocumentSnapshot> items = snapshot.data.documents.toList();
+                List<DocumentSnapshot> items = snapshot.data.documents;
                 return GridView.count(
                     shrinkWrap: true,
                     mainAxisSpacing: 15.0,
@@ -132,6 +129,9 @@ class AllItemsState extends State<AllItems> {
                       ),
                       subtitle: Text('${allItems[index]['description']}'),
                       onTap: () => navigateToDetail(allItems[index], context),
+                      trailing: StarRating(
+                          rating: 3.5,
+                          sz: MediaQuery.of(context).size.height / 15),
                     );
                   },
                 );

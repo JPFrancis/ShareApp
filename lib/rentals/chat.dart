@@ -460,6 +460,31 @@ class ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    int stat = widget.rentalDS['status'];
+    String status;
+    switch (stat) {
+      case 0:
+        status = "Waiting for Owner's response";
+        break;
+      case 1:
+        status = "Waiting for your response";
+        break;
+      case 2:
+        status = "Accepted";
+        break;
+      case 3:
+        status = "You have the item";
+        break;
+      case 4:
+        status = "Waiting for your review";
+        break;
+      case 5:
+        status = "Completed";
+        break;
+      case 6:
+        status = "Rejected";
+        break;
+    }
     return WillPopScope(
       child: isLoading
           ? Container()
@@ -503,7 +528,7 @@ class ChatScreenState extends State<ChatScreen> {
                             alignment: Alignment.bottomCenter,
                             child: FlatButton(
                                 child: Text(
-                                  '[status]',
+                                  status,
                                   style: TextStyle(
                                       fontSize: 15.0,
                                       fontFamily: 'Quicksand',
@@ -666,50 +691,47 @@ class ChatScreenState extends State<ChatScreen> {
   }
 
   Widget buildInput() {
-    return Expanded(
-      child: Column(
-        children: <Widget>[
-          Expanded(
-            child: Container(
-              padding: EdgeInsets.all(10.0),
-              child: TextField(
-                expands: true,
-                keyboardType: TextInputType.multiline,
-                maxLines: null,
-                style: TextStyle(color: Colors.black, fontSize: 15.0),
-                controller: textEditingController,
-                decoration: InputDecoration.collapsed(
-                  hintText: 'Type your message',
-                  hintStyle: TextStyle(color: greyColor),
-                ),
-                //focusNode: focusNode,
-              ),
+    return Column(
+      children: <Widget>[
+        Container(
+          height: 50.0,
+          padding: EdgeInsets.all(10.0),
+          child: TextField(
+            expands: true,
+            keyboardType: TextInputType.multiline,
+            maxLines: null,
+            style: TextStyle(color: Colors.black, fontSize: 15.0),
+            controller: textEditingController,
+            decoration: InputDecoration.collapsed(
+              hintText: 'Type your message',
+              hintStyle: TextStyle(color: greyColor),
             ),
+            //focusNode: focusNode,
           ),
-          Row(
-            children: <Widget>[
-              SizedBox(
-                width: 10.0,
-              ),
-              IconButton(
-                icon: Icon(Icons.photo_camera),
-                onPressed: () => debugPrint,
-              ),
-              IconButton(
-                icon: Icon(Icons.image),
-                onPressed: () => debugPrint,
-              ),
-              Spacer(flex: 1000),
-              IconButton(
-                icon: new Icon(Icons.send),
-                onPressed: () => onSendMessage(textEditingController.text, 0),
-                color: primaryColor,
-              ),
-              SizedBox(width: 10.0),
-            ],
-          )
-        ],
-      ),
+        ),
+        Row(
+          children: <Widget>[
+            SizedBox(
+              width: 10.0,
+            ),
+            IconButton(
+              icon: Icon(Icons.photo_camera),
+              onPressed: () => debugPrint,
+            ),
+            IconButton(
+              icon: Icon(Icons.image),
+              onPressed: () => debugPrint,
+            ),
+            Spacer(flex: 1000),
+            IconButton(
+              icon: new Icon(Icons.send),
+              onPressed: () => onSendMessage(textEditingController.text, 0),
+              color: primaryColor,
+            ),
+            SizedBox(width: 10.0),
+          ],
+        )
+      ],
     );
   }
 

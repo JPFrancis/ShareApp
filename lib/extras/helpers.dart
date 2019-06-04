@@ -30,6 +30,44 @@ class CustomBoxShadow extends BoxShadow {
   }
 }
 
+class StarRating extends StatelessWidget {
+  final int starCount;
+  final double rating;
+  final Color color;
+  final double sz;
+
+  StarRating({this.starCount = 5, this.rating = .0, this.color, this.sz});
+
+  Widget buildStar(BuildContext context, int index, h) {
+    Icon icon;
+    if (index >= rating) {
+      icon = new Icon(
+        Icons.star_border,
+        color: primaryColor,
+        size: sz,
+      );
+    } else if (index > rating - 1 && index < rating) {
+      icon = new Icon(
+        Icons.star_half,
+        color: primaryColor,
+        size: sz,
+      );
+    } else {
+      icon = new Icon(
+        Icons.star,
+        color: primaryColor,
+        size: sz,
+      );
+    }
+    return icon;
+  }
+
+  Widget build(BuildContext context) {
+    return new Row(
+        children: new List.generate(
+            starCount, (index) => buildStar(context, index, sz)));
+  }
+}
 // Reusable Widgets
 
 Widget itemCard(DocumentSnapshot ds, context) {
@@ -39,11 +77,15 @@ Widget itemCard(DocumentSnapshot ds, context) {
     placeholder: (context, url) => Container(),
   );
 
+  var img = ds['images'][0];
+
   var card = new Container(child: new LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
     double h = constraints.maxHeight;
     double w = constraints.maxWidth;
     return Container(
+      height: h,
+      width: w,
       decoration: new BoxDecoration(
         boxShadow: <BoxShadow>[
           CustomBoxShadow(
@@ -54,7 +96,12 @@ Widget itemCard(DocumentSnapshot ds, context) {
       ),
       child: Column(
         children: <Widget>[
-          Container(height: 2 * h / 3, width: w,child: FittedBox(fit: BoxFit.cover, child: image)),
+          Container(
+              height: 2 * h / 3,
+              width: w,
+              decoration: BoxDecoration(
+                  image: DecorationImage(
+                      image: NetworkImage(img), fit: BoxFit.cover))),
           SizedBox(
             height: 10.0,
           ),
@@ -93,37 +140,8 @@ Widget itemCard(DocumentSnapshot ds, context) {
                 ),
                 Row(
                   children: <Widget>[
-                    Icon(
-                      Icons.star_border,
-                      size: h / 19,
-                    ),
-                    Icon(
-                      Icons.star_border,
-                      size: h / 19,
-                    ),
-                    Icon(
-                      Icons.star_border,
-                      size: h / 19,
-                    ),
-                    Icon(
-                      Icons.star_border,
-                      size: h / 19,
-                    ),
-                    Icon(
-                      Icons.star_border,
-                      size: h / 19,
-                    ),
-                    SizedBox(
-                      width: 5.0,
-                    ),
-                    Text(
-                      "328",
-                      style: TextStyle(
-                        fontSize: h / 25,
-                        fontFamily: 'Quicksand',
-                        fontWeight: FontWeight.bold,
-                      ),
-                    )
+                    StarRating(rating: ds['rating'].toDouble(), sz: h / 15),
+                    Text(ds['numRatings'].toString())
                   ],
                 )
               ],

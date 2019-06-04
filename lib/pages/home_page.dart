@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/models/item.dart';
@@ -138,9 +139,7 @@ class HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     bottomTabPages = <Widget>[
       searchPage(),
-      //homeTabPage(),
       myRentalsPage(),
-      //myListingsTabPage(),
       myListingsPage(),
       messagesTabPage(),
       profileTabPage(),
@@ -706,7 +705,14 @@ class HomePageState extends State<HomePage> {
           children: [
             Column(
               children: <Widget>[
-                buildRentalsList(true),
+                reusableCategoryWithAll("REQUESTING", () => debugPrint),
+                buildRequests("renter"),
+                reusableCategoryWithAll("UPCOMING", () => debugPrint),
+                buildTransactions("upcoming", "renter"),
+                reusableCategoryWithAll("CURRENT", () => debugPrint),
+                buildTransactions("current", "renter"),
+                reusableCategoryWithAll("PAST", () => debugPrint),
+                buildTransactions("past", "renter"),
               ],
             ),
             Column(
@@ -721,17 +727,15 @@ class HomePageState extends State<HomePage> {
   }
 
   Widget buildListingsList() {
-    CollectionReference collectionReference =
-        Firestore.instance.collection('items');
     int tilerows = MediaQuery.of(context).size.width > 500 ? 3 : 2;
-    Stream stream = collectionReference
-        .where('creator',
-            isEqualTo:
-                Firestore.instance.collection('users').document(myUserID))
-        .snapshots();
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
-        stream: stream,
+        stream: Firestore.instance
+            .collection('items')
+            .where('creator',
+                isEqualTo:
+                    Firestore.instance.collection('users').document(myUserID))
+            .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
             return new Text('${snapshot.error}');
@@ -742,24 +746,16 @@ class HomePageState extends State<HomePage> {
             default:
               if (snapshot.hasData) {
                 List snapshots = snapshot.data.documents;
-                return ListView.builder(
-                  itemCount: snapshots.length,
-                  itemBuilder: (context, index) {
-                    DocumentSnapshot ds = snapshots[index];
-
-                    return ListTile(
-                      leading: Icon(Icons.build),
-                      title: Text(
-                        '${ds['name']}',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      subtitle: Text('${ds['description']}'),
-                      onTap: () => navigateToDetail(ds),
-                    );
-                  },
-                );
+                return GridView.count(
+                    shrinkWrap: true,
+                    mainAxisSpacing: 15.0,
+                    crossAxisCount: tilerows,
+                    childAspectRatio: (2 / 3),
+                    padding: const EdgeInsets.all(15.0),
+                    crossAxisSpacing: MediaQuery.of(context).size.width / 25,
+                    children: snapshots
+                        .map((snapshot) => itemCard(snapshot, context))
+                        .toList());
               } else {
                 return Container();
               }
@@ -769,14 +765,12 @@ class HomePageState extends State<HomePage> {
     );
   }
 
-  Widget buildRequestsTransactionsList() {
-    CollectionReference collectionReference =
-        Firestore.instance.collection('rentals');
-    Stream stream = collectionReference
-        .where('owner',
+  Widget buildRequests(person) {
+    Stream stream = Firestore.instance
+        .collection('rentals')
+        .where(person,
             isEqualTo:
                 Firestore.instance.collection('users').document(myUserID))
-        .where('status', isEqualTo: 0)
         .snapshots();
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 10),
@@ -791,8 +785,9 @@ class HomePageState extends State<HomePage> {
 
             default:
               if (snapshot.hasData) {
-                var updated = snapshot.data.documents.toList();
-
+                var updated = snapshot.data.documents
+                    .where((d) => d['status'] == 1 || d['status'] == 0)
+                    .toList();
                 return ListView.builder(
                   shrinkWrap: true,
                   physics: NeverScrollableScrollPhysics(),
@@ -819,7 +814,9 @@ class HomePageState extends State<HomePage> {
                                   '${durationDays > 1 ? '$durationDays days' : '$durationDays day'}';
 
                               return StreamBuilder<DocumentSnapshot>(
-                                stream: rentalDS['renter'].snapshots(),
+                                stream: person == "renter"
+                                    ? rentalDS["owner"].snapshots()
+                                    : rentalDS["renter"].snapshots(),
                                 builder: (BuildContext context,
                                     AsyncSnapshot<DocumentSnapshot> snapshot) {
                                   if (snapshot.hasError) {
@@ -830,9 +827,8 @@ class HomePageState extends State<HomePage> {
 
                                     default:
                                       if (snapshot.hasData) {
-                                        DocumentSnapshot renterDS =
+                                        DocumentSnapshot ownerDS =
                                             snapshot.data;
-
                                         return Column(
                                           children: <Widget>[
                                             Container(
@@ -886,12 +882,12 @@ class HomePageState extends State<HomePage> {
                                                                     .white,
                                                                 image: DecorationImage(
                                                                     image: NetworkImage(
-                                                                        renterDS[
+                                                                        ownerDS[
                                                                             'avatar']),
                                                                     fit: BoxFit
                                                                         .fill))),
                                                         Text(
-                                                          renterDS['name'],
+                                                          ownerDS['name'],
                                                           style: TextStyle(
                                                               color:
                                                                   Colors.white,
@@ -991,7 +987,7 @@ class HomePageState extends State<HomePage> {
     );
   }
 
-  Widget buildListingsTransactions(String rentalStatus) {
+  Widget buildTransactions(String rentalStatus, person) {
     List status;
     switch (rentalStatus) {
       case 'upcoming':
@@ -1007,7 +1003,7 @@ class HomePageState extends State<HomePage> {
     CollectionReference collectionReference =
         Firestore.instance.collection('rentals');
     Stream stream = collectionReference
-        .where('owner',
+        .where(person,
             isEqualTo:
                 Firestore.instance.collection('users').document(myUserID))
         .snapshots();
@@ -1062,47 +1058,85 @@ class HomePageState extends State<HomePage> {
                                             snapshot.data;
                                         CachedNetworkImage image =
                                             CachedNetworkImage(
-                                          //key: ValueKey(DateTime.now().millisecondsSinceEpoch),
+                                          key:
+                                              ValueKey<String>(ds['images'][0]),
                                           imageUrl: ds['images'][0],
                                           placeholder: (context, url) =>
                                               new CircularProgressIndicator(),
                                           fit: BoxFit.cover,
                                         );
-                                        return Container(
-                                          padding: EdgeInsets.only(left: 10.0),
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width /
-                                              2,
-                                          child: Stack(
-                                            children: <Widget>[
-                                              SizedBox.expand(child: image),
-                                              SizedBox.expand(
-                                                  child: Container(
-                                                color: Colors.black
-                                                    .withOpacity(0.4),
-                                              )),
-                                              Center(
-                                                child: Column(
-                                                  children: <Widget>[
-                                                    Text(ds['name'],
-                                                        style: TextStyle(
-                                                            color:
-                                                                Colors.white)),
-                                                    Text(
-                                                        "Pickup Time: \n" +
-                                                            DateTime.fromMillisecondsSinceEpoch(
-                                                                    rentalDS[
-                                                                            'pickupStart']
-                                                                        .millisecondsSinceEpoch)
-                                                                .toString(),
-                                                        style: TextStyle(
-                                                            color:
-                                                                Colors.white)),
-                                                  ],
-                                                ),
-                                              )
-                                            ],
+                                        return InkWell(
+                                          onTap: () => navigateToDetail(ds),
+                                          child: Container(
+                                            padding:
+                                                EdgeInsets.only(left: 10.0),
+                                            width: MediaQuery.of(context)
+                                                    .size
+                                                    .width /
+                                                2,
+                                            child: Stack(
+                                              children: <Widget>[
+                                                SizedBox.expand(child: image),
+                                                SizedBox.expand(
+                                                    child: Container(
+                                                  color: Colors.black
+                                                      .withOpacity(0.4),
+                                                )),
+                                                Center(
+                                                  child: Column(
+                                                    children: <Widget>[
+                                                      Text(ds['name'],
+                                                          style: TextStyle(
+                                                              color: Colors
+                                                                  .white)),
+                                                      // Text("Pickup Time: \n" + DateTime.fromMillisecondsSinceEpoch(rentalDS[ 'pickupStart'].millisecondsSinceEpoch).toString(), style: TextStyle(color:Colors.white)),
+                                                      StreamBuilder(
+                                                          stream:
+                                                              Stream.periodic(
+                                                                  Duration(
+                                                                      seconds:
+                                                                          1),
+                                                                  (i) => i),
+                                                          builder: (BuildContext
+                                                                  context,
+                                                              AsyncSnapshot<int>
+                                                                  snapshot) {
+                                                            DateFormat format =
+                                                                DateFormat(
+                                                                    "hh 'hours,' mm 'minutes until pickup'");
+                                                            int now = DateTime
+                                                                    .now()
+                                                                .millisecondsSinceEpoch;
+                                                            int pickupTime = rentalDS[
+                                                                    'pickupStart']
+                                                                .millisecondsSinceEpoch;
+                                                            Duration remaining =
+                                                                Duration(
+                                                                    milliseconds:
+                                                                        (pickupTime -
+                                                                            now));
+                                                            ;
+                                                            var dateString;
+                                                            remaining.inDays ==
+                                                                    0
+                                                                ? dateString =
+                                                                    '${format.format(DateTime.fromMillisecondsSinceEpoch(remaining.inMilliseconds))}'
+                                                                : dateString =
+                                                                    '${remaining.inDays} days, ${format.format(DateTime.fromMillisecondsSinceEpoch(remaining.inMilliseconds))}';
+                                                            return Container(
+                                                              child: Text(
+                                                                dateString,
+                                                                style: TextStyle(
+                                                                    color: Colors
+                                                                        .white),
+                                                              ),
+                                                            );
+                                                          })
+                                                    ],
+                                                  ),
+                                                )
+                                              ],
+                                            ),
                                           ),
                                         );
                                         // return Container(width: MediaQuery.of(context).size.width/2, padding: EdgeInsets.only(left: 10.0), child: _tile());
@@ -1163,13 +1197,13 @@ class HomePageState extends State<HomePage> {
             Column(
               children: <Widget>[
                 reusableCategoryWithAll("REQUESTS", () => debugPrint),
-                buildRequestsTransactionsList(),
+                buildRequests("owner"),
                 reusableCategoryWithAll("UPCOMING", () => debugPrint),
-                buildListingsTransactions('upcoming'),
+                buildTransactions('upcoming', "owner"),
                 reusableCategoryWithAll("CURRENT", () => debugPrint),
-                buildListingsTransactions('current'),
+                buildTransactions('current', "owner"),
                 reusableCategoryWithAll("PAST", () => debugPrint),
-                buildListingsTransactions('past'),
+                buildTransactions('past', "owner"),
               ],
             ),
             Column(
