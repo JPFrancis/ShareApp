@@ -620,25 +620,11 @@ class HomePageState extends State<HomePage> {
         child: Container(
           height: h / 7.5,
           width: h / 7.5,
-          child: Stack(
-            children: <Widget>[
-              SizedBox.expand(
-                  child: Image.asset(
-                image,
-                fit: BoxFit.cover,
-                gaplessPlayback: true,
-              )),
-              SizedBox.expand(
-                child: Container(color: Colors.black45),
-              ),
-              Center(
-                  child: Text(category,
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontFamily: 'Quicksand',
-                          fontSize: h / 60)))
-            ],
-          ),
+          child: Stack( children: <Widget>[
+            SizedBox.expand(child: Image.asset(image, fit: BoxFit.cover, gaplessPlayback: true,)),
+            SizedBox.expand(child: Container(color: Colors.black45),),
+            Center(child: Text(category, style: TextStyle(color: Colors.white, fontFamily: 'Quicksand', fontSize: h / 60)))
+          ],),
         ),
       );
     }

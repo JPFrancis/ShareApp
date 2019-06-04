@@ -677,12 +677,13 @@ class ChatScreenState extends State<ChatScreen> {
   }
 
   Widget buildInput() {
+    bool _buttonEnabled = false;
     return Column(
       children: <Widget>[
         Container(
           height: 50.0,
           padding: EdgeInsets.all(10.0),
-          child: TextField(
+          child: TextFormField(
             expands: true,
             keyboardType: TextInputType.multiline,
             maxLines: null,
@@ -711,7 +712,7 @@ class ChatScreenState extends State<ChatScreen> {
             Spacer(flex: 1000),
             IconButton(
               icon: new Icon(Icons.send),
-              onPressed: () => onSendMessage(textEditingController.text, 0),
+              onPressed: ()=>onSendMessage(textEditingController.text, 0),
               color: primaryColor,
             ),
             SizedBox(width: 10.0),
