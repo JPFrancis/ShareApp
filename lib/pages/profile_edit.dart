@@ -283,7 +283,7 @@ class ProfileEditState extends State<ProfileEdit> {
       child: FittedBox(
         fit: BoxFit.cover,
         child: CachedNetworkImage(
-          key: ValueKey(DateTime.now().millisecondsSinceEpoch),
+          //key: ValueKey(DateTime.now().millisecondsSinceEpoch),
           imageUrl: userEditCopy.photoUrl,
           placeholder: (context, url) => CircularProgressIndicator(),
         ),

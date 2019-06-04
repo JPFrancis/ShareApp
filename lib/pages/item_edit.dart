@@ -500,6 +500,8 @@ class ItemEditState extends State<ItemEdit> {
         'description': itemCopy.description,
         'type': itemCopy.type,
         'condition': itemCopy.condition,
+        'rating': 0,
+        'numRatings': 0,
         'price': itemCopy.price,
         'numImages': itemCopy.numImages,
         'location': itemCopy.location,

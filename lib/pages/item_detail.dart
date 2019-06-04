@@ -254,7 +254,7 @@ class ItemDetailState extends State<ItemDetail> {
             height: 50.0,
             child: ClipOval(
               child: CachedNetworkImage(
-                key: ValueKey(DateTime.now().millisecondsSinceEpoch),
+                //key: ValueKey(DateTime.now().millisecondsSinceEpoch),
                 imageUrl: creatorDS['avatar'],
                 placeholder: (context, url) => new CircularProgressIndicator(),
               ),
@@ -487,7 +487,7 @@ class ItemDetailState extends State<ItemDetail> {
           width: widthOfScreen,
           child: sizedContainer(
             new CachedNetworkImage(
-              key: ValueKey(DateTime.now().millisecondsSinceEpoch),
+              //key: ValueKey(DateTime.now().millisecondsSinceEpoch),
               imageUrl: imagesList[index],
               placeholder: (context, url) => new CircularProgressIndicator(),
             ),

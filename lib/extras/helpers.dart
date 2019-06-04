@@ -34,7 +34,7 @@ class CustomBoxShadow extends BoxShadow {
 
 Widget itemCard(DocumentSnapshot ds, context) {
   CachedNetworkImage image = CachedNetworkImage(
-    key: ValueKey(DateTime.now().millisecondsSinceEpoch),
+    //key: ValueKey(DateTime.now().millisecondsSinceEpoch),
     imageUrl: ds['images'][0],
     placeholder: (context, url) => Container(),
   );
@@ -54,7 +54,7 @@ Widget itemCard(DocumentSnapshot ds, context) {
       ),
       child: Column(
         children: <Widget>[
-          //Container(height: 2 * h / 3, width: w,child: FittedBox(fit: BoxFit.cover, child: image)),
+          Container(height: 2 * h / 3, width: w,child: FittedBox(fit: BoxFit.cover, child: image)),
           SizedBox(
             height: 10.0,
           ),
