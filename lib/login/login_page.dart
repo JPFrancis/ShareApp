@@ -25,7 +25,7 @@ class _LoginPageState extends State<LoginPage> {
   String errorMessage;
 
   // Initial form is login form
-  FormMode _formMode = FormMode.LOGIN;
+  FormMode formMode = FormMode.LOGIN;
   bool isIos;
   bool isLoading;
 
@@ -48,7 +48,7 @@ class _LoginPageState extends State<LoginPage> {
     if (_validateAndSave()) {
       String userId = "";
       try {
-        if (_formMode == FormMode.LOGIN) {
+        if (formMode == FormMode.LOGIN) {
           userId = await widget.auth.signIn(email, password);
           print('Signed in: $userId');
         } else {
@@ -62,7 +62,7 @@ class _LoginPageState extends State<LoginPage> {
 
         if (userId.length > 0 &&
             userId != null &&
-            _formMode == FormMode.LOGIN) {
+            formMode == FormMode.LOGIN) {
           widget.onSignIn();
         }
       } catch (e) {
@@ -89,7 +89,7 @@ class _LoginPageState extends State<LoginPage> {
     //formKey.currentState.reset();
     errorMessage = "";
     setState(() {
-      _formMode = FormMode.SIGNUP;
+      formMode = FormMode.SIGNUP;
     });
   }
 
@@ -97,7 +97,7 @@ class _LoginPageState extends State<LoginPage> {
     //formKey.currentState.reset();
     errorMessage = "";
     setState(() {
-      _formMode = FormMode.LOGIN;
+      formMode = FormMode.LOGIN;
     });
   }
 
@@ -110,13 +110,13 @@ class _LoginPageState extends State<LoginPage> {
         ),
         body: Stack(
           children: <Widget>[
-            _showBody(),
-            _showCircularProgress(),
+            showBody(),
+            //showCircularProgress(),
           ],
         ));
   }
 
-  Widget _showCircularProgress() {
+  Widget showCircularProgress() {
     if (isLoading) {
       return Center(child: CircularProgressIndicator());
     }
@@ -126,7 +126,7 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _showBody() {
+  Widget showBody() {
     return new Container(
         padding: EdgeInsets.all(16.0),
         child: new Form(
@@ -135,20 +135,20 @@ class _LoginPageState extends State<LoginPage> {
             shrinkWrap: true,
             children: <Widget>[
               //_showLogo(),
-              _showEmailInput(),
-              _showPasswordInput(),
-              _showPrimaryButton(),
-              _showSecondaryButton(),
+              showEmailInput(),
+              showPasswordInput(),
+              showPrimaryButton(),
+              showSecondaryButton(),
               googleLogin(),
               //facebookLogin(),
               otherUserSignin(),
-              _showErrorMessage(),
+              showErrorMessage(),
             ],
           ),
         ));
   }
 
-  Widget _showErrorMessage() {
+  Widget showErrorMessage() {
     if (errorMessage.length > 0 && errorMessage != null) {
       return new Text(
         errorMessage,
@@ -179,7 +179,7 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _showEmailInput() {
+  Widget showEmailInput() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(0.0, 100.0, 0.0, 0.0),
       child: new TextFormField(
@@ -198,7 +198,7 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _showPasswordInput() {
+  Widget showPasswordInput() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(0.0, 15.0, 0.0, 0.0),
       child: new TextFormField(
@@ -217,15 +217,15 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _showSecondaryButton() {
+  Widget showSecondaryButton() {
     return new FlatButton(
-      child: _formMode == FormMode.LOGIN
+      child: formMode == FormMode.LOGIN
           ? new Text('Create an account',
               style: new TextStyle(fontSize: 18.0, fontWeight: FontWeight.w300))
           : new Text('Have an account? Sign in',
               style:
                   new TextStyle(fontSize: 18.0, fontWeight: FontWeight.w300)),
-      onPressed: _formMode == FormMode.LOGIN
+      onPressed: formMode == FormMode.LOGIN
           ? _changeFormToSignUp
           : _changeFormToLogin,
     );
@@ -286,7 +286,7 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  Widget _showPrimaryButton() {
+  Widget showPrimaryButton() {
     return new Padding(
         padding: EdgeInsets.fromLTRB(0.0, 45.0, 0.0, 0.0),
         child: SizedBox(
@@ -296,7 +296,7 @@ class _LoginPageState extends State<LoginPage> {
             shape: new RoundedRectangleBorder(
                 borderRadius: new BorderRadius.circular(30.0)),
             color: Colors.red,
-            child: _formMode == FormMode.LOGIN
+            child: formMode == FormMode.LOGIN
                 ? new Text('Login',
                     style: new TextStyle(fontSize: 20.0, color: Colors.white))
                 : new Text('Create account',
@@ -314,7 +314,7 @@ class _LoginPageState extends State<LoginPage> {
 
     String userId = "";
     try {
-      if (_formMode == FormMode.LOGIN) {
+      if (formMode == FormMode.LOGIN) {
         userId = await widget.auth.signIn('e@c.com', '000000');
         print('Signed in: $userId');
       } else {
@@ -326,7 +326,7 @@ class _LoginPageState extends State<LoginPage> {
         isLoading = false;
       });
 
-      if (userId.length > 0 && userId != null && _formMode == FormMode.LOGIN) {
+      if (userId.length > 0 && userId != null && formMode == FormMode.LOGIN) {
         widget.onSignIn();
       }
     } catch (e) {

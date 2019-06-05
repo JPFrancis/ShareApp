@@ -1268,7 +1268,7 @@ class HomePageState extends State<HomePage> {
           default:
             if (snapshot.hasData) {
               DocumentSnapshot ds = snapshot.data;
-              return new Container(
+              return Container(
                 child: Column(
                   children: <Widget>[
                     Container(
@@ -1277,8 +1277,9 @@ class HomePageState extends State<HomePage> {
                       height: 60.0,
                       child: ClipOval(
                         child: CachedNetworkImage(
+                          alignment: Alignment.topLeft,
                           //key: ValueKey(DateTime.now().millisecondsSinceEpoch),
-                          imageUrl: ds['avatar'],
+                          imageUrl: ds['avatar']??'',
                           placeholder: (context, url) => new Container(),
                         ),
                       ),

@@ -383,8 +383,8 @@ class ProfileEditState extends State<ProfileEdit> {
   Future<String> saveImage() async {
     StorageReference ref = FirebaseStorage.instance
         .ref()
-        .child('/profile_pics/${userEditCopy.id}');
-    StorageUploadTask uploadTask = ref.putFile(imageFile);
+        .child('/profile_pics/${userEditCopy.id}.jpg');
+    StorageUploadTask uploadTask = ref.putFile(imageFile, StorageMetadata(contentType: 'image/jpeg'));
 
     return await (await uploadTask.onComplete).ref.getDownloadURL();
   }

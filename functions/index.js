@@ -95,6 +95,16 @@ exports.deleteUser = functions.auth.user().onDelete(event => {
         console.error('Error when deleting card for user $userID', error);
     });
 
+    const filePath = `profile_pics/${userID}`;
+    const file = bucket.file(filePath);
+
+    file.delete().then(() => {
+        console.log(`Successfully deleted profile pic with user id: ${userID} at path ${filePath}`);
+        return 'Delete photo profile pic success';
+    }).catch(err => {
+        console.error(`Failed to remove images, error: ${err}`);
+    });
+
     return firestore.collection('users').doc(userID).delete().then(function () {
         console.log('Deleted user: ', userID);
         return 'Deleted user $userID';
@@ -116,7 +126,7 @@ exports.deleteItemImages = functions.firestore.document('items/{itemId}')
         console.log(`itemId to be deleted: ${id}`);
 
         bucket.deleteFiles({
-            prefix: `${id}/`
+            prefix: `items/${id}/`
         }, function (err) {
             if (!err) {
                 console.log(`Successfully deleted images with item id: ${id}`);
