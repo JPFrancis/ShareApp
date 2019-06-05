@@ -956,7 +956,7 @@ class HomePageState extends State<HomePage> {
       length: 2,
       child: Scaffold(
         appBar: PreferredSize(
-          preferredSize: Size.fromHeight(h / 16),
+          preferredSize: Size.fromHeight(h / 12),
           child: AppBar(
             backgroundColor: primaryColor,
             elevation: 1.0,
