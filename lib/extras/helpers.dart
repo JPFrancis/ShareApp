@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:shareapp/main.dart';
@@ -71,14 +70,6 @@ class StarRating extends StatelessWidget {
 // Reusable Widgets
 
 Widget itemCard(DocumentSnapshot ds, context) {
-  CachedNetworkImage image = CachedNetworkImage(
-    //key: ValueKey(DateTime.now().millisecondsSinceEpoch),
-    imageUrl: ds['images'][0],
-    placeholder: (context, url) => Container(),
-  );
-
-  var img = ds['images'][0];
-
   var card = new Container(child: new LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
     double h = constraints.maxHeight;
@@ -94,57 +85,82 @@ Widget itemCard(DocumentSnapshot ds, context) {
               blurStyle: BlurStyle.outer),
         ],
       ),
-      child: Column(
+      child: Stack(
         children: <Widget>[
           Container(
-              height: 2 * h / 3,
-              width: w,
               decoration: BoxDecoration(
                   image: DecorationImage(
-                      image: NetworkImage(img), fit: BoxFit.cover))),
-          SizedBox(
-            height: 10.0,
+                      image: NetworkImage(ds['images'][0]),
+                      fit: BoxFit.cover))),
+          SizedBox.expand(
+            child: Container(
+              color: Colors.black12,
+            ),
           ),
-          Container(
-            height: h / 3.5,
-            width: w,
-            padding: EdgeInsets.symmetric(horizontal: 5.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Text(ds['name'],
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Container(
+              height: h / 3.5,
+              width: w,
+              padding: EdgeInsets.symmetric(horizontal: 5.0),
+              decoration: BoxDecoration(
+                boxShadow: <BoxShadow>[
+                  CustomBoxShadow(
+                      color: Colors.black38,
+                      blurRadius: 0.1,
+                      blurStyle: BlurStyle.outer),
+                ],
+                color: Color.fromARGB(220, 255, 255, 255),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  SizedBox(
+                    height: 5.0,
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(ds['name'],
+                          style: TextStyle(
+                              fontSize: h / 20,
+                              fontFamily: 'Quicksand',
+                              fontWeight: FontWeight.bold)),
+                      Text(
+                        '${ds['type']}'.toUpperCase(),
                         style: TextStyle(
-                            fontSize: h / 20,
+                            fontSize: h / 25,
                             fontFamily: 'Quicksand',
-                            fontWeight: FontWeight.bold)),
-                    Text(
-                      '${ds['type']}'.toUpperCase(),
+                            fontWeight: FontWeight.bold),
+                      )
+                    ],
+                  ),
+                  SizedBox(
+                    height: 2.0,
+                  ),
+                  Text("\$${ds['price']} per day",
                       style: TextStyle(
-                          fontSize: h / 25,
+                          fontSize: h / 21,
                           fontFamily: 'Quicksand',
-                          fontWeight: FontWeight.bold),
-                    )
-                  ],
-                ),
-                SizedBox(
-                  height: 2.0,
-                ),
-                Text("\$${ds['price']} per day",
-                    style:
-                        TextStyle(fontSize: h / 21, fontFamily: 'Quicksand')),
-                SizedBox(
-                  height: 2.0,
-                ),
-                Row(
-                  children: <Widget>[
-                    StarRating(rating: ds['rating'].toDouble(), sz: h / 15),
-                    Text(ds['numRatings'].toString())
-                  ],
-                )
-              ],
+                          fontWeight: FontWeight.w400)),
+                  SizedBox(
+                    height: 2.0,
+                  ),
+                  Row(
+                    children: <Widget>[
+                      StarRating(rating: ds['rating'].toDouble(), sz: h / 15),
+                      SizedBox(width: 5.0),
+                      Text(
+                        ds['numRatings'].toString(),
+                        style: TextStyle(
+                            fontSize: h / 23,
+                            fontFamily: 'Quicksand',
+                            fontWeight: FontWeight.w400),
+                      )
+                    ],
+                  )
+                ],
+              ),
             ),
           ),
         ],

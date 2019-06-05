@@ -691,12 +691,13 @@ class ChatScreenState extends State<ChatScreen> {
   }
 
   Widget buildInput() {
+    bool _buttonEnabled = false;
     return Column(
       children: <Widget>[
         Container(
           height: 50.0,
           padding: EdgeInsets.all(10.0),
-          child: TextField(
+          child: TextFormField(
             expands: true,
             keyboardType: TextInputType.multiline,
             maxLines: null,

@@ -7,8 +7,12 @@ const firestore = admin.firestore();
 const settings = { timestampInSnapshots: true };
 firestore.settings(settings);
 
+const storage = admin.storage();
+const bucket = storage.bucket();
+
 const stripe = require('stripe')(functions.config().stripe.token);
 
+// add stripe source when new card added
 exports.addStripeSource = functions.firestore.document('cards/{userId}/tokens/{tokenId}')
     .onWrite(async (tokenSnap, context) => {
         var customer;
@@ -44,6 +48,7 @@ exports.addStripeSource = functions.firestore.document('cards/{userId}/tokens/{t
             });
     })
 
+// create new user document when account created
 exports.createUser = functions.auth.user().onCreate(event => {
     console.log('User id to be created: ', event.uid);
 
@@ -77,6 +82,7 @@ exports.createUser = functions.auth.user().onCreate(event => {
     });
 });
 
+// delete user account in firestore when account deleted
 exports.deleteUser = functions.auth.user().onDelete(event => {
     console.log('User id to be deleted: ', event.uid);
 
@@ -96,6 +102,29 @@ exports.deleteUser = functions.auth.user().onDelete(event => {
         console.error('Error when delting user! $userID', error);
     });
 });
+
+// delete images from item in firebase storage when item document deleted
+exports.deleteItemImages = functions.firestore.document('items/{itemId}')
+    .onDelete(async (snap, context) => {
+        const deletedValue = snap.data();
+        const id = deletedValue.id;
+
+        if (id === null) {
+            return null;
+        }
+
+        console.log(`itemId to be deleted: ${id}`);
+
+        bucket.deleteFiles({
+            prefix: `${id}/`
+        }, function (err) {
+            if (!err) {
+                console.log(`Successfully deleted images with item id: ${id}`);
+            } else {
+                console.error(`Failed to remove images, error: ${err}`);
+            }
+        });
+    })
 
 /*
 exports.addItem = functions.https.onCall((data, context) => {

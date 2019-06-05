@@ -42,6 +42,7 @@ class ItemDetailState extends State<ItemDetail> {
   String itemCreator;
 
   bool isLoading = true;
+  bool isOwner;
 
   @override
   void initState() {
@@ -67,16 +68,6 @@ class ItemDetailState extends State<ItemDetail> {
     myUserID = prefs.getString('userID') ?? '';
   }
 
-  void getItemCreatorID() async {
-    Firestore.instance
-        .collection('items')
-        .document(itemDS.documentID)
-        .get()
-        .then((DocumentSnapshot ds) {
-      itemCreator = ds['creatorID'];
-    });
-  }
-
   Future<Null> getSnapshots(bool refreshItemDS) async {
     DocumentSnapshot ds = refreshItemDS
         ? await Firestore.instance
@@ -96,6 +87,8 @@ class ItemDetailState extends State<ItemDetail> {
       if (ds != null) {
         creatorDS = ds;
       }
+
+      isOwner = myUserID == creatorDS.documentID ? true : false;
 
       dr = itemDS['rental'];
 
@@ -212,10 +205,23 @@ class ItemDetailState extends State<ItemDetail> {
         children: <Widget>[
           Stack(children: <Widget>[
             showItemImages(),
-            IconButton(
-              alignment: Alignment.topLeft,
-              icon: BackButton(),
-              onPressed: () => Navigator.pop(context),
+            Row(
+              children: <Widget>[
+                IconButton(
+                  alignment: Alignment.topLeft,
+                  icon: BackButton(),
+                  onPressed: () => Navigator.pop(context),
+                ),
+                Spacer(),
+                isOwner && itemDS['rental'] == null
+                    ? IconButton(
+                        alignment: Alignment.topRight,
+                        padding: EdgeInsets.all(15),
+                        icon: Icon(Icons.delete),
+                        onPressed: deleteItemDialog,
+                      )
+                    : Container(),
+              ],
             ),
           ]),
           showItemType(),
@@ -597,6 +603,48 @@ class ItemDetailState extends State<ItemDetail> {
     LatLng newLoc = LatLng(lat, long);
     googleMapController.animateCamera(CameraUpdate.newCameraPosition(
         new CameraPosition(target: newLoc, zoom: 11.5)));
+  }
+
+  Future<bool> deleteItemDialog() async {
+    return await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Delete item?'),
+          content: Text('${itemDS['name']}'),
+          actions: <Widget>[
+            FlatButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop(
+                    false); // Pops the confirmation dialog but not the page.
+              },
+            ),
+            FlatButton(
+              child: const Text('Delete'),
+              onPressed: () {
+                Navigator.of(context).pop(false);
+                deleteItem();
+                // Pops the confirmation dialog but not the page.
+              },
+            ),
+          ],
+        );
+      },
+    ) ??
+        false;
+  }
+
+  void deleteItem() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    Firestore.instance
+        .collection('items')
+        .document(itemDS.documentID)
+        .delete()
+        .then((_) => Navigator.of(context).pop());
   }
 
   void goToLastScreen() {

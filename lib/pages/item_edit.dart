@@ -668,7 +668,7 @@ class ItemEditState extends State<ItemEdit> {
     ByteData byteData = await asset.requestOriginal();
     List<int> imageData = byteData.buffer.asUint8List();
     StorageReference ref =
-        FirebaseStorage.instance.ref().child('$fileName/$index');
+        FirebaseStorage.instance.ref().child('$fileName/$index.jpg');
     StorageUploadTask uploadTask = ref.putData(imageData);
 
     return await (await uploadTask.onComplete).ref.getDownloadURL();
