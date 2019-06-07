@@ -54,7 +54,7 @@ exports.createUser = functions.auth.user().onCreate(event => {
 
     const userID = event.uid;
     const email = event.email;
-    const photoURL = event.photoURL || 'https://bit.ly/2vcmALY';
+    const photoURL = event.photoURL || 'https://firebasestorage.googleapis.com/v0/b/shareapp-rrd.appspot.com/o/profile_pics%2Fnew_user.png?alt=media&token=60762aec-fa4f-42cd-9d4b-656bd92aeb6d';
     const name = event.displayName || 'new user';
     const creationDate = Date.now();
 

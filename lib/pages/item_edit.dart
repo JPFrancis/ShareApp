@@ -616,7 +616,10 @@ class ItemEditState extends State<ItemEdit> {
   Future<void> deleteAssets() async {
     setState(() {
       for (int i = 0; i < itemCopy.numImages; i++) {
-        FirebaseStorage.instance.ref().child('/items/${itemCopy.id}/$i.jpg').delete();
+        FirebaseStorage.instance
+            .ref()
+            .child('/items/${itemCopy.id}/$i.jpg')
+            .delete();
       }
 
       imageAssets = List<Asset>();
@@ -669,7 +672,8 @@ class ItemEditState extends State<ItemEdit> {
     List<int> imageData = byteData.buffer.asUint8List();
     StorageReference ref =
         FirebaseStorage.instance.ref().child('/items/$fileName/$index.jpg');
-    StorageUploadTask uploadTask = ref.putData(imageData, StorageMetadata(contentType: 'image/jpeg'));
+    StorageUploadTask uploadTask =
+        ref.putData(imageData, StorageMetadata(contentType: 'image/jpeg'));
 
     return await (await uploadTask.onComplete).ref.getDownloadURL();
   }

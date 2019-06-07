@@ -49,6 +49,8 @@ class ItemDetailState extends State<ItemDetail> {
     // TODO: implement initState
     super.initState();
 
+    //delayPage();
+
     itemDS = widget.initItemDS;
 
     getMyUserID();
@@ -492,7 +494,7 @@ class ItemDetailState extends State<ItemDetail> {
         return new Container(
           width: widthOfScreen,
           child: sizedContainer(
-            new CachedNetworkImage(
+            CachedNetworkImage(
               //key: ValueKey(DateTime.now().millisecondsSinceEpoch),
               imageUrl: imagesList[index],
               placeholder: (context, url) => new CircularProgressIndicator(),
@@ -607,31 +609,31 @@ class ItemDetailState extends State<ItemDetail> {
 
   Future<bool> deleteItemDialog() async {
     return await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Delete item?'),
-          content: Text('${itemDS['name']}'),
-          actions: <Widget>[
-            FlatButton(
-              child: const Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop(
-                    false); // Pops the confirmation dialog but not the page.
-              },
-            ),
-            FlatButton(
-              child: const Text('Delete'),
-              onPressed: () {
-                Navigator.of(context).pop(false);
-                deleteItem();
-                // Pops the confirmation dialog but not the page.
-              },
-            ),
-          ],
-        );
-      },
-    ) ??
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Delete item?'),
+              content: Text('${itemDS['name']}'),
+              actions: <Widget>[
+                FlatButton(
+                  child: const Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(context).pop(
+                        false); // Pops the confirmation dialog but not the page.
+                  },
+                ),
+                FlatButton(
+                  child: const Text('Delete'),
+                  onPressed: () {
+                    Navigator.of(context).pop(false);
+                    deleteItem();
+                    // Pops the confirmation dialog but not the page.
+                  },
+                ),
+              ],
+            );
+          },
+        ) ??
         false;
   }
 

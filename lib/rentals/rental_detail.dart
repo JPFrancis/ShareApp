@@ -69,7 +69,7 @@ class RentalDetailState extends State<RentalDetail> {
 
     getMyUserID();
     getSnapshots();
-    delayPage();
+    //delayPage();
   }
 
   void delayPage() async {
@@ -122,6 +122,7 @@ class RentalDetailState extends State<RentalDetail> {
               isRenter = myUserId == renterDS.documentID ? true : false;
               rentalCC = isRenter ? 'renterCC' : 'ownerCC';
               userDS = isRenter ? renterDS : ownerDS;
+              delayPage();
             }
           }
         }
