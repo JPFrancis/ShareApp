@@ -213,12 +213,12 @@ class ItemDetailState extends State<ItemDetail> {
                   onPressed: () => Navigator.pop(context),
                 ),
                 Spacer(),
-                isOwner && itemDS['rental'] == null
+                isOwner
                     ? IconButton(
                         alignment: Alignment.topRight,
                         padding: EdgeInsets.all(15),
-                        icon: Icon(Icons.delete),
-                        onPressed: deleteItemDialog,
+                        icon: Icon(Icons.edit),
+                        onPressed: ()=>navigateToEdit(),
                       )
                     : Container(),
               ],
@@ -519,19 +519,11 @@ class ItemDetailState extends State<ItemDetail> {
     Item result = await Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (BuildContext context) => ItemEdit(
-                item: editItem,
-              ),
+          builder: (BuildContext context) => ItemEdit(item: editItem),
           fullscreenDialog: true,
         ));
 
-    if (result != null) {
-      setState(
-        () {
-          getSnapshots(true);
-        },
-      );
-    }
+    if (result != null) {setState(() { getSnapshots(true); });}
   }
 
   void handleRequestItemPressed() async {

@@ -9,6 +9,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:multi_image_picker/multi_image_picker.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/models/item.dart';
+import 'package:shareapp/services/const.dart';
 import 'package:shareapp/services/select_location.dart';
 
 enum DismissDialogAction {
@@ -95,13 +96,7 @@ class ItemEditState extends State<ItemEdit> {
       'Other',
     ];
     dropDownItemType = itemType
-        .map(
-          (String value) => DropdownMenuItem<String>(
-                value: value,
-                child: Text(value),
-              ),
-        )
-        .toList();
+        .map((String value) => DropdownMenuItem<String>(value: value, child: Text(value, style: TextStyle(fontFamily: 'Quicksand')))).toList();
 
     const itemCondition = <String>[
       'Lightly Used',
@@ -110,31 +105,21 @@ class ItemEditState extends State<ItemEdit> {
       'Has Character',
     ];
     dropDownItemCondition = itemCondition
-        .map(
-          (String value) => DropdownMenuItem<String>(
-                value: value,
-                child: Text(value),
-              ),
-        )
-        .toList();
+        .map((String value) => DropdownMenuItem<String>(value: value, child: Text(value, style: TextStyle(fontFamily: 'Quicksand')))).toList();
 
     return Scaffold(
       resizeToAvoidBottomPadding: true,
       body: Stack(
         children: <Widget>[
           isUploading
-              ? Container(
-                  decoration:
-                      new BoxDecoration(color: Colors.white.withOpacity(0.0)),
-                )
+              ? Container(decoration: new BoxDecoration(color: Colors.white.withOpacity(0.0)),)
               : showBody(),
           showCircularProgress(),
         ],
       ),
       floatingActionButton: RaisedButton(
+        child: Text('Next ＞', style: TextStyle(color: Colors.white, fontFamily: 'Quicksand')),
         color: Color(0xff007f6e),
-        child: Text('Next ＞',
-            style: TextStyle(color: Colors.white, fontFamily: 'Quicksand')),
         onPressed: () {
           saveWarning();
         },
@@ -144,7 +129,6 @@ class ItemEditState extends State<ItemEdit> {
 
   Widget showBody() {
     double height = MediaQuery.of(context).size.height;
-    double width = MediaQuery.of(context).size.width;
 
     return Form(
       key: formKey,
@@ -157,35 +141,41 @@ class ItemEditState extends State<ItemEdit> {
             backButton(context),
             Padding(
               padding: const EdgeInsets.only(top: 60, bottom: 60.0),
-              child: Center(child: Text("[ add image thumbnails here ]")),
+              child: Center(child: Text("[ add image thumbnails here ]", style: TextStyle(fontFamily: 'Quicksand'),)),
             ),
             showImageButtons(),
             divider(),
             reusableCategory("DETAILS"),
-            reusableTextEntry("What are you selling? (required)", true,
-                nameController, 'name'),
-            reusableTextEntry("Describe it... (required)", true,
-                descriptionController, 'description'),
+            reusableTextEntry("What are you selling? (required)", true, nameController, 'name'),
+            reusableTextEntry("Describe it... (required)", true, descriptionController, 'description'),
             divider(),
             reusableCategory("SPECIFICS"),
             showTypeSelector(),
             showConditionSelector(),
             divider(),
             reusableCategory("PRICE"),
-            reusableTextEntry(
-                "Price", true, priceController, 'price', TextInputType.number),
+            reusableTextEntry( "Price", true, priceController, 'price', TextInputType.number),
             divider(),
             reusableCategory("LOCATION"),
             showItemLocation(),
             showLocationButtons(),
+            deleteButton(),
           ]),
     );
   }
 
-  Widget reusableTextEntry(placeholder, required, controller, saveTo,
-      [keyboard = TextInputType.text]) {
+  Widget deleteButton(){
+    return OutlineButton(
+      child: Text("Delete Item", style: TextStyle(fontFamily: 'Quicksand', color: Colors.red),),
+      onPressed: ()=>print("hello"),
+      borderSide: BorderSide(color: Colors.red),
+    );
+  }
+
+  Widget reusableTextEntry(placeholder, required, controller, saveTo, [keyboard = TextInputType.text]) {
     return Container(
       child: TextField(
+        style: TextStyle(fontFamily: 'Quicksand'),
         keyboardType: keyboard,
         controller: controller,
         onChanged: (value) {
@@ -203,9 +193,7 @@ class ItemEditState extends State<ItemEdit> {
           }
         },
         decoration: InputDecoration(
-          labelStyle: TextStyle(
-            color: required ? Colors.black54 : Colors.black26,
-          ),
+          labelStyle: TextStyle(color: required ? Colors.black54 : Colors.black26, fontFamily: 'Quicksand'),
           labelText: placeholder,
           //border: OutlineInputBorder(borderRadius: BorderRadius.circular(5.0)),
         ),
@@ -214,10 +202,7 @@ class ItemEditState extends State<ItemEdit> {
   }
 
   Widget reusableCategory(text) {
-    return Container(
-        alignment: Alignment.centerLeft,
-        child: Text(text,
-            style: TextStyle(fontSize: 11.0, fontWeight: FontWeight.w100)));
+    return Container(alignment: Alignment.centerLeft, child: Text(text, style: TextStyle(fontSize: 11.0, fontWeight: FontWeight.w100, fontFamily: 'Quicksand')));
   }
 
   Widget showItemCreator() {
@@ -233,11 +218,9 @@ class ItemEditState extends State<ItemEdit> {
       padding: EdgeInsets.only(left: 15.0, right: 15.0),
       child: DropdownButton<String>(
         value: itemCopy.type,
-        hint: Text('Category'),
+        hint: Text('Category', style: TextStyle(fontFamily: 'Quicksand'),),
         onChanged: (String newValue) {
-          setState(() {
-            itemCopy.type = newValue;
-          });
+          setState(()=>itemCopy.type = newValue);
         },
         items: dropDownItemType,
       ),
@@ -249,11 +232,9 @@ class ItemEditState extends State<ItemEdit> {
       padding: EdgeInsets.only(left: 15.0, right: 15.0),
       child: DropdownButton<String>(
         value: itemCopy.condition,
-        hint: Text('Condition'),
+        hint: Text('Condition', style: TextStyle(fontFamily: 'Quicksand'),),
         onChanged: (String newValue) {
-          setState(() {
-            itemCopy.condition = newValue;
-          });
+          setState(() { itemCopy.condition = newValue; });
         },
         items: dropDownItemCondition,
       ),
@@ -305,10 +286,8 @@ class ItemEditState extends State<ItemEdit> {
             child: RaisedButton(
                 color: Colors.white,
                 textColor: Colors.black,
-                child: Text("Add Images"),
-                onPressed: () {
-                  _showAlertDialog(context);
-                }),
+                child: Text("Add Images", style: TextStyle(fontFamily: 'Quicksand'),),
+                onPressed: () { _showAlertDialog(context); }),
           ),
           /*
           Expanded(
@@ -335,14 +314,8 @@ class ItemEditState extends State<ItemEdit> {
   Widget showSelectedLocation() {
     return Container(
       child: itemCopy.location != null
-          ? Text(
-              "Selected location: ${itemCopy.location.latitude}, ${itemCopy.location.longitude}",
-              style: TextStyle(fontSize: 16),
-            )
-          : Text(
-              "No location yet",
-              style: TextStyle(fontSize: 16),
-            ),
+          ? Text("Selected location: ${itemCopy.location.latitude}, ${itemCopy.location.longitude}", style: TextStyle(fontSize: 16),)
+          : Text("No location yet", style: TextStyle(fontSize: 16),),
     );
   }
 
@@ -411,44 +384,23 @@ class ItemEditState extends State<ItemEdit> {
         children: <Widget>[
           Expanded(
             child: RaisedButton(
-              shape: new RoundedRectangleBorder(
-                  borderRadius: new BorderRadius.circular(5.0)),
-              color: Colors.red,
+              color: primaryColor,
               textColor: Colors.white,
               child: itemCopy.location == null
-                  ? Text(
-                      "Add Location",
-                      textScaleFactor: 1.25,
-                    )
-                  : Text(
-                      "Edit Location",
-                      textScaleFactor: 1.25,
-                    ),
-              onPressed: () {
-                setState(() {
-                  navToLocation();
-                });
-              },
+                  ? Text("Add Location", textScaleFactor: 1.25, style: TextStyle(fontFamily: 'Quicksand'),)
+                  : Text("Edit Location", textScaleFactor: 1.25, style: TextStyle(fontFamily: 'Quicksand',)),
+              onPressed: () {setState(() {navToLocation();});},
             ),
           ),
-          Container(
-            width: 15.0,
-          ),
+          SizedBox(width: 15.0,),
           Expanded(
             child: RaisedButton(
-              shape: new RoundedRectangleBorder(
-                  borderRadius: new BorderRadius.circular(5.0)),
-              color: Colors.red,
+              color: primaryColor,
               textColor: Colors.white,
-              child: Text(
-                "Reset Location",
-                textScaleFactor: 1.25,
-              ),
+              child: Text("Reset Location", textScaleFactor: 1.25, style: TextStyle(fontFamily: 'Quicksand'),),
               onPressed: itemCopy.location == null
                   ? null
-                  : () {
-                      resetLocation();
-                    },
+                  : () => resetLocation(),
             ),
           ),
         ],
