@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
@@ -10,7 +11,6 @@ import 'package:multi_image_picker/multi_image_picker.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/models/item.dart';
 import 'package:shareapp/services/select_location.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
 enum DismissDialogAction {
   cancel,
@@ -222,49 +222,54 @@ class ItemEditState extends State<ItemEdit> {
   Widget showImages() {
     double widthOfScreen = MediaQuery.of(context).size.width;
 
-    return isEdit?
-Container(
-      height: widthOfScreen,
-      child: SizedBox.expand(child: getImagesListView(context)),
-    )
+    return isEdit
+        ? Container(
+            height: widthOfScreen,
+            child: SizedBox.expand(child: getImagesListView(context)),
+          )
         : buildAssetList();
   }
 
   getImagesListView(BuildContext context) {
     double widthOfScreen = MediaQuery.of(context).size.width;
 
-    return itemCopy.images.length>0?ListView.builder(
-      shrinkWrap: true,
-      scrollDirection: Axis.horizontal,
-      itemCount: itemCopy.images.length,
-      itemBuilder: (BuildContext context, int index) {
-        return Container(
-          width: widthOfScreen,
-          child: sizedContainer(
-            CachedNetworkImage(
-              imageUrl: itemCopy.images[index],
-              placeholder: (context, url) => new CircularProgressIndicator(),
-            ),
-          ),
-        );
-      },
-    ):Container();
+    return itemCopy.images.length > 0
+        ? ListView.builder(
+            shrinkWrap: true,
+            scrollDirection: Axis.horizontal,
+            itemCount: itemCopy.images.length,
+            itemBuilder: (BuildContext context, int index) {
+              return Container(
+                width: widthOfScreen,
+                child: sizedContainer(
+                  CachedNetworkImage(
+                    imageUrl: itemCopy.images[index],
+                    placeholder: (context, url) =>
+                        new CircularProgressIndicator(),
+                  ),
+                ),
+              );
+            },
+          )
+        : Container();
   }
 
   Widget buildAssetList() {
     return Container(
       height: 50,
-      child: imageAssets.length > 0 ? GridView.count(
-        crossAxisCount: 3,
-        children: List.generate(imageAssets.length, (index) {
-          Asset asset = imageAssets[index];
-          return AssetThumb(
-            asset: asset,
-            width: 300,
-            height: 300,
-          );
-        }),
-      ):Container(),
+      child: imageAssets.length > 0
+          ? GridView.count(
+              crossAxisCount: 3,
+              children: List.generate(imageAssets.length, (index) {
+                Asset asset = imageAssets[index];
+                return AssetThumb(
+                  asset: asset,
+                  width: 300,
+                  height: 300,
+                );
+              }),
+            )
+          : Container(),
     );
   }
 
