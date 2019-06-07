@@ -50,7 +50,7 @@ class HomePageState extends State<HomePage> {
   List bottomTabPages;
   int currentTabIndex;
   int badge;
-  bool isLoading = true;
+  bool isLoading = false;
 
   Color primaryColor = Color.fromRGBO(52, 117, 115, 1);
   EdgeInsets edgeInset;
@@ -72,6 +72,11 @@ class HomePageState extends State<HomePage> {
 
     myUserID = widget.firebaseUser.uid;
 
+    setPrefs();
+    updateLastActive();
+    getAllItems();
+    //checkPrefs();
+
     bottomNavBarTiles = <BottomNavigationBarItem>[
       bottomNavTile('Search', Icon(Icons.search), false),
       bottomNavTile('Rentals', Icon(Icons.shopping_cart), false),
@@ -79,27 +84,6 @@ class HomePageState extends State<HomePage> {
       bottomNavTile('Messages', Icon(Icons.forum), false),
       bottomNavTile('Profile', Icon(Icons.account_circle), false),
     ];
-/*
-    subscription = Firestore.instance
-        .collection('rentals')
-        .where('owner',
-            isEqualTo:
-                Firestore.instance.collection('users').document(myUserID))
-        .where('status', isEqualTo: 0)
-        .snapshots()
-        .listen((data) {
-      badge = data.documents.toList().length;
-
-    }, onDone: () {
-      print("Task Done");
-    }, onError: (error) {
-      print("Some Error");
-    });
-*/
-    setPrefs();
-    updateLastActive();
-    getAllItems();
-    checkPrefs();
     //delayPage();
   }
 
@@ -128,14 +112,14 @@ class HomePageState extends State<HomePage> {
       String tempUserID = await prefs.get('userID');
 
       if (tempUserID != null) {
+        debugPrint('======= myUserID: ${myUserID}');
+        debugPrint('======= tempUserID: ${tempUserID}');
         if (myUserID != tempUserID) {
           setPrefs();
         } else {
-          if (myUserID != null) {
-            setState(() {
-              isLoading = false;
-            });
-          }
+          setState(() {
+            isLoading = false;
+          });
         }
       }
     }

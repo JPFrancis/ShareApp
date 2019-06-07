@@ -226,6 +226,7 @@ class ItemDetailState extends State<ItemDetail> {
               ],
             ),
           ]),
+          editButton(),
           showItemType(),
           showItemName(),
           showItemCondition(),
@@ -235,6 +236,13 @@ class ItemDetailState extends State<ItemDetail> {
           showItemLocation(),
         ],
       ),
+    );
+  }
+
+  Widget editButton() {
+    return RaisedButton(
+      onPressed: navigateToEdit,
+      child: Text('edit item'),
     );
   }
 

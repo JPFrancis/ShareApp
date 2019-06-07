@@ -10,6 +10,7 @@ import 'package:multi_image_picker/multi_image_picker.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/models/item.dart';
 import 'package:shareapp/services/select_location.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 enum DismissDialogAction {
   cancel,
@@ -155,11 +156,9 @@ class ItemEditState extends State<ItemEdit> {
               top: height / 15, bottom: 10.0, left: 18.0, right: 18.0),
           children: <Widget>[
             backButton(context),
-            Padding(
-              padding: const EdgeInsets.only(top: 60, bottom: 60.0),
-              child: Center(child: Text("[ add image thumbnails here ]")),
-            ),
-            showImageButtons(),
+            //Padding(padding: const EdgeInsets.only(top: 60, bottom: 60.0),child: Center(child: Text("[ add image thumbnails here ]"))),
+            showImages(),
+            isEdit ? Container() : showImageButtons(),
             divider(),
             reusableCategory("DETAILS"),
             reusableTextEntry("What are you selling? (required)", true,
@@ -218,6 +217,65 @@ class ItemEditState extends State<ItemEdit> {
         alignment: Alignment.centerLeft,
         child: Text(text,
             style: TextStyle(fontSize: 11.0, fontWeight: FontWeight.w100)));
+  }
+
+  Widget showImages() {
+    double widthOfScreen = MediaQuery.of(context).size.width;
+
+    return isEdit?
+Container(
+      height: widthOfScreen,
+      child: SizedBox.expand(child: getImagesListView(context)),
+    )
+        : buildAssetList();
+  }
+
+  getImagesListView(BuildContext context) {
+    double widthOfScreen = MediaQuery.of(context).size.width;
+
+    return itemCopy.images.length>0?ListView.builder(
+      shrinkWrap: true,
+      scrollDirection: Axis.horizontal,
+      itemCount: itemCopy.images.length,
+      itemBuilder: (BuildContext context, int index) {
+        return Container(
+          width: widthOfScreen,
+          child: sizedContainer(
+            CachedNetworkImage(
+              imageUrl: itemCopy.images[index],
+              placeholder: (context, url) => new CircularProgressIndicator(),
+            ),
+          ),
+        );
+      },
+    ):Container();
+  }
+
+  Widget buildAssetList() {
+    return Container(
+      height: 50,
+      child: imageAssets.length > 0 ? GridView.count(
+        crossAxisCount: 3,
+        children: List.generate(imageAssets.length, (index) {
+          Asset asset = imageAssets[index];
+          return AssetThumb(
+            asset: asset,
+            width: 300,
+            height: 300,
+          );
+        }),
+      ):Container(),
+    );
+  }
+
+  Widget sizedContainer(Widget child) {
+    return new SizedBox(
+      width: 300.0,
+      height: 150.0,
+      child: new Center(
+        child: child,
+      ),
+    );
   }
 
   Widget showItemCreator() {
