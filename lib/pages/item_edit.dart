@@ -11,6 +11,7 @@ import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/models/item.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:shareapp/services/select_location.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 enum DismissDialogAction {
   cancel,
@@ -139,10 +140,9 @@ class ItemEditState extends State<ItemEdit> {
               top: height / 15, bottom: 10.0, left: 18.0, right: 18.0),
           children: <Widget>[
             backButton(context),
-            Padding(
-              padding: const EdgeInsets.only(top: 60, bottom: 60.0),
-              child: Center(child: Text("[ add image thumbnails here ]", style: TextStyle(fontFamily: 'Quicksand'),)),
-            ),
+            //Padding(padding: const EdgeInsets.only(top: 60, bottom: 60.0),child: Center(child: Text("[ add image thumbnails here ]"))),
+            showImages(),
+            //isEdit ? Container() : showImageButtons(),
             showImageButtons(),
             divider(),
             reusableCategory("DETAILS"),
@@ -203,6 +203,62 @@ class ItemEditState extends State<ItemEdit> {
 
   Widget reusableCategory(text) {
     return Container(alignment: Alignment.centerLeft, child: Text(text, style: TextStyle(fontSize: 11.0, fontWeight: FontWeight.w100, fontFamily: 'Quicksand')));
+  }
+
+  Widget showImages() {
+    double widthOfScreen = MediaQuery.of(context).size.width;
+
+    return isEdit? Container(
+      height: widthOfScreen,
+      child: SizedBox.expand(child: getImagesListView(context)),
+    )
+        : buildAssetList();
+  }
+
+  getImagesListView(BuildContext context) {
+    double widthOfScreen = MediaQuery.of(context).size.width;
+
+    return itemCopy.images.length>0?ListView.builder(
+      shrinkWrap: true,
+      scrollDirection: Axis.horizontal,
+      itemCount: itemCopy.images.length,
+      itemBuilder: (BuildContext context, int index) {
+        return Container(
+          width: widthOfScreen,
+          child: sizedContainer(
+            CachedNetworkImage(
+              imageUrl: itemCopy.images[index],
+              placeholder: (context, url) => new CircularProgressIndicator(),
+            ),
+          ),
+        );
+      },
+    ):Container();
+  }
+
+  Widget buildAssetList() {
+    return Container(
+      height: 120,
+      width: 120,
+      child: imageAssets.length > 0 ? ListView(
+        scrollDirection: Axis.horizontal,
+        children: List.generate(imageAssets.length, (index) {
+          Asset asset = imageAssets[index];
+          return Container(padding: EdgeInsets.only(right: 10.0),
+            child: AssetThumb(asset: asset, height: 120, width: 120,));
+        }),
+      ):Container(),
+    );
+  }
+
+  Widget sizedContainer(Widget child) {
+    return new SizedBox(
+      width: 300.0,
+      height: 150.0,
+      child: new Center(
+        child: child,
+      ),
+    );
   }
 
   Widget showItemCreator() {
@@ -568,7 +624,10 @@ class ItemEditState extends State<ItemEdit> {
   Future<void> deleteAssets() async {
     setState(() {
       for (int i = 0; i < itemCopy.numImages; i++) {
-        FirebaseStorage.instance.ref().child('/items/${itemCopy.id}/$i.jpg').delete();
+        FirebaseStorage.instance
+            .ref()
+            .child('/items/${itemCopy.id}/$i.jpg')
+            .delete();
       }
 
       imageAssets = List<Asset>();
@@ -621,7 +680,8 @@ class ItemEditState extends State<ItemEdit> {
     List<int> imageData = byteData.buffer.asUint8List();
     StorageReference ref =
         FirebaseStorage.instance.ref().child('/items/$fileName/$index.jpg');
-    StorageUploadTask uploadTask = ref.putData(imageData, StorageMetadata(contentType: 'image/jpeg'));
+    StorageUploadTask uploadTask =
+        ref.putData(imageData, StorageMetadata(contentType: 'image/jpeg'));
 
     return await (await uploadTask.onComplete).ref.getDownloadURL();
   }

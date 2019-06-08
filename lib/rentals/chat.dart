@@ -47,7 +47,7 @@ class ChatScreenState extends State<ChatScreen> {
   SharedPreferences prefs;
 
   File imageFile;
-  bool isLoading;
+  bool isLoading = true;
   String imageUrl;
   String myUserID;
 
@@ -70,7 +70,6 @@ class ChatScreenState extends State<ChatScreen> {
     imageUrl = '';
     getMyUserID();
     getSnapshots();
-    delayPage();
   }
 
   void delayPage() async {
@@ -126,16 +125,13 @@ class ChatScreenState extends State<ChatScreen> {
       }
 
       otherUserDS = myUserID == ownerDS.documentID ? renterDS : ownerDS;
-      /*
+
       if (prefs != null &&
           itemDS != null &&
           ownerDS != null &&
           renterDS != null) {
-        setState(() {
-          isLoading = false;
-        });
+        delayPage();
       }
-      */
     }
   }
 

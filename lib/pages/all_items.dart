@@ -17,7 +17,7 @@ class AllItems extends StatefulWidget {
 }
 
 class AllItemsState extends State<AllItems> {
-  bool isLoading;
+  bool isLoading = true;
 
   @override
   void initState() {
@@ -28,7 +28,6 @@ class AllItemsState extends State<AllItems> {
   }
 
   void delayPage() async {
-    isLoading = true;
     Future.delayed(Duration(milliseconds: 750)).then((_) {
       setState(() {
         isLoading = false;

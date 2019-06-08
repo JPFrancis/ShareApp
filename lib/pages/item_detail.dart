@@ -5,11 +5,13 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/models/item.dart';
 import 'package:shareapp/pages/item_edit.dart';
 import 'package:shareapp/rentals/item_request.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
+import 'package:shareapp/services/const.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ItemDetail extends StatefulWidget {
@@ -114,11 +116,10 @@ class ItemDetailState extends State<ItemDetail> {
         onRefresh: () => getSnapshots(true),
         child: isLoading ? Container() : showBody(),
       ),
-      //floatingActionButton: showFAB(),
+      floatingActionButton: IconButton(onPressed: ()=>Navigator.pop(context), icon: Icon(Icons.arrow_back_ios, color: primaryColor,), padding: EdgeInsets.only(top: 100.0, left: 0),),
+      floatingActionButtonLocation: FloatingActionButtonLocation.miniStartTop,
       bottomNavigationBar: isLoading
-          ? Container(
-              height: 0,
-            )
+          ? Container(height: 0,)
           : bottomDetails(),
     );
   }
@@ -163,7 +164,7 @@ class ItemDetailState extends State<ItemDetail> {
         onPressed:
             itemDS['rental'] != null ? null : () => handleRequestItemPressed(),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5.0)),
-        color: Colors.red,
+        color: primaryColor,
         child: Text('Request Item', //Text("Check Availability",
             style: TextStyle(color: Colors.white, fontFamily: 'Quicksand')));
   }
@@ -173,21 +174,8 @@ class ItemDetailState extends State<ItemDetail> {
         onPressed:
             itemDS['rental'] == null ? null : () => handleViewRentalPressed(),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5.0)),
-        color: Colors.red,
-        child: Text('View Rental',
-            style: TextStyle(color: Colors.white, fontFamily: 'Quicksand')));
-  }
-
-  Widget showFAB() {
-    return Padding(
-      padding: const EdgeInsets.only(right: 10.0),
-      child: RaisedButton(
-        onPressed: () => navigateToEdit(),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5.0)),
-        color: Colors.red,
-        child: Icon(Icons.edit),
-      ),
-    );
+        color: primaryColor,
+        child: Text('View Rental', style: TextStyle(color: Colors.white, fontFamily: 'Quicksand')));
   }
 
   Future<DocumentSnapshot> getItemFromFirestore() async {
@@ -200,39 +188,46 @@ class ItemDetailState extends State<ItemDetail> {
   }
 
   Widget showBody() {
-    return WillPopScope(
-      child: ListView(
+    return ListView(
+      padding: EdgeInsets.all(0),
+      children: <Widget>[
+        Stack(children: <Widget>[
+          showItemImages(),
+          Row(
+            children: <Widget>[
+              Spacer(),
+              isOwner
+                  ? IconButton(
+                      alignment: Alignment.topRight,
+                      padding: EdgeInsets.symmetric(vertical: 40.0, horizontal: 15.0),
+                      icon: Icon(Icons.edit, color: Colors.pink,),
+                      onPressed: ()=>navigateToEdit(),
+                    )
+                  : Container(),
+            ],
+          ),
+        ]),
+        showItemType(),
+        showItemName(),
+        showItemCondition(),
+        showItemCreator(),
+        showItemDescription(),
+        divider(),
+        showItemLocation(),
+        divider(),
+        showReviews(),
+      ],
+    );
+  }
+
+  Widget showReviews(){
+    double h = MediaQuery.of(context).size.height;
+    return Container(padding: EdgeInsets.symmetric(horizontal: 20.0),
+      child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
-          Stack(children: <Widget>[
-            showItemImages(),
-            Row(
-              children: <Widget>[
-                IconButton(
-                  alignment: Alignment.topLeft,
-                  icon: BackButton(),
-                  onPressed: () => Navigator.pop(context),
-                ),
-                Spacer(),
-                isOwner
-                    ? IconButton(
-                        alignment: Alignment.topRight,
-                        padding: EdgeInsets.all(15),
-                        icon: Icon(Icons.edit),
-                        onPressed: ()=>navigateToEdit(),
-                      )
-                    : Container(),
-              ],
-            ),
-          ]),
-          showItemType(),
-          showItemName(),
-          showItemCondition(),
-          showItemCreator(),
-          showItemDescription(),
-          divider(),
-          showItemLocation(),
-        ],
-      ),
+        Text('Reviews', style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.bold, color: Colors.black87, fontFamily: 'Quicksand')),
+        StarRating(rating: itemDS['rating'].toDouble(), sz: h / 30),
+      ],),
     );
   }
 
@@ -405,7 +400,7 @@ class ItemDetailState extends State<ItemDetail> {
     return imagesList.length > 0
         ? Container(
             height: widthOfScreen,
-            child: SizedBox.expand(child: getImagesListView(context)),
+            child: getImagesListView(context)
           )
         : Text('No images yet\n');
   }
@@ -424,14 +419,7 @@ class ItemDetailState extends State<ItemDetail> {
             alignment: Alignment.centerLeft,
             child: Padding(
               padding: EdgeInsets.only(bottom: 12.0),
-              child: Text('The Location',
-                  style: TextStyle(
-                      fontSize: 15.0,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                      fontFamily: 'Quicksand')
-                  //textScaleFactor: 1.2,
-                  ),
+              child: Text('The Location', style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.bold, color: Colors.black87, fontFamily: 'Quicksand')),
             ),
           ),
           Center(
@@ -491,9 +479,10 @@ class ItemDetailState extends State<ItemDetail> {
       itemBuilder: (BuildContext context, int index) {
         return new Container(
           width: widthOfScreen,
-          child: sizedContainer(
-            new CachedNetworkImage(
-              //key: ValueKey(DateTime.now().millisecondsSinceEpoch),
+          height: widthOfScreen,
+          child: FittedBox(
+            fit: BoxFit.cover,
+            child: CachedNetworkImage(
               imageUrl: imagesList[index],
               placeholder: (context, url) => new CircularProgressIndicator(),
             ),
@@ -597,35 +586,7 @@ class ItemDetailState extends State<ItemDetail> {
         new CameraPosition(target: newLoc, zoom: 11.5)));
   }
 
-  Future<bool> deleteItemDialog() async {
-    return await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Delete item?'),
-          content: Text('${itemDS['name']}'),
-          actions: <Widget>[
-            FlatButton(
-              child: const Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop(
-                    false); // Pops the confirmation dialog but not the page.
-              },
-            ),
-            FlatButton(
-              child: const Text('Delete'),
-              onPressed: () {
-                Navigator.of(context).pop(false);
-                deleteItem();
-                // Pops the confirmation dialog but not the page.
-              },
-            ),
-          ],
-        );
-      },
-    ) ??
-        false;
-  }
+
 
   void deleteItem() async {
     setState(() {

@@ -60,9 +60,7 @@ class _LoginPageState extends State<LoginPage> {
           isLoading = false;
         });
 
-        if (userId.length > 0 &&
-            userId != null &&
-            formMode == FormMode.LOGIN) {
+        if (userId.length > 0 && userId != null && formMode == FormMode.LOGIN) {
           widget.onSignIn();
         }
       } catch (e) {
@@ -225,9 +223,8 @@ class _LoginPageState extends State<LoginPage> {
           : new Text('Have an account? Sign in',
               style:
                   new TextStyle(fontSize: 18.0, fontWeight: FontWeight.w300)),
-      onPressed: formMode == FormMode.LOGIN
-          ? _changeFormToSignUp
-          : _changeFormToLogin,
+      onPressed:
+          formMode == FormMode.LOGIN ? _changeFormToSignUp : _changeFormToLogin,
     );
   }
 
