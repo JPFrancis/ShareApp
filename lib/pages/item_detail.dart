@@ -116,7 +116,10 @@ class ItemDetailState extends State<ItemDetail> {
         onRefresh: () => getSnapshots(true),
         child: isLoading ? Container() : showBody(),
       ),
-      floatingActionButton: IconButton(onPressed: ()=>Navigator.pop(context), icon: Icon(Icons.arrow_back_ios, color: primaryColor,), padding: EdgeInsets.only(top: 100.0, left: 0),),
+      floatingActionButton: Container(
+        padding: const EdgeInsets.only(top: 120.0, left: 5.0),
+        child: FloatingActionButton(onPressed: ()=>Navigator.pop(context),child: Icon(Icons.arrow_back), elevation: 1, backgroundColor: Colors.white70, foregroundColor: primaryColor,),
+      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.miniStartTop,
       bottomNavigationBar: isLoading
           ? Container(height: 0,)

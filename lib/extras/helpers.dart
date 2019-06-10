@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:shareapp/main.dart';
@@ -71,11 +70,6 @@ class StarRating extends StatelessWidget {
 // Reusable Widgets
 
 Widget itemCard(DocumentSnapshot ds, context) {
-  CachedNetworkImage image = CachedNetworkImage(
-    imageUrl: ds['images'][0],
-    placeholder: (context, url) => new CircularProgressIndicator(),
-  );
-
   var card = new Container(child: new LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
     double h = constraints.maxHeight;
@@ -94,23 +88,10 @@ Widget itemCard(DocumentSnapshot ds, context) {
       child: Stack(
         children: <Widget>[
           Container(
-            height: h,
-            width: w,
-            child: FittedBox(
-              fit: BoxFit.cover,
-              child: image,
-            ),
-          ),
-          /*
-          Container(
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: NetworkImage(ds['images'][0]),
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-          */
+              decoration: BoxDecoration(
+                  image: DecorationImage(
+                      image: NetworkImage(ds['images'][0]),
+                      fit: BoxFit.cover))),
           SizedBox.expand(
             child: Container(
               color: Colors.black12,
@@ -203,31 +184,16 @@ Widget reusableCategory(text) {
 }
 
 Widget reusableCategoryWithAll(text, action) {
-  return Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    children: <Widget>[
-      Container(
-          padding: EdgeInsets.only(left: 15.0),
-          child: Text(text,
-              style: TextStyle(
-                  fontSize: 11.0,
-                  fontWeight: FontWeight.w400,
-                  fontFamily: 'Quicksand'))),
-      Container(
-          child: FlatButton(
-        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        child: Text(
-          "View All",
-          style: TextStyle(
-              fontSize: 12.0,
-              fontFamily: 'Quicksand',
-              color: primaryColor,
-              fontWeight: FontWeight.w400),
-        ),
+  return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
+    Container(padding: EdgeInsets.only(left: 15.0),
+        child: Text(text, style: TextStyle(fontSize: 11.0, fontWeight: FontWeight.w400, fontFamily: 'Quicksand'))),
+    Container(
+      child: FlatButton(
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap, 
+        child: Text( "View All", style: TextStyle( fontSize: 12.0, fontFamily: 'Quicksand', color: primaryColor, fontWeight: FontWeight.w400),),
         onPressed: action,
-      )),
-    ],
-  );
+    )),
+  ],);
 }
 
 Widget reusableFlatButton(text, icon, action) {

@@ -7,8 +7,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_picker/flutter_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
+import 'package:shareapp/services/const.dart';
 import 'package:shareapp/services/picker_data.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -126,63 +128,75 @@ class ItemRequestState extends State<ItemRequest> {
     inputTextStyle = Theme.of(context).textTheme.subtitle;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Item Request'),
-        actions: <Widget>[
-          FlatButton(
-            child: Text('SEND',
-                textScaleFactor: 1.05,
-                style: theme.textTheme.body2.copyWith(color: Colors.white)),
-            onPressed: () {
-              validateSend(sendItem);
-            },
-          ),
-        ],
+      floatingActionButton: Container(
+        padding: const EdgeInsets.only(top: 120.0, left: 5.0),
+        child: FloatingActionButton(onPressed: ()=>Navigator.pop(context),child: Icon(Icons.close), elevation: 1, backgroundColor: Colors.white70, foregroundColor: primaryColor,),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.miniStartTop,
+
       body: Stack(
         children: <Widget>[
           isLoading
-              ? Container(
-                  decoration:
-                      new BoxDecoration(color: Colors.white.withOpacity(0.0)),
-                )
+              ? Container(decoration: new BoxDecoration(color: Colors.white.withOpacity(0.0)),)
               : showBody(),
           showCircularProgress(),
         ],
       ),
+
       bottomNavigationBar: Container(
-        height: MediaQuery.of(context).size.height / 10,
-        color: Colors.black,
+        height: 60.0,
+        padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
         child: RaisedButton(
-          child: Text("test"),
-          onPressed: null,
-          color: Colors.red,
+          splashColor: Colors.red,
+          elevation: 3.0,
+          onPressed: ()=>print,
+//          onPressed: ()=>validateSend(sendItem),
+          color: primaryColor,
+          child: Text("Request", style: TextStyle(color: Colors.white, fontFamily: 'Quicksand'),),
         ),
       ),
     );
   }
 
   Widget showBody() {
-    return Padding(
-      padding: EdgeInsets.all(15),
-      child: ListView(
-        children: <Widget>[
-          showItemName(),
-          showItemCreator(),
-          Container(
-            height: 10,
-          ),
-          showItemPriceInfo(),
-
-          showTimePickers(),
-          Container(
-            height: 10,
-          ),
-          showNoteEdit(),
-          showTimeInfo(), // testing purposes only
-        ],
-      ),
+    return ListView(
+      padding: EdgeInsets.all(0),
+      children: <Widget>[
+        showItemImage(),
+        showItemCreator(),
+        divider(),
+        showTimePickers(),
+        divider(),
+        showItemPriceInfo(),
+        divider(),
+       // showNoteEdit(),
+        showTimeInfo(), // testing purposes only
+      ],
     );
+  }
+
+  Widget showItemImage(){
+    _getItemImage(BuildContext context) {
+    double widthOfScreen = MediaQuery.of(context).size.width;
+    var image = itemDS['images'][0];
+        return new Container(
+          child: FittedBox(
+            fit: BoxFit.cover,
+            child: CachedNetworkImage(
+              imageUrl: image,
+              placeholder: (context, url) => new CircularProgressIndicator(),
+            ),
+          ),
+        );
+  }
+   double widthOfScreen = MediaQuery.of(context).size.width;
+    List imagesList = itemDS['images'];
+    return imagesList.length > 0
+        ? Container(
+            height: widthOfScreen/1,
+            child: _getItemImage(context),
+          )
+        : Text('No images yet\n');
   }
 
   // testing purposes only, will remove in final build
@@ -201,103 +215,76 @@ class ItemRequestState extends State<ItemRequest> {
     );
   }
 
-  Widget showItemName() {
-    return Padding(
-      padding: EdgeInsets.all(padding),
-      child: SizedBox(
-          height: 50.0,
-          child: Container(
-            color: Color(0x00000000),
-            child: Text(
-              'You\'re requesting a:\n${itemDS['name']}',
-              //itemName,
-              style: TextStyle(color: Colors.black, fontSize: 20.0),
-              textAlign: TextAlign.left,
-            ),
-          )),
-    );
-  }
-
   Widget showItemCreator() {
-    return Row(
-      children: <Widget>[
-        Text(
-          'You\'re requesting from:\n${creatorDS['name']}',
-          style: TextStyle(color: Colors.black, fontSize: 20.0),
-          textAlign: TextAlign.left,
-        ),
-        Expanded(
-          child: Container(
-            height: 50,
-            child: CachedNetworkImage(
-              //key: ValueKey(DateTime.now().millisecondsSinceEpoch),
-              imageUrl: creatorDS['avatar'],
-              placeholder: (context, url) => new CircularProgressIndicator(),
+    return Padding(
+      padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 10.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          Text(itemDS['name'], style: TextStyle(fontFamily: 'Quicksand', fontSize: 25.0, fontWeight: FontWeight.bold),),
+          Column(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
+            Container(height: 50.0,
+              child: ClipOval(
+                child: CachedNetworkImage(
+                  imageUrl: creatorDS['avatar'],
+                  placeholder: (context, url) => new CircularProgressIndicator(),
+                ),
+              ),
             ),
-          ),
-        ),
-      ],
+            Text('${creatorDS['name']}', style: TextStyle(color: Colors.black, fontSize: 15.0, fontFamily: 'Quicksand'), textAlign: TextAlign.left,),
+          ],),
+        ],
+      ),
     );
   }
 
   Widget showItemPriceInfo() {
-    return Padding(
-      padding: EdgeInsets.all(padding),
-      child: SizedBox(
-          height: 50.0,
-          child: Container(
-            color: Color(0x00000000),
-            child: Text(
-              'Item daily rate: \$${itemDS['price']}\n'
-              'Total due: \$${itemDS['price'] * duration}',
-              //itemName,
-              style: TextStyle(color: Colors.black, fontSize: 20.0),
-              textAlign: TextAlign.left,
-            ),
-          )),
+    return Container(padding: EdgeInsets.symmetric(horizontal: 20.0),
+      child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+        Text('Total', style: TextStyle(fontSize: 15.0, fontFamily: 'Quicksand')),
+        Text('\$${itemDS['price'] * duration}', style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.bold, fontFamily: 'Quicksand')),
+      ],),
     );
   }
 
   Widget showTimePickers() {
-    return Padding(
-      padding: EdgeInsets.all(padding),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          DateTimeItem(
-            dateTime: pickupTime,
-            window: window,
-            amPm: amPm,
-            duration: duration,
-            onChangedDateTime: (DateTime value) {
-              setState(() {
-                pickupTime = value;
-              });
-            },
-            onChangedWindow: (int value) {
-              setState(() {
-                window = value;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        DateTimeItem(
+          dateTime: pickupTime,
+          window: window,
+          amPm: amPm,
+          duration: duration,
+          onChangedDateTime: (DateTime value) {
+            setState(() {
+              pickupTime = value;
+            });
+          },
+          onChangedWindow: (int value) {
+            setState(() {
+              window = value;
 
-                pickupTime = updateDateTime(pickupTime.year, pickupTime.month,
-                    pickupTime.day, windows, window, amPm);
-              });
-            },
-            onChangedAmPm: (int value) {
-              setState(() {
-                amPm = value;
+              pickupTime = updateDateTime(pickupTime.year, pickupTime.month,
+                  pickupTime.day, windows, window, amPm);
+            });
+          },
+          onChangedAmPm: (int value) {
+            setState(() {
+              amPm = value;
 
-                pickupTime = updateDateTime(pickupTime.year, pickupTime.month,
-                    pickupTime.day, windows, window, amPm);
-              });
-            },
-            onChangedDuration: (int value) {
-              setState(() {
-                duration = value;
-              });
-            },
-          ),
-        ],
-      ),
+              pickupTime = updateDateTime(pickupTime.year, pickupTime.month,
+                  pickupTime.day, windows, window, amPm);
+            });
+          },
+          onChangedDuration: (int value) {
+            setState(() {
+              duration = value;
+            });
+          },
+        ),
+      ],
     );
   }
 
@@ -600,109 +587,87 @@ class DateTimeItem extends StatelessWidget {
     List windows = pickerData[0];
 
     String range = parseWindow(windows, window, amPm);
+    double w = MediaQuery.of(context).size.width;
 
-    return DefaultTextStyle(
-      style: theme.textTheme.subhead,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 15.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
-          Text('Day to pickup item', style: theme.textTheme.caption),
-          Container(
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              decoration: BoxDecoration(
-                  border:
-                      Border(bottom: BorderSide(color: theme.dividerColor))),
-              child: InkWell(
-                onTap: () {
-                  showDatePicker(
-                    context: context,
-                    initialDate: dateTime,
-                    firstDate: DateTime(2000),
-                    lastDate: DateTime(2100),
-                  ).then<void>((DateTime value) {
-                    if (value != null) {
-                      onChangedDateTime(updateDateTime(value.year, value.month,
-                          value.day, windows, window, amPm));
-                    }
-                  });
-                },
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Text(DateFormat('EEE, MMM d yyyy').format(dateTime)),
-                    const Icon(Icons.arrow_drop_down, color: Colors.black54),
-                  ],
+          InkWell(
+            onTap: () {
+              showDatePicker(
+                context: context,
+                initialDate: dateTime,
+                firstDate: DateTime(2000),
+                lastDate: DateTime(2100),
+              ).then<void>((DateTime value) {
+                if (value != null) {
+                  onChangedDateTime(updateDateTime(value.year, value.month, value.day, windows, window, amPm));
+                }
+              });
+            },
+            child: Column(
+              children: <Widget>[
+                Text('Pickup Date', style: TextStyle(fontFamily: 'Quicksand', fontWeight: FontWeight.w200, fontSize: w/30), textAlign: TextAlign.start),
+                SizedBox(height: 3),
+                Container(
+                  child: Center(
+                    child: Text(DateFormat('MMM d').format(dateTime), style: TextStyle(color: primaryColor, fontFamily: 'Quicksand', fontSize: w/25),),
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
-          Container(
-            height: 12,
-          ),
-          Text(
-              'Pickup window\n(earliest pickup must be at least 1 hr from now)',
-              style: theme.textTheme.caption),
-          Container(
-            //margin: const EdgeInsets.only(left: 8.0),
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            decoration: BoxDecoration(
-                border: Border(bottom: BorderSide(color: theme.dividerColor))),
-            child: InkWell(
-              onTap: () {
-                Picker(
-                    adapter: PickerDataAdapter<String>(
-                      pickerdata: JsonDecoder().convert(PickerData),
-                      isArray: true,
-                    ),
-                    hideHeader: true,
-                    selecteds: [window, amPm],
-                    title: Text("Select Pickup Window"),
-                    columnFlex: [2, 1],
-                    onConfirm: (Picker picker, List value) {
-                      onChangedWindow(value[0]);
-                      onChangedAmPm(value[1]);
-                    }).showDialog(context);
-              },
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  Text(range),
-                  const Icon(Icons.arrow_drop_down, color: Colors.black54),
-                ],
-              ),
+
+          InkWell(
+            onTap: () {
+              Picker(
+                  adapter: PickerDataAdapter<String>(
+                    pickerdata: JsonDecoder().convert(PickerData),
+                    isArray: true,
+                  ),
+                  hideHeader: true,
+                  selecteds: [window, amPm],
+                  title: Text("Select Pickup Window"),
+                  columnFlex: [2, 1],
+                  onConfirm: (Picker picker, List value) {
+                    onChangedWindow(value[0]);
+                    onChangedAmPm(value[1]);
+                  }).showDialog(context);
+            },
+            child: Column(
+              children: <Widget>[
+                Text('Pickup Window', style: TextStyle(fontFamily: 'Quicksand', fontWeight: FontWeight.w200, fontSize: w/30), textAlign: TextAlign.start),
+                SizedBox(height: 3),
+                Center(
+                  child: Text(range, style: TextStyle(color: primaryColor, fontFamily: 'Quicksand', fontSize: w/25),),
+                ),
+              ],
             ),
           ),
-          Container(
-            height: 12,
-          ),
-          Text('How many days will you be renting?',
-              style: theme.textTheme.caption),
-          Container(
-            //margin: const EdgeInsets.only(left: 8.0),
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            decoration: BoxDecoration(
-                border: Border(bottom: BorderSide(color: theme.dividerColor))),
-            child: InkWell(
-              onTap: () {
-                Picker(
-                    adapter: NumberPickerAdapter(data: [
-                      NumberPickerColumn(begin: 1, end: 27),
-                    ]),
-                    hideHeader: true,
-                    selecteds: [duration - 1],
-                    title: Text('Rental Duration (days)'),
-                    onConfirm: (Picker picker, List value) {
-                      onChangedDuration(picker.getSelectedValues()[0]);
-                    }).showDialog(context);
-              },
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  Text('$duration'),
-                  const Icon(Icons.arrow_drop_down, color: Colors.black54),
-                ],
-              ),
+
+          InkWell(
+            onTap: () {
+            Picker(
+                adapter: NumberPickerAdapter(data: [
+                  NumberPickerColumn(begin: 1, end: 27),
+                ]),
+                hideHeader: true,
+                selecteds: [duration - 1],
+                title: Text('Rental Duration (days)'),
+                onConfirm: (Picker picker, List value) {
+                  onChangedDuration(picker.getSelectedValues()[0]);
+                }).showDialog(context);
+          },
+            child: Column(
+              children: <Widget>[
+                Text('Days', style: TextStyle(fontFamily: 'Quicksand', fontWeight: FontWeight.w200, fontSize: w/30), textAlign: TextAlign.start),
+                SizedBox(height: 3),
+                Center(
+                  child: Text('$duration', style: TextStyle(color: primaryColor, fontFamily: 'Quicksand', fontSize: w/25),),
+                ),
+              ],
             ),
           ),
         ],
