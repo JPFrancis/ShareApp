@@ -556,13 +556,15 @@ class HomePageState extends State<HomePage> {
       child: Stack(
         children: <Widget>[
           Container(
-              height: h / 3.2,
-              child: SizedBox.expand(
-                  child: Image.asset(
+            height: h / 3.2,
+            child: SizedBox.expand(
+              child: Image.asset(
                 'assets/surfing.jpg',
                 fit: BoxFit.cover,
                 gaplessPlayback: true,
-              ))),
+              ),
+            ),
+          ),
           Container(height: h / 3.2, color: Colors.black12),
           Container(
             padding: EdgeInsets.only(left: 5, right: 5),

@@ -10,6 +10,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:multi_image_picker/multi_image_picker.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/models/item.dart';
+import 'package:shareapp/services/const.dart';
 import 'package:shareapp/services/select_location.dart';
 
 enum DismissDialogAction {
@@ -43,7 +44,7 @@ class ItemEditState extends State<ItemEdit> {
   String imageFileName;
   bool imageButton = false;
   bool isEdit = true; // true if on editing mode, false if on adding mode
-  bool isUploading = false;
+  bool isLoading = false;
 
   GoogleMapController googleMapController;
   TextEditingController nameController = TextEditingController();
@@ -96,12 +97,9 @@ class ItemEditState extends State<ItemEdit> {
       'Other',
     ];
     dropDownItemType = itemType
-        .map(
-          (String value) => DropdownMenuItem<String>(
-                value: value,
-                child: Text(value),
-              ),
-        )
+        .map((String value) => DropdownMenuItem<String>(
+            value: value,
+            child: Text(value, style: TextStyle(fontFamily: 'Quicksand'))))
         .toList();
 
     const itemCondition = <String>[
@@ -111,19 +109,16 @@ class ItemEditState extends State<ItemEdit> {
       'Has Character',
     ];
     dropDownItemCondition = itemCondition
-        .map(
-          (String value) => DropdownMenuItem<String>(
-                value: value,
-                child: Text(value),
-              ),
-        )
+        .map((String value) => DropdownMenuItem<String>(
+            value: value,
+            child: Text(value, style: TextStyle(fontFamily: 'Quicksand'))))
         .toList();
 
     return Scaffold(
       resizeToAvoidBottomPadding: true,
       body: Stack(
         children: <Widget>[
-          isUploading
+          isLoading
               ? Container(
                   decoration:
                       new BoxDecoration(color: Colors.white.withOpacity(0.0)),
@@ -133,9 +128,9 @@ class ItemEditState extends State<ItemEdit> {
         ],
       ),
       floatingActionButton: RaisedButton(
-        color: Color(0xff007f6e),
         child: Text('Next ＞',
             style: TextStyle(color: Colors.white, fontFamily: 'Quicksand')),
+        color: Color(0xff007f6e),
         onPressed: () {
           saveWarning();
         },
@@ -145,7 +140,6 @@ class ItemEditState extends State<ItemEdit> {
 
   Widget showBody() {
     double height = MediaQuery.of(context).size.height;
-    double width = MediaQuery.of(context).size.width;
 
     return Form(
       key: formKey,
@@ -158,7 +152,8 @@ class ItemEditState extends State<ItemEdit> {
             backButton(context),
             //Padding(padding: const EdgeInsets.only(top: 60, bottom: 60.0),child: Center(child: Text("[ add image thumbnails here ]"))),
             showImages(),
-            isEdit ? Container() : showImageButtons(),
+            //isEdit ? Container() : showImageButtons(),
+            showImageButtons(),
             divider(),
             reusableCategory("DETAILS"),
             reusableTextEntry("What are you selling? (required)", true,
@@ -177,7 +172,19 @@ class ItemEditState extends State<ItemEdit> {
             reusableCategory("LOCATION"),
             showItemLocation(),
             showLocationButtons(),
+            isEdit ? deleteButton() : Container(),
           ]),
+    );
+  }
+
+  Widget deleteButton() {
+    return OutlineButton(
+      child: Text(
+        'Delete Item',
+        style: TextStyle(fontFamily: 'Quicksand', color: Colors.red),
+      ),
+      onPressed: () => deleteItemDialog(),
+      borderSide: BorderSide(color: Colors.red),
     );
   }
 
@@ -185,6 +192,7 @@ class ItemEditState extends State<ItemEdit> {
       [keyboard = TextInputType.text]) {
     return Container(
       child: TextField(
+        style: TextStyle(fontFamily: 'Quicksand'),
         keyboardType: keyboard,
         controller: controller,
         onChanged: (value) {
@@ -203,8 +211,8 @@ class ItemEditState extends State<ItemEdit> {
         },
         decoration: InputDecoration(
           labelStyle: TextStyle(
-            color: required ? Colors.black54 : Colors.black26,
-          ),
+              color: required ? Colors.black54 : Colors.black26,
+              fontFamily: 'Quicksand'),
           labelText: placeholder,
           //border: OutlineInputBorder(borderRadius: BorderRadius.circular(5.0)),
         ),
@@ -216,7 +224,10 @@ class ItemEditState extends State<ItemEdit> {
     return Container(
         alignment: Alignment.centerLeft,
         child: Text(text,
-            style: TextStyle(fontSize: 11.0, fontWeight: FontWeight.w100)));
+            style: TextStyle(
+                fontSize: 11.0,
+                fontWeight: FontWeight.w100,
+                fontFamily: 'Quicksand')));
   }
 
   Widget showImages() {
@@ -256,17 +267,20 @@ class ItemEditState extends State<ItemEdit> {
 
   Widget buildAssetList() {
     return Container(
-      height: 50,
+      height: 120,
+      width: 120,
       child: imageAssets.length > 0
-          ? GridView.count(
-              crossAxisCount: 3,
+          ? ListView(
+              scrollDirection: Axis.horizontal,
               children: List.generate(imageAssets.length, (index) {
                 Asset asset = imageAssets[index];
-                return AssetThumb(
-                  asset: asset,
-                  width: 300,
-                  height: 300,
-                );
+                return Container(
+                    padding: EdgeInsets.only(right: 10.0),
+                    child: AssetThumb(
+                      asset: asset,
+                      height: 120,
+                      width: 120,
+                    ));
               }),
             )
           : Container(),
@@ -296,11 +310,12 @@ class ItemEditState extends State<ItemEdit> {
       padding: EdgeInsets.only(left: 15.0, right: 15.0),
       child: DropdownButton<String>(
         value: itemCopy.type,
-        hint: Text('Category'),
+        hint: Text(
+          'Category',
+          style: TextStyle(fontFamily: 'Quicksand'),
+        ),
         onChanged: (String newValue) {
-          setState(() {
-            itemCopy.type = newValue;
-          });
+          setState(() => itemCopy.type = newValue);
         },
         items: dropDownItemType,
       ),
@@ -312,7 +327,10 @@ class ItemEditState extends State<ItemEdit> {
       padding: EdgeInsets.only(left: 15.0, right: 15.0),
       child: DropdownButton<String>(
         value: itemCopy.condition,
-        hint: Text('Condition'),
+        hint: Text(
+          'Condition',
+          style: TextStyle(fontFamily: 'Quicksand'),
+        ),
         onChanged: (String newValue) {
           setState(() {
             itemCopy.condition = newValue;
@@ -368,7 +386,10 @@ class ItemEditState extends State<ItemEdit> {
             child: RaisedButton(
                 color: Colors.white,
                 textColor: Colors.black,
-                child: Text("Add Images"),
+                child: Text(
+                  "Add Images",
+                  style: TextStyle(fontFamily: 'Quicksand'),
+                ),
                 onPressed: () {
                   _showAlertDialog(context);
                 }),
@@ -474,19 +495,19 @@ class ItemEditState extends State<ItemEdit> {
         children: <Widget>[
           Expanded(
             child: RaisedButton(
-              shape: new RoundedRectangleBorder(
-                  borderRadius: new BorderRadius.circular(5.0)),
-              color: Colors.red,
+              color: primaryColor,
               textColor: Colors.white,
               child: itemCopy.location == null
                   ? Text(
                       "Add Location",
                       textScaleFactor: 1.25,
+                      style: TextStyle(fontFamily: 'Quicksand'),
                     )
-                  : Text(
-                      "Edit Location",
+                  : Text("Edit Location",
                       textScaleFactor: 1.25,
-                    ),
+                      style: TextStyle(
+                        fontFamily: 'Quicksand',
+                      )),
               onPressed: () {
                 setState(() {
                   navToLocation();
@@ -494,24 +515,20 @@ class ItemEditState extends State<ItemEdit> {
               },
             ),
           ),
-          Container(
+          SizedBox(
             width: 15.0,
           ),
           Expanded(
             child: RaisedButton(
-              shape: new RoundedRectangleBorder(
-                  borderRadius: new BorderRadius.circular(5.0)),
-              color: Colors.red,
+              color: primaryColor,
               textColor: Colors.white,
               child: Text(
                 "Reset Location",
                 textScaleFactor: 1.25,
+                style: TextStyle(fontFamily: 'Quicksand'),
               ),
-              onPressed: itemCopy.location == null
-                  ? null
-                  : () {
-                      resetLocation();
-                    },
+              onPressed:
+                  itemCopy.location == null ? null : () => resetLocation(),
             ),
           ),
         ],
@@ -520,14 +537,14 @@ class ItemEditState extends State<ItemEdit> {
   }
 
   Widget showCircularProgress() {
-    return isUploading
+    return isLoading
         ? Container(
             child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: <Widget>[
                   Text(
-                    "Uploading...",
+                    'Loading...',
                     style: TextStyle(fontSize: 30),
                   ),
                   Container(
@@ -544,7 +561,7 @@ class ItemEditState extends State<ItemEdit> {
 
   void saveItem() async {
     setState(() {
-      isUploading = true;
+      isLoading = true;
     });
 
     // Trim spaces and capitlize first letter of item name
@@ -892,5 +909,50 @@ class ItemEditState extends State<ItemEdit> {
           },
         ) ??
         false;
+  }
+
+  Future<bool> deleteItemDialog() async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Delete item?'),
+              content: Text('${itemCopy.name}'),
+              actions: <Widget>[
+                FlatButton(
+                  child: const Text('No'),
+                  onPressed: () {
+                    Navigator.of(context).pop(
+                        false); // Pops the confirmation dialog but not the page.
+                  },
+                ),
+                FlatButton(
+                  child: const Text('Yes'),
+                  onPressed: () {
+                    Navigator.of(context).pop(false);
+                    deleteItem();
+                    // Pops the confirmation dialog but not the page.
+                  },
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
+  }
+
+  void deleteItem() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    Firestore.instance
+        .collection('items')
+        .document(itemCopy.id)
+        .delete()
+        .then((_) => Navigator.popUntil(
+              context,
+              ModalRoute.withName('/'),
+            ));
   }
 }
