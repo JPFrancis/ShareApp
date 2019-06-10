@@ -140,40 +140,50 @@ class ItemEditState extends State<ItemEdit> {
 
   Widget showBody() {
     double height = MediaQuery.of(context).size.height;
-
     return Form(
       key: formKey,
       onWillPop: onWillPop,
-      child: ListView(
-          shrinkWrap: true,
-          padding: EdgeInsets.only(
-              top: height / 15, bottom: 10.0, left: 18.0, right: 18.0),
-          children: <Widget>[
-            backButton(context),
-            //Padding(padding: const EdgeInsets.only(top: 60, bottom: 60.0),child: Center(child: Text("[ add image thumbnails here ]"))),
-            showImages(),
-            //isEdit ? Container() : showImageButtons(),
-            showImageButtons(),
-            divider(),
-            reusableCategory("DETAILS"),
-            reusableTextEntry("What are you selling? (required)", true,
-                nameController, 'name'),
-            reusableTextEntry("Describe it... (required)", true,
-                descriptionController, 'description'),
-            divider(),
-            reusableCategory("SPECIFICS"),
-            showTypeSelector(),
-            showConditionSelector(),
-            divider(),
-            reusableCategory("PRICE"),
-            reusableTextEntry(
-                "Price", true, priceController, 'price', TextInputType.number),
-            divider(),
-            reusableCategory("LOCATION"),
-            showItemLocation(),
-            showLocationButtons(),
-            isEdit ? deleteButton() : Container(),
-          ]),
+      child: Stack(
+        children: <Widget>[
+          ListView(
+              shrinkWrap: true,
+              padding: EdgeInsets.only(
+                  top: height / 15, bottom: 10.0, left: 18.0, right: 18.0),
+              children: <Widget>[
+                showImages(),
+                showImageButtons(),
+                divider(),
+                reusableCategory("DETAILS"),
+                reusableTextEntry("What are you selling? (required)", true,
+                    nameController, 'name'),
+                reusableTextEntry("Describe it... (required)", true,
+                    descriptionController, 'description'),
+                divider(),
+                reusableCategory("SPECIFICS"),
+                showTypeSelector(),
+                showConditionSelector(),
+                divider(),
+                reusableCategory("PRICE"),
+                reusableTextEntry("Price", true, priceController, 'price',
+                    TextInputType.number),
+                divider(),
+                reusableCategory("LOCATION"),
+                showItemLocation(),
+                showLocationButtons(),
+                isEdit ? deleteButton() : Container()
+              ]),
+          Container(
+            padding: EdgeInsets.only(top: 30, left: 20),
+            alignment: Alignment.topLeft,
+            child: FloatingActionButton(
+                onPressed: () => Navigator.pop(context),
+                child: Icon(Icons.arrow_back),
+                elevation: 1,
+                backgroundColor: Colors.white70,
+                foregroundColor: primaryColor),
+          ),
+        ],
+      ),
     );
   }
 
@@ -231,11 +241,11 @@ class ItemEditState extends State<ItemEdit> {
   }
 
   Widget showImages() {
-    double widthOfScreen = MediaQuery.of(context).size.width;
+    double w = MediaQuery.of(context).size.width;
 
     return isEdit
         ? Container(
-            height: widthOfScreen,
+            height: w,
             child: SizedBox.expand(child: getImagesListView(context)),
           )
         : buildAssetList();
@@ -267,8 +277,7 @@ class ItemEditState extends State<ItemEdit> {
 
   Widget buildAssetList() {
     return Container(
-      height: 120,
-      width: 120,
+      height: 150,
       child: imageAssets.length > 0
           ? ListView(
               scrollDirection: Axis.horizontal,
@@ -394,23 +403,6 @@ class ItemEditState extends State<ItemEdit> {
                   _showAlertDialog(context);
                 }),
           ),
-          /*
-          Expanded(
-            child: RaisedButton(
-              shape: new RoundedRectangleBorder(
-                  borderRadius: new BorderRadius.circular(5.0)),
-              color: Colors.red,
-              textColor: Colors.white,
-              child: Text(
-                "Delete Images",
-                textScaleFactor: 1.25,
-              ),
-              onPressed: imageButton
-                  ? null
-                  : () {
-                      deleteImagesWarning();
-                    },
-            ),*/
         ],
       ),
     );

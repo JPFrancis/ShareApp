@@ -59,6 +59,8 @@ class HomePageState extends State<HomePage> {
   TextEditingController searchController = TextEditingController();
   List<DocumentSnapshot> searchList;
 
+  double _changingHeight = 220;
+
   @override
   void initState() {
     // TODO: implement initState
@@ -408,9 +410,6 @@ class HomePageState extends State<HomePage> {
         child: RefreshIndicator(
           onRefresh: getAllItems,
           child: ListView(
-            //physics: const ClampingScrollPhysics(),
-
-            // shrinkWrap: true,
             children: <Widget>[
               introImageAndSearch(),
               SizedBox(
@@ -504,6 +503,14 @@ class HomePageState extends State<HomePage> {
 
     Widget searchField() {
       return Container(
+        decoration: new BoxDecoration(
+          boxShadow: <BoxShadow>[
+            CustomBoxShadow(
+                color: Colors.black45,
+                blurRadius: 4.0,
+                blurStyle: BlurStyle.outer),
+          ],
+        ),
         child: Container(
           padding: EdgeInsets.only(left: 10),
           color: Colors.white,
@@ -522,11 +529,16 @@ class HomePageState extends State<HomePage> {
                   },
                   keyboardType: TextInputType.text,
                   controller: searchController,
-                  onTap: () {},
+                  onTap: () {
+                    setState(() {
+                      _changingHeight = 50;
+                    });
+                  },
                   onChanged: (value) {
                     setState(() {});
                   },
                   decoration: InputDecoration(
+                    border: InputBorder.none,
                     labelStyle: TextStyle(
                       color: Colors.black54,
                     ),
@@ -534,11 +546,12 @@ class HomePageState extends State<HomePage> {
                 ),
               ),
               Container(
-                width: 40,
+                width: 50,
                 child: FlatButton(
                   onPressed: () {
                     setState(() {
                       searchController.clear();
+                      _changingHeight = 220;
                     });
                   },
                   child: Icon(Icons.clear),
@@ -571,8 +584,9 @@ class HomePageState extends State<HomePage> {
             alignment: Alignment.bottomCenter,
             child: Column(
               children: <Widget>[
-                Container(
-                  height: 30,
+                AnimatedContainer(
+                  height: _changingHeight,
+                  duration: Duration(seconds: 1),
                 ),
                 searchField(),
                 searchController.text.isNotEmpty && searchList != null
