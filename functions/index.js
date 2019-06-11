@@ -12,42 +12,6 @@ const bucket = storage.bucket();
 
 const stripe = require('stripe')(functions.config().stripe.token);
 
-// add stripe source when new card added
-exports.addStripeSource = functions.firestore.document('cards/{userId}/tokens/{tokenId}')
-    .onWrite(async (tokenSnap, context) => {
-        var customer;
-        const data = tokenSnap.after.data();
-
-        if (data === null) {
-            return null
-        }
-
-        const token = data.tokenId;
-        const snapshot = await firestore.collection('cards').doc(context.params.userId).get();
-        const customerId = snapshot.data().custId;
-        const customerEmail = snapshot.data().email;
-
-        if (customerId === 'new') {
-            customer = await stripe.customers.create({
-                email: customerEmail,
-                source: token
-            });
-
-            firestore.collection('cards').doc(context.params.userId).update({
-                custId: customer.id
-            });
-        } else {
-            customer = await stripe.customers.retrieve(customerId);
-        }
-
-        const customerSource = customer.sources.data[0];
-
-        return firestore.collection('cards').doc(context.params.userId).collection('sources').
-            doc(customerSource.card.fingerprint).set(customerSource, {
-                merge: true
-            });
-    })
-
 // create new user document when account created
 exports.createUser = functions.auth.user().onCreate(event => {
     console.log('User id to be created: ', event.uid);
@@ -58,22 +22,13 @@ exports.createUser = functions.auth.user().onCreate(event => {
     const name = event.displayName || 'new user';
     const creationDate = Date.now();
 
-    firestore.collection('cards').doc(userID).set({
-        custId: 'new',
-        email: email,
-    }).then(function () {
-        console.log('Added card for user ', userID);
-        return 'Added card for user $userID';
-    }).catch(error => {
-        console.error('Error when adding card for new user! ', error);
-    });
-
     return firestore.collection('users').doc(userID).set({
         email: email,
         avatar: photoURL,
         name: name,
         lastActive: Date.now(),
         creationDate: creationDate,
+        custId: 'new',
     }).then(function () {
         console.log('Created user: ', userID);
         return 'Created user $userID';
@@ -87,14 +42,6 @@ exports.deleteUser = functions.auth.user().onDelete(event => {
     console.log('User id to be deleted: ', event.uid);
 
     const userID = event.uid;
-
-    firestore.collection('cards').doc(userID).delete().then(function () {
-        console.log('Deleted card for user ', userID);
-        return 'Deleted card for user $userID';
-    }).catch(error => {
-        console.error('Error when deleting card for user $userID', error);
-    });
-
     const filePath = `profile_pics/${userID}`;
     const file = bucket.file(filePath);
 
@@ -135,6 +82,62 @@ exports.deleteItemImages = functions.firestore.document('items/{itemId}')
             }
         });
     })
+
+// add stripe source when new card added
+exports.addStripeSource = functions.firestore.document('users/{userId}/tokens/{tokenId}')
+    .onWrite(async (tokenSnap, context) => {
+        var customer;
+        const data = tokenSnap.after.data();
+
+        if (data === null) {
+            return null
+        }
+
+        const token = data.tokenId;
+        const snapshot = await firestore.collection('users').doc(context.params.userId).get();
+        const customerId = snapshot.data().custId;
+        const customerEmail = snapshot.data().email;
+
+        if (customerId === 'new') {
+            customer = await stripe.customers.create({
+                email: customerEmail,
+                source: token
+            });
+
+            firestore.collection('users').doc(context.params.userId).update({
+                custId: customer.id
+            });
+        } else {
+            customer = await stripe.customers.retrieve(customerId);
+        }
+
+        const customerSource = customer.sources.data[0];
+
+        return firestore.collection('users').doc(context.params.userId).collection('sources').
+            doc(customerSource.card.fingerprint).set(customerSource, {
+                merge: true
+            });
+    })
+
+exports.createCharge = functions.firestore.document('users/{userId}/charges/{chargeId}').onCreate(async (chargeSnap, context) => {
+    try {
+        const userSnap = await firestore.collection('users').doc(context.params.userId).get();
+        const customer = userSnap.data().custId;
+        const amount = chargeSnap.data().amount;
+        const currency = chargeSnap.data().currency;
+        const description = chargeSnap.data().description;
+
+        const charge = { amount, currency, customer, description };
+        const idempotentKey = context.params.chargeId;
+
+        const response = await stripe.charges.create(charge, { idempotency_key: idempotentKey });
+        return chargeSnap.ref.set(response, { merge: true });
+
+    } catch (error) {
+        await chargeSnap.ref.set({ error: error.message }, { merge: true });
+    }
+
+});
 
 /*
 exports.addItem = functions.https.onCall((data, context) => {

@@ -38,7 +38,7 @@ class HomePage extends StatefulWidget {
 
 class HomePageState extends State<HomePage> {
   final GlobalKey<RefreshIndicatorState> refreshIndicatorKey =
-      new GlobalKey<RefreshIndicatorState>();
+  new GlobalKey<RefreshIndicatorState>();
 
   StreamSubscription<QuerySnapshot> subscription;
 
@@ -58,8 +58,6 @@ class HomePageState extends State<HomePage> {
 
   TextEditingController searchController = TextEditingController();
   List<DocumentSnapshot> searchList;
-
-  double _changingHeight = 220;
 
   @override
   void initState() {
@@ -163,9 +161,9 @@ class HomePageState extends State<HomePage> {
       body: isLoading
           ? Container()
           : IndexedStack(
-              index: currentTabIndex,
-              children: bottomTabPages,
-            ),
+        index: currentTabIndex,
+        children: bottomTabPages,
+      ),
       floatingActionButton: showFAB(),
       bottomNavigationBar: BottomNavigationBar(
         selectedItemColor: primaryColor,
@@ -184,32 +182,32 @@ class HomePageState extends State<HomePage> {
   RaisedButton showFAB() {
     return currentTabIndex == 2
         ? RaisedButton(
-            elevation: 3,
-            color: primaryColor,
-            textColor: Colors.white,
-            onPressed: () {
-              navigateToEdit(
-                Item(
-                  id: null,
-                  status: true,
-                  creator:
-                      Firestore.instance.collection('users').document(myUserID),
-                  name: '',
-                  description: '',
-                  type: null,
-                  condition: null,
-                  price: 0,
-                  numImages: 0,
-                  images: new List(),
-                  location: null,
-                  rental: null,
-                ),
-              );
-            },
-            child: Text("Add Item",
-                style: TextStyle(
-                    fontFamily: 'Quicksand', fontWeight: FontWeight.normal)),
-          )
+      elevation: 3,
+      color: primaryColor,
+      textColor: Colors.white,
+      onPressed: () {
+        navigateToEdit(
+          Item(
+            id: null,
+            status: true,
+            creator:
+            Firestore.instance.collection('users').document(myUserID),
+            name: '',
+            description: '',
+            type: null,
+            condition: null,
+            price: 0,
+            numImages: 0,
+            images: new List(),
+            location: null,
+            rental: null,
+          ),
+        );
+      },
+      child: Text("Add Item",
+          style: TextStyle(
+              fontFamily: 'Quicksand', fontWeight: FontWeight.normal)),
+    )
         : null;
   }
 
@@ -221,59 +219,59 @@ class HomePageState extends State<HomePage> {
           icon,
           showBadge
               ? StreamBuilder<QuerySnapshot>(
-                  stream: Firestore.instance
-                      .collection('rentals')
-                      .where('owner',
-                          isEqualTo: Firestore.instance
-                              .collection('users')
-                              .document(myUserID))
-                      .where('status', isEqualTo: 0)
-                      .snapshots(),
-                  builder: (BuildContext context,
-                      AsyncSnapshot<QuerySnapshot> snapshot) {
-                    if (snapshot.hasError) {
-                      return new Text('${snapshot.error}');
-                    }
-                    switch (snapshot.connectionState) {
-                      case ConnectionState.waiting:
+            stream: Firestore.instance
+                .collection('rentals')
+                .where('owner',
+                isEqualTo: Firestore.instance
+                    .collection('users')
+                    .document(myUserID))
+                .where('status', isEqualTo: 0)
+                .snapshots(),
+            builder: (BuildContext context,
+                AsyncSnapshot<QuerySnapshot> snapshot) {
+              if (snapshot.hasError) {
+                return new Text('${snapshot.error}');
+              }
+              switch (snapshot.connectionState) {
+                case ConnectionState.waiting:
 
-                      default:
-                        if (snapshot.hasData) {
-                          var updated = snapshot.data.documents.toList().length;
-                          return Positioned(
-                            top: 0,
-                            right: 0,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.red[600],
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              constraints: BoxConstraints(
-                                minWidth: 13,
-                                minHeight: 13,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  '$updated',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 11,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
+                default:
+                  if (snapshot.hasData) {
+                    var updated = snapshot.data.documents.toList().length;
+                    return Positioned(
+                      top: 0,
+                      right: 0,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.red[600],
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        constraints: BoxConstraints(
+                          minWidth: 13,
+                          minHeight: 13,
+                        ),
+                        child: Center(
+                          child: Text(
+                            '$updated',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
                             ),
-                          );
-                        } else {
-                          return Container();
-                        }
-                    }
-                  },
-                )
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                    );
+                  } else {
+                    return Container();
+                  }
+              }
+            },
+          )
               : Container(
-                  width: 0,
-                  height: 0,
-                ),
+            width: 0,
+            height: 0,
+          ),
         ],
       ),
       title: Text(label),
@@ -289,117 +287,117 @@ class HomePageState extends State<HomePage> {
 
     return new Container(child: new LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
-      double h = constraints.maxHeight;
-      double w = constraints.maxWidth;
+          double h = constraints.maxHeight;
+          double w = constraints.maxWidth;
 
-      return InkWell(
-        onTap: () {
-          navigateToDetail(ds);
-        },
-        child: Container(
-          decoration: new BoxDecoration(
-            boxShadow: <BoxShadow>[
-              CustomBoxShadow(
-                  color: Colors.black45,
-                  blurRadius: 3.0,
-                  blurStyle: BlurStyle.outer),
-            ],
-          ),
-          child: Column(
-            children: <Widget>[
-              Container(
-                  height: 1.9 * h / 3,
-                  width: w,
-                  child: FittedBox(fit: BoxFit.cover, child: image)),
-              SizedBox(
-                height: 10.0,
+          return InkWell(
+            onTap: () {
+              navigateToDetail(ds);
+            },
+            child: Container(
+              decoration: new BoxDecoration(
+                boxShadow: <BoxShadow>[
+                  CustomBoxShadow(
+                      color: Colors.black45,
+                      blurRadius: 3.0,
+                      blurStyle: BlurStyle.outer),
+                ],
               ),
-              Container(
-                padding: EdgeInsets.only(left: 5.0, right: 5.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Column(
+                children: <Widget>[
+                  Container(
+                      height: 1.9 * h / 3,
+                      width: w,
+                      child: FittedBox(fit: BoxFit.cover, child: image)),
+                  SizedBox(
+                    height: 10.0,
+                  ),
+                  Container(
+                    padding: EdgeInsets.only(left: 5.0, right: 5.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
-                        ds['type'] != null
-                            ? Text(
-                                '${ds['type']}'.toUpperCase(),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: <Widget>[
+                            ds['type'] != null
+                                ? Text(
+                              '${ds['type']}'.toUpperCase(),
+                              style: TextStyle(
+                                  fontSize: h / 25,
+                                  fontFamily: 'Quicksand',
+                                  fontWeight: FontWeight.bold),
+                            )
+                                : Text(''),
+                            Text('${ownerDS['name']}',
                                 style: TextStyle(
-                                    fontSize: h / 25,
-                                    fontFamily: 'Quicksand',
-                                    fontWeight: FontWeight.bold),
-                              )
-                            : Text(''),
-                        Text('${ownerDS['name']}',
+                                    fontSize: h / 24, fontFamily: 'Quicksand')),
+                          ],
+                        ),
+                        Text('${ds['name']}',
                             style: TextStyle(
-                                fontSize: h / 24, fontFamily: 'Quicksand')),
+                                fontSize: h / 21,
+                                fontFamily: 'Quicksand',
+                                fontWeight: FontWeight.bold)),
+                        Text("\$${ds['price']} per day",
+                            style: TextStyle(
+                                fontSize: h / 22, fontFamily: 'Quicksand')),
+                        Divider(height: 15),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: <Widget>[
+                            ButtonTheme(
+                              minWidth: w / 5,
+                              height: h / 13,
+                              child: FlatButton(
+                                materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
+                                child: Icon(
+                                  Icons.add_shopping_cart,
+                                  size: h / 13,
+                                ),
+                                onPressed: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    RentalDetail.routeName,
+                                    arguments: RentalDetailArgs(
+                                      rentalDS,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            ButtonTheme(
+                              minWidth: w / 5,
+                              height: h / 13,
+                              child: FlatButton(
+                                materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
+                                child: Icon(
+                                  Icons.chat_bubble_outline,
+                                  size: h / 13,
+                                ),
+                                onPressed: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    Chat.routeName,
+                                    arguments: ChatArgs(
+                                      rentalDS,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        )
                       ],
                     ),
-                    Text('${ds['name']}',
-                        style: TextStyle(
-                            fontSize: h / 21,
-                            fontFamily: 'Quicksand',
-                            fontWeight: FontWeight.bold)),
-                    Text("\$${ds['price']} per day",
-                        style: TextStyle(
-                            fontSize: h / 22, fontFamily: 'Quicksand')),
-                    Divider(height: 15),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: <Widget>[
-                        ButtonTheme(
-                          minWidth: w / 5,
-                          height: h / 13,
-                          child: FlatButton(
-                            materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap,
-                            child: Icon(
-                              Icons.add_shopping_cart,
-                              size: h / 13,
-                            ),
-                            onPressed: () {
-                              Navigator.pushNamed(
-                                context,
-                                RentalDetail.routeName,
-                                arguments: RentalDetailArgs(
-                                  rentalDS,
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                        ButtonTheme(
-                          minWidth: w / 5,
-                          height: h / 13,
-                          child: FlatButton(
-                            materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap,
-                            child: Icon(
-                              Icons.chat_bubble_outline,
-                              size: h / 13,
-                            ),
-                            onPressed: () {
-                              Navigator.pushNamed(
-                                context,
-                                Chat.routeName,
-                                arguments: ChatArgs(
-                                  rentalDS,
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    )
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
-      );
-    }));
+            ),
+          );
+        }));
   }
 
   Widget searchPage() {
@@ -410,6 +408,9 @@ class HomePageState extends State<HomePage> {
         child: RefreshIndicator(
           onRefresh: getAllItems,
           child: ListView(
+            //physics: const ClampingScrollPhysics(),
+
+            // shrinkWrap: true,
             children: <Widget>[
               introImageAndSearch(),
               SizedBox(
@@ -503,14 +504,6 @@ class HomePageState extends State<HomePage> {
 
     Widget searchField() {
       return Container(
-        decoration: new BoxDecoration(
-          boxShadow: <BoxShadow>[
-            CustomBoxShadow(
-                color: Colors.black45,
-                blurRadius: 4.0,
-                blurStyle: BlurStyle.outer),
-          ],
-        ),
         child: Container(
           padding: EdgeInsets.only(left: 10),
           color: Colors.white,
@@ -529,16 +522,11 @@ class HomePageState extends State<HomePage> {
                   },
                   keyboardType: TextInputType.text,
                   controller: searchController,
-                  onTap: () {
-                    setState(() {
-                      _changingHeight = 50;
-                    });
-                  },
+                  onTap: () {},
                   onChanged: (value) {
                     setState(() {});
                   },
                   decoration: InputDecoration(
-                    border: InputBorder.none,
                     labelStyle: TextStyle(
                       color: Colors.black54,
                     ),
@@ -546,12 +534,11 @@ class HomePageState extends State<HomePage> {
                 ),
               ),
               Container(
-                width: 50,
+                width: 40,
                 child: FlatButton(
                   onPressed: () {
                     setState(() {
                       searchController.clear();
-                      _changingHeight = 220;
                     });
                   },
                   child: Icon(Icons.clear),
@@ -584,43 +571,42 @@ class HomePageState extends State<HomePage> {
             alignment: Alignment.bottomCenter,
             child: Column(
               children: <Widget>[
-                AnimatedContainer(
-                  height: _changingHeight,
-                  duration: Duration(seconds: 1),
+                Container(
+                  height: 30,
                 ),
                 searchField(),
                 searchController.text.isNotEmpty && searchList != null
                     ? Expanded(
-                        child: Container(
-                          color: Colors.white,
-                          child: ListView.builder(
-                            itemCount: searchList.length,
-                            itemBuilder: (context, index) {
-                              String name = searchList[index]['name'];
-                              String description =
-                                  searchList[index]['description'];
+                  child: Container(
+                    color: Colors.white,
+                    child: ListView.builder(
+                      itemCount: searchList.length,
+                      itemBuilder: (context, index) {
+                        String name = searchList[index]['name'];
+                        String description =
+                        searchList[index]['description'];
 
-                              return name.toLowerCase().contains(
-                                          searchController.text
-                                              .toLowerCase()) ||
-                                      description.toLowerCase().contains(
-                                          searchController.text.toLowerCase())
-                                  ? ListTile(
-                                      leading: Icon(Icons.build),
-                                      title: Text(
-                                        '$name',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      subtitle: Text('$description'),
-                                      onTap: () =>
-                                          navigateToDetail(searchList[index]),
-                                    )
-                                  : Container();
-                            },
+                        return name.toLowerCase().contains(
+                            searchController.text
+                                .toLowerCase()) ||
+                            description.toLowerCase().contains(
+                                searchController.text.toLowerCase())
+                            ? ListTile(
+                          leading: Icon(Icons.build),
+                          title: Text(
+                            '$name',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold),
                           ),
-                        ),
-                      )
+                          subtitle: Text('$description'),
+                          onTap: () =>
+                              navigateToDetail(searchList[index]),
+                        )
+                            : Container();
+                      },
+                    ),
+                  ),
+                )
                     : Container(),
               ],
             ),
@@ -783,8 +769,8 @@ class HomePageState extends State<HomePage> {
         stream: Firestore.instance
             .collection('items')
             .where('creator',
-                isEqualTo:
-                    Firestore.instance.collection('users').document(myUserID))
+            isEqualTo:
+            Firestore.instance.collection('users').document(myUserID))
             .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
@@ -819,8 +805,8 @@ class HomePageState extends State<HomePage> {
     Stream stream = Firestore.instance
         .collection('rentals')
         .where(person,
-            isEqualTo:
-                Firestore.instance.collection('users').document(myUserID))
+        isEqualTo:
+        Firestore.instance.collection('users').document(myUserID))
         .snapshots();
     return StreamBuilder<QuerySnapshot>(
       stream: stream,
@@ -884,14 +870,14 @@ class HomePageState extends State<HomePage> {
                                               image: DecorationImage(
                                                 //image: NetworkImage(itemDS['images'][0]),
                                                 image:
-                                                    CachedNetworkImageProvider(
-                                                        itemDS['images'][0]),
+                                                CachedNetworkImageProvider(
+                                                    itemDS['images'][0]),
                                                 fit: BoxFit.cover,
                                                 colorFilter:
-                                                    new ColorFilter.mode(
-                                                        Colors.black
-                                                            .withOpacity(0.45),
-                                                        BlendMode.srcATop),
+                                                new ColorFilter.mode(
+                                                    Colors.black
+                                                        .withOpacity(0.45),
+                                                    BlendMode.srcATop),
                                               ),
                                               boxShadow: <BoxShadow>[
                                                 CustomBoxShadow(
@@ -909,8 +895,8 @@ class HomePageState extends State<HomePage> {
                                               },
                                               child: Row(
                                                 mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceAround,
+                                                MainAxisAlignment
+                                                    .spaceAround,
                                                 children: <Widget>[
                                                   Column(
                                                     children: <Widget>[
@@ -924,7 +910,7 @@ class HomePageState extends State<HomePage> {
                                                               shape: BoxShape.circle,
                                                               color: Colors.white,
                                                               image: DecorationImage(
-                                                                  //image: NetworkImage(ownerDS['avatar']),
+                                                                //image: NetworkImage(ownerDS['avatar']),
                                                                   image: CachedNetworkImageProvider(ownerDS['avatar']),
                                                                   fit: BoxFit.fill))),
                                                       Text(
@@ -932,10 +918,10 @@ class HomePageState extends State<HomePage> {
                                                         style: TextStyle(
                                                             color: Colors.white,
                                                             fontFamily:
-                                                                'Quicksand',
+                                                            'Quicksand',
                                                             fontWeight:
-                                                                FontWeight
-                                                                    .bold),
+                                                            FontWeight
+                                                                .bold),
                                                       ),
                                                     ],
                                                   ),
@@ -947,24 +933,24 @@ class HomePageState extends State<HomePage> {
                                                             "Request Sent: ",
                                                             style: TextStyle(
                                                               color:
-                                                                  Colors.white,
+                                                              Colors.white,
                                                               fontFamily:
-                                                                  'Quicksand',
+                                                              'Quicksand',
                                                             ),
                                                           ),
                                                           Text(
                                                             timeago.format((DateTime
                                                                 .fromMillisecondsSinceEpoch(
-                                                                    rentalDS[
-                                                                        'created']))),
+                                                                rentalDS[
+                                                                'created']))),
                                                             style: TextStyle(
                                                                 color: Colors
                                                                     .white,
                                                                 fontFamily:
-                                                                    'Quicksand',
+                                                                'Quicksand',
                                                                 fontWeight:
-                                                                    FontWeight
-                                                                        .bold),
+                                                                FontWeight
+                                                                    .bold),
                                                           )
                                                         ],
                                                       ),
@@ -976,17 +962,17 @@ class HomePageState extends State<HomePage> {
                                                                 color: Colors
                                                                     .white,
                                                                 fontFamily:
-                                                                    'Quicksand'),
+                                                                'Quicksand'),
                                                           ),
                                                           Text(duration,
                                                               style: TextStyle(
                                                                 color: Colors
                                                                     .white,
                                                                 fontFamily:
-                                                                    'Quicksand',
+                                                                'Quicksand',
                                                                 fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
+                                                                FontWeight
+                                                                    .bold,
                                                               ))
                                                         ],
                                                       )
@@ -1039,11 +1025,11 @@ class HomePageState extends State<HomePage> {
         break;
     }
     CollectionReference collectionReference =
-        Firestore.instance.collection('rentals');
+    Firestore.instance.collection('rentals');
     Stream stream = collectionReference
         .where(person,
-            isEqualTo:
-                Firestore.instance.collection('users').document(myUserID))
+        isEqualTo:
+        Firestore.instance.collection('users').document(myUserID))
         .snapshots();
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
@@ -1095,12 +1081,12 @@ class HomePageState extends State<HomePage> {
                                         DocumentSnapshot renterDS =
                                             snapshot.data;
                                         CachedNetworkImage image =
-                                            CachedNetworkImage(
+                                        CachedNetworkImage(
                                           key:
-                                              ValueKey<String>(ds['images'][0]),
+                                          ValueKey<String>(ds['images'][0]),
                                           imageUrl: ds['images'][0],
                                           placeholder: (context, url) =>
-                                              new CircularProgressIndicator(),
+                                          new CircularProgressIndicator(),
                                           fit: BoxFit.cover,
                                         );
                                         return Container(
@@ -1109,8 +1095,8 @@ class HomePageState extends State<HomePage> {
                                             onTap: () => navigateToDetail(ds),
                                             child: Container(
                                               width: MediaQuery.of(context)
-                                                      .size
-                                                      .width /
+                                                  .size
+                                                  .width /
                                                   2,
                                               decoration: BoxDecoration(
                                                 boxShadow: <BoxShadow>[
@@ -1118,7 +1104,7 @@ class HomePageState extends State<HomePage> {
                                                       color: Colors.black45,
                                                       blurRadius: 3.5,
                                                       blurStyle:
-                                                          BlurStyle.outer),
+                                                      BlurStyle.outer),
                                                 ],
                                               ),
                                               child: Stack(
@@ -1126,9 +1112,9 @@ class HomePageState extends State<HomePage> {
                                                   SizedBox.expand(child: image),
                                                   SizedBox.expand(
                                                       child: Container(
-                                                    color: Colors.black
-                                                        .withOpacity(0.4),
-                                                  )),
+                                                        color: Colors.black
+                                                            .withOpacity(0.4),
+                                                      )),
                                                   Center(
                                                     child: Column(
                                                       children: <Widget>[
@@ -1139,39 +1125,39 @@ class HomePageState extends State<HomePage> {
                                                         // Text("Pickup Time: \n" + DateTime.fromMillisecondsSinceEpoch(rentalDS[ 'pickupStart'].millisecondsSinceEpoch).toString(), style: TextStyle(color:Colors.white)),
                                                         StreamBuilder(
                                                             stream:
-                                                                Stream.periodic(
-                                                                    Duration(
-                                                                        seconds:
-                                                                            1),
+                                                            Stream.periodic(
+                                                                Duration(
+                                                                    seconds:
+                                                                    1),
                                                                     (i) => i),
                                                             builder: (BuildContext
-                                                                    context,
+                                                            context,
                                                                 AsyncSnapshot<
-                                                                        int>
-                                                                    snapshot) {
+                                                                    int>
+                                                                snapshot) {
                                                               DateFormat
-                                                                  format =
-                                                                  DateFormat(
-                                                                      "hh 'hours,' mm 'minutes until pickup'");
+                                                              format =
+                                                              DateFormat(
+                                                                  "hh 'hours,' mm 'minutes until pickup'");
                                                               int now = DateTime
-                                                                      .now()
+                                                                  .now()
                                                                   .millisecondsSinceEpoch;
                                                               int pickupTime = rentalDS[
-                                                                      'pickupStart']
+                                                              'pickupStart']
                                                                   .millisecondsSinceEpoch;
                                                               Duration
-                                                                  remaining =
-                                                                  Duration(
-                                                                      milliseconds:
-                                                                          (pickupTime -
-                                                                              now));
+                                                              remaining =
+                                                              Duration(
+                                                                  milliseconds:
+                                                                  (pickupTime -
+                                                                      now));
                                                               var dateString;
                                                               remaining.inDays ==
-                                                                      0
+                                                                  0
                                                                   ? dateString =
-                                                                      '${format.format(DateTime.fromMillisecondsSinceEpoch(remaining.inMilliseconds))}'
+                                                              '${format.format(DateTime.fromMillisecondsSinceEpoch(remaining.inMilliseconds))}'
                                                                   : dateString =
-                                                                      '${remaining.inDays} days, ${format.format(DateTime.fromMillisecondsSinceEpoch(remaining.inMilliseconds))}';
+                                                              '${remaining.inDays} days, ${format.format(DateTime.fromMillisecondsSinceEpoch(remaining.inMilliseconds))}';
                                                               return Container(
                                                                 child: Text(
                                                                   dateString,
@@ -1273,7 +1259,7 @@ class HomePageState extends State<HomePage> {
                   padding: EdgeInsets.only(left: 30.0, bottom: 10.0),
                   child: Text("Messages",
                       style:
-                          TextStyle(fontSize: 30.0, fontFamily: 'Quicksand')))),
+                      TextStyle(fontSize: 30.0, fontFamily: 'Quicksand')))),
           Divider(),
           buildMessagesList(),
         ],
@@ -1300,7 +1286,7 @@ class HomePageState extends State<HomePage> {
   Widget profileIntroStream() {
     return StreamBuilder<DocumentSnapshot>(
       stream:
-          Firestore.instance.collection('users').document(myUserID).snapshots(),
+      Firestore.instance.collection('users').document(myUserID).snapshots(),
       builder:
           (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
         if (snapshot.hasError) {
@@ -1457,7 +1443,7 @@ class HomePageState extends State<HomePage> {
           details.add(ds.documentID);
           details.add(ds['email']);
           var date1 =
-              new DateTime.fromMillisecondsSinceEpoch(ds['creationDate']);
+          new DateTime.fromMillisecondsSinceEpoch(ds['creationDate']);
           details.add(date1.toString());
 
           var date2 = new DateTime.fromMillisecondsSinceEpoch(ds['lastActive']);
@@ -1507,8 +1493,8 @@ class HomePageState extends State<HomePage> {
         stream: Firestore.instance
             .collection('rentals')
             .where('renter',
-                isEqualTo:
-                    Firestore.instance.collection('users').document(myUserID))
+            isEqualTo:
+            Firestore.instance.collection('users').document(myUserID))
             .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
@@ -1521,7 +1507,7 @@ class HomePageState extends State<HomePage> {
               if (snapshot.hasData) {
                 List<DocumentSnapshot> items = snapshot.data.documents
                     .where((d) =>
-                        requesting ^ (d['status'] == 0 || d['status'] == 1))
+                requesting ^ (d['status'] == 0 || d['status'] == 1))
                     .toList();
                 return GridView.count(
                     padding: EdgeInsets.all(20.0),
@@ -1553,7 +1539,7 @@ class HomePageState extends State<HomePage> {
                                     stream: ownerDR.snapshots(),
                                     builder: (BuildContext context,
                                         AsyncSnapshot<DocumentSnapshot>
-                                            snapshot) {
+                                        snapshot) {
                                       if (snapshot.hasError) {
                                         return new Text('${snapshot.error}');
                                       }
@@ -1568,7 +1554,7 @@ class HomePageState extends State<HomePage> {
                                             String created = 'Created: ' +
                                                 timeago.format(DateTime
                                                     .fromMillisecondsSinceEpoch(
-                                                        rentalDS['created']));
+                                                    rentalDS['created']));
 
                                             return cardItemRentals(
                                                 itemDS, ownerDS, rentalDS);
@@ -1603,8 +1589,8 @@ class HomePageState extends State<HomePage> {
         stream: Firestore.instance
             .collection('rentals')
             .where('users',
-                arrayContains:
-                    Firestore.instance.collection('users').document(myUserID))
+            arrayContains:
+            Firestore.instance.collection('users').document(myUserID))
             .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           switch (snapshot.connectionState) {
@@ -1618,9 +1604,9 @@ class HomePageState extends State<HomePage> {
                   itemBuilder: (context, index) {
                     DocumentSnapshot rentalDS = snapshot.data.documents[index];
                     DocumentReference otherUserDR =
-                        myUserID == rentalDS['users'][0].documentID
-                            ? rentalDS['users'][1]
-                            : rentalDS['users'][0];
+                    myUserID == rentalDS['users'][0].documentID
+                        ? rentalDS['users'][1]
+                        : rentalDS['users'][0];
 
                     return StreamBuilder<DocumentSnapshot>(
                       stream: otherUserDR.snapshots(),
@@ -1650,7 +1636,7 @@ class HomePageState extends State<HomePage> {
                                       if (snapshot.hasData &&
                                           snapshot.data.documents.length > 0) {
                                         DocumentSnapshot lastMessageDS =
-                                            snapshot.data.documents[0];
+                                        snapshot.data.documents[0];
                                         Text title = Text(
                                           otherUserDS['name'],
                                           style: TextStyle(
@@ -1661,8 +1647,8 @@ class HomePageState extends State<HomePage> {
                                             ('Last seen: ' +
                                                 timeago.format(DateTime
                                                     .fromMillisecondsSinceEpoch(
-                                                        otherUserDS[
-                                                            'lastActive']))),
+                                                    otherUserDS[
+                                                    'lastActive']))),
                                             style: TextStyle(
                                               fontFamily: 'Quicksand',
                                             ));
@@ -1672,7 +1658,7 @@ class HomePageState extends State<HomePage> {
                                                 fontFamily: 'Quicksand'));
                                         String imageURL = otherUserDS['avatar'];
                                         String lastMessage =
-                                            lastMessageDS['content'];
+                                        lastMessageDS['content'];
                                         int cutoff = 30;
                                         String lastMessageCrop;
 
@@ -1696,7 +1682,7 @@ class HomePageState extends State<HomePage> {
                                                     imageUrl: imageURL,
                                                     placeholder:
                                                         (context, url) =>
-                                                            new Container(),
+                                                    new Container(),
                                                   ),
                                                 ),
                                               ),
@@ -1720,7 +1706,7 @@ class HomePageState extends State<HomePage> {
                                                           lastMessageCrop,
                                                           style: TextStyle(
                                                               fontFamily:
-                                                                  "Quicksand"),
+                                                              "Quicksand"),
                                                         )),
                                                   ],
                                                 ),
@@ -1785,7 +1771,7 @@ class HomePageState extends State<HomePage> {
   Future<UserEdit> getUserEdit() async {
     UserEdit out;
     DocumentSnapshot ds =
-        await Firestore.instance.collection('users').document(myUserID).get();
+    await Firestore.instance.collection('users').document(myUserID).get();
     if (ds != null) {
       out = new UserEdit(
           id: myUserID, photoUrl: ds['avatar'], displayName: ds['name']);
@@ -1807,9 +1793,9 @@ class HomePageState extends State<HomePage> {
         context,
         MaterialPageRoute(
           builder: (BuildContext context) => SearchResults(
-                searchList: searchList,
-                searchQuery: searchQuery,
-              ),
+            searchList: searchList,
+            searchQuery: searchQuery,
+          ),
         )).then((value) {
       searchList = value;
     });
@@ -1822,8 +1808,8 @@ class HomePageState extends State<HomePage> {
         context,
         MaterialPageRoute(
           builder: (BuildContext context) => ProfileEdit(
-                userEdit: userEdit,
-              ),
+            userEdit: userEdit,
+          ),
           fullscreenDialog: true,
         ));
 
@@ -1837,54 +1823,54 @@ class HomePageState extends State<HomePage> {
 
   Future<bool> deleteItemError() async {
     return await showDialog<bool>(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text('Error'),
-              content: Text(
-                  'Item is currently being rented, so it cannot be deleted'),
-              actions: <Widget>[
-                FlatButton(
-                  child: const Text('Ok'),
-                  onPressed: () {
-                    Navigator.of(context).pop(false);
-                    // Pops the confirmation dialog but not the page.
-                  },
-                ),
-              ],
-            );
-          },
-        ) ??
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Error'),
+          content: Text(
+              'Item is currently being rented, so it cannot be deleted'),
+          actions: <Widget>[
+            FlatButton(
+              child: const Text('Ok'),
+              onPressed: () {
+                Navigator.of(context).pop(false);
+                // Pops the confirmation dialog but not the page.
+              },
+            ),
+          ],
+        );
+      },
+    ) ??
         false;
   }
 
   Future<bool> deleteItemDialog(DocumentSnapshot ds) async {
     return await showDialog<bool>(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text('Delete item?'),
-              content: Text('${ds['name']}'),
-              actions: <Widget>[
-                FlatButton(
-                  child: const Text('Cancel'),
-                  onPressed: () {
-                    Navigator.of(context).pop(
-                        false); // Pops the confirmation dialog but not the page.
-                  },
-                ),
-                FlatButton(
-                  child: const Text('Delete'),
-                  onPressed: () {
-                    Navigator.of(context).pop(false);
-                    deleteItem(ds);
-                    // Pops the confirmation dialog but not the page.
-                  },
-                ),
-              ],
-            );
-          },
-        ) ??
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Delete item?'),
+          content: Text('${ds['name']}'),
+          actions: <Widget>[
+            FlatButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop(
+                    false); // Pops the confirmation dialog but not the page.
+              },
+            ),
+            FlatButton(
+              child: const Text('Delete'),
+              onPressed: () {
+                Navigator.of(context).pop(false);
+                deleteItem(ds);
+                // Pops the confirmation dialog but not the page.
+              },
+            ),
+          ],
+        );
+      },
+    ) ??
         false;
   }
 
@@ -1907,7 +1893,7 @@ class HomePageState extends State<HomePage> {
 
   Future<DocumentSnapshot> getUserFromFirestore(String userID) async {
     DocumentSnapshot ds =
-        await Firestore.instance.collection('users').document(userID).get();
+    await Firestore.instance.collection('users').document(userID).get();
 
     return ds;
   }
@@ -1962,168 +1948,3 @@ Widget template() {
 
 // to show all items created by you
 //where('creator', isEqualTo: Firestore.instance.collection('users').document(userID)),
-
-/*
-  Widget buildRentalsListOLD(bool requesting) {
-    CollectionReference collectionReference =
-        Firestore.instance.collection('users');
-    return Expanded(
-      child: StreamBuilder<QuerySnapshot>(
-        stream: collectionReference
-            .document(userID)
-            .collection('rentals')
-            .snapshots(),
-        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.hasError) {
-            return new Text('${snapshot.error}');
-          }
-          switch (snapshot.connectionState) {
-            case ConnectionState.waiting:
-
-            default:
-              if (snapshot.hasData) {
-                return new ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: snapshot.data.documents.length,
-                  itemBuilder: (context, index) {
-                    DocumentSnapshot userRentalDS =
-                        snapshot.data.documents[index];
-                    DocumentReference rentalDR = userRentalDS['rental'];
-
-                    return StreamBuilder<DocumentSnapshot>(
-                      stream: rentalDR.snapshots(),
-                      builder: (BuildContext context,
-                          AsyncSnapshot<DocumentSnapshot> snapshot) {
-                        if (snapshot.hasError) {
-                          return new Text('${snapshot.error}');
-                        }
-                        switch (snapshot.connectionState) {
-                          case ConnectionState.waiting:
-
-                          default:
-                            if (snapshot.hasData) {
-                              DocumentSnapshot rentalDS = snapshot.data;
-                              DocumentReference itemDR = rentalDS['item'];
-                              DocumentReference renterDR = rentalDS['renter'];
-
-                              if (userID == renterDR.documentID) {
-                                return StreamBuilder<DocumentSnapshot>(
-                                  stream: itemDR.snapshots(),
-                                  builder: (BuildContext context,
-                                      AsyncSnapshot<DocumentSnapshot>
-                                          snapshot) {
-                                    if (snapshot.hasError) {
-                                      return new Text('${snapshot.error}');
-                                    }
-                                    switch (snapshot.connectionState) {
-                                      case ConnectionState.waiting:
-
-                                      default:
-                                        if (snapshot.hasData) {
-                                          DocumentSnapshot itemDS =
-                                              snapshot.data;
-                                          DocumentReference ownerDR =
-                                              itemDS['creator'];
-
-                                          if (requesting ^
-                                              (rentalDS['status'] == 1)) {
-                                            return StreamBuilder<
-                                                DocumentSnapshot>(
-                                              stream: ownerDR.snapshots(),
-                                              builder: (BuildContext context,
-                                                  AsyncSnapshot<
-                                                          DocumentSnapshot>
-                                                      snapshot) {
-                                                if (snapshot.hasError) {
-                                                  return new Text(
-                                                      '${snapshot.error}');
-                                                }
-                                                switch (
-                                                    snapshot.connectionState) {
-                                                  case ConnectionState.waiting:
-
-                                                  default:
-                                                    if (snapshot.hasData) {
-                                                      DocumentSnapshot ownerDS =
-                                                          snapshot.data;
-
-                                                      String created = 'Created: ' +
-                                                          timeago.format(DateTime
-                                                              .fromMillisecondsSinceEpoch(
-                                                                  rentalDS[
-                                                                      'created']));
-
-                                                      return ListTile(
-                                                        leading: Icon(Icons
-                                                            .shopping_cart),
-                                                        //leading: Icon(Icons.build),
-                                                        title: Text(
-                                                          '${ownerDS['name']}\'s ${itemDS['name']}',
-                                                          style: TextStyle(
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold),
-                                                        ),
-                                                        subtitle: Text(created),
-                                                        onTap: () {
-                                                          Navigator.pushNamed(
-                                                            context,
-                                                            RentalDetail
-                                                                .routeName,
-                                                            arguments:
-                                                                RentalDetailArgs(
-                                                              rentalDS
-                                                                  .documentID,
-                                                            ),
-                                                          );
-                                                        },
-                                                        trailing: IconButton(
-                                                          icon: Icon(
-                                                              Icons.message),
-                                                          onPressed: () {
-                                                            Navigator.pushNamed(
-                                                              context,
-                                                              Chat.routeName,
-                                                              arguments:
-                                                                  ChatArgs(
-                                                                rentalDS
-                                                                    .documentID,
-                                                              ),
-                                                            );
-                                                          },
-                                                        ),
-                                                      );
-                                                    } else {
-                                                      return Container();
-                                                    }
-                                                }
-                                              },
-                                            );
-                                          } else {
-                                            return Container();
-                                          }
-                                        } else {
-                                          return Container();
-                                        }
-                                    }
-                                  },
-                                );
-                              } else {
-                                return Container();
-                              }
-                            } else {
-                              return Container();
-                            }
-                        }
-                      },
-                    );
-                  },
-                );
-              } else {
-                return Container();
-              }
-          }
-        },
-      ),
-    );
-  }*/

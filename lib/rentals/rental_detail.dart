@@ -45,7 +45,6 @@ class RentalDetailState extends State<RentalDetail> {
   DocumentSnapshot ownerDS;
   DocumentSnapshot renterDS;
   DocumentSnapshot userDS;
-  DocumentSnapshot cardDS;
 
   TextStyle textStyle;
   double padding = 5.0;
@@ -110,20 +109,11 @@ class RentalDetailState extends State<RentalDetail> {
         if (ds != null) {
           renterDS = ds;
 
-          ds = await Firestore.instance
-              .collection('cards')
-              .document(myUserId)
-              .get();
-
-          if (ds != null) {
-            cardDS = ds;
-
-            if (prefs != null && ownerDS != null && renterDS != null) {
-              isRenter = myUserId == renterDS.documentID ? true : false;
-              rentalCC = isRenter ? 'renterCC' : 'ownerCC';
-              userDS = isRenter ? renterDS : ownerDS;
-              delayPage();
-            }
+          if (prefs != null && ownerDS != null && renterDS != null) {
+            isRenter = myUserId == renterDS.documentID ? true : false;
+            rentalCC = isRenter ? 'renterCC' : 'ownerCC';
+            userDS = isRenter ? renterDS : ownerDS;
+            delayPage();
           }
         }
       }
@@ -232,6 +222,7 @@ class RentalDetailState extends State<RentalDetail> {
                     showReceiveItemButton(),
                     showReturnedItemButton(),
                     showReview(),
+                    //paymentButtonTEST(),
                   ],
                 ),
               );
@@ -240,6 +231,18 @@ class RentalDetailState extends State<RentalDetail> {
             }
         }
       },
+    );
+  }
+
+  Widget paymentButtonTEST() {
+    return RaisedButton(
+      onPressed: () {
+        PaymentService().chargeRental(
+            1.0,
+            '${renterDS['name']} paying ${ownerDS['name']} '
+            'for renting ${rentalDS['itemName']}');
+      },
+      child: Text('Charge'),
     );
   }
 
@@ -512,7 +515,7 @@ class RentalDetailState extends State<RentalDetail> {
                           height: 175,
                           child: StreamBuilder<QuerySnapshot>(
                             stream: Firestore.instance
-                                .collection('cards')
+                                .collection('users')
                                 .document(myUserId)
                                 .collection('sources')
                                 .limit(1)
