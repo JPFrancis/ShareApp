@@ -43,6 +43,7 @@ class ItemEditState extends State<ItemEdit> {
   List<Asset> imageAssets = List<Asset>();
   List imageURLs = List();
   String imageFileName;
+  int totalImagesCount;
   bool imageButton = false;
   bool isEdit = true; // true if on editing mode, false if on adding mode
   bool isLoading = false;
@@ -84,6 +85,10 @@ class ItemEditState extends State<ItemEdit> {
     if (itemCopy.numImages == 0) {
       imageButton = true;
     }
+
+    imageURLs.addAll(itemCopy.images);
+
+    totalImagesCount = itemCopy.numImages;
 
     const itemType = <String>[
       'Tool',
@@ -282,12 +287,74 @@ class ItemEditState extends State<ItemEdit> {
   }
 
   Widget showImages() {
+    return Container(
+      height: 120,
+      child: SizedBox.expand(child: getAllImages(context)),
+    );
+    /*
     return isEdit
         ? Container(
             height: 120,
             child: SizedBox.expand(child: getImagesListView(context)),
           )
         : buildAssetList();
+    */
+  }
+
+  getAllImages(BuildContext context) {
+    return totalImagesCount > 0
+        ? ListView.builder(
+            shrinkWrap: true,
+            scrollDirection: Axis.horizontal,
+            itemCount: totalImagesCount,
+            itemBuilder: (BuildContext context, int index) {
+              // display both url images and image assets
+              if (itemCopy.numImages > 0 && imageAssets.length > 0) {
+                if (index < itemCopy.images.length) {
+                  return Container(
+                    child: CachedNetworkImage(
+                      imageUrl: itemCopy.images[index],
+                      placeholder: (context, url) =>
+                          new CircularProgressIndicator(),
+                    ),
+                  );
+                } else {
+                  Asset asset = imageAssets[index - itemCopy.images.length];
+                  return Container(
+                      padding: EdgeInsets.only(right: 10.0),
+                      child: AssetThumb(
+                        asset: asset,
+                        height: 120,
+                        width: 120,
+                      ));
+                }
+              }
+
+              // display only url images
+              else if (itemCopy.numImages > 0) {
+                return Container(
+                  child: CachedNetworkImage(
+                    imageUrl: itemCopy.images[index],
+                    placeholder: (context, url) =>
+                        new CircularProgressIndicator(),
+                  ),
+                );
+              }
+
+              // display only image assets
+              else {
+                Asset asset = imageAssets[index];
+                return Container(
+                    padding: EdgeInsets.only(right: 10.0),
+                    child: AssetThumb(
+                      asset: asset,
+                      height: 120,
+                      width: 120,
+                    ));
+              }
+            },
+          )
+        : Container();
   }
 
   getImagesListView(BuildContext context) {
@@ -606,7 +673,7 @@ class ItemEditState extends State<ItemEdit> {
         'rating': 0,
         'numRatings': 0,
         'price': itemCopy.price,
-        'numImages': itemCopy.numImages,
+        'numImages': totalImagesCount,
         'location': itemCopy.location,
         'rental': itemCopy.rental,
       });
@@ -665,7 +732,7 @@ class ItemEditState extends State<ItemEdit> {
         'type': itemCopy.type,
         'condition': itemCopy.condition,
         'price': itemCopy.price,
-        'numImages': itemCopy.numImages,
+        'numImages': totalImagesCount,
         'location': itemCopy.location,
       });
 
@@ -680,7 +747,9 @@ class ItemEditState extends State<ItemEdit> {
 
         if (done != null) {
           setState(() {
-            if (isEdit) widget.item.images = imageURLs;
+            if (isEdit) {
+              //widget.item.images = imageURLs;
+            }
           });
           Navigator.of(context).pop(itemCopy);
         }
@@ -699,18 +768,16 @@ class ItemEditState extends State<ItemEdit> {
       resultList = await MultiImagePicker.pickImages(
         maxImages: 10,
         enableCamera: false,
-        //options: CupertinoOptions(takePhotoIcon: "chat"),
       );
     } on PlatformException catch (e) {}
 
-    // If the widget was removed from the tree while the asynchronous platform
-    // message was in flight, we want to discard the reply rather than calling
-    // setState to update our non-existent appearance.
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
 
     setState(() {
       imageAssets = resultList;
-      itemCopy.numImages = imageAssets.length;
+      totalImagesCount = itemCopy.numImages + imageAssets.length;
       imageButton = false;
       //_error = error;
     });
@@ -754,18 +821,21 @@ class ItemEditState extends State<ItemEdit> {
 
     for (var i = 0; i < imageAssets.length; i++) {
       if (i == imageAssets.length - 1) {
-        done = await saveImage(imageAssets[i], fileName, i);
+        done = await saveImage(
+            imageAssets[i], fileName, i + itemCopy.images.length);
         result = done;
       } else {
-        result = await saveImage(imageAssets[i], fileName, i);
+        result = await saveImage(
+            imageAssets[i], fileName, i + itemCopy.images.length);
       }
 
       imageURLs.add(result);
-      Firestore.instance
-          .collection('items')
-          .document(itemCopy.id)
-          .updateData({'images': imageURLs});
     }
+
+    Firestore.instance
+        .collection('items')
+        .document(itemCopy.id)
+        .updateData({'images': imageURLs});
 
     return done;
   }
@@ -900,7 +970,7 @@ class ItemEditState extends State<ItemEdit> {
 
   Future<bool> saveWarning() async {
     if (itemCopy.location != null &&
-        itemCopy.numImages > 0 &&
+        totalImagesCount > 0 &&
         itemCopy.name.length > 0) {
       saveItem();
       return true;
