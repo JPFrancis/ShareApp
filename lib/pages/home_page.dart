@@ -59,7 +59,8 @@ class HomePageState extends State<HomePage> {
   TextEditingController searchController = TextEditingController();
   List<DocumentSnapshot> searchList;
 
-  double _changingHeight = 220;
+  static final double _initial = 200;
+  double _changingHeight = _initial;
 
   @override
   void initState() {
@@ -522,6 +523,7 @@ class HomePageState extends State<HomePage> {
               ),
               Expanded(
                 child: TextField(
+                  onEditingComplete: ()=>setState(()=>_changingHeight = _initial),
                   onSubmitted: (value) {
                     if (value.length > 0) {
                       navToSearchResults(value);
@@ -529,14 +531,8 @@ class HomePageState extends State<HomePage> {
                   },
                   keyboardType: TextInputType.text,
                   controller: searchController,
-                  onTap: () {
-                    setState(() {
-                      _changingHeight = 50;
-                    });
-                  },
-                  onChanged: (value) {
-                    setState(() {});
-                  },
+                  onTap: () => setState(() => _changingHeight = 50),
+                  onChanged: (value) {setState(() {});},
                   decoration: InputDecoration(
                     border: InputBorder.none,
                     labelStyle: TextStyle(
@@ -548,12 +544,7 @@ class HomePageState extends State<HomePage> {
               Container(
                 width: 50,
                 child: FlatButton(
-                  onPressed: () {
-                    setState(() {
-                      searchController.clear();
-                      _changingHeight = 220;
-                    });
-                  },
+                  onPressed: () {setState(() {searchController.clear(); _changingHeight = _initial;});},
                   child: Icon(Icons.clear),
                 ),
               ),

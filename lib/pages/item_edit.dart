@@ -6,7 +6,9 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:google_maps_webservice/places.dart';
 import 'package:multi_image_picker/multi_image_picker.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/models/item.dart';
@@ -60,11 +62,26 @@ class ItemEditState extends State<ItemEdit> {
 
   Item itemCopy;
 
+
   @override
   void initState() {
     super.initState();
 
+    getUserLocation();
     itemCopy = Item.copy(widget.item);
+  }
+  
+  LatLng _center ;
+  Position currentLocation;
+  Future<Position> locateUser() async {
+    return Geolocator().getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+  }
+  getUserLocation() async {
+    currentLocation = await locateUser();
+    setState(() {
+      _center = LatLng(currentLocation.latitude, currentLocation.longitude);
+    });
+    print('center $_center');
   }
 
   @override
@@ -241,19 +258,15 @@ class ItemEditState extends State<ItemEdit> {
   }
 
   Widget showImages() {
-    double w = MediaQuery.of(context).size.width;
-
     return isEdit
         ? Container(
-            height: w,
+            height: 120,
             child: SizedBox.expand(child: getImagesListView(context)),
           )
         : buildAssetList();
   }
 
   getImagesListView(BuildContext context) {
-    double widthOfScreen = MediaQuery.of(context).size.width;
-
     return itemCopy.images.length > 0
         ? ListView.builder(
             shrinkWrap: true,
@@ -261,14 +274,10 @@ class ItemEditState extends State<ItemEdit> {
             itemCount: itemCopy.images.length,
             itemBuilder: (BuildContext context, int index) {
               return Container(
-                width: widthOfScreen,
-                child: sizedContainer(
-                  CachedNetworkImage(
+                child: CachedNetworkImage(
                     imageUrl: itemCopy.images[index],
-                    placeholder: (context, url) =>
-                        new CircularProgressIndicator(),
+                    placeholder: (context, url) => new CircularProgressIndicator(),
                   ),
-                ),
               );
             },
           )
@@ -423,16 +432,21 @@ class ItemEditState extends State<ItemEdit> {
   }
 
   Widget showItemLocation() {
-    Widget toret;
     if (itemCopy.location == null) {
-      return Container();
+      Set<Marker> markers = new Set();
+      markers.add(Marker(position: _center, markerId: MarkerId('1')));
+      return Container(
+        height: 200,
+        width: 100,
+        child: GoogleMap(initialCameraPosition: CameraPosition(target: _center, zoom: 15), myLocationButtonEnabled: false, markers: markers,)
+      );
     } else {
       double widthOfScreen = MediaQuery.of(context).size.width;
       GeoPoint gp = itemCopy.location;
       double lat = gp.latitude;
       double long = gp.longitude;
 
-      toret = Center(
+      return Center(
         child: SizedBox(
           width: widthOfScreen,
           height: 200.0,
@@ -477,8 +491,6 @@ class ItemEditState extends State<ItemEdit> {
         ),
       );
     }
-
-    return toret;
   }
 
   Widget showLocationButtons() {
