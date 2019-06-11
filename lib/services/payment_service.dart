@@ -14,7 +14,6 @@ class PaymentService {
     });
   }
 
-
   chargeRental(price, description) {
     // Stripe charges in cents. so $3.00 = 300 cents
     var processedPrice = price * 100;

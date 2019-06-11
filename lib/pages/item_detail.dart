@@ -238,18 +238,58 @@ class ItemDetailState extends State<ItemDetail> {
 
   Widget showReviews() {
     double h = MediaQuery.of(context).size.height;
+    Widget _reviewTile() {
+      return Container(
+        child: Column(
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Icon(Icons.image),
+                Text(
+                  "Renter Name",
+                  style: TextStyle(fontFamily: 'Quicksand'),
+                )
+              ],
+            ),
+            Text("Customer Review Goes Here",
+                style: TextStyle(fontFamily: 'Quicksand')),
+          ],
+        ),
+      );
+    }
+
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 20.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
         children: <Widget>[
-          Text('Reviews',
-              style: TextStyle(
-                  fontSize: 15.0,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                  fontFamily: 'Quicksand')),
-          StarRating(rating: itemDS['rating'].toDouble(), sz: h / 30),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Text('Reviews',
+                  style: TextStyle(
+                      fontSize: 15.0,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                      fontFamily: 'Quicksand')),
+              StarRating(rating: itemDS['rating'].toDouble(), sz: h / 30),
+            ],
+          ),
+          SizedBox(
+            height: 10.0,
+          ),
+          _reviewTile(),
+          divider(),
+          _reviewTile(),
+          divider(),
+          _reviewTile(),
+          divider(),
+          Align(
+              alignment: Alignment.bottomRight,
+              child: InkWell(
+                  onTap: () => null,
+                  child: Text('View All',
+                      style: TextStyle(
+                          fontFamily: 'Quicksand', color: primaryColor))))
         ],
       ),
     );

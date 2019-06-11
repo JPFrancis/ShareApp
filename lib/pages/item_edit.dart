@@ -6,6 +6,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:multi_image_picker/multi_image_picker.dart';
 import 'package:shareapp/extras/helpers.dart';
@@ -59,20 +60,14 @@ class ItemEditState extends State<ItemEdit> {
   ThemeData theme;
 
   Item itemCopy;
+  Position currentLocation;
 
   @override
   void initState() {
     super.initState();
 
+    isLoading = true;
     itemCopy = Item.copy(widget.item);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    theme = Theme.of(context);
-    textStyle =
-        Theme.of(context).textTheme.headline.merge(TextStyle(fontSize: 20));
-    inputTextStyle = Theme.of(context).textTheme.subtitle;
 
     nameController.text = itemCopy.name;
     descriptionController.text = itemCopy.description;
@@ -113,6 +108,52 @@ class ItemEditState extends State<ItemEdit> {
             value: value,
             child: Text(value, style: TextStyle(fontFamily: 'Quicksand'))))
         .toList();
+
+    getUserLocation();
+  }
+
+  getUserLocation() async {
+    if (isEdit) {
+      setState(() {
+        isLoading = false;
+      });
+    } else {
+      GeolocationStatus geolocationStatus =
+          await Geolocator().checkGeolocationPermissionStatus();
+
+      if (geolocationStatus != null) {
+        if (geolocationStatus != GeolocationStatus.granted) {
+          setState(() {
+            isLoading = false;
+          });
+
+          showUserLocationError();
+        } else {
+          currentLocation = await locateUser();
+
+          if (currentLocation != null) {
+            setState(() {
+              itemCopy.location =
+                  GeoPoint(currentLocation.latitude, currentLocation.longitude);
+              isLoading = false;
+            });
+          }
+        }
+      }
+    }
+  }
+
+  Future<Position> locateUser() async {
+    return Geolocator()
+        .getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    theme = Theme.of(context);
+    textStyle =
+        Theme.of(context).textTheme.headline.merge(TextStyle(fontSize: 20));
+    inputTextStyle = Theme.of(context).textTheme.subtitle;
 
     return Scaffold(
       resizeToAvoidBottomPadding: true,
@@ -241,19 +282,15 @@ class ItemEditState extends State<ItemEdit> {
   }
 
   Widget showImages() {
-    double w = MediaQuery.of(context).size.width;
-
     return isEdit
         ? Container(
-            height: w,
+            height: 120,
             child: SizedBox.expand(child: getImagesListView(context)),
           )
         : buildAssetList();
   }
 
   getImagesListView(BuildContext context) {
-    double widthOfScreen = MediaQuery.of(context).size.width;
-
     return itemCopy.images.length > 0
         ? ListView.builder(
             shrinkWrap: true,
@@ -261,13 +298,10 @@ class ItemEditState extends State<ItemEdit> {
             itemCount: itemCopy.images.length,
             itemBuilder: (BuildContext context, int index) {
               return Container(
-                width: widthOfScreen,
-                child: sizedContainer(
-                  CachedNetworkImage(
-                    imageUrl: itemCopy.images[index],
-                    placeholder: (context, url) =>
-                        new CircularProgressIndicator(),
-                  ),
+                child: CachedNetworkImage(
+                  imageUrl: itemCopy.images[index],
+                  placeholder: (context, url) =>
+                      new CircularProgressIndicator(),
                 ),
               );
             },
@@ -423,7 +457,6 @@ class ItemEditState extends State<ItemEdit> {
   }
 
   Widget showItemLocation() {
-    Widget toret;
     if (itemCopy.location == null) {
       return Container();
     } else {
@@ -432,7 +465,7 @@ class ItemEditState extends State<ItemEdit> {
       double lat = gp.latitude;
       double long = gp.longitude;
 
-      toret = Center(
+      return Center(
         child: SizedBox(
           width: widthOfScreen,
           height: 200.0,
@@ -477,8 +510,6 @@ class ItemEditState extends State<ItemEdit> {
         ),
       );
     }
-
-    return toret;
   }
 
   Widget showLocationButtons() {
@@ -924,6 +955,36 @@ class ItemEditState extends State<ItemEdit> {
                     Navigator.of(context).pop(false);
                     deleteItem();
                     // Pops the confirmation dialog but not the page.
+                  },
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
+  }
+
+  Future<bool> showUserLocationError() async {
+    final ThemeData theme = Theme.of(context);
+    final TextStyle dialogTextStyle =
+        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+
+    return await showDialog<bool>(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Error'),
+              content: Text(
+                'Problem with getting your current location',
+                style: dialogTextStyle,
+              ),
+              actions: <Widget>[
+                FlatButton(
+                  child: const Text('Close'),
+                  onPressed: () {
+                    deleteAssets();
+                    Navigator.of(context).pop(
+                        false); // Pops the confirmation dialog but not the page.
                   },
                 ),
               ],
