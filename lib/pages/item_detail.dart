@@ -260,27 +260,30 @@ class ItemDetailState extends State<ItemDetail> {
         divider(),
         showItemLocation(),
         divider(),
-        showReviews(),
+        recentReviews.length >= 3 ? showReviews() : Container(),
       ],
     );
   }
 
   Widget showReviews() {
     double h = MediaQuery.of(context).size.height;
-    Widget _reviewTile(renterName, customerReview) {
+    Widget _reviewTile(renter, customerReview) {
       return Container(
         child: Column(
           children: <Widget>[
-            Row(
-              children: <Widget>[
-                Icon(Icons.image),
-                Text(
-                  renterName,
-                  style: TextStyle(fontFamily: 'Quicksand'),
-                )
-              ],
-            ),
-            Text(customerReview, style: TextStyle(fontFamily: 'Quicksand')),
+            Row(children: <Widget>[
+              Container(height: 40.0,
+                child: ClipOval(
+                  child: CachedNetworkImage(
+                    imageUrl: renter['avatar'],
+                    placeholder: (context, url) => new CircularProgressIndicator(),
+                  ),
+              ),),
+              SizedBox(width: 5),
+              Text(renter['name'], style: TextStyle(fontFamily: 'Quicksand', fontWeight: FontWeight.bold),)
+            ],),
+            Container(padding: EdgeInsets.only(left: 45.0), alignment: Alignment.centerLeft,
+              child: Text(customerReview, style: TextStyle(fontFamily: 'Quicksand'))),
           ],
         ),
       );
@@ -305,13 +308,13 @@ class ItemDetailState extends State<ItemDetail> {
           SizedBox(
             height: 10.0,
           ),
-          _reviewTile(recentReviewsUsers[0]['name'],
+          _reviewTile(recentReviewsUsers[0],
               recentReviews[0]['review']['reviewNote']),
           divider(),
-          _reviewTile(recentReviewsUsers[1]['name'],
+          _reviewTile(recentReviewsUsers[1],
               recentReviews[1]['review']['reviewNote']),
           divider(),
-          _reviewTile(recentReviewsUsers[2]['name'],
+          _reviewTile(recentReviewsUsers[2],
               recentReviews[2]['review']['reviewNote']),
           divider(),
           Align(
