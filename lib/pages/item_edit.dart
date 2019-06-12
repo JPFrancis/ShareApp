@@ -193,10 +193,10 @@ class ItemEditState extends State<ItemEdit> {
         children: <Widget>[
           ListView(
               shrinkWrap: true,
-              padding: EdgeInsets.only(
-                  top: height / 15, bottom: 10.0, left: 18.0, right: 18.0),
+              padding: EdgeInsets.only(top: height / 15, bottom: 10.0, left: 17.0, right: 17.0),
               children: <Widget>[
                 showImages(),
+                SizedBox(height: 10,),
                 showImageButtons(),
                 divider(),
                 reusableCategory("DETAILS"),
@@ -289,7 +289,7 @@ class ItemEditState extends State<ItemEdit> {
   Widget showImages() {
     return Container(
       height: 120,
-      child: SizedBox.expand(child: getAllImages(context)),
+      child: getAllImages(context),
     );
     /*
     return isEdit
@@ -312,10 +312,15 @@ class ItemEditState extends State<ItemEdit> {
               if (itemCopy.numImages > 0 && imageAssets.length > 0) {
                 if (index < itemCopy.images.length) {
                   return Container(
-                    child: CachedNetworkImage(
-                      imageUrl: itemCopy.images[index],
-                      placeholder: (context, url) =>
-                          new CircularProgressIndicator(),
+                    padding: EdgeInsets.only(right: 10.0),
+                    width: 130,
+                    child: FittedBox(
+                      fit: BoxFit.cover,
+                      child: CachedNetworkImage(
+                        imageUrl: itemCopy.images[index],
+                        placeholder: (context, url) =>
+                            new CircularProgressIndicator(),
+                      ),
                     ),
                   );
                 } else {
@@ -333,6 +338,8 @@ class ItemEditState extends State<ItemEdit> {
               // display only url images
               else if (itemCopy.numImages > 0) {
                 return Container(
+                  height: 120,
+                  width: 120,
                   child: CachedNetworkImage(
                     imageUrl: itemCopy.images[index],
                     placeholder: (context, url) =>
@@ -354,7 +361,8 @@ class ItemEditState extends State<ItemEdit> {
               }
             },
           )
-        : Container();
+        : Container(decoration: BoxDecoration(border: Border.all()),
+            child: Center(child: Text("No Images Added Yet!", style: TextStyle(fontFamily: 'Quicksand'))));
   }
 
   getImagesListView(BuildContext context) {
@@ -394,16 +402,6 @@ class ItemEditState extends State<ItemEdit> {
               }),
             )
           : Container(),
-    );
-  }
-
-  Widget sizedContainer(Widget child) {
-    return new SizedBox(
-      width: 300.0,
-      height: 150.0,
-      child: new Center(
-        child: child,
-      ),
     );
   }
 
@@ -532,48 +530,50 @@ class ItemEditState extends State<ItemEdit> {
       double lat = gp.latitude;
       double long = gp.longitude;
 
-      return Center(
-        child: SizedBox(
-          width: widthOfScreen,
-          height: 200.0,
-          child: GoogleMap(
-            mapType: MapType.normal,
-            rotateGesturesEnabled: false,
-            initialCameraPosition: CameraPosition(
-              target: LatLng(lat, long),
-              zoom: 11.5,
-            ),
-            onMapCreated: (GoogleMapController controller) {
-              googleMapController = controller;
-            },
-            markers: Set<Marker>.of(
-              <Marker>[
-                Marker(
-                  markerId: MarkerId("test_marker_id"),
-                  position: LatLng(
-                    lat,
-                    long,
-                  ),
-                  infoWindow: InfoWindow(
-                    title: 'Item Location',
-                    snippet: '${lat}, ${long}',
-                  ),
-                )
-              ],
-            ),
-            /*
-            gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>[
-              Factory<OneSequenceGestureRecognizer>(
-                    () =>
-
-                /// to disable dragging, use ScaleGestureRecognizer()
-                /// to enable dragging, use EagerGestureRecognizer()
-                EagerGestureRecognizer(),
-                //ScaleGestureRecognizer(),
-              ),
-            ].toSet(),
-            */
+      return Container(
+        padding: EdgeInsets.only(top: 10.0),
+        decoration: BoxDecoration(
+          //border: Border(top: BorderSide(color: Colors.black), bottom: BorderSide(color: Colors.black)),
+        ),
+        width: widthOfScreen,
+        height: 200.0,
+        child: GoogleMap(
+          mapType: MapType.normal,
+          rotateGesturesEnabled: false,
+          initialCameraPosition: CameraPosition(
+            target: LatLng(lat, long),
+            zoom: 11.5,
           ),
+          onMapCreated: (GoogleMapController controller) {
+            googleMapController = controller;
+          },
+          markers: Set<Marker>.of(
+            <Marker>[
+              Marker(
+                markerId: MarkerId("test_marker_id"),
+                position: LatLng(
+                  lat,
+                  long,
+                ),
+                infoWindow: InfoWindow(
+                  title: 'Item Location',
+                  snippet: '${lat}, ${long}',
+                ),
+              )
+            ],
+          ),
+          /*
+          gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>[
+            Factory<OneSequenceGestureRecognizer>(
+                  () =>
+
+              /// to disable dragging, use ScaleGestureRecognizer()
+              /// to enable dragging, use EagerGestureRecognizer()
+              EagerGestureRecognizer(),
+              //ScaleGestureRecognizer(),
+            ),
+          ].toSet(),
+          */
         ),
       );
     }
@@ -590,11 +590,9 @@ class ItemEditState extends State<ItemEdit> {
               child: itemCopy.location == null
                   ? Text(
                       "Add Location",
-                      textScaleFactor: 1.25,
                       style: TextStyle(fontFamily: 'Quicksand'),
                     )
                   : Text("Edit Location",
-                      textScaleFactor: 1.25,
                       style: TextStyle(
                         fontFamily: 'Quicksand',
                       )),
@@ -605,6 +603,7 @@ class ItemEditState extends State<ItemEdit> {
               },
             ),
           ),
+          /*
           SizedBox(
             width: 15.0,
           ),
@@ -620,7 +619,7 @@ class ItemEditState extends State<ItemEdit> {
               onPressed:
                   itemCopy.location == null ? null : () => resetLocation(),
             ),
-          ),
+          ),*/
         ],
       ),
     );
