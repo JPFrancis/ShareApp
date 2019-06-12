@@ -9,6 +9,7 @@ import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/models/item.dart';
 import 'package:shareapp/pages/item_edit.dart';
+import 'package:shareapp/rentals/all_reviews.dart';
 import 'package:shareapp/rentals/item_request.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/const.dart';
@@ -42,6 +43,8 @@ class ItemDetailState extends State<ItemDetail> {
   SharedPreferences prefs;
   String myUserID;
   String itemCreator;
+  List<DocumentSnapshot> recentReviews;
+  List<DocumentSnapshot> recentReviewsUsers = List();
 
   bool isLoading = true;
   bool isOwner;
@@ -103,8 +106,34 @@ class ItemDetailState extends State<ItemDetail> {
         }
       }
 
-      if (prefs != null && itemDS != null && creatorDS != null) {
-        delayPage();
+      QuerySnapshot querySnapshot = await Firestore.instance
+          .collection('rentals')
+          .where('item',
+              isEqualTo: Firestore.instance
+                  .collection('items')
+                  .document(itemDS.documentID))
+          .orderBy('review', descending: false)
+          .limit(3)
+          .getDocuments();
+      recentReviews = querySnapshot.documents;
+
+      if (recentReviews != null) {
+        for (int i = 0; i < recentReviews.length; i++) {
+          DocumentReference renterDR = recentReviews[i]['renter'];
+
+          DocumentSnapshot userDS = await renterDR.get();
+          if (userDS != null) {
+            recentReviewsUsers.add(userDS);
+          }
+        }
+
+        if (prefs != null &&
+            itemDS != null &&
+            creatorDS != null &&
+            recentReviews != null &&
+            recentReviewsUsers != null) {
+          delayPage();
+        }
       }
     }
   }
@@ -238,7 +267,7 @@ class ItemDetailState extends State<ItemDetail> {
 
   Widget showReviews() {
     double h = MediaQuery.of(context).size.height;
-    Widget _reviewTile() {
+    Widget _reviewTile(renterName, customerReview) {
       return Container(
         child: Column(
           children: <Widget>[
@@ -246,13 +275,12 @@ class ItemDetailState extends State<ItemDetail> {
               children: <Widget>[
                 Icon(Icons.image),
                 Text(
-                  "Renter Name",
+                  renterName,
                   style: TextStyle(fontFamily: 'Quicksand'),
                 )
               ],
             ),
-            Text("Customer Review Goes Here",
-                style: TextStyle(fontFamily: 'Quicksand')),
+            Text(customerReview, style: TextStyle(fontFamily: 'Quicksand')),
           ],
         ),
       );
@@ -277,19 +305,23 @@ class ItemDetailState extends State<ItemDetail> {
           SizedBox(
             height: 10.0,
           ),
-          _reviewTile(),
+          _reviewTile(recentReviewsUsers[0]['name'],
+              recentReviews[0]['review']['reviewNote']),
           divider(),
-          _reviewTile(),
+          _reviewTile(recentReviewsUsers[1]['name'],
+              recentReviews[1]['review']['reviewNote']),
           divider(),
-          _reviewTile(),
+          _reviewTile(recentReviewsUsers[2]['name'],
+              recentReviews[2]['review']['reviewNote']),
           divider(),
           Align(
               alignment: Alignment.bottomRight,
               child: InkWell(
-                  onTap: () => null,
+                  onTap: () => navToAllReviews(),
                   child: Text('View All',
                       style: TextStyle(
-                          fontFamily: 'Quicksand', color: primaryColor))))
+                          fontFamily: 'Quicksand', color: primaryColor)))),
+          Container(height: 10),
         ],
       ),
     );
@@ -566,6 +598,16 @@ class ItemDetailState extends State<ItemDetail> {
         child: child,
       ),
     );
+  }
+
+  void navToAllReviews() async {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (BuildContext context) => AllReviews(
+                itemDS: itemDS,
+              ),
+        ));
   }
 
   void navigateToEdit() async {

@@ -774,7 +774,14 @@ class RentalDetailState extends State<RentalDetail> {
     Firestore.instance
         .collection('rentals')
         .document(rentalDS.documentID)
-        .updateData({'status': status});
+        .updateData({'status': status}).then((_) {
+      if (status == 5) {
+        Firestore.instance
+            .collection('items')
+            .document(rentalDS['item'].documentID)
+            .updateData({'rental': null});
+      }
+    });
   }
 
   void newPickupProposal() async {
@@ -870,9 +877,12 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   void goToLastScreen() {
+    Navigator.pop(context);
+    /*
     Navigator.popUntil(
       context,
       ModalRoute.withName('/'),
     );
+    */
   }
 }
