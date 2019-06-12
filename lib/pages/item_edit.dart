@@ -198,6 +198,7 @@ class ItemEditState extends State<ItemEdit> {
                 showImages(),
                 SizedBox(height: 10,),
                 showImageButtons(),
+                showImageWarning(),
                 divider(),
                 reusableCategory("DETAILS"),
                 reusableTextEntry("What are you selling? (required)", true,
@@ -278,12 +279,20 @@ class ItemEditState extends State<ItemEdit> {
 
   Widget reusableCategory(text) {
     return Container(
-        alignment: Alignment.centerLeft,
-        child: Text(text,
-            style: TextStyle(
-                fontSize: 11.0,
-                fontWeight: FontWeight.w100,
-                fontFamily: 'Quicksand')));
+      alignment: Alignment.centerLeft,
+      child: Text(
+        text,
+        style: TextStyle(
+            fontSize: 11.0,
+            fontWeight: FontWeight.w100,
+            fontFamily: 'Quicksand'),
+      ),
+    );
+  }
+
+  Widget showImageWarning() {
+    return Text(
+        'Select up to 8 images\nAvailable images remaining: ${8 - totalImagesCount}');
   }
 
   Widget showImages() {
@@ -291,14 +300,6 @@ class ItemEditState extends State<ItemEdit> {
       height: 120,
       child: getAllImages(context),
     );
-    /*
-    return isEdit
-        ? Container(
-            height: 120,
-            child: SizedBox.expand(child: getImagesListView(context)),
-          )
-        : buildAssetList();
-    */
   }
 
   getAllImages(BuildContext context) {
@@ -765,7 +766,7 @@ class ItemEditState extends State<ItemEdit> {
 
     try {
       resultList = await MultiImagePicker.pickImages(
-        maxImages: 10,
+        maxImages: 8 - totalImagesCount,
         enableCamera: false,
       );
     } on PlatformException catch (e) {}

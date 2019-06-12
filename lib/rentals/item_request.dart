@@ -156,8 +156,7 @@ class ItemRequestState extends State<ItemRequest> {
         child: RaisedButton(
           splashColor: Colors.red,
           elevation: 3.0,
-          onPressed: () => print,
-//          onPressed: ()=>validateSend(sendItem),
+          onPressed: () => validateSend(sendItem),
           color: primaryColor,
           child: Text(
             "Request",
@@ -434,7 +433,7 @@ class ItemRequestState extends State<ItemRequest> {
 
           rentalDR.get().then((ds) {
             if (rentalID != null) {
-              Navigator.pushNamed(
+              Navigator.popAndPushNamed(
                 context,
                 RentalDetail.routeName,
                 arguments: RentalDetailArgs(

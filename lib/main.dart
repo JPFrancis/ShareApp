@@ -8,6 +8,7 @@ import 'package:shareapp/pages/home_page.dart';
 import 'package:shareapp/pages/item_detail.dart';
 import 'package:shareapp/pages/item_edit.dart';
 import 'package:shareapp/pages/search_results.dart';
+import 'package:shareapp/rentals/all_reviews.dart';
 import 'package:shareapp/rentals/chat.dart';
 import 'package:shareapp/rentals/item_request.dart';
 import 'package:shareapp/rentals/new_pickup.dart';
@@ -138,13 +139,26 @@ class MyApp extends StatelessWidget {
             }
           case SearchResults.routeName:
             {
-              final SearchResults args = settings.arguments;
+              final SearchResultsArgs args = settings.arguments;
 
               return MaterialPageRoute(
                 builder: (context) {
                   return SearchResults(
                     searchList: args.searchList,
                     searchQuery: args.searchQuery,
+                  );
+                },
+              );
+            }
+
+          case AllReviews.routeName:
+            {
+              final AllReviewsArgs args = settings.arguments;
+
+              return MaterialPageRoute(
+                builder: (context) {
+                  return AllReviews(
+                    itemDS: args.itemDS,
                   );
                 },
               );
@@ -209,4 +223,10 @@ class SearchResultsArgs {
   final String searchQuery;
 
   SearchResultsArgs(this.searchList, this.searchQuery);
+}
+
+class AllReviewsArgs {
+  final DocumentSnapshot itemDS;
+
+  AllReviewsArgs(this.itemDS);
 }
