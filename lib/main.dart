@@ -24,7 +24,8 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'ShareApp',
       theme: ThemeData(
-        primarySwatch: Colors.red,
+        //primarySwatch: Colors.red,
+        backgroundColor: Colors.black
       ),
       home: new RootPage(auth: new Auth()),
       //initialRoute: RootPage.routeName,

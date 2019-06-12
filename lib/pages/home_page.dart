@@ -20,6 +20,7 @@ import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:shareapp/services/const.dart';
 
 class HomePage extends StatefulWidget {
   static const routeName = '/homePage';
@@ -52,7 +53,6 @@ class HomePageState extends State<HomePage> {
   int badge;
   bool isLoading = false;
 
-  Color primaryColor = Color.fromRGBO(52, 117, 115, 1);
   EdgeInsets edgeInset;
   double padding;
 
@@ -161,6 +161,7 @@ class HomePageState extends State<HomePage> {
     //updateLastActive();
 
     return Scaffold(
+      backgroundColor: coolerWhite,
       body: isLoading
           ? Container()
           : IndexedStack(
@@ -169,6 +170,7 @@ class HomePageState extends State<HomePage> {
             ),
       floatingActionButton: showFAB(),
       bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: coolerWhite,
         selectedItemColor: primaryColor,
         items: bottomNavBarTiles,
         currentIndex: currentTabIndex,
@@ -577,9 +579,7 @@ class HomePageState extends State<HomePage> {
             alignment: Alignment.bottomCenter,
             child: Column(
               children: <Widget>[
-                Container(
-                  height: 30,
-                ),
+                AnimatedContainer(height: _changingHeight, duration: Duration(seconds: 1)),
                 searchField(),
                 searchController.text.isNotEmpty && searchList != null
                     ? Expanded(
@@ -1228,26 +1228,29 @@ class HomePageState extends State<HomePage> {
             ),
           ),
         ),
-        body: TabBarView(
-          children: [
-            Column(
-              children: <Widget>[
-                reusableCategoryWithAll("REQUESTS", () => debugPrint),
-                buildRequests("owner"),
-                reusableCategoryWithAll("UPCOMING", () => debugPrint),
-                buildTransactions('upcoming', "owner"),
-                reusableCategoryWithAll("CURRENT", () => debugPrint),
-                buildTransactions('current', "owner"),
-                reusableCategoryWithAll("PAST", () => debugPrint),
-                buildTransactions('past', "owner"),
-              ],
-            ),
-            Column(
-              children: <Widget>[
-                buildListingsList(),
-              ],
-            ),
-          ],
+        body: Container(
+          color: coolerWhite,
+          child: TabBarView(
+            children: [
+              Column(
+                children: <Widget>[
+                  reusableCategoryWithAll("REQUESTS", () => debugPrint),
+                  buildRequests("owner"),
+                  reusableCategoryWithAll("UPCOMING", () => debugPrint),
+                  buildTransactions('upcoming', "owner"),
+                  reusableCategoryWithAll("CURRENT", () => debugPrint),
+                  buildTransactions('current', "owner"),
+                  reusableCategoryWithAll("PAST", () => debugPrint),
+                  buildTransactions('past', "owner"),
+                ],
+              ),
+              Column(
+                children: <Widget>[
+                  buildListingsList(),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

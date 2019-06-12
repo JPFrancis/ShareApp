@@ -193,26 +193,21 @@ class ItemEditState extends State<ItemEdit> {
         children: <Widget>[
           ListView(
               shrinkWrap: true,
-              padding: EdgeInsets.only(
-                  top: height / 15, bottom: 10.0, left: 18.0, right: 18.0),
+              padding: EdgeInsets.only(top: height / 15, bottom: 10.0, left: 17.0, right: 17.0),
               children: <Widget>[
+                Align(alignment: Alignment.topRight, child: Text("$totalImagesCount / 8", style: TextStyle(fontFamily: 'Quicksand', fontWeight: FontWeight.bold))),
                 showImages(),
-                showImageButtons(),
-                showImageWarning(),
                 divider(),
                 reusableCategory("DETAILS"),
-                reusableTextEntry("What are you selling? (required)", true,
-                    nameController, 'name'),
-                reusableTextEntry("Describe it... (required)", true,
-                    descriptionController, 'description'),
+                reusableTextEntry("What are you selling? (required)", true, nameController, 'name'),
+                reusableTextEntry("Describe it... (required)", true, descriptionController, 'description'),
                 divider(),
                 reusableCategory("SPECIFICS"),
                 showTypeSelector(),
                 showConditionSelector(),
                 divider(),
                 reusableCategory("PRICE"),
-                reusableTextEntry("Price", true, priceController, 'price',
-                    TextInputType.number),
+                reusableTextEntry("Price", true, priceController, 'price', TextInputType.number),
                 divider(),
                 reusableCategory("LOCATION"),
                 showItemLocation(),
@@ -290,120 +285,75 @@ class ItemEditState extends State<ItemEdit> {
     );
   }
 
-  Widget showImageWarning() {
-    return Text(
-        'Select up to 8 images\nAvailable images remaining: ${8 - totalImagesCount}');
-  }
-
   Widget showImages() {
-    return Container(
-      height: 120,
-      child: SizedBox.expand(child: getAllImages(context)),
-    );
+    return getAllImages(context);
   }
 
   getAllImages(BuildContext context) {
-    return totalImagesCount > 0
-        ? ListView.builder(
-            shrinkWrap: true,
-            scrollDirection: Axis.horizontal,
-            itemCount: totalImagesCount,
-            itemBuilder: (BuildContext context, int index) {
-              // display both url images and image assets
-              if (itemCopy.numImages > 0 && imageAssets.length > 0) {
-                if (index < itemCopy.images.length) {
-                  return Container(
-                    child: CachedNetworkImage(
-                      imageUrl: itemCopy.images[index],
-                      placeholder: (context, url) =>
-                          new CircularProgressIndicator(),
-                    ),
-                  );
-                } else {
-                  Asset asset = imageAssets[index - itemCopy.images.length];
-                  return Container(
-                      padding: EdgeInsets.only(right: 10.0),
-                      child: AssetThumb(
-                        asset: asset,
-                        height: 120,
-                        width: 120,
-                      ));
-                }
-              }
 
-              // display only url images
-              else if (itemCopy.numImages > 0) {
-                return Container(
-                  child: CachedNetworkImage(
-                    imageUrl: itemCopy.images[index],
-                    placeholder: (context, url) =>
-                        new CircularProgressIndicator(),
-                  ),
-                );
-              }
+    _showAlertDialog(BuildContext context) {
+      // set up the buttons
+      Widget cameraButton = FlatButton(
+        child: Icon(Icons.camera),
+        onPressed: () {},
+      );
+      Widget galleryButton = FlatButton(
+        child: Icon(Icons.image),
+        onPressed: () {
+          loadAssets();
+          Navigator.pop(context);
+        },
+      );
 
-              // display only image assets
-              else {
-                Asset asset = imageAssets[index];
-                return Container(
-                    padding: EdgeInsets.only(right: 10.0),
-                    child: AssetThumb(
-                      asset: asset,
-                      height: 120,
-                      width: 120,
-                    ));
-              }
-            },
-          )
-        : Container();
-  }
+      CupertinoAlertDialog alert = CupertinoAlertDialog(
+        actions: [
+          cameraButton,
+          galleryButton,
+        ],
+      );
+      // show the dialog
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return alert;
+        },
+      );
+    }
 
-  getImagesListView(BuildContext context) {
-    return itemCopy.images.length > 0
-        ? ListView.builder(
-            shrinkWrap: true,
-            scrollDirection: Axis.horizontal,
-            itemCount: itemCopy.images.length,
-            itemBuilder: (BuildContext context, int index) {
-              return Container(
-                child: CachedNetworkImage(
-                  imageUrl: itemCopy.images[index],
-                  placeholder: (context, url) =>
-                      new CircularProgressIndicator(),
-                ),
-              );
-            },
-          )
-        : Container();
-  }
+    List<Widget> databaseImages = itemCopy.images.map((image) => 
+    Container(
+      decoration: BoxDecoration(border: Border.all()),
+      child: FittedBox(
+        fit: BoxFit.cover,
+        child: CachedNetworkImage(imageUrl: image, placeholder: (context, url) => new CircularProgressIndicator()),
+      )
+    )).toList();
+     
+     List<Widget> assetImages = imageAssets.map((asset) => 
+      Container(
+        decoration: BoxDecoration(border: Border.all()),
+        child: AssetThumb(asset: asset, height: 250, width: 250,)
+      )).toList();
 
-  Widget buildAssetList() {
+      List<Widget> allImages = []..addAll(databaseImages)..addAll(assetImages);
+      allImages.add(InkWell(
+        onTap: ()=>_showAlertDialog(context),
+        child: Container(
+          decoration: BoxDecoration(border: Border.all()),
+          child: Icon(Icons.add),
+        ),
+      ));
+
     return Container(
-      height: 150,
-      child: imageAssets.length > 0
-          ? ListView(
-              scrollDirection: Axis.horizontal,
-              children: List.generate(imageAssets.length, (index) {
-                Asset asset = imageAssets[index];
-                return Container(
-                    padding: EdgeInsets.only(right: 10.0),
-                    child: AssetThumb(
-                      asset: asset,
-                      height: 120,
-                      width: 120,
-                    ));
-              }),
-            )
-          : Container(),
-    );
-  }
-
-  Widget sizedContainer(Widget child) {
-    return new SizedBox(
-      width: 300.0,
-      height: 150.0,
-      child: new Center(
-        child: child,
+      child: GridView.count(
+        crossAxisSpacing: 5,
+        mainAxisSpacing: 5,
+        childAspectRatio: (5/5),
+        padding: EdgeInsets.all(0),
+        physics: NeverScrollableScrollPhysics(),
+        crossAxisCount: 4,
+        shrinkWrap: true,
+        children: allImages,
       ),
     );
   }
@@ -533,48 +483,50 @@ class ItemEditState extends State<ItemEdit> {
       double lat = gp.latitude;
       double long = gp.longitude;
 
-      return Center(
-        child: SizedBox(
-          width: widthOfScreen,
-          height: 200.0,
-          child: GoogleMap(
-            mapType: MapType.normal,
-            rotateGesturesEnabled: false,
-            initialCameraPosition: CameraPosition(
-              target: LatLng(lat, long),
-              zoom: 11.5,
-            ),
-            onMapCreated: (GoogleMapController controller) {
-              googleMapController = controller;
-            },
-            markers: Set<Marker>.of(
-              <Marker>[
-                Marker(
-                  markerId: MarkerId("test_marker_id"),
-                  position: LatLng(
-                    lat,
-                    long,
-                  ),
-                  infoWindow: InfoWindow(
-                    title: 'Item Location',
-                    snippet: '${lat}, ${long}',
-                  ),
-                )
-              ],
-            ),
-            /*
-            gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>[
-              Factory<OneSequenceGestureRecognizer>(
-                    () =>
-
-                /// to disable dragging, use ScaleGestureRecognizer()
-                /// to enable dragging, use EagerGestureRecognizer()
-                EagerGestureRecognizer(),
-                //ScaleGestureRecognizer(),
-              ),
-            ].toSet(),
-            */
+      return Container(
+        padding: EdgeInsets.only(top: 10.0),
+        decoration: BoxDecoration(
+          //border: Border(top: BorderSide(color: Colors.black), bottom: BorderSide(color: Colors.black)),
+        ),
+        width: widthOfScreen,
+        height: 200.0,
+        child: GoogleMap(
+          mapType: MapType.normal,
+          rotateGesturesEnabled: false,
+          initialCameraPosition: CameraPosition(
+            target: LatLng(lat, long),
+            zoom: 11.5,
           ),
+          onMapCreated: (GoogleMapController controller) {
+            googleMapController = controller;
+          },
+          markers: Set<Marker>.of(
+            <Marker>[
+              Marker(
+                markerId: MarkerId("test_marker_id"),
+                position: LatLng(
+                  lat,
+                  long,
+                ),
+                infoWindow: InfoWindow(
+                  title: 'Item Location',
+                  snippet: '${lat}, ${long}',
+                ),
+              )
+            ],
+          ),
+          /*
+          gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>[
+            Factory<OneSequenceGestureRecognizer>(
+                  () =>
+
+              /// to disable dragging, use ScaleGestureRecognizer()
+              /// to enable dragging, use EagerGestureRecognizer()
+              EagerGestureRecognizer(),
+              //ScaleGestureRecognizer(),
+            ),
+          ].toSet(),
+          */
         ),
       );
     }
@@ -591,11 +543,9 @@ class ItemEditState extends State<ItemEdit> {
               child: itemCopy.location == null
                   ? Text(
                       "Add Location",
-                      textScaleFactor: 1.25,
                       style: TextStyle(fontFamily: 'Quicksand'),
                     )
                   : Text("Edit Location",
-                      textScaleFactor: 1.25,
                       style: TextStyle(
                         fontFamily: 'Quicksand',
                       )),
@@ -606,6 +556,7 @@ class ItemEditState extends State<ItemEdit> {
               },
             ),
           ),
+          /*
           SizedBox(
             width: 15.0,
           ),
@@ -621,7 +572,7 @@ class ItemEditState extends State<ItemEdit> {
               onPressed:
                   itemCopy.location == null ? null : () => resetLocation(),
             ),
-          ),
+          ),*/
         ],
       ),
     );
