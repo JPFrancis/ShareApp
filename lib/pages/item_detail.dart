@@ -260,7 +260,7 @@ class ItemDetailState extends State<ItemDetail> {
         divider(),
         showItemLocation(),
         divider(),
-        showReviews(),
+        recentReviews.length >= 3 ? showReviews() : Container(),
       ],
     );
   }
