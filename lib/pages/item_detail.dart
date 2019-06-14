@@ -8,8 +8,9 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/models/item.dart';
+import 'package:shareapp/pages/all_reviews.dart';
 import 'package:shareapp/pages/item_edit.dart';
-import 'package:shareapp/rentals/all_reviews.dart';
+import 'package:shareapp/pages/profile_page.dart';
 import 'package:shareapp/rentals/item_request.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/const.dart';
@@ -271,19 +272,31 @@ class ItemDetailState extends State<ItemDetail> {
       return Container(
         child: Column(
           children: <Widget>[
-            Row(children: <Widget>[
-              Container(height: 40.0,
-                child: ClipOval(
-                  child: CachedNetworkImage(
-                    imageUrl: renter['avatar'],
-                    placeholder: (context, url) => new CircularProgressIndicator(),
+            Row(
+              children: <Widget>[
+                Container(
+                  height: 40.0,
+                  child: ClipOval(
+                    child: CachedNetworkImage(
+                      imageUrl: renter['avatar'],
+                      placeholder: (context, url) =>
+                          new CircularProgressIndicator(),
+                    ),
                   ),
-              ),),
-              SizedBox(width: 5),
-              Text(renter['name'], style: TextStyle(fontFamily: 'Quicksand', fontWeight: FontWeight.bold),)
-            ],),
-            Container(padding: EdgeInsets.only(left: 45.0), alignment: Alignment.centerLeft,
-              child: Text(customerReview, style: TextStyle(fontFamily: 'Quicksand'))),
+                ),
+                SizedBox(width: 5),
+                Text(
+                  renter['name'],
+                  style: TextStyle(
+                      fontFamily: 'Quicksand', fontWeight: FontWeight.bold),
+                )
+              ],
+            ),
+            Container(
+                padding: EdgeInsets.only(left: 45.0),
+                alignment: Alignment.centerLeft,
+                child: Text(customerReview,
+                    style: TextStyle(fontFamily: 'Quicksand'))),
           ],
         ),
       );
@@ -308,14 +321,14 @@ class ItemDetailState extends State<ItemDetail> {
           SizedBox(
             height: 10.0,
           ),
-          _reviewTile(recentReviewsUsers[0],
-              recentReviews[0]['review']['reviewNote']),
+          _reviewTile(
+              recentReviewsUsers[0], recentReviews[0]['review']['reviewNote']),
           divider(),
-          _reviewTile(recentReviewsUsers[1],
-              recentReviews[1]['review']['reviewNote']),
+          _reviewTile(
+              recentReviewsUsers[1], recentReviews[1]['review']['reviewNote']),
           divider(),
-          _reviewTile(recentReviewsUsers[2],
-              recentReviews[2]['review']['reviewNote']),
+          _reviewTile(
+              recentReviewsUsers[2], recentReviews[2]['review']['reviewNote']),
           divider(),
           Align(
               alignment: Alignment.bottomRight,
@@ -338,30 +351,34 @@ class ItemDetailState extends State<ItemDetail> {
   }
 
   Widget showItemCreator() {
-    return Padding(
-      padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 10.0),
-      child: SizedBox(
-          child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: <Widget>[
-          Text(
-            'Shared by ${creatorDS['name']}',
-            style: TextStyle(
-                color: Colors.black, fontSize: 15.0, fontFamily: 'Quicksand'),
-            textAlign: TextAlign.left,
-          ),
-          Container(
-            height: 50.0,
-            child: ClipOval(
-              child: CachedNetworkImage(
-                //key: ValueKey(DateTime.now().millisecondsSinceEpoch),
-                imageUrl: creatorDS['avatar'],
-                placeholder: (context, url) => new CircularProgressIndicator(),
+    return InkWell(
+      onTap: navToItemCreatorProfile,
+      child: Padding(
+        padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 10.0),
+        child: SizedBox(
+            child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: <Widget>[
+            Text(
+              'Shared by ${creatorDS['name']}',
+              style: TextStyle(
+                  color: Colors.black, fontSize: 15.0, fontFamily: 'Quicksand'),
+              textAlign: TextAlign.left,
+            ),
+            Container(
+              height: 50.0,
+              child: ClipOval(
+                child: CachedNetworkImage(
+                  //key: ValueKey(DateTime.now().millisecondsSinceEpoch),
+                  imageUrl: creatorDS['avatar'],
+                  placeholder: (context, url) =>
+                      new CircularProgressIndicator(),
+                ),
               ),
             ),
-          ),
-        ],
-      )),
+          ],
+        )),
+      ),
     );
   }
 
@@ -689,6 +706,16 @@ class ItemDetailState extends State<ItemDetail> {
           },
         ) ??
         false;
+  }
+
+  void navToItemCreatorProfile() {
+    Navigator.pushNamed(
+      context,
+      ProfilePage.routeName,
+      arguments: ProfilePageArgs(
+        creatorDS,
+      ),
+    );
   }
 
   setCamera() async {

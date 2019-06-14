@@ -3,12 +3,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shareapp/login/root_page.dart';
 import 'package:shareapp/models/item.dart';
-import 'package:shareapp/pages/all_items.dart';
+import 'package:shareapp/pages/all_reviews.dart';
 import 'package:shareapp/pages/home_page.dart';
 import 'package:shareapp/pages/item_detail.dart';
 import 'package:shareapp/pages/item_edit.dart';
+import 'package:shareapp/pages/item_filter.dart';
+import 'package:shareapp/pages/profile_page.dart';
 import 'package:shareapp/pages/search_results.dart';
-import 'package:shareapp/rentals/all_reviews.dart';
 import 'package:shareapp/rentals/chat.dart';
 import 'package:shareapp/rentals/item_request.dart';
 import 'package:shareapp/rentals/new_pickup.dart';
@@ -24,8 +25,9 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'ShareApp',
       theme: ThemeData(
-        //primarySwatch: Colors.red,
-        backgroundColor: Colors.black
+        backgroundColor: Colors.black,
+        primaryColor: Color(0xff007f6e),
+        accentColor: Color(0xff007f6e),
       ),
       home: new RootPage(auth: new Auth()),
       //initialRoute: RootPage.routeName,
@@ -127,13 +129,15 @@ class MyApp extends StatelessWidget {
               );
             }
 
-          case AllItems.routeName:
+          case ItemFilter.routeName:
             {
-              final AllItemsArgs args = settings.arguments;
+              final ItemFilterArgs args = settings.arguments;
 
               return MaterialPageRoute(
                 builder: (context) {
-                  return AllItems();
+                  return ItemFilter(
+                    filter: args.filter,
+                  );
                 },
               );
             }
@@ -159,6 +163,19 @@ class MyApp extends StatelessWidget {
                 builder: (context) {
                   return AllReviews(
                     itemDS: args.itemDS,
+                  );
+                },
+              );
+            }
+
+          case ProfilePage.routeName:
+            {
+              final ProfilePageArgs args = settings.arguments;
+
+              return MaterialPageRoute(
+                builder: (context) {
+                  return ProfilePage(
+                    initUserDS: args.userDS,
                   );
                 },
               );
@@ -214,8 +231,10 @@ class NewPickupArgs {
   NewPickupArgs(this.rentalID, this.isRenter);
 }
 
-class AllItemsArgs {
-  AllItemsArgs();
+class ItemFilterArgs {
+  final String filter;
+
+  ItemFilterArgs(this.filter);
 }
 
 class SearchResultsArgs {
@@ -229,4 +248,10 @@ class AllReviewsArgs {
   final DocumentSnapshot itemDS;
 
   AllReviewsArgs(this.itemDS);
+}
+
+class ProfilePageArgs {
+  final DocumentSnapshot userDS;
+
+  ProfilePageArgs(this.userDS);
 }

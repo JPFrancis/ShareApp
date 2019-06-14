@@ -21,6 +21,7 @@ class SearchResults extends StatefulWidget {
 
 class SearchResultsState extends State<SearchResults> {
   List<DocumentSnapshot> searchList;
+  TextEditingController searchController = TextEditingController();
 
   @override
   void initState() {
@@ -28,6 +29,7 @@ class SearchResultsState extends State<SearchResults> {
     super.initState();
 
     searchList = widget.searchList;
+    searchController.text = widget.searchQuery;
   }
 
   @override
@@ -49,12 +51,59 @@ class SearchResultsState extends State<SearchResults> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text(
-              'Search results for \"${widget.searchQuery}\"',
-              style: TextStyle(fontSize: 18),
-            ),
+            searchField(),
             buildSearchResultsList(),
-            //buildItemListTEST(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget searchField() {
+    return Container(
+      height: 100,
+      child: Container(
+        padding: EdgeInsets.only(left: 10),
+        color: Colors.white,
+        child: Row(
+          children: <Widget>[
+            Icon(Icons.search),
+            SizedBox(
+              width: 10.0,
+            ),
+            Expanded(
+              child: TextField(
+                keyboardType: TextInputType.text,
+                controller: searchController,
+                onTap: () {
+                  if (searchList.length == 0) {
+                    setState(() {
+                      getAllItems();
+                    });
+                  }
+                },
+                onChanged: (value) {
+                  setState(() {});
+                },
+                decoration: InputDecoration(
+                  labelStyle: TextStyle(
+                    color: Colors.black54,
+                  ),
+                ),
+              ),
+            ),
+            Container(
+              width: 40,
+              child: FlatButton(
+                onPressed: () {
+                  setState(() {
+                    searchController.clear();
+                    FocusScope.of(context).requestFocus(FocusNode());
+                  });
+                },
+                child: Icon(Icons.clear),
+              ),
+            ),
           ],
         ),
       ),
@@ -68,15 +117,24 @@ class SearchResultsState extends State<SearchResults> {
         child: ListView.builder(
           itemCount: searchList.length,
           itemBuilder: (context, index) {
-            String name = searchList[index]['name'];
-            String description = searchList[index]['description'];
+            String name = searchList[index]['name'].toLowerCase();
+            String description = searchList[index]['description'].toLowerCase();
 
-            return name
-                        .toLowerCase()
-                        .contains(widget.searchQuery.toLowerCase()) ||
-                    description
-                        .toLowerCase()
-                        .contains(widget.searchQuery.toLowerCase())
+            List<String> splitList = List();
+            splitList.addAll(name.split(' '));
+            splitList.addAll(description.split(' '));
+
+            RegExp regExp =
+                RegExp(r'^' + searchController.text.toLowerCase() + r'.*$');
+
+            bool show = false;
+            splitList.forEach((String str) {
+              if (regExp.hasMatch(str)) {
+                show = true;
+              }
+            });
+
+            return show
                 ? ListTile(
                     leading: Icon(Icons.build),
                     title: Text(
@@ -93,46 +151,6 @@ class SearchResultsState extends State<SearchResults> {
     );
   }
 
-  Widget buildItemListTEST() {
-    return Expanded(
-      child: StreamBuilder<QuerySnapshot>(
-        stream: Firestore.instance
-            .collection('items')
-            .where('name', isEqualTo: widget.searchQuery)
-            .snapshots(),
-        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.hasError) {
-            return new Text('${snapshot.error}');
-          }
-          switch (snapshot.connectionState) {
-            case ConnectionState.waiting:
-
-            default:
-              if (snapshot.hasData) {
-                List<DocumentSnapshot> items = snapshot.data.documents;
-                return ListView.builder(
-                  itemCount: items.length,
-                  itemBuilder: (context, index) {
-                    return ListTile(
-                      leading: Icon(Icons.build),
-                      title: Text(
-                        '${items[index]['name']}',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Text('${items[index]['description']}'),
-                      onTap: () => navigateToDetail(items[index], context),
-                    );
-                  },
-                );
-              } else {
-                return Container();
-              }
-          }
-        },
-      ),
-    );
-  }
-
   Future<Null> getAllItems() async {
     QuerySnapshot querySnapshot = await Firestore.instance
         .collection('items')
@@ -144,6 +162,6 @@ class SearchResultsState extends State<SearchResults> {
   }
 
   void goBack() {
-    Navigator.pop(context, searchList);
+    Navigator.pop(context);
   }
 }

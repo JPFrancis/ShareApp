@@ -5,24 +5,38 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shareapp/extras/helpers.dart';
 
-class AllItems extends StatefulWidget {
+class ItemFilter extends StatefulWidget {
   static const routeName = '/allItems';
+  final String filter;
 
-  AllItems({Key key}) : super(key: key);
+  ItemFilter({Key key, this.filter}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
-    return AllItemsState();
+    return ItemFilterState();
   }
 }
 
-class AllItemsState extends State<AllItems> {
+class ItemFilterState extends State<ItemFilter> {
+  String title;
+  Stream stream;
   bool isLoading = true;
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+
+    if (widget.filter == 'All') {
+      title = 'All items';
+      stream = Firestore.instance.collection('items').snapshots();
+    } else {
+      title = '${widget.filter}';
+      stream = Firestore.instance
+          .collection('items')
+          .where('type', isEqualTo: widget.filter)
+          .snapshots();
+    }
 
     delayPage();
   }
@@ -56,7 +70,7 @@ class AllItemsState extends State<AllItems> {
                 child: BackButton(),
                 onPressed: () => goBack(),
               ),
-              Text("Items near you",
+              Text(title,
                   style: TextStyle(fontFamily: 'Quicksand', fontSize: 30.0)),
             ],
           ),
@@ -70,7 +84,7 @@ class AllItemsState extends State<AllItems> {
     int tilerows = MediaQuery.of(context).size.width > 500 ? 3 : 2;
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
-        stream: Firestore.instance.collection('items').snapshots(),
+        stream: stream,
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
             return new Text('${snapshot.error}');
