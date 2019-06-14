@@ -1134,6 +1134,7 @@ class HomePageState extends State<HomePage> {
                                               new CircularProgressIndicator(),
                                           fit: BoxFit.cover,
                                         );
+
                                         return Container(
                                           padding: EdgeInsets.only(left: 10.0),
                                           child: InkWell(
