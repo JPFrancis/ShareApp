@@ -237,18 +237,19 @@ class ItemDetailState extends State<ItemDetail> {
           Row(
             children: <Widget>[
               Spacer(),
-              isOwner && itemDS['rental'] == null
-                  ? IconButton(
-                      alignment: Alignment.topRight,
-                      padding: EdgeInsets.symmetric(
-                          vertical: 40.0, horizontal: 15.0),
-                      icon: Icon(
-                        Icons.edit,
-                        color: Colors.pink,
-                      ),
-                      onPressed: () => navigateToEdit(),
-                    )
-                  : Container(),
+              isOwner && itemDS['rental'] == null ?
+                Container(
+                  padding: const EdgeInsets.only(top: 30.0, right: 5.0),
+                  child: FloatingActionButton(
+                    mini: true,
+                    heroTag: "Edit",
+                    onPressed: () => navigateToEdit(),
+                    child: Icon(Icons.edit),
+                    elevation: 0,
+                    backgroundColor: Colors.white54,
+                    foregroundColor: primaryColor,
+                  ),
+                ) : Container(),
             ],
           ),
         ]),

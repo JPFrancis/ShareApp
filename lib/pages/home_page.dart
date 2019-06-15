@@ -59,26 +59,26 @@ class HomePageState extends State<HomePage> {
   TextEditingController searchController = TextEditingController();
   List<DocumentSnapshot> searchList;
 
-  static final double _initial = 200;
+  static double _initial;
   double _changingHeight = _initial;
 
   @override
   void initState() {
     // TODO: implement initState
+
     super.initState();
 
     currentTabIndex = 0;
 
     padding = 18;
-    edgeInset = EdgeInsets.only(
-        left: padding, right: padding, bottom: padding, top: 30);
+    edgeInset = EdgeInsets.only(left: padding, right: padding, bottom: padding, top: 30);
 
     myUserID = widget.firebaseUser.uid;
+
 
     setPrefs();
     updateLastActive();
     getAllItems();
-    //checkPrefs();
 
     bottomNavBarTiles = <BottomNavigationBarItem>[
       bottomNavTile('Search', Icon(Icons.search), false),
@@ -89,6 +89,8 @@ class HomePageState extends State<HomePage> {
     ];
     //delayPage();
   }
+
+
 
   void delayPage() async {
     Future.delayed(Duration(milliseconds: 750)).then((_) {
@@ -508,6 +510,9 @@ class HomePageState extends State<HomePage> {
     double h = MediaQuery.of(context).size.height;
 
     Widget searchField() {
+      setState(() {
+        _initial = MediaQuery.of(context).size.height/4;
+      });
       return Container(
         child: Container(
           padding: EdgeInsets.only(left: 10),
@@ -808,12 +813,8 @@ class HomePageState extends State<HomePage> {
   }
 
   Widget buildRequests(person) {
-    Stream stream = Firestore.instance
-        .collection('rentals')
-        .where(person,
-            isEqualTo:
-                Firestore.instance.collection('users').document(myUserID))
-        .snapshots();
+    Stream stream = Firestore.instance.collection('rentals').where(person, isEqualTo: Firestore.instance.collection('users').document(myUserID)).snapshots();
+    var status; 
     return StreamBuilder<QuerySnapshot>(
       stream: stream,
       builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
@@ -825,9 +826,7 @@ class HomePageState extends State<HomePage> {
 
           default:
             if (snapshot.hasData) {
-              var updated = snapshot.data.documents
-                  .where((d) => d['status'] == 1 || d['status'] == 0)
-                  .toList();
+              var updated = snapshot.data.documents.where((d) => d['status'] == 1 || d['status'] == 0).toList();
               return ListView.builder(
                 padding: EdgeInsets.symmetric(horizontal: 10.0),
                 shrinkWrap: true,
@@ -839,8 +838,7 @@ class HomePageState extends State<HomePage> {
 
                   return StreamBuilder<DocumentSnapshot>(
                     stream: itemDR.snapshots(),
-                    builder: (BuildContext context,
-                        AsyncSnapshot<DocumentSnapshot> snapshot) {
+                    builder: (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
                       if (snapshot.hasError) {
                         return new Text('${snapshot.error}');
                       }
@@ -869,46 +867,32 @@ class HomePageState extends State<HomePage> {
                                   default:
                                     if (snapshot.hasData) {
                                       DocumentSnapshot ownerDS = snapshot.data;
+                                      CustomBoxShadow cbs;
+                                      rentalDS['status'] == 1 
+                                        ? cbs = CustomBoxShadow(
+                                          color: Colors.black38,
+                                          blurRadius: 3.0,
+                                          blurStyle: BlurStyle.outer)
+                                        : cbs = CustomBoxShadow(
+                                          color: Colors.orange,
+                                          blurRadius: 7.0,
+                                          blurStyle: BlurStyle.outer);
                                       return Column(
                                         children: <Widget>[
-                                          Container(
-                                            decoration: new BoxDecoration(
-                                              image: DecorationImage(
-                                                //image: NetworkImage(itemDS['images'][0]),
-                                                image:
-                                                    CachedNetworkImageProvider(
-                                                        itemDS['images'][0]),
-                                                fit: BoxFit.cover,
-                                                colorFilter:
-                                                    new ColorFilter.mode(
-                                                        Colors.black
-                                                            .withOpacity(0.45),
-                                                        BlendMode.srcATop),
+                                           Container(
+                                              decoration: new BoxDecoration(
+                                                image: DecorationImage(
+                                                  image: CachedNetworkImageProvider(itemDS['images'][0]),
+                                                  fit: BoxFit.cover,
+                                                  colorFilter: new ColorFilter.mode(Colors.black.withOpacity(0.45), BlendMode.srcATop),
+                                                ),
+                                                boxShadow: <BoxShadow>[cbs],
                                               ),
-                                              boxShadow: <BoxShadow>[
-                                                CustomBoxShadow(
-                                                    color: Colors.black38,
-                                                    blurRadius: 3.0,
-                                                    blurStyle: BlurStyle.outer),
-                                              ],
-                                            ),
-                                            child: InkWell(
-                                              onTap: () {
-                                                Navigator.pushNamed(context,
-                                                    RentalDetail.routeName,
-                                                    arguments: RentalDetailArgs(
-                                                        rentalDS));
-                                              },
-                                              child: Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceAround,
-                                                children: <Widget>[
-                                                  Column(
-                                                    children: <Widget>[
-                                                      SizedBox(
-                                                        height: 6.0,
-                                                      ),
+                                              child: InkWell(
+                                                onTap: () {Navigator.pushNamed(context, RentalDetail.routeName, arguments: RentalDetailArgs(rentalDS));},
+                                                child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: <Widget>[
+                                                    Column(children: <Widget>[
+                                                      SizedBox(height: 6.0,),
                                                       Container(
                                                           height: 30,
                                                           width: 30,
@@ -916,81 +900,28 @@ class HomePageState extends State<HomePage> {
                                                               shape: BoxShape.circle,
                                                               color: Colors.white,
                                                               image: DecorationImage(
-                                                                  //image: NetworkImage(ownerDS['avatar']),
                                                                   image: CachedNetworkImageProvider(ownerDS['avatar']),
                                                                   fit: BoxFit.fill))),
-                                                      Text(
-                                                        ownerDS['name'],
-                                                        style: TextStyle(
-                                                            color: Colors.white,
-                                                            fontFamily:
-                                                                'Quicksand',
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  Column(
-                                                    children: <Widget>[
-                                                      Row(
-                                                        children: <Widget>[
-                                                          Text(
-                                                            "Request Sent: ",
-                                                            style: TextStyle(
-                                                              color:
-                                                                  Colors.white,
-                                                              fontFamily:
-                                                                  'Quicksand',
-                                                            ),
-                                                          ),
-                                                          Text(
-                                                            timeago.format((DateTime
-                                                                .fromMillisecondsSinceEpoch(
-                                                                    rentalDS[
-                                                                        'created']))),
-                                                            style: TextStyle(
-                                                                color: Colors
-                                                                    .white,
-                                                                fontFamily:
-                                                                    'Quicksand',
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold),
-                                                          )
-                                                        ],
-                                                      ),
-                                                      Row(
-                                                        children: <Widget>[
-                                                          Text(
-                                                            "Requested Duration: ",
-                                                            style: TextStyle(
-                                                                color: Colors
-                                                                    .white,
-                                                                fontFamily:
-                                                                    'Quicksand'),
-                                                          ),
-                                                          Text(duration,
-                                                              style: TextStyle(
-                                                                color: Colors
-                                                                    .white,
-                                                                fontFamily:
-                                                                    'Quicksand',
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
-                                                              ))
-                                                        ],
-                                                      )
-                                                    ],
-                                                  ),
-                                                ],
+                                                      Text(ownerDS['name'], style: TextStyle(color: Colors.white, fontFamily: 'Quicksand', fontWeight: FontWeight.bold),),
+                                                    ],),
+                                                    Column(
+                                                      children: <Widget>[
+                                                        Row(children: <Widget>[
+                                                          Text("Request Sent: ", style: TextStyle(color: Colors.white, fontFamily: 'Quicksand')),
+                                                          Text(timeago.format((DateTime.fromMillisecondsSinceEpoch(rentalDS['created']))),
+                                                            style: TextStyle(color: Colors.white, fontFamily: 'Quicksand', fontWeight: FontWeight.bold),)
+                                                        ]),
+                                                        Row(children: <Widget>[
+                                                          Text("Requested Duration: ", style: TextStyle(color: Colors.white, fontFamily: 'Quicksand'),),
+                                                          Text(duration, style: TextStyle(color: Colors.white, fontFamily: 'Quicksand', fontWeight: FontWeight.bold))
+                                                        ],)
+                                                      ],
+                                                    ),
+                                                  ],
+                                                ),
                                               ),
                                             ),
-                                          ),
-                                          SizedBox(
-                                            height: 5.0,
-                                          )
+                                          SizedBox(height: 5.0)
                                         ],
                                       );
                                     } else {
