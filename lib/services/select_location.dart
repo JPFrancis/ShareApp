@@ -126,8 +126,8 @@ class SelectLocationState extends State<SelectLocation> {
               ),
             ),
           ),
-          showCircularProgress(),
           //showCircle(),
+          showCircularProgress(),
         ],
       ),
       floatingActionButton: Padding(
@@ -179,16 +179,26 @@ class SelectLocationState extends State<SelectLocation> {
 
   Widget showCircle() {
     return Center(
-      child: Opacity(
-        opacity: .5,
-        child: Container(
-          width: 150,
-          height: 150,
-          decoration: new BoxDecoration(
-            color: Colors.blue,
-            shape: BoxShape.circle,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Text(
+            'ADDRESS HERE',
+            style: TextStyle(fontSize: 25),
           ),
-        ),
+          Opacity(
+            opacity: .5,
+            child: Container(
+              width: 150,
+              height: 150,
+              decoration: new BoxDecoration(
+                color: Colors.blue,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -10,17 +10,17 @@ import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/models/item.dart';
 import 'package:shareapp/models/user_edit.dart';
-import 'package:shareapp/pages/all_items.dart';
 import 'package:shareapp/pages/item_detail.dart';
 import 'package:shareapp/pages/item_edit.dart';
+import 'package:shareapp/pages/item_filter.dart';
 import 'package:shareapp/pages/profile_edit.dart';
 import 'package:shareapp/pages/search_results.dart';
 import 'package:shareapp/rentals/chat.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/auth.dart';
+import 'package:shareapp/services/const.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timeago/timeago.dart' as timeago;
-import 'package:shareapp/services/const.dart';
 
 class HomePage extends StatefulWidget {
   static const routeName = '/homePage';
@@ -498,7 +498,7 @@ class HomePageState extends State<HomePage> {
             alignment: Alignment.bottomRight,
             child: FlatButton(
               child: Text("View all"),
-              onPressed: navToAllItems,
+              onPressed: null,
             ),
           )
         ],
@@ -529,12 +529,21 @@ class HomePageState extends State<HomePage> {
                       setState(() => _changingHeight = _initial),
                   onSubmitted: (value) {
                     if (value.length > 0) {
-                      navToSearchResults(value);
+                      navToSearchResults(value.toLowerCase());
+                    } else {
+                      FocusScope.of(context).requestFocus(FocusNode());
                     }
                   },
                   keyboardType: TextInputType.text,
                   controller: searchController,
-                  onTap: () => setState(() => _changingHeight = 50),
+                  onTap: () {
+                    setState(() => _changingHeight = 50);
+                    if (searchList.length == 0) {
+                      setState(() {
+                        getAllItems();
+                      });
+                    }
+                  },
                   onChanged: (value) {
                     setState(() {});
                   },
@@ -552,6 +561,7 @@ class HomePageState extends State<HomePage> {
                     setState(() {
                       searchController.clear();
                       _changingHeight = _initial;
+                      FocusScope.of(context).requestFocus(FocusNode());
                     });
                   },
                   child: Icon(Icons.clear),
@@ -584,7 +594,8 @@ class HomePageState extends State<HomePage> {
             alignment: Alignment.bottomCenter,
             child: Column(
               children: <Widget>[
-                AnimatedContainer(height: _changingHeight, duration: Duration(seconds: 1)),
+                AnimatedContainer(
+                    height: _changingHeight, duration: Duration(seconds: 1)),
                 searchField(),
                 searchController.text.isNotEmpty && searchList != null
                     ? Expanded(
@@ -593,15 +604,28 @@ class HomePageState extends State<HomePage> {
                           child: ListView.builder(
                             itemCount: searchList.length,
                             itemBuilder: (context, index) {
-                              String name = searchList[index]['name'];
-                              String description =
-                                  searchList[index]['description'];
+                              String name =
+                                  searchList[index]['name'].toLowerCase();
+                              String description = searchList[index]
+                                      ['description']
+                                  .toLowerCase();
 
-                              return name.toLowerCase().contains(
-                                          searchController.text
-                                              .toLowerCase()) ||
-                                      description.toLowerCase().contains(
-                                          searchController.text.toLowerCase())
+                              List<String> splitList = List();
+                              splitList.addAll(name.split(' '));
+                              splitList.addAll(description.split(' '));
+
+                              RegExp regExp = RegExp(r'^' +
+                                  searchController.text.toLowerCase() +
+                                  r'.*$');
+
+                              bool show = false;
+                              splitList.forEach((String str) {
+                                if (regExp.hasMatch(str)) {
+                                  show = true;
+                                }
+                              });
+
+                              return show
                                   ? ListTile(
                                       leading: Icon(Icons.build),
                                       title: Text(
@@ -699,9 +723,18 @@ class HomePageState extends State<HomePage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
-              _categoryTile("Tools", Icon(Icons.build)),
-              _categoryTile("Leisure", Icon(Icons.golf_course)),
-              _categoryTile("Household", Icon(Icons.home)),
+              InkWell(
+                onTap: () => navToItemFilter('Tool'),
+                child: _categoryTile('Tools', Icon(Icons.build)),
+              ),
+              InkWell(
+                onTap: () => navToItemFilter('Leisure'),
+                child: _categoryTile('Leisure', Icon(Icons.golf_course)),
+              ),
+              InkWell(
+                onTap: () => navToItemFilter('Home'),
+                child: _categoryTile('Household', Icon(Icons.home)),
+              ),
             ],
           ),
           SizedBox(
@@ -710,11 +743,17 @@ class HomePageState extends State<HomePage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
-              _categoryTile("Equipment", Icon(Icons.straighten)),
-              _categoryTile("Miscellaneous", Icon(Icons.widgets)),
               InkWell(
-                onTap: navToAllItems,
-                child: _categoryTile("More", Icon(Icons.more_horiz)),
+                onTap: () => navToItemFilter('Equipment'),
+                child: _categoryTile('Equipment', Icon(Icons.straighten)),
+              ),
+              InkWell(
+                onTap: () => navToItemFilter('Other'),
+                child: _categoryTile('Miscellaneous', Icon(Icons.widgets)),
+              ),
+              InkWell(
+                onTap: () => navToItemFilter('All'),
+                child: _categoryTile('More', Icon(Icons.more_horiz)),
               ),
             ],
           ),
@@ -1026,6 +1065,7 @@ class HomePageState extends State<HomePage> {
                                               new CircularProgressIndicator(),
                                           fit: BoxFit.cover,
                                         );
+
                                         return Container(
                                           padding: EdgeInsets.only(left: 10.0),
                                           child: InkWell(
@@ -1531,6 +1571,7 @@ class HomePageState extends State<HomePage> {
             .where('users',
                 arrayContains:
                     Firestore.instance.collection('users').document(myUserID))
+            .where('status', isLessThan: 5)
             .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           switch (snapshot.connectionState) {
@@ -1720,11 +1761,13 @@ class HomePageState extends State<HomePage> {
     return out;
   }
 
-  void navToAllItems() async {
+  void navToItemFilter(String filter) async {
     Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (BuildContext context) => AllItems(),
+          builder: (BuildContext context) => ItemFilter(
+                filter: filter,
+              ),
         ));
   }
 
@@ -1736,9 +1779,7 @@ class HomePageState extends State<HomePage> {
                 searchList: searchList,
                 searchQuery: searchQuery,
               ),
-        )).then((value) {
-      searchList = value;
-    });
+        ));
   }
 
   void navToProfileEdit() async {

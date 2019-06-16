@@ -10,7 +10,9 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:multi_image_picker/multi_image_picker.dart';
 import 'package:shareapp/extras/helpers.dart';
+import 'package:shareapp/main.dart';
 import 'package:shareapp/models/item.dart';
+import 'package:shareapp/pages/item_detail.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:shareapp/services/select_location.dart';
 
@@ -89,11 +91,13 @@ class ItemEditState extends State<ItemEdit> {
     imageURLs.addAll(itemCopy.images);
 
     totalImagesCount = itemCopy.numImages;
+    imageAssets = List<Asset>();
 
     const itemType = <String>[
       'Tool',
       'Leisure',
       'Home',
+      'Equipment',
       'Other',
     ];
     dropDownItemType = itemType
@@ -193,9 +197,15 @@ class ItemEditState extends State<ItemEdit> {
         children: <Widget>[
           ListView(
               shrinkWrap: true,
-              padding: EdgeInsets.only(top: height / 15, bottom: 10.0, left: 17.0, right: 17.0),
+              padding: EdgeInsets.only(
+                  top: height / 15, bottom: 10.0, left: 17.0, right: 17.0),
               children: <Widget>[
-                Align(alignment: Alignment.topRight, child: Text("$totalImagesCount / 8", style: TextStyle(fontFamily: 'Quicksand', fontWeight: FontWeight.bold))),
+                Align(
+                    alignment: Alignment.topRight,
+                    child: Text("$totalImagesCount / 8",
+                        style: TextStyle(
+                            fontFamily: 'Quicksand',
+                            fontWeight: FontWeight.bold))),
                 showImages(),
                 divider(),
                 reusableCategory("DETAILS"),
@@ -290,7 +300,6 @@ class ItemEditState extends State<ItemEdit> {
   }
 
   getAllImages(BuildContext context) {
-
     _showAlertDialog(BuildContext context) {
       // set up the buttons
       Widget cameraButton = FlatButton(
@@ -320,35 +329,46 @@ class ItemEditState extends State<ItemEdit> {
       );
     }
 
-    List<Widget> databaseImages = itemCopy.images.map((image) => 
-    Container(
-      decoration: BoxDecoration(border: Border.all()),
-      child: FittedBox(
-        fit: BoxFit.cover,
-        child: CachedNetworkImage(imageUrl: image, placeholder: (context, url) => new CircularProgressIndicator()),
-      )
-    )).toList();
-     
-     List<Widget> assetImages = imageAssets.map((asset) => 
-      Container(
-        decoration: BoxDecoration(border: Border.all()),
-        child: AssetThumb(asset: asset, height: 250, width: 250,)
-      )).toList();
+    List<Widget> databaseImages = itemCopy.images
+        .map((image) => Container(
+            decoration: BoxDecoration(border: Border.all()),
+            child: FittedBox(
+              fit: BoxFit.cover,
+              child: CachedNetworkImage(
+                  imageUrl: image,
+                  placeholder: (context, url) =>
+                      new CircularProgressIndicator()),
+            )))
+        .toList();
 
-      List<Widget> allImages = []..addAll(databaseImages)..addAll(assetImages);
-      allImages.add(InkWell(
-        onTap: ()=>_showAlertDialog(context),
-        child: Container(
-          decoration: BoxDecoration(border: Border.all()),
-          child: Icon(Icons.add),
-        ),
-      ));
+    List<Widget> assetImages = imageAssets
+        .map((asset) => Container(
+            decoration: BoxDecoration(border: Border.all()),
+            child: AssetThumb(
+              asset: asset,
+              height: 250,
+              width: 250,
+            )))
+        .toList();
+
+    List<Widget> allImages = []..addAll(databaseImages)..addAll(assetImages);
+    allImages.add(
+      InkWell(
+        onTap: () => _showAlertDialog(context),
+        child: totalImagesCount < 8
+            ? Container(
+                decoration: BoxDecoration(border: Border.all()),
+                child: Icon(Icons.add),
+              )
+            : Container(),
+      ),
+    );
 
     return Container(
       child: GridView.count(
         crossAxisSpacing: 5,
         mainAxisSpacing: 5,
-        childAspectRatio: (5/5),
+        childAspectRatio: (5 / 5),
         padding: EdgeInsets.all(0),
         physics: NeverScrollableScrollPhysics(),
         crossAxisCount: 4,
@@ -486,8 +506,8 @@ class ItemEditState extends State<ItemEdit> {
       return Container(
         padding: EdgeInsets.only(top: 10.0),
         decoration: BoxDecoration(
-          //border: Border(top: BorderSide(color: Colors.black), bottom: BorderSide(color: Colors.black)),
-        ),
+            //border: Border(top: BorderSide(color: Colors.black), bottom: BorderSide(color: Colors.black)),
+            ),
         width: widthOfScreen,
         height: 200.0,
         child: GoogleMap(
@@ -671,7 +691,16 @@ class ItemEditState extends State<ItemEdit> {
         }
 
         if (done != null) {
-          Navigator.of(context).pop(true);
+          //Navigator.of(context).pop(true);
+          documentReference.get().then((DocumentSnapshot ds) {
+            Navigator.popAndPushNamed(
+              context,
+              ItemDetail.routeName,
+              arguments: ItemDetailArgs(
+                ds,
+              ),
+            );
+          });
         }
       }
     }
@@ -710,10 +739,6 @@ class ItemEditState extends State<ItemEdit> {
   }
 
   Future<void> loadAssets() async {
-    setState(() {
-      imageAssets = List<Asset>();
-    });
-
     List<Asset> resultList = List<Asset>();
 
     try {
@@ -728,10 +753,9 @@ class ItemEditState extends State<ItemEdit> {
     }
 
     setState(() {
-      imageAssets = resultList;
+      imageAssets.addAll(resultList);
       totalImagesCount = itemCopy.numImages + imageAssets.length;
       imageButton = false;
-      //_error = error;
     });
   }
 
@@ -938,7 +962,7 @@ class ItemEditState extends State<ItemEdit> {
             return AlertDialog(
               title: Text('Error!'),
               content: Text(
-                'Please add images and location',
+                'Please add item name, images, and/or location',
                 style: dialogTextStyle,
               ),
               actions: <Widget>[
