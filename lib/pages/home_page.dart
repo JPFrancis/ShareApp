@@ -57,7 +57,9 @@ class HomePageState extends State<HomePage> {
   double padding;
 
   TextEditingController searchController = TextEditingController();
-  List<DocumentSnapshot> searchList;
+  List<DocumentSnapshot> allItems;
+  List<String> searchList;
+  List<String> filteredList;
 
   static final double _initial = 40;
   double _changingHeight = _initial;
@@ -141,11 +143,40 @@ class HomePageState extends State<HomePage> {
   }
 
   Future<Null> getAllItems() async {
+    searchList = [];
+    filteredList = [];
+
     QuerySnapshot querySnapshot = await Firestore.instance
         .collection('items')
         .orderBy('name', descending: false)
         .getDocuments();
-    searchList = querySnapshot.documents;
+
+    if (querySnapshot != null) {
+      allItems = querySnapshot.documents;
+
+      allItems.forEach((DocumentSnapshot ds) {
+        String name = ds['name'].toLowerCase();
+        String description = ds['description'].toLowerCase();
+
+        searchList.addAll(name.split(' '));
+        searchList.addAll(description.split(' '));
+      });
+
+      searchList = searchList.toSet().toList();
+
+      for (int i = 0; i < searchList.length; i++) {
+        searchList[i] = searchList[i].replaceAll(RegExp(r"[^\w]"), '');
+      }
+
+      searchList = searchList.toSet().toList();
+
+      searchList.sort();
+
+      filteredList = searchList;
+
+      //debugPrint('AFTER: $searchList, LENGTH: ${searchList.length}');
+
+    }
   }
 
   @override
@@ -507,6 +538,21 @@ class HomePageState extends State<HomePage> {
   Widget introImageAndSearch() {
     double h = MediaQuery.of(context).size.height;
 
+    RegExp regExp = RegExp(r'^' + searchController.text.toLowerCase() + r'.*$');
+
+    if (searchController.text.isNotEmpty) {
+      List<String> temp = [];
+      for (int i = 0; i < filteredList.length; i++) {
+        if (regExp.hasMatch(filteredList[i])) {
+          temp.add(filteredList[i]);
+        }
+      }
+
+      filteredList = temp;
+    } else {
+      filteredList = searchList;
+    }
+
     Widget searchField() {
       return Container(
         child: Container(
@@ -597,42 +643,14 @@ class HomePageState extends State<HomePage> {
                         child: Container(
                           color: Colors.white,
                           child: ListView.builder(
-                            itemCount: searchList.length,
-                            itemBuilder: (context, index) {
-                              String name =
-                                  searchList[index]['name'].toLowerCase();
-                              String description = searchList[index]
-                                      ['description']
-                                  .toLowerCase();
-
-                              List<String> splitList = List();
-                              splitList.addAll(name.split(' '));
-                              splitList.addAll(description.split(' '));
-
-                              RegExp regExp = RegExp(r'^' +
-                                  searchController.text.toLowerCase() +
-                                  r'.*$');
-
-                              bool show = false;
-                              splitList.forEach((String str) {
-                                if (regExp.hasMatch(str)) {
-                                  show = true;
-                                }
-                              });
-
-                              return show
-                                  ? ListTile(
-                                      leading: Icon(Icons.build),
-                                      title: Text(
-                                        '$name',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      subtitle: Text('$description'),
-                                      onTap: () =>
-                                          navigateToDetail(searchList[index]),
-                                    )
-                                  : Container();
+                            itemCount:
+                                searchList == null ? 0 : filteredList.length,
+                            itemBuilder: (BuildContext context, int index) {
+                              return ListTile(
+                                title: Text(filteredList[index]),
+                                onTap: () => navToSearchResults(
+                                    filteredList[index].toLowerCase()),
+                              );
                             },
                           ),
                         ),
@@ -1845,7 +1863,7 @@ class HomePageState extends State<HomePage> {
         context,
         MaterialPageRoute(
           builder: (BuildContext context) => SearchResults(
-                searchList: searchList,
+                searchList: allItems,
                 searchQuery: searchQuery,
               ),
         ));
