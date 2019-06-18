@@ -2,6 +2,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:shareapp/extras/helpers.dart';
+import 'package:shareapp/services/const.dart';
 
 class ProfilePage extends StatefulWidget {
   static const routeName = '/profilePage';
@@ -57,9 +59,18 @@ class ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('${userDS['name']}'),
+      backgroundColor: coolerWhite,
+      floatingActionButton: Container(
+        padding: const EdgeInsets.only(top: 120.0, left: 5.0),
+        child: FloatingActionButton(
+          onPressed: () => Navigator.pop(context),
+          child: Icon(Icons.arrow_back),
+          elevation: 1,
+          backgroundColor: Colors.white70,
+          foregroundColor: primaryColor,
+        ),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.startTop,
       body: RefreshIndicator(
         onRefresh: () => getSnapshots(true),
         child: isLoading ? Container() : showBody(),
@@ -68,60 +79,48 @@ class ProfilePageState extends State<ProfilePage> {
   }
 
   Widget showBody() {
-    return Padding(
-      padding: EdgeInsets.all(15),
-      child: ListView(
+    return ListView(
+        padding: EdgeInsets.all(0),
         children: <Widget>[
           showNameAndProfilePic(),
-          Text('Items'),
+
+          divider(),
+          reusableCategory("ITEMS"),
+          SizedBox(height: 10.0,),
           showItems(),
         ],
-      ),
     );
   }
 
   Widget showNameAndProfilePic() {
-    return SizedBox(
-        child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: <Widget>[
-        Text(
-          '${userDS['name']}',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 20.0,
-            fontFamily: 'Quicksand',
-          ),
-          textAlign: TextAlign.left,
-        ),
-        Container(
-          height: 50.0,
-          child: ClipOval(
-            child: CachedNetworkImage(
-              imageUrl: userDS['avatar'],
-              placeholder: (context, url) => CircularProgressIndicator(),
-            ),
+    double h = MediaQuery.of(context).size.height;
+    double w = MediaQuery.of(context).size.width;
+
+    return Container(
+      decoration: 
+        new BoxDecoration(
+          image: DecorationImage(
+            image: CachedNetworkImageProvider(userDS['avatar']),
+            fit: BoxFit.fill,
+            colorFilter: new ColorFilter.mode(Colors.black.withOpacity(0.35), BlendMode.srcATop),
           ),
         ),
-      ],
-    ));
+      height: w,
+      child: Align(alignment: Alignment.bottomLeft,
+        child: Text('${userDS['name']}', style: TextStyle(color: Colors.white, fontSize: h/20, fontFamily: 'Quicksand',),),
+      ));
   }
 
   Widget showItems() {
+    double h = MediaQuery.of(context).size.height;
+    double w = MediaQuery.of(context).size.width;
+
     return Container(
-      height: 100,
+      height: h/3.2,
       child: StreamBuilder(
-        stream: Firestore.instance
-            .collection('items')
-            .where('creator',
-                isEqualTo: Firestore.instance
-                    .collection('users')
-                    .document(userDS.documentID))
-            .snapshots(),
+        stream: Firestore.instance.collection('items').where('creator', isEqualTo: Firestore.instance.collection('users').document(userDS.documentID)).snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.hasError) {
-            return new Text('${snapshot.error}');
-          }
+          if (snapshot.hasError) { return new Text('${snapshot.error}'); }
 
           switch (snapshot.connectionState) {
             case ConnectionState.waiting:
@@ -129,8 +128,6 @@ class ProfilePageState extends State<ProfilePage> {
             default:
               if (snapshot.hasData) {
                 List<DocumentSnapshot> itemSnaps = snapshot.data.documents;
-                double h = 100;
-                double w = 200;
 
                 return ListView.builder(
                   scrollDirection: Axis.horizontal,
@@ -138,11 +135,9 @@ class ProfilePageState extends State<ProfilePage> {
                   itemCount: itemSnaps.length,
                   itemBuilder: (context, index) {
                     DocumentSnapshot itemDS = itemSnaps[index];
-
                     return Container(
-                      height: h,
-                      width: w,
-                      child: Text('${itemDS['name']}'),
+                      width: w/2.2,
+                      child: itemCard(itemDS, context)
                     );
                   },
                 );

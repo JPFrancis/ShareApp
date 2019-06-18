@@ -22,6 +22,7 @@ import 'package:shareapp/services/const.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
+
 class HomePage extends StatefulWidget {
   static const routeName = '/homePage';
 
@@ -59,7 +60,7 @@ class HomePageState extends State<HomePage> {
   TextEditingController searchController = TextEditingController();
   List<DocumentSnapshot> searchList;
 
-  static double _initial;
+  static double _initial = 50.0;
   double _changingHeight = _initial;
 
   @override
@@ -525,8 +526,7 @@ class HomePageState extends State<HomePage> {
               ),
               Expanded(
                 child: TextField(
-                  onEditingComplete: () =>
-                      setState(() => _changingHeight = _initial),
+                  
                   onSubmitted: (value) {
                     if (value.length > 0) {
                       navToSearchResults(value.toLowerCase());
@@ -594,8 +594,7 @@ class HomePageState extends State<HomePage> {
             alignment: Alignment.bottomCenter,
             child: Column(
               children: <Widget>[
-                AnimatedContainer(
-                    height: _changingHeight, duration: Duration(seconds: 1)),
+                AnimatedContainer(height: _changingHeight, duration: Duration(seconds: 1)),
                 searchField(),
                 searchController.text.isNotEmpty && searchList != null
                     ? Expanded(
@@ -1774,11 +1773,11 @@ class HomePageState extends State<HomePage> {
   void navToSearchResults(String searchQuery) async {
     Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (BuildContext context) => SearchResults(
+        SlideRightRoute(
+          page: SearchResults(
                 searchList: searchList,
                 searchQuery: searchQuery,
-              ),
+              ), 
         ));
   }
 

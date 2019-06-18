@@ -515,7 +515,7 @@ class ItemDetailState extends State<ItemDetail> {
     double widthOfScreen = MediaQuery.of(context).size.width;
     List imagesList = itemDS['images'];
     return imagesList.length > 0
-        ? Container(height: widthOfScreen, child: getImagesListView(context))
+        ? Hero(tag: "${itemDS['id']}", child: Container(height: widthOfScreen, child: getImagesListView(context)))
         : Text('No images yet\n');
   }
 

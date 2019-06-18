@@ -67,6 +67,7 @@ class StarRating extends StatelessWidget {
             starCount, (index) => buildStar(context, index, sz)));
   }
 }
+
 // Reusable Widgets
 
 Widget itemCard(DocumentSnapshot ds, context) {
@@ -87,11 +88,14 @@ Widget itemCard(DocumentSnapshot ds, context) {
       ),
       child: Stack(
         children: <Widget>[
-          Container(
-              decoration: BoxDecoration(
-                  image: DecorationImage(
-                      image: NetworkImage(ds['images'][0]),
-                      fit: BoxFit.cover))),
+          Hero(
+            tag: "${ds['id']}",
+            child: Container(
+                decoration: BoxDecoration(
+                    image: DecorationImage(
+                        image: NetworkImage(ds['images'][0]),
+                        fit: BoxFit.cover))),
+          ),
           SizedBox.expand(
             child: Container(
               color: Colors.black12,
@@ -266,4 +270,32 @@ void navigateToDetail(DocumentSnapshot itemDS, context) async {
 
 void delayPage() async {
   await Future.delayed(Duration(milliseconds: 500));
+}
+
+// transitions
+
+class SlideRightRoute extends PageRouteBuilder {
+  final Widget page;
+  SlideRightRoute({this.page})
+      : super(
+          pageBuilder: (
+            BuildContext context,
+            Animation<double> animation,
+            Animation<double> secondaryAnimation,
+          ) =>
+              page,
+          transitionsBuilder: (
+            BuildContext context,
+            Animation<double> animation,
+            Animation<double> secondaryAnimation,
+            Widget child,
+          ) =>
+              SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(1, 1),
+                  end: Offset.zero,
+                ).animate(animation),
+                child: child,
+              ),
+        );
 }
