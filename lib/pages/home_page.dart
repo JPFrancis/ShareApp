@@ -445,21 +445,16 @@ class HomePageState extends State<HomePage> {
       child: MediaQuery.removePadding(
         removeTop: true,
         context: context,
-        child: RefreshIndicator(
-          onRefresh: getAllItems,
-          child: ListView(
-            //physics: const ClampingScrollPhysics(),
+        child: ListView(
+          physics: const NeverScrollableScrollPhysics(),
 
-            // shrinkWrap: true,
-            children: <Widget>[
-              introImageAndSearch(),
-              SizedBox(
-                height: 30.0,
-              ),
-              categories(),
-              //lookingFor()
-            ],
-          ),
+          // shrinkWrap: true,
+          children: <Widget>[
+            introImageAndSearch(),
+            SizedBox(height: 30.0,),
+            categories(),
+            //lookingFor()
+          ],
         ),
       ),
     );
@@ -562,7 +557,13 @@ class HomePageState extends State<HomePage> {
         onTap: ()=>navToSearchResults(""),
         splashColor: primaryColor,
         child: Container(
-          color: Colors.white,
+          decoration: new BoxDecoration(
+              color: Colors.white,
+              borderRadius: new BorderRadius.only(
+                  bottomLeft: const Radius.circular(30.0),
+                  bottomRight: const Radius.circular(30.0),
+                  topLeft: const Radius.circular(12.0),
+                  topRight: const Radius.circular(12.0))),
           child: Row(
             children: <Widget>[
               SizedBox(width: 20.0,),
@@ -614,47 +615,43 @@ class HomePageState extends State<HomePage> {
     }
 
     return Container(
-      height: h / 3,
-      child: Stack(
-        children: <Widget>[
-          Container(
-            height: h / 3.2,
-            child: SizedBox.expand(
-              child: Image.asset(
-                'assets/surfing.jpg',
-                fit: BoxFit.cover,
-                gaplessPlayback: true,
-              ),
-            ),
-          ),
-          Container(height: h / 3.2, color: Colors.black12),
-          Container(
-            padding: EdgeInsets.only(left: 5, right: 5, top: _changingHeight),
-            child: Column(
-              children: <Widget>[
-                Hero(tag: "search", child: searchField()),
-                /*
-                searchController.text.isNotEmpty && searchList != null
-                    ? Expanded(
-                        child: Container(
-                          color: Colors.white,
-                          child: ListView.builder(
-                            itemCount:
-                                searchList == null ? 0 : filteredList.length,
-                            itemBuilder: (BuildContext context, int index) {
-                              return ListTile(
-                                title: Text(filteredList[index]),
-                                onTap: () => navToSearchResults(filteredList[index].toLowerCase()),
-                              );
-                            },
-                          ),
-                        ),
-                      )
-                    : Container(),*/
-              ],
-            ),
-          ),
-        ],
+      height: h / 8,
+      decoration: new BoxDecoration(
+         boxShadow: <BoxShadow>[
+              CustomBoxShadow(
+                  color: Colors.black,
+                  blurRadius: 3.0,
+                  blurStyle: BlurStyle.outer),
+            ],
+        color: primaryColor,
+        borderRadius: new BorderRadius.only(
+            bottomLeft: const Radius.circular(30.0),
+            bottomRight: const Radius.circular(30.0))),
+      child: Container(
+        padding: EdgeInsets.only(left: 5, right: 5, top: h/15),
+        child: Column(
+          children: <Widget>[
+            searchField(),
+            /*
+            searchController.text.isNotEmpty && searchList != null
+                ? Expanded(
+                    child: Container(
+                      color: Colors.white,
+                      child: ListView.builder(
+                        itemCount:
+                            searchList == null ? 0 : filteredList.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          return ListTile(
+                            title: Text(filteredList[index]),
+                            onTap: () => navToSearchResults(filteredList[index].toLowerCase()),
+                          );
+                        },
+                      ),
+                    ),
+                  )
+                : Container(),*/
+          ],
+        ),
       ),
     );
   }
@@ -692,6 +689,7 @@ class HomePageState extends State<HomePage> {
       );
     }
     */
+
 
     Widget _categoryTile(category, icon) {
       return ClipRRect(
@@ -805,9 +803,7 @@ class HomePageState extends State<HomePage> {
   Widget myRentalsPage() {
     return Column(
       children: <Widget>[
-        SizedBox(
-          height: 30.0,
-        ),
+        SizedBox(height: 30.0,),
         reusableCategoryWithAll("REQUESTING", () => debugPrint),
         buildRequests("renter"),
         reusableCategoryWithAll("UPCOMING", () => debugPrint),
@@ -860,12 +856,7 @@ class HomePageState extends State<HomePage> {
   }
 
   Widget buildRequests(person) {
-    Stream stream = Firestore.instance
-        .collection('rentals')
-        .where(person,
-            isEqualTo:
-                Firestore.instance.collection('users').document(myUserID))
-        .snapshots();
+    Stream stream = Firestore.instance.collection('rentals').where(person, isEqualTo: Firestore.instance.collection('users').document(myUserID)).snapshots();
     var status;
     return StreamBuilder<QuerySnapshot>(
       stream: stream,
@@ -904,8 +895,7 @@ class HomePageState extends State<HomePage> {
                           if (snapshot.hasData) {
                             DocumentSnapshot itemDS = snapshot.data;
                             int durationDays = rentalDS['duration'];
-                            String duration =
-                                '${durationDays > 1 ? '$durationDays days' : '$durationDays day'}';
+                            String duration = '${durationDays > 1 ? '$durationDays days' : '$durationDays day'}';
 
                             return StreamBuilder<DocumentSnapshot>(
                               stream: person == "renter"
@@ -929,8 +919,8 @@ class HomePageState extends State<HomePage> {
                                               blurRadius: 3.0,
                                               blurStyle: BlurStyle.outer)
                                           : cbs = CustomBoxShadow(
-                                              color: Colors.orange,
-                                              blurRadius: 7.0,
+                                              color: primaryColor,
+                                              blurRadius: 6.0,
                                               blurStyle: BlurStyle.outer);
                                       return Column(
                                         children: <Widget>[
@@ -943,8 +933,7 @@ class HomePageState extends State<HomePage> {
                                                 fit: BoxFit.cover,
                                                 colorFilter:
                                                     new ColorFilter.mode(
-                                                        Colors.black
-                                                            .withOpacity(0.45),
+                                                        Colors.black.withOpacity(0.45),
                                                         BlendMode.srcATop),
                                               ),
                                               boxShadow: <BoxShadow>[cbs],
@@ -1266,46 +1255,57 @@ class HomePageState extends State<HomePage> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        appBar: PreferredSize(
-          preferredSize: Size.fromHeight(h / 12),
-          child: AppBar(
-            backgroundColor: primaryColor,
-            elevation: 1.0,
-            centerTitle: false,
-            bottom: TabBar(
-              indicatorColor: Colors.black45,
-              labelStyle: TextStyle(fontFamily: 'Quicksand'),
-              tabs: [
-                Tab(text: "Transactions"),
-                Tab(text: "All My Items"),
+        body: Stack(children: <Widget> [
+          Container(
+            color: coolerWhite,
+            child: TabBarView(
+              children: [
+                Column(
+                  children: <Widget>[
+                    SizedBox(height: 30.0,),
+                    buildListingsList(),
+                  ],
+                ),
+                Column(
+                  children: <Widget>[
+                    SizedBox(height: 30.0,),
+                    reusableCategoryWithAll("REQUESTS", () => debugPrint),
+                    buildRequests("owner"),
+                    reusableCategoryWithAll("UPCOMING", () => debugPrint),
+                    buildTransactions('upcoming', "owner"),
+                    reusableCategoryWithAll("CURRENT", () => debugPrint),
+                    buildTransactions('current', "owner"),
+                    reusableCategoryWithAll("PAST", () => debugPrint),
+                    buildTransactions('past', "owner"),
+                  ],
+                ),
               ],
             ),
           ),
-        ),
-        body: Container(
-          color: coolerWhite,
-          child: TabBarView(
-            children: [
-              Column(
-                children: <Widget>[
-                  reusableCategoryWithAll("REQUESTS", () => debugPrint),
-                  buildRequests("owner"),
-                  reusableCategoryWithAll("UPCOMING", () => debugPrint),
-                  buildTransactions('upcoming', "owner"),
-                  reusableCategoryWithAll("CURRENT", () => debugPrint),
-                  buildTransactions('current', "owner"),
-                  reusableCategoryWithAll("PAST", () => debugPrint),
-                  buildTransactions('past', "owner"),
+        Align(
+          alignment: Alignment.bottomLeft,
+          child: Padding(
+            padding: EdgeInsets.only(bottom: 10.0),
+            child: Container(
+              height: 30.0,
+              decoration: new BoxDecoration(
+              color: Colors.white,
+              borderRadius: new BorderRadius.all(Radius.circular(100.0),)),
+              child: new TabBar(
+                isScrollable: true,
+                tabs: [
+                  Tab(child: Text("All My Items", style: TextStyle(fontFamily: 'Quicksand'),)),
+                  Tab(child: Text("Transactions", style: TextStyle(fontFamily: 'Quicksand'),)),
                 ],
+                labelColor: primaryColor,
+                unselectedLabelColor: Colors.grey,
+                indicatorColor: Colors.transparent,
               ),
-              Column(
-                children: <Widget>[
-                  buildListingsList(),
-                ],
-              ),
-            ],
+            ),
           ),
         ),
+        ]),
+
       ),
     );
   }
@@ -1331,96 +1331,100 @@ class HomePageState extends State<HomePage> {
   }
 
   Widget profileTabPage() {
-    return Padding(
-      padding: edgeInset,
-      child: Column(
-        children: <Widget>[
-          Padding(
-            padding: EdgeInsets.all(10.0),
-          ),
-          profileIntroStream(),
-          Divider(),
-          profileTabAfterIntro(),
-        ],
-      ),
+    return Column(
+      children: <Widget>[
+        profileIntroStream(),
+        SizedBox(height: 20.0),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 5.0),
+          child: profileTabAfterIntro(),
+        ),
+      ],
     );
   }
 
   Widget profileIntroStream() {
-    return StreamBuilder<DocumentSnapshot>(
-      stream:
-          Firestore.instance.collection('users').document(myUserID).snapshots(),
-      builder:
-          (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
-        if (snapshot.hasError) {
-          return new Text('${snapshot.error}');
-        }
-        switch (snapshot.connectionState) {
-          case ConnectionState.waiting:
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 15.0),
+      decoration: new BoxDecoration(
+        boxShadow: <BoxShadow>[
+          CustomBoxShadow(
+              color: Colors.black,
+              blurRadius: 2.0,
+              blurStyle: BlurStyle.outer),
+        ],
+        color: primaryColor,
+        borderRadius: new BorderRadius.only(
+            bottomLeft: const Radius.circular(50.0),
+            bottomRight: const Radius.circular(50.0),)),
+      child: StreamBuilder<DocumentSnapshot>(
+        stream: Firestore.instance.collection('users').document(myUserID).snapshots(),
+        builder: (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+          if (snapshot.hasError) {
+            return new Text('${snapshot.error}');
+          }
+          switch (snapshot.connectionState) {
+            case ConnectionState.waiting:
 
-          default:
-            if (snapshot.hasData) {
-              DocumentSnapshot ds = snapshot.data;
-              String name;
-              String avatarURL;
-              String email;
+            default:
+              if (snapshot.hasData) {
+                DocumentSnapshot ds = snapshot.data;
+                String name;
+                String avatarURL;
+                String email;
 
-              if (ds.exists) {
-                name = ds['name'];
-                avatarURL = ds['avatar'];
-                email = ds['email'];
-              } else {
-                name = 'ERROR';
-                avatarURL = '';
-                email = '';
-              }
+                if (ds.exists) {
+                  name = ds['name'];
+                  avatarURL = ds['avatar'];
+                  email = ds['email'];
+                } else {
+                  name = 'ERROR';
+                  avatarURL = '';
+                  email = '';
+                }
 
-              return Container(
-                child: Column(
-                  children: <Widget>[
-                    Container(
-                      padding: EdgeInsets.only(left: 15.0),
-                      alignment: Alignment.topLeft,
-                      height: 60.0,
-                      child: ClipOval(
-                        child: CachedNetworkImage(
-                          alignment: Alignment.topLeft,
-                          imageUrl: avatarURL,
-                          placeholder: (context, url) => new Container(),
+                return Container(
+                  child: Column(
+                    children: <Widget>[
+                      SizedBox(height: 30.0,),
+                      Container(
+                        padding: EdgeInsets.only(left: 15.0),
+                        alignment: Alignment.topLeft,
+                        height: 60.0,
+                        child: ClipOval(
+                          child: CachedNetworkImage(
+                            alignment: Alignment.topLeft,
+                            imageUrl: avatarURL,
+                            placeholder: (context, url) => new Container(),
+                          ),
                         ),
                       ),
-                    ),
-                    Container(
-                        padding: const EdgeInsets.only(top: 8.0, left: 15.0),
-                        alignment: Alignment.centerLeft,
-                        child: Text('$name',
-                            style: TextStyle(
-                                fontSize: 20.0,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: 'Quicksand'))),
-                    Container(
-                        padding: const EdgeInsets.only(top: 4.0, left: 15.0),
-                        alignment: Alignment.centerLeft,
-                        child: Text('$email',
-                            style: TextStyle(
-                                fontSize: 15.0, fontFamily: 'Quicksand'))),
-                    Container(
-                        alignment: Alignment.centerLeft,
-                        child: FlatButton(
-                          child: Text("Edit Profile",
-                              style: TextStyle(
-                                  color: Color(0xff007f6e),
-                                  fontFamily: 'Quicksand')),
-                          onPressed: () => navToProfileEdit(),
-                        )),
-                  ],
-                ),
-              );
-            } else {
-              return Container();
-            }
-        }
-      },
+                      Container(
+                          padding: const EdgeInsets.only(top: 8.0, left: 15.0),
+                          alignment: Alignment.centerLeft,
+                          child: Text('$name', style: TextStyle(color: Colors.white, fontSize: 20.0, fontWeight: FontWeight.bold, fontFamily: 'Quicksand'))),
+                      Container(
+                          padding: const EdgeInsets.only(top: 4.0, left: 15.0),
+                          alignment: Alignment.centerLeft,
+                          child: Text('$email', style: TextStyle(color: Colors.white, fontSize: 15.0, fontFamily: 'Quicksand'))),
+                      Container(
+                          alignment: Alignment.centerLeft,
+                          child: FlatButton(
+                            child: Text("Edit Profile",
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontFamily: 'Quicksand')),
+                            onPressed: () => navToProfileEdit(),
+                          )),
+                    ],
+                  ),
+                );
+              } else {
+                return Container();
+              }
+          }
+        },
+      ),
     );
   }
 

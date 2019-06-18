@@ -100,6 +100,7 @@ class SearchResultsState extends State<SearchResults> {
             decoration: new BoxDecoration(border: Border(left: BorderSide(color: primaryColor, width: 3)),),
             child: Center(
               child: TextField(
+                autofocus: true,
                 style: TextStyle(fontFamily: 'Quicksand', fontSize: 21),
                 keyboardType: TextInputType.text,
                 controller: searchController,
