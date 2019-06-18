@@ -61,8 +61,8 @@ class SearchResultsState extends State<SearchResults> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          buildSearchResultsList(),
           searchField(),
+          buildSearchResultsList(),
         ],
       ),
     );
@@ -72,29 +72,43 @@ class SearchResultsState extends State<SearchResults> {
     return Container(
       padding: EdgeInsets.only(left: 10, right: 10),
       child: Container(
-      decoration: new BoxDecoration(
-        border: Border.all(color: primaryColor),
-        color: Colors.white,
-        borderRadius: new BorderRadius.all(Radius.circular(9))),
+        decoration: new BoxDecoration(
+            border: Border.all(color: primaryColor),
+            color: Colors.white,
+            borderRadius: new BorderRadius.all(Radius.circular(9))),
         child: TextField(
           keyboardType: TextInputType.text,
           controller: searchController,
-          onTap: () {if (searchList.length == 0) setState(() {getAllItems();});},
-          onChanged: (value) {setState(() {});},
+          onTap: () {
+            if (searchList.length == 0)
+              setState(() {
+                getAllItems();
+              });
+          },
+          onChanged: (value) {
+            setState(() {});
+          },
           decoration: InputDecoration(
             border: InputBorder.none,
-            prefixIcon: Icon(Icons.search, color: primaryColor,),
-            suffixIcon: 
-              Container(
-                width: 40,
-                child: FlatButton(
-                  onPressed: () {
-                    setState(() {
-                      searchController.clear();
-                      FocusScope.of(context).requestFocus(FocusNode());
-                  });},
-                  child: Icon(Icons.clear, color: primaryColor,),
-              ),),
+            prefixIcon: Icon(
+              Icons.search,
+              color: primaryColor,
+            ),
+            suffixIcon: Container(
+              width: 40,
+              child: FlatButton(
+                onPressed: () {
+                  setState(() {
+                    searchController.clear();
+                    FocusScope.of(context).requestFocus(FocusNode());
+                  });
+                },
+                child: Icon(
+                  Icons.clear,
+                  color: primaryColor,
+                ),
+              ),
+            ),
             labelStyle: TextStyle(color: Colors.black54),
           ),
         ),
@@ -109,7 +123,7 @@ class SearchResultsState extends State<SearchResults> {
         onRefresh: () => getAllItems(),
         child: ListView.builder(
           shrinkWrap: true,
-          reverse: true,
+          //reverse: true,
           padding: EdgeInsets.only(bottom: 0.0, top: 60),
           itemCount: searchList.length,
           itemBuilder: (context, index) {
@@ -120,7 +134,8 @@ class SearchResultsState extends State<SearchResults> {
             splitList.addAll(name.split(' '));
             splitList.addAll(description.split(' '));
 
-            RegExp regExp = RegExp(r'^' + searchController.text.toLowerCase() + r'.*$');
+            RegExp regExp =
+                RegExp(r'^' + searchController.text.toLowerCase() + r'.*$');
 
             bool show = false;
             splitList.forEach((String str) {
@@ -129,7 +144,7 @@ class SearchResultsState extends State<SearchResults> {
               }
             });
 
-            Widget _searchTile(){
+            Widget _searchTile() {
               return InkWell(
                 onTap: () => navigateToDetail(searchList[index], context),
                 child: Container(
@@ -141,32 +156,45 @@ class SearchResultsState extends State<SearchResults> {
                           blurStyle: BlurStyle.outer),
                     ],
                   ),
-                  child: Row(children: <Widget>[
-                    Container(
-                      height: 50, width: 50,
-                      child: FittedBox(
-                        fit: BoxFit.cover,
-                        child: CachedNetworkImage(
-                          imageUrl: searchList[index]['images'][0],
-                          placeholder: (context, url) => new CircularProgressIndicator(),
+                  child: Row(
+                    children: <Widget>[
+                      Container(
+                        height: 50,
+                        width: 50,
+                        child: FittedBox(
+                          fit: BoxFit.cover,
+                          child: CachedNetworkImage(
+                            imageUrl: searchList[index]['images'][0],
+                            placeholder: (context, url) =>
+                                new CircularProgressIndicator(),
+                          ),
                         ),
                       ),
-                    ),        
-                    Column(children: <Widget>[
-                        Text('${searchList[index]['name']}'),
-                        Text('${searchList[index]['condition']}'),
-                    ],),
-                    Column(children: <Widget>[
-                        Text('${searchList[index]['price']}'),
-                        StarRating(rating: searchList[index]['rating'].toDouble(), sz: h / 30),
-                    ],),
-                  ],),
+                      Column(
+                        children: <Widget>[
+                          Text('${searchList[index]['name']}'),
+                          Text('${searchList[index]['condition']}'),
+                        ],
+                      ),
+                      Column(
+                        children: <Widget>[
+                          Text('${searchList[index]['price']}'),
+                          StarRating(
+                              rating: searchList[index]['rating'].toDouble(),
+                              sz: h / 30),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               );
             }
 
             return show
-                ? Container(child: _searchTile(), padding: EdgeInsets.symmetric(vertical: 5.0, horizontal: 15.0))
+                ? Container(
+                    child: _searchTile(),
+                    padding:
+                        EdgeInsets.symmetric(vertical: 5.0, horizontal: 15.0))
                 : Container();
           },
         ),

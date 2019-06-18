@@ -6,7 +6,8 @@ buildscript {
 
     dependencies {
         classpath 'com.android.tools.build:gradle:3.3.1'
-        classpath 'com.google.gms:google-services:4.0.1'
+        //classpath 'com.google.gms:google-services:4.0.1'
+        classpath 'com.google.gms:google-services:4.2.0'
         classpath 'com.deploygate:gradle:2.0.1'
     }
 }
@@ -14,7 +15,7 @@ buildscript {
 allprojects {
     repositories {
         google()
-        jcenter()
+        jcenter()r
     }
 /*
     configurations.all {

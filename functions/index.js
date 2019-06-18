@@ -12,13 +12,24 @@ const bucket = storage.bucket();
 
 const stripe = require('stripe')(functions.config().stripe.token);
 
+var msgData;
+/*
+exports.offerTrigger = functions.firestore.document(
+    'offers/{offerId}'
+).onCreate((snapshot, context) => {
+    msgData = snapshot.data();
+
+    admin.firestore().collection('pushtokens')
+})
+*/
+
 // create new user document when account created
 exports.createUser = functions.auth.user().onCreate(event => {
     console.log('User id to be created: ', event.uid);
 
     const userID = event.uid;
     const email = event.email;
-    const photoURL = event.photoURL || 'https://firebasestorage.googleapis.com/v0/b/shareapp-rrd.appspot.com/o/profile_pics%2Fnew_user.png?alt=media&token=60762aec-fa4f-42cd-9d4b-656bd92aeb6d';
+    const photoURL = event.photoURL.replace('s96-c', 's960-c') || 'https://firebasestorage.googleapis.com/v0/b/shareapp-rrd.appspot.com/o/profile_pics%2Fnew_user.png?alt=media&token=60762aec-fa4f-42cd-9d4b-656bd92aeb6d';
     const name = event.displayName || 'new user';
     const creationDate = Date.now();
 
