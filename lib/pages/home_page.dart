@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+//import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -42,6 +43,7 @@ class HomePageState extends State<HomePage> {
   final GlobalKey<RefreshIndicatorState> refreshIndicatorKey =
       new GlobalKey<RefreshIndicatorState>();
 
+  //final FirebaseMessaging _messaging = FirebaseMessaging();
   StreamSubscription<QuerySnapshot> subscription;
 
   SharedPreferences prefs;
@@ -58,7 +60,9 @@ class HomePageState extends State<HomePage> {
   double padding;
 
   TextEditingController searchController = TextEditingController();
-  List<DocumentSnapshot> searchList;
+  List<DocumentSnapshot> allItems;
+  List<String> searchList;
+  List<String> filteredList;
 
   static double _initial = 50.0;
   double _changingHeight = _initial;
@@ -72,10 +76,10 @@ class HomePageState extends State<HomePage> {
     currentTabIndex = 0;
 
     padding = 18;
-    edgeInset = EdgeInsets.only(left: padding, right: padding, bottom: padding, top: 30);
+    edgeInset = EdgeInsets.only(
+        left: padding, right: padding, bottom: padding, top: 30);
 
     myUserID = widget.firebaseUser.uid;
-
 
     setPrefs();
     updateLastActive();
@@ -89,9 +93,9 @@ class HomePageState extends State<HomePage> {
       bottomNavTile('Profile', Icon(Icons.account_circle), false),
     ];
     //delayPage();
+
+  //  _messaging.getToken().then((token) => debugPrint(token));
   }
-
-
 
   void delayPage() async {
     Future.delayed(Duration(milliseconds: 750)).then((_) {
@@ -144,11 +148,40 @@ class HomePageState extends State<HomePage> {
   }
 
   Future<Null> getAllItems() async {
+    searchList = [];
+    filteredList = [];
+
     QuerySnapshot querySnapshot = await Firestore.instance
         .collection('items')
         .orderBy('name', descending: false)
         .getDocuments();
-    searchList = querySnapshot.documents;
+
+    if (querySnapshot != null) {
+      allItems = querySnapshot.documents;
+
+      allItems.forEach((DocumentSnapshot ds) {
+        String name = ds['name'].toLowerCase();
+        String description = ds['description'].toLowerCase();
+
+        searchList.addAll(name.split(' '));
+        searchList.addAll(description.split(' '));
+      });
+
+      searchList = searchList.toSet().toList();
+
+      for (int i = 0; i < searchList.length; i++) {
+        searchList[i] = searchList[i].replaceAll(RegExp(r"[^\w]"), '');
+      }
+
+      searchList = searchList.toSet().toList();
+
+      searchList.sort();
+
+      filteredList = searchList;
+
+      //debugPrint('AFTER: $searchList, LENGTH: ${searchList.length}');
+
+    }
   }
 
   @override
@@ -219,8 +252,7 @@ class HomePageState extends State<HomePage> {
         : null;
   }
 
-  BottomNavigationBarItem bottomNavTile(
-      String label, Icon icon, bool showBadge) {
+  BottomNavigationBarItem bottomNavTile(String label, Icon icon, bool showBadge) {
     return BottomNavigationBarItem(
       icon: Stack(
         children: <Widget>[
@@ -510,23 +542,35 @@ class HomePageState extends State<HomePage> {
   Widget introImageAndSearch() {
     double h = MediaQuery.of(context).size.height;
 
+    RegExp regExp = RegExp(r'^' + searchController.text.toLowerCase() + r'.*$');
+
+    if (searchController.text.isNotEmpty) {
+      List<String> temp = [];
+      for (int i = 0; i < filteredList.length; i++) {
+        if (regExp.hasMatch(filteredList[i])) {
+          temp.add(filteredList[i]);
+        }
+      }
+
+      filteredList = temp;
+    } else {
+      filteredList = searchList;
+    }
+
     Widget searchField() {
-      setState(() {
-        _initial = MediaQuery.of(context).size.height/4;
-      });
-      return Container(
+      return InkWell(
+        onTap: ()=>navToSearchResults(""),
+        splashColor: primaryColor,
         child: Container(
-          padding: EdgeInsets.only(left: 10),
           color: Colors.white,
           child: Row(
             children: <Widget>[
-              Icon(Icons.search),
-              SizedBox(
-                width: 10.0,
-              ),
-              Expanded(
-                child: TextField(
-                  
+              SizedBox(width: 20.0,),
+              Icon(Icons.search, color: primaryColor),
+              SizedBox(width: 10,),
+              Text("Try \"Vacuum\"", style: TextStyle(fontFamily: 'Quicksand')),
+                /*
+                TextField(
                   onSubmitted: (value) {
                     if (value.length > 0) {
                       navToSearchResults(value.toLowerCase());
@@ -537,16 +581,13 @@ class HomePageState extends State<HomePage> {
                   keyboardType: TextInputType.text,
                   controller: searchController,
                   onTap: () {
-                    setState(() => _changingHeight = 50);
                     if (searchList.length == 0) {
                       setState(() {
                         getAllItems();
                       });
                     }
                   },
-                  onChanged: (value) {
-                    setState(() {});
-                  },
+                  onChanged: (value) {setState(() {});},
                   decoration: InputDecoration(
                     labelStyle: TextStyle(
                       color: Colors.black54,
@@ -560,17 +601,15 @@ class HomePageState extends State<HomePage> {
                   onPressed: () {
                     setState(() {
                       searchController.clear();
-                      _changingHeight = _initial;
                       FocusScope.of(context).requestFocus(FocusNode());
                     });
                   },
                   child: Icon(Icons.clear),
-                ),
-              ),
+                ),*/
             ],
           ),
+          height: h / 20,
         ),
-        height: h / 20,
       );
     }
 
@@ -590,58 +629,28 @@ class HomePageState extends State<HomePage> {
           ),
           Container(height: h / 3.2, color: Colors.black12),
           Container(
-            padding: EdgeInsets.only(left: 5, right: 5),
-            alignment: Alignment.bottomCenter,
+            padding: EdgeInsets.only(left: 5, right: 5, top: _changingHeight),
             child: Column(
               children: <Widget>[
-                AnimatedContainer(height: _changingHeight, duration: Duration(seconds: 1)),
-                searchField(),
+                Hero(tag: "search", child: searchField()),
+                /*
                 searchController.text.isNotEmpty && searchList != null
                     ? Expanded(
                         child: Container(
                           color: Colors.white,
                           child: ListView.builder(
-                            itemCount: searchList.length,
-                            itemBuilder: (context, index) {
-                              String name =
-                                  searchList[index]['name'].toLowerCase();
-                              String description = searchList[index]
-                                      ['description']
-                                  .toLowerCase();
-
-                              List<String> splitList = List();
-                              splitList.addAll(name.split(' '));
-                              splitList.addAll(description.split(' '));
-
-                              RegExp regExp = RegExp(r'^' +
-                                  searchController.text.toLowerCase() +
-                                  r'.*$');
-
-                              bool show = false;
-                              splitList.forEach((String str) {
-                                if (regExp.hasMatch(str)) {
-                                  show = true;
-                                }
-                              });
-
-                              return show
-                                  ? ListTile(
-                                      leading: Icon(Icons.build),
-                                      title: Text(
-                                        '$name',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      subtitle: Text('$description'),
-                                      onTap: () =>
-                                          navigateToDetail(searchList[index]),
-                                    )
-                                  : Container();
+                            itemCount:
+                                searchList == null ? 0 : filteredList.length,
+                            itemBuilder: (BuildContext context, int index) {
+                              return ListTile(
+                                title: Text(filteredList[index]),
+                                onTap: () => navToSearchResults(filteredList[index].toLowerCase()),
+                              );
                             },
                           ),
                         ),
                       )
-                    : Container(),
+                    : Container(),*/
               ],
             ),
           ),
@@ -851,8 +860,13 @@ class HomePageState extends State<HomePage> {
   }
 
   Widget buildRequests(person) {
-    Stream stream = Firestore.instance.collection('rentals').where(person, isEqualTo: Firestore.instance.collection('users').document(myUserID)).snapshots();
-    var status; 
+    Stream stream = Firestore.instance
+        .collection('rentals')
+        .where(person,
+            isEqualTo:
+                Firestore.instance.collection('users').document(myUserID))
+        .snapshots();
+    var status;
     return StreamBuilder<QuerySnapshot>(
       stream: stream,
       builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
@@ -864,7 +878,9 @@ class HomePageState extends State<HomePage> {
 
           default:
             if (snapshot.hasData) {
-              var updated = snapshot.data.documents.where((d) => d['status'] == 1 || d['status'] == 0).toList();
+              var updated = snapshot.data.documents
+                  .where((d) => d['status'] == 1 || d['status'] == 0)
+                  .toList();
               return ListView.builder(
                 padding: EdgeInsets.symmetric(horizontal: 10.0),
                 shrinkWrap: true,
@@ -876,7 +892,8 @@ class HomePageState extends State<HomePage> {
 
                   return StreamBuilder<DocumentSnapshot>(
                     stream: itemDR.snapshots(),
-                    builder: (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+                    builder: (BuildContext context,
+                        AsyncSnapshot<DocumentSnapshot> snapshot) {
                       if (snapshot.hasError) {
                         return new Text('${snapshot.error}');
                       }
@@ -906,59 +923,126 @@ class HomePageState extends State<HomePage> {
                                     if (snapshot.hasData) {
                                       DocumentSnapshot ownerDS = snapshot.data;
                                       CustomBoxShadow cbs;
-                                      rentalDS['status'] == 1 
-                                        ? cbs = CustomBoxShadow(
-                                          color: Colors.black38,
-                                          blurRadius: 3.0,
-                                          blurStyle: BlurStyle.outer)
-                                        : cbs = CustomBoxShadow(
-                                          color: Colors.orange,
-                                          blurRadius: 7.0,
-                                          blurStyle: BlurStyle.outer);
+                                      rentalDS['status'] == 1
+                                          ? cbs = CustomBoxShadow(
+                                              color: Colors.black38,
+                                              blurRadius: 3.0,
+                                              blurStyle: BlurStyle.outer)
+                                          : cbs = CustomBoxShadow(
+                                              color: Colors.orange,
+                                              blurRadius: 7.0,
+                                              blurStyle: BlurStyle.outer);
                                       return Column(
                                         children: <Widget>[
-                                           Container(
-                                              decoration: new BoxDecoration(
-                                                image: DecorationImage(
-                                                  image: CachedNetworkImageProvider(itemDS['images'][0]),
-                                                  fit: BoxFit.cover,
-                                                  colorFilter: new ColorFilter.mode(Colors.black.withOpacity(0.45), BlendMode.srcATop),
-                                                ),
-                                                boxShadow: <BoxShadow>[cbs],
+                                          Container(
+                                            decoration: new BoxDecoration(
+                                              image: DecorationImage(
+                                                image:
+                                                    CachedNetworkImageProvider(
+                                                        itemDS['images'][0]),
+                                                fit: BoxFit.cover,
+                                                colorFilter:
+                                                    new ColorFilter.mode(
+                                                        Colors.black
+                                                            .withOpacity(0.45),
+                                                        BlendMode.srcATop),
                                               ),
-                                              child: InkWell(
-                                                onTap: () {Navigator.pushNamed(context, RentalDetail.routeName, arguments: RentalDetailArgs(rentalDS));},
-                                                child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: <Widget>[
-                                                    Column(children: <Widget>[
-                                                      SizedBox(height: 6.0,),
+                                              boxShadow: <BoxShadow>[cbs],
+                                            ),
+                                            child: InkWell(
+                                              onTap: () {
+                                                Navigator.pushNamed(context,
+                                                    RentalDetail.routeName,
+                                                    arguments: RentalDetailArgs(
+                                                        rentalDS));
+                                              },
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceAround,
+                                                children: <Widget>[
+                                                  Column(
+                                                    children: <Widget>[
+                                                      SizedBox(
+                                                        height: 6.0,
+                                                      ),
                                                       Container(
                                                           height: 30,
                                                           width: 30,
                                                           decoration: BoxDecoration(
-                                                              shape: BoxShape.circle,
-                                                              color: Colors.white,
+                                                              shape: BoxShape
+                                                                  .circle,
+                                                              color:
+                                                                  Colors.white,
                                                               image: DecorationImage(
-                                                                  image: CachedNetworkImageProvider(ownerDS['avatar']),
-                                                                  fit: BoxFit.fill))),
-                                                      Text(ownerDS['name'], style: TextStyle(color: Colors.white, fontFamily: 'Quicksand', fontWeight: FontWeight.bold),),
-                                                    ],),
-                                                    Column(
-                                                      children: <Widget>[
-                                                        Row(children: <Widget>[
-                                                          Text("Request Sent: ", style: TextStyle(color: Colors.white, fontFamily: 'Quicksand')),
-                                                          Text(timeago.format((DateTime.fromMillisecondsSinceEpoch(rentalDS['created']))),
-                                                            style: TextStyle(color: Colors.white, fontFamily: 'Quicksand', fontWeight: FontWeight.bold),)
-                                                        ]),
-                                                        Row(children: <Widget>[
-                                                          Text("Requested Duration: ", style: TextStyle(color: Colors.white, fontFamily: 'Quicksand'),),
-                                                          Text(duration, style: TextStyle(color: Colors.white, fontFamily: 'Quicksand', fontWeight: FontWeight.bold))
-                                                        ],)
-                                                      ],
-                                                    ),
-                                                  ],
-                                                ),
+                                                                  image: CachedNetworkImageProvider(
+                                                                      ownerDS[
+                                                                          'avatar']),
+                                                                  fit: BoxFit
+                                                                      .fill))),
+                                                      Text(
+                                                        ownerDS['name'],
+                                                        style: TextStyle(
+                                                            color: Colors.white,
+                                                            fontFamily:
+                                                                'Quicksand',
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .bold),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  Column(
+                                                    children: <Widget>[
+                                                      Row(children: <Widget>[
+                                                        Text("Request Sent: ",
+                                                            style: TextStyle(
+                                                                color: Colors
+                                                                    .white,
+                                                                fontFamily:
+                                                                    'Quicksand')),
+                                                        Text(
+                                                          timeago.format((DateTime
+                                                              .fromMillisecondsSinceEpoch(
+                                                                  rentalDS[
+                                                                      'created']))),
+                                                          style: TextStyle(
+                                                              color:
+                                                                  Colors.white,
+                                                              fontFamily:
+                                                                  'Quicksand',
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold),
+                                                        )
+                                                      ]),
+                                                      Row(
+                                                        children: <Widget>[
+                                                          Text(
+                                                            "Requested Duration: ",
+                                                            style: TextStyle(
+                                                                color: Colors
+                                                                    .white,
+                                                                fontFamily:
+                                                                    'Quicksand'),
+                                                          ),
+                                                          Text(duration,
+                                                              style: TextStyle(
+                                                                  color: Colors
+                                                                      .white,
+                                                                  fontFamily:
+                                                                      'Quicksand',
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold))
+                                                        ],
+                                                      )
+                                                    ],
+                                                  ),
+                                                ],
                                               ),
                                             ),
+                                          ),
                                           SizedBox(height: 5.0)
                                         ],
                                       );
@@ -1277,6 +1361,20 @@ class HomePageState extends State<HomePage> {
           default:
             if (snapshot.hasData) {
               DocumentSnapshot ds = snapshot.data;
+              String name;
+              String avatarURL;
+              String email;
+
+              if (ds.exists) {
+                name = ds['name'];
+                avatarURL = ds['avatar'];
+                email = ds['email'];
+              } else {
+                name = 'ERROR';
+                avatarURL = '';
+                email = '';
+              }
+
               return Container(
                 child: Column(
                   children: <Widget>[
@@ -1287,8 +1385,7 @@ class HomePageState extends State<HomePage> {
                       child: ClipOval(
                         child: CachedNetworkImage(
                           alignment: Alignment.topLeft,
-                          //key: ValueKey(DateTime.now().millisecondsSinceEpoch),
-                          imageUrl: ds['avatar'] ?? '',
+                          imageUrl: avatarURL,
                           placeholder: (context, url) => new Container(),
                         ),
                       ),
@@ -1296,7 +1393,7 @@ class HomePageState extends State<HomePage> {
                     Container(
                         padding: const EdgeInsets.only(top: 8.0, left: 15.0),
                         alignment: Alignment.centerLeft,
-                        child: Text('${ds['name']}',
+                        child: Text('$name',
                             style: TextStyle(
                                 fontSize: 20.0,
                                 fontWeight: FontWeight.bold,
@@ -1304,7 +1401,7 @@ class HomePageState extends State<HomePage> {
                     Container(
                         padding: const EdgeInsets.only(top: 4.0, left: 15.0),
                         alignment: Alignment.centerLeft,
-                        child: Text('${ds['email']}',
+                        child: Text('$email',
                             style: TextStyle(
                                 fontSize: 15.0, fontFamily: 'Quicksand'))),
                     Container(
@@ -1322,64 +1419,6 @@ class HomePageState extends State<HomePage> {
             } else {
               return Container();
             }
-        }
-      },
-    );
-  }
-
-  Widget profileIntro() {
-    return FutureBuilder(
-      future: Firestore.instance.collection('users').document(myUserID).get(),
-      builder: (BuildContext context, AsyncSnapshot snapshot) {
-        if (snapshot.hasData) {
-          DocumentSnapshot ds = snapshot.data;
-          return new Container(
-            child: Column(
-              children: <Widget>[
-                // User Icon
-                Container(
-                  padding: EdgeInsets.only(left: 15.0),
-                  alignment: Alignment.topLeft,
-                  height: 60.0,
-                  child: ClipOval(
-                    child: CachedNetworkImage(
-                      //key: ValueKey(DateTime.now().millisecondsSinceEpoch),
-                      imageUrl: ds['avatar'],
-                      placeholder: (context, url) => new Container(),
-                    ),
-                  ),
-                ),
-                // username
-                Container(
-                    padding: const EdgeInsets.only(top: 8.0, left: 15.0),
-                    alignment: Alignment.centerLeft,
-                    child: Text('${ds['name']}',
-                        style: TextStyle(
-                            fontSize: 20.0,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Quicksand'))),
-                // email
-                Container(
-                    padding: const EdgeInsets.only(top: 4.0, left: 15.0),
-                    alignment: Alignment.centerLeft,
-                    child: Text('${ds['email']}',
-                        style: TextStyle(
-                            fontSize: 15.0, fontFamily: 'Quicksand'))),
-                //
-                Container(
-                    alignment: Alignment.centerLeft,
-                    child: FlatButton(
-                      child: Text("Edit Profile",
-                          style: TextStyle(
-                              color: Color(0xff007f6e),
-                              fontFamily: 'Quicksand')),
-                      onPressed: () => navToProfileEdit(),
-                    )),
-              ],
-            ),
-          );
-        } else {
-          return Container();
         }
       },
     );
@@ -1405,7 +1444,7 @@ class HomePageState extends State<HomePage> {
             reusableFlatButton("Get help", Icons.help_outline, null),
             reusableFlatButton("Give us feedback", Icons.feedback, null),
             reusableFlatButton("Log out", null, logout),
-            getProfileDetails()
+            //getProfileDetails()
           ],
         ),
       ),
@@ -1773,9 +1812,9 @@ class HomePageState extends State<HomePage> {
   void navToSearchResults(String searchQuery) async {
     Navigator.push(
         context,
-        SlideRightRoute(
+        SlideUpRoute(
           page: SearchResults(
-                searchList: searchList,
+                searchList: allItems,
                 searchQuery: searchQuery,
               ), 
         ));

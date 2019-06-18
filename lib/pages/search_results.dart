@@ -38,20 +38,21 @@ class SearchResultsState extends State<SearchResults> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: coolerWhite,
+      /*
       floatingActionButton: Container(
         padding: const EdgeInsets.only(top: 120.0, left: 5.0),
         child: FloatingActionButton(
+          mini: true,
           onPressed: () => Navigator.pop(context),
-          child: Icon(Icons.arrow_back),
+          child: Icon(Icons.clear),
           elevation: 1,
           backgroundColor: Colors.white70,
           foregroundColor: primaryColor,
         ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.startTop,
-      body: searchList != null && searchList.length > 0
-          ? showBody()
-          : Container(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.miniStartTop,
+      */
+      body: searchList != null ? showBody() : searchField()
     );
   }
 
@@ -59,50 +60,62 @@ class SearchResultsState extends State<SearchResults> {
     double h = MediaQuery.of(context).size.height;
     double w = MediaQuery.of(context).size.width;
     return Container(
-      child: Container(
-        height: MediaQuery.of(context).size.height,
-        padding: EdgeInsets.only(bottom: 30),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            buildSearchResultsList(),
-            searchField(),
-          ],
-        ),
+      height: h,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          SizedBox(height: 50.0),
+          Row(crossAxisAlignment: CrossAxisAlignment.center, children: <Widget>[
+            SizedBox(width: 10.0,),
+            IconButton(onPressed: () => Navigator.pop(context), icon: Icon(Icons.clear, color: primaryColor,)),
+            Expanded(child: searchField()),
+          ],),
+          searchController.text.isNotEmpty
+           ? Container(
+              alignment: Alignment.topRight,
+              child: FlatButton(
+                onPressed: () {
+                  setState(() {
+                    searchController.clear();
+                    FocusScope.of(context).requestFocus(FocusNode());
+                  });
+                },
+                child: Text("Reset"),
+              ),
+            )
+          : Container(),
+          buildSearchResultsList(),
+        ],
       ),
     );
   }
 
   Widget searchField() {
     return Container(
-      padding: EdgeInsets.only(left: 10, right: 10),
-      child: Container(
-      decoration: new BoxDecoration(
-        border: Border.all(color: primaryColor),
-        color: Colors.white,
-        borderRadius: new BorderRadius.all(Radius.circular(9))),
-        child: TextField(
-          keyboardType: TextInputType.text,
-          controller: searchController,
-          onTap: () {if (searchList.length == 0) setState(() {getAllItems();});},
-          onChanged: (value) {setState(() {});},
-          decoration: InputDecoration(
-            border: InputBorder.none,
-            prefixIcon: Icon(Icons.search, color: primaryColor,),
-            suffixIcon: 
-              Container(
-                width: 40,
-                child: FlatButton(
-                  onPressed: () {
-                    setState(() {
-                      searchController.clear();
-                      FocusScope.of(context).requestFocus(FocusNode());
-                  });},
-                  child: Icon(Icons.clear, color: primaryColor,),
-              ),),
-            labelStyle: TextStyle(color: Colors.black54),
+      padding: EdgeInsets.only(),
+      child: Column(
+        children: <Widget>[
+          Container(
+            height: 70,
+            decoration: new BoxDecoration(border: Border(left: BorderSide(color: primaryColor, width: 3)),),
+            child: Center(
+              child: TextField(
+                style: TextStyle(fontFamily: 'Quicksand', fontSize: 21),
+                keyboardType: TextInputType.text,
+                controller: searchController,
+                onTap: () {if (searchList.length == 0) setState(() {getAllItems();});},
+                onChanged: (value) {setState(() {});},
+                decoration: InputDecoration(
+                  hintStyle: TextStyle(fontFamily: 'Quicksand', fontSize: 20.0) ,
+                  hintText: "Search for an item",
+                  border: InputBorder.none,
+                  prefixIcon: Icon(Icons.search, color: primaryColor,),
+                ),
+              ),
+            ),
           ),
-        ),
+
+        ],
       ),
     );
   }
@@ -115,7 +128,7 @@ class SearchResultsState extends State<SearchResults> {
         child: searchController.text.isEmpty ? Container() :
         ListView.builder(
           shrinkWrap: true,
-          padding: EdgeInsets.only(bottom: 0.0, top: 60),
+          padding: EdgeInsets.all(0),
           itemCount: searchList.length,
           itemBuilder: (context, index) {
             String name = searchList[index]['name'].toLowerCase();
@@ -125,7 +138,8 @@ class SearchResultsState extends State<SearchResults> {
             splitList.addAll(name.split(' '));
             splitList.addAll(description.split(' '));
 
-            RegExp regExp = RegExp(r'^' + searchController.text.toLowerCase() + r'.*$');
+            RegExp regExp =
+                RegExp(r'^' + searchController.text.toLowerCase() + r'.*$');
 
             bool show = false;
             splitList.forEach((String str) {
@@ -134,7 +148,7 @@ class SearchResultsState extends State<SearchResults> {
               }
             });
 
-            Widget _searchTile(){
+            Widget _searchTile() {
               return InkWell(
                 onTap: () => navigateToDetail(searchList[index], context),
                 child: Container(

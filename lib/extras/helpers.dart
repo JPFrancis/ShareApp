@@ -274,9 +274,9 @@ void delayPage() async {
 
 // transitions
 
-class SlideRightRoute extends PageRouteBuilder {
+class SlideUpRoute extends PageRouteBuilder {
   final Widget page;
-  SlideRightRoute({this.page})
+  SlideUpRoute({this.page})
       : super(
           pageBuilder: (
             BuildContext context,
