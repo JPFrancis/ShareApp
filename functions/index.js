@@ -12,17 +12,6 @@ const bucket = storage.bucket();
 
 const stripe = require('stripe')(functions.config().stripe.token);
 
-var msgData;
-/*
-exports.offerTrigger = functions.firestore.document(
-    'offers/{offerId}'
-).onCreate((snapshot, context) => {
-    msgData = snapshot.data();
-
-    admin.firestore().collection('pushtokens')
-})
-*/
-
 // create new user document when account created
 exports.createUser = functions.auth.user().onCreate(event => {
     console.log('User id to be created: ', event.uid);
@@ -40,6 +29,11 @@ exports.createUser = functions.auth.user().onCreate(event => {
         lastActive: Date.now(),
         creationDate: creationDate,
         custId: 'new',
+        pushToken: null,
+        description: '',
+        gender: '',
+        phoneNum: '',
+        birthday: '',
     }).then(function () {
         console.log('Created user: ', userID);
         return 'Created user $userID';
@@ -92,6 +86,99 @@ exports.deleteItemImages = functions.firestore.document('items/{itemId}')
                 console.error(`Failed to remove images, error: ${err}`);
             }
         });
+    })
+
+// chat push notifications
+exports.chatNotification = functions.firestore.document('rentals/{rentalId}/chat/{msgTimestamp}')
+    .onCreate(async (snapshot, context) => {
+        var msgData = snapshot.data();
+        var token = msgData.pushToken;
+
+        if (token === null) {
+            console.log('Other user has no push token');
+        } else {
+            var payload = {
+                "notification": {
+                    "title": msgData.nameFrom,
+                    "body": msgData.content,
+                    "sound": "default",
+                },
+                "data": {
+                    "idFrom": msgData.idFrom,
+                    "idTo": msgData.idTo,
+                    "message": msgData.content,
+                }
+            }
+
+            return admin.messaging().sendToDevice(token, payload).then((response) => {
+                console.log('Push success');
+                return 'Success';
+            }).catch((err) => {
+                console.log(err);
+                return err;
+            });
+        }
+    })
+
+// new rental notification
+exports.newRentalNotification = functions.firestore.document('rentals/{rentalId}')
+    .onCreate(async (snapshot, context) => {
+        var msgData = snapshot.data();
+        var initialPushNotif = msgData.initialPushNotif;
+        var token = initialPushNotif.pushToken;
+
+        if (token === null) {
+            console.log('Other user has no push token');
+        } else {
+            var payload = {
+                "notification": {
+                    "title": "Someone has requested your item!",
+                    "body": `Item: ${initialPushNotif.itemName}`,
+                    "sound": "default",
+                },
+                "data": {
+                    "rentalID": context.params.rentalId,
+                }
+            }
+
+            return admin.messaging().sendToDevice(token, payload).then((response) => {
+                console.log('Push success');
+                return 'Success';
+            }).catch((err) => {
+                console.log(err);
+                return err;
+            });
+        }
+    })
+
+// push notifications in 'notifications' collection
+exports.pushNotifications = functions.firestore.document('notifications/{notificationId}')
+    .onCreate(async (snapshot, context) => {
+        var msgData = snapshot.data();
+        var token = msgData.pushToken;
+
+        if (token === null) {
+            console.log('Other user has no push token');
+        } else {
+            var payload = {
+                "notification": {
+                    "title": msgData.title,
+                    "body": msgData.body,
+                    "sound": "default",
+                },
+                "data": {
+                    //"rentalID": msgData.rentalID,
+                }
+            }
+
+            return admin.messaging().sendToDevice(token, payload).then((response) => {
+                console.log('Push success');
+                return 'Success';
+            }).catch((err) => {
+                console.log(err);
+                return err;
+            });
+        }
     })
 
 // add stripe source when new card added

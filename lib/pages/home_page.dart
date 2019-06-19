@@ -42,8 +42,9 @@ class HomePageState extends State<HomePage> {
   final GlobalKey<RefreshIndicatorState> refreshIndicatorKey =
       new GlobalKey<RefreshIndicatorState>();
 
-  final FirebaseMessaging _messaging = FirebaseMessaging();
+  final FirebaseMessaging firebaseMessaging = FirebaseMessaging();
   StreamSubscription<QuerySnapshot> subscription;
+  String deviceToken;
 
   SharedPreferences prefs;
   String myUserID;
@@ -69,8 +70,9 @@ class HomePageState extends State<HomePage> {
   @override
   void initState() {
     // TODO: implement initState
-
     super.initState();
+
+    //updateAll();
 
     currentTabIndex = 0;
 
@@ -81,7 +83,7 @@ class HomePageState extends State<HomePage> {
     myUserID = widget.firebaseUser.uid;
 
     setPrefs();
-    updateLastActive();
+    updateLastActiveAndPushToken();
     getAllItems();
 
     bottomNavBarTiles = <BottomNavigationBarItem>[
@@ -92,8 +94,21 @@ class HomePageState extends State<HomePage> {
       bottomNavTile('Profile', Icon(Icons.account_circle), false),
     ];
     //delayPage();
+  }
 
-    _messaging.getToken().then((token) => debugPrint(token));
+  void updateAll() async {
+    var docs = await Firestore.instance.collection('rentals').getDocuments();
+
+    if (docs != null) {
+      docs.documents.forEach((ds) {
+        Firestore.instance
+            .collection('users')
+            .document(ds.documentID)
+            .updateData({
+          'pushToken': '',
+        });
+      });
+    }
   }
 
   void delayPage() async {
@@ -134,14 +149,12 @@ class HomePageState extends State<HomePage> {
     }
   }
 
-  void updateLastActive() async {
-    Firestore.instance
-        .collection('users')
-        .document(myUserID)
-        .get()
-        .then((DocumentSnapshot ds) {
+  void updateLastActiveAndPushToken() async {
+    firebaseMessaging.getToken().then((token) {
+      deviceToken = token;
       Firestore.instance.collection('users').document(myUserID).updateData({
         'lastActive': DateTime.now().millisecondsSinceEpoch,
+        'pushToken': FieldValue.arrayUnion([token]),
       });
     });
   }
@@ -173,13 +186,11 @@ class HomePageState extends State<HomePage> {
       }
 
       searchList = searchList.toSet().toList();
-
       searchList.sort();
-
+      searchList.remove('');
       filteredList = searchList;
 
-      //debugPrint('AFTER: $searchList, LENGTH: ${searchList.length}');
-
+      //debugPrint('LIST: $searchList, LENGTH: ${searchList.length}');
     }
   }
 
@@ -278,32 +289,41 @@ class HomePageState extends State<HomePage> {
                       default:
                         if (snapshot.hasData) {
                           var updated = snapshot.data.documents.toList().length;
-                          return Positioned(
-                            top: 0,
-                            right: 0,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.red[600],
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              constraints: BoxConstraints(
-                                minWidth: 13,
-                                minHeight: 13,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  '$updated',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 11,
+
+                          return updated == 0
+                              ? Container(
+                                  height: 0,
+                                  width: 0,
+                                )
+                              : Positioned(
+                                  top: 0,
+                                  right: 0,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.red[600],
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    constraints: BoxConstraints(
+                                      minWidth: 13,
+                                      minHeight: 13,
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        '$updated',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 11,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
                                   ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                            ),
-                          );
+                                );
                         } else {
-                          return Container();
+                          return Container(
+                            height: 0,
+                            width: 0,
+                          );
                         }
                     }
                   },
@@ -1379,10 +1399,12 @@ class HomePageState extends State<HomePage> {
 
               if (ds.exists) {
                 name = ds['name'];
+                prefs.setString('name', name);
                 avatarURL = ds['avatar'];
                 email = ds['email'];
               } else {
                 name = 'ERROR';
+                prefs.setString('name', name);
                 avatarURL = '';
                 email = '';
               }
@@ -1931,9 +1953,15 @@ class HomePageState extends State<HomePage> {
 
   void logout() async {
     try {
-      await prefs.remove('userID');
-      await widget.auth.signOut();
-      widget.onSignOut();
+      prefs.remove('userID').then((_) {
+        Firestore.instance.collection('users').document(myUserID).updateData({
+          'pushToken': FieldValue.arrayRemove([deviceToken]),
+        }).then((_) {
+          widget.auth.signOut().then((_) {
+            widget.onSignOut();
+          });
+        });
+      });
     } catch (e) {
       print(e);
     }
