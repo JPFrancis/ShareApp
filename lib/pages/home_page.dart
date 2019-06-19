@@ -1335,9 +1335,11 @@ class HomePageState extends State<HomePage> {
       children: <Widget>[
         profileIntroStream(),
         SizedBox(height: 20.0),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 5.0),
-          child: profileTabAfterIntro(),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 5.0),
+            child: profileTabAfterIntro(),
+          ),
         ),
       ],
     );
