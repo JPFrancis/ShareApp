@@ -576,7 +576,7 @@ class HomePageState extends State<HomePage> {
 
     Widget searchField() {
       return InkWell(
-        onTap: () => navToSearchResults(""),
+        onTap: () => navToSearchResults(),
         splashColor: primaryColor,
         child: Container(
           decoration: new BoxDecoration(
@@ -1843,14 +1843,11 @@ class HomePageState extends State<HomePage> {
         ));
   }
 
-  void navToSearchResults(String searchQuery) async {
+  void navToSearchResults() async {
     Navigator.push(
         context,
         SlideUpRoute(
-          page: SearchResults(
-            searchList: allItems,
-            searchQuery: searchQuery,
-          ),
+          page: SearchResults(),
         ));
   }
 

@@ -11,10 +11,7 @@ import 'package:shareapp/services/const.dart';
 class SearchResults extends StatefulWidget {
   static const routeName = '/searchResults';
 
-  final List<DocumentSnapshot> searchList;
-  final String searchQuery;
-
-  SearchResults({Key key, this.searchList, this.searchQuery}) : super(key: key);
+  SearchResults({Key key}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
@@ -30,8 +27,8 @@ class SearchResultsState extends State<SearchResults> {
   void initState() {
     super.initState();
 
-    searchList = widget.searchList;
-    searchController.text = widget.searchQuery;
+    searchController.text = '';
+    getAllItems();
   }
 
   @override

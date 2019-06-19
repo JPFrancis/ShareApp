@@ -215,14 +215,21 @@ void dispose() {
   }
 
   Widget _showLogo() {
+    double h = MediaQuery.of(context).size.height;
     double w = MediaQuery.of(context).size.width;
     return Column(
       children: <Widget>[
         Container(
-          padding: EdgeInsets.only(top: w/7),
-          child: SvgPicture.asset('assets/Borderless.svg', width: w/1.5,)
-        ),
-        Text("S H A R E", style: TextStyle(fontFamily: 'Quicksand', color: Colors.white, fontSize: w/18),)
+            padding: EdgeInsets.only(top: h / 20),
+            child: SvgPicture.asset(
+              'assets/Borderless.svg',
+              width: w / 1.5,
+            )),
+        Text(
+          "S H A R E",
+          style: TextStyle(
+              fontFamily: 'Quicksand', color: Colors.white, fontSize: w / 18),
+        )
       ],
     );
   }
@@ -360,9 +367,15 @@ void dispose() {
         color: Colors.white,
         child: formMode == FormMode.LOGIN
             ? new Text('Login',
-                style: new TextStyle(fontSize: 20.0, color: Colors.black, fontFamily: 'Quicksand'))
+                style: new TextStyle(
+                    fontSize: 20.0,
+                    color: Colors.black,
+                    fontFamily: 'Quicksand'))
             : new Text('Create account',
-                style: new TextStyle(fontSize: 20.0, color: Colors.black, fontFamily: 'Quicksand')),
+                style: new TextStyle(
+                    fontSize: 20.0,
+                    color: Colors.black,
+                    fontFamily: 'Quicksand')),
         onPressed: _validateAndSubmit,
       ),
     );

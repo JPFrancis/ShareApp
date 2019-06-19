@@ -147,10 +147,7 @@ class MyApp extends StatelessWidget {
 
               return MaterialPageRoute(
                 builder: (context) {
-                  return SearchResults(
-                    searchList: args.searchList,
-                    searchQuery: args.searchQuery,
-                  );
+                  return SearchResults();
                 },
               );
             }
@@ -238,10 +235,7 @@ class ItemFilterArgs {
 }
 
 class SearchResultsArgs {
-  final List<DocumentSnapshot> searchList;
-  final String searchQuery;
-
-  SearchResultsArgs(this.searchList, this.searchQuery);
+  SearchResultsArgs();
 }
 
 class AllReviewsArgs {
