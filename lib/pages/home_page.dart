@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-//import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -23,7 +23,6 @@ import 'package:shareapp/services/const.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
-
 class HomePage extends StatefulWidget {
   static const routeName = '/homePage';
 
@@ -41,10 +40,10 @@ class HomePage extends StatefulWidget {
 
 class HomePageState extends State<HomePage> {
   final GlobalKey<RefreshIndicatorState> refreshIndicatorKey =
-      new GlobalKey<RefreshIndicatorState>();
-
-  //final FirebaseMessaging _messaging = FirebaseMessaging();
+      GlobalKey<RefreshIndicatorState>();
+  final FirebaseMessaging firebaseMessaging = FirebaseMessaging();
   StreamSubscription<QuerySnapshot> subscription;
+  String deviceToken;
 
   SharedPreferences prefs;
   String myUserID;
@@ -70,8 +69,9 @@ class HomePageState extends State<HomePage> {
   @override
   void initState() {
     // TODO: implement initState
-
     super.initState();
+
+    //updateAll();
 
     currentTabIndex = 0;
 
@@ -82,8 +82,8 @@ class HomePageState extends State<HomePage> {
     myUserID = widget.firebaseUser.uid;
 
     setPrefs();
-    updateLastActive();
-    getAllItems();
+    updateLastActiveAndPushToken();
+    //getAllItems();
 
     bottomNavBarTiles = <BottomNavigationBarItem>[
       bottomNavTile('Search', Icon(Icons.search), false),
@@ -93,8 +93,22 @@ class HomePageState extends State<HomePage> {
       bottomNavTile('Profile', Icon(Icons.account_circle), false),
     ];
     //delayPage();
+  }
 
-  //  _messaging.getToken().then((token) => debugPrint(token));
+  /// TESTING ONLY, if we need to add a field to all existing documents for example
+  void updateAll() async {
+    var docs = await Firestore.instance.collection('rentals').getDocuments();
+
+    if (docs != null) {
+      docs.documents.forEach((ds) {
+        Firestore.instance
+            .collection('users')
+            .document(ds.documentID)
+            .updateData({
+          'pushToken': '',
+        });
+      });
+    }
   }
 
   void delayPage() async {
@@ -135,14 +149,12 @@ class HomePageState extends State<HomePage> {
     }
   }
 
-  void updateLastActive() async {
-    Firestore.instance
-        .collection('users')
-        .document(myUserID)
-        .get()
-        .then((DocumentSnapshot ds) {
+  void updateLastActiveAndPushToken() async {
+    firebaseMessaging.getToken().then((token) {
+      deviceToken = token;
       Firestore.instance.collection('users').document(myUserID).updateData({
         'lastActive': DateTime.now().millisecondsSinceEpoch,
+        'pushToken': FieldValue.arrayUnion([token]),
       });
     });
   }
@@ -174,13 +186,11 @@ class HomePageState extends State<HomePage> {
       }
 
       searchList = searchList.toSet().toList();
-
       searchList.sort();
-
+      searchList.remove('');
       filteredList = searchList;
 
-      //debugPrint('AFTER: $searchList, LENGTH: ${searchList.length}');
-
+      //debugPrint('LIST: $searchList, LENGTH: ${searchList.length}');
     }
   }
 
@@ -252,7 +262,8 @@ class HomePageState extends State<HomePage> {
         : null;
   }
 
-  BottomNavigationBarItem bottomNavTile(String label, Icon icon, bool showBadge) {
+  BottomNavigationBarItem bottomNavTile(
+      String label, Icon icon, bool showBadge) {
     return BottomNavigationBarItem(
       icon: Stack(
         children: <Widget>[
@@ -278,32 +289,41 @@ class HomePageState extends State<HomePage> {
                       default:
                         if (snapshot.hasData) {
                           var updated = snapshot.data.documents.toList().length;
-                          return Positioned(
-                            top: 0,
-                            right: 0,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.red[600],
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              constraints: BoxConstraints(
-                                minWidth: 13,
-                                minHeight: 13,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  '$updated',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 11,
+
+                          return updated == 0
+                              ? Container(
+                                  height: 0,
+                                  width: 0,
+                                )
+                              : Positioned(
+                                  top: 0,
+                                  right: 0,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.red[600],
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    constraints: BoxConstraints(
+                                      minWidth: 13,
+                                      minHeight: 13,
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        '$updated',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 11,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
                                   ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                            ),
-                          );
+                                );
                         } else {
-                          return Container();
+                          return Container(
+                            height: 0,
+                            width: 0,
+                          );
                         }
                     }
                   },
@@ -451,7 +471,9 @@ class HomePageState extends State<HomePage> {
           // shrinkWrap: true,
           children: <Widget>[
             introImageAndSearch(),
-            SizedBox(height: 30.0,),
+            SizedBox(
+              height: 30.0,
+            ),
             categories(),
             //lookingFor()
           ],
@@ -554,7 +576,7 @@ class HomePageState extends State<HomePage> {
 
     Widget searchField() {
       return InkWell(
-        onTap: ()=>navToSearchResults(""),
+        onTap: () => navToSearchResults(""),
         splashColor: primaryColor,
         child: Container(
           decoration: new BoxDecoration(
@@ -566,47 +588,14 @@ class HomePageState extends State<HomePage> {
                   topRight: const Radius.circular(12.0))),
           child: Row(
             children: <Widget>[
-              SizedBox(width: 20.0,),
-              Icon(Icons.search, color: primaryColor),
-              SizedBox(width: 10,),
-              Text("Try \"Vacuum\"", style: TextStyle(fontFamily: 'Quicksand')),
-                /*
-                TextField(
-                  onSubmitted: (value) {
-                    if (value.length > 0) {
-                      navToSearchResults(value.toLowerCase());
-                    } else {
-                      FocusScope.of(context).requestFocus(FocusNode());
-                    }
-                  },
-                  keyboardType: TextInputType.text,
-                  controller: searchController,
-                  onTap: () {
-                    if (searchList.length == 0) {
-                      setState(() {
-                        getAllItems();
-                      });
-                    }
-                  },
-                  onChanged: (value) {setState(() {});},
-                  decoration: InputDecoration(
-                    labelStyle: TextStyle(
-                      color: Colors.black54,
-                    ),
-                  ),
-                ),
+              SizedBox(
+                width: 20.0,
               ),
-              Container(
-                width: 40,
-                child: FlatButton(
-                  onPressed: () {
-                    setState(() {
-                      searchController.clear();
-                      FocusScope.of(context).requestFocus(FocusNode());
-                    });
-                  },
-                  child: Icon(Icons.clear),
-                ),*/
+              Icon(Icons.search, color: primaryColor),
+              SizedBox(
+                width: 10,
+              ),
+              Text("Try \"Vacuum\"", style: TextStyle(fontFamily: 'Quicksand')),
             ],
           ),
           height: h / 20,
@@ -617,18 +606,18 @@ class HomePageState extends State<HomePage> {
     return Container(
       height: h / 8,
       decoration: new BoxDecoration(
-         boxShadow: <BoxShadow>[
-              CustomBoxShadow(
-                  color: Colors.black,
-                  blurRadius: 3.0,
-                  blurStyle: BlurStyle.outer),
-            ],
-        color: primaryColor,
-        borderRadius: new BorderRadius.only(
-            bottomLeft: const Radius.circular(30.0),
-            bottomRight: const Radius.circular(30.0))),
+          boxShadow: <BoxShadow>[
+            CustomBoxShadow(
+                color: Colors.black,
+                blurRadius: 3.0,
+                blurStyle: BlurStyle.outer),
+          ],
+          color: primaryColor,
+          borderRadius: new BorderRadius.only(
+              bottomLeft: const Radius.circular(30.0),
+              bottomRight: const Radius.circular(30.0))),
       child: Container(
-        padding: EdgeInsets.only(left: 5, right: 5, top: h/15),
+        padding: EdgeInsets.only(left: 5, right: 5, top: h / 15),
         child: Column(
           children: <Widget>[
             searchField(),
@@ -689,7 +678,6 @@ class HomePageState extends State<HomePage> {
       );
     }
     */
-
 
     Widget _categoryTile(category, icon) {
       return ClipRRect(
@@ -803,7 +791,9 @@ class HomePageState extends State<HomePage> {
   Widget myRentalsPage() {
     return Column(
       children: <Widget>[
-        SizedBox(height: 30.0,),
+        SizedBox(
+          height: 30.0,
+        ),
         reusableCategoryWithAll("REQUESTING", () => debugPrint),
         buildRequests("renter"),
         reusableCategoryWithAll("UPCOMING", () => debugPrint),
@@ -856,7 +846,12 @@ class HomePageState extends State<HomePage> {
   }
 
   Widget buildRequests(person) {
-    Stream stream = Firestore.instance.collection('rentals').where(person, isEqualTo: Firestore.instance.collection('users').document(myUserID)).snapshots();
+    Stream stream = Firestore.instance
+        .collection('rentals')
+        .where(person,
+            isEqualTo:
+                Firestore.instance.collection('users').document(myUserID))
+        .snapshots();
     var status;
     return StreamBuilder<QuerySnapshot>(
       stream: stream,
@@ -895,7 +890,8 @@ class HomePageState extends State<HomePage> {
                           if (snapshot.hasData) {
                             DocumentSnapshot itemDS = snapshot.data;
                             int durationDays = rentalDS['duration'];
-                            String duration = '${durationDays > 1 ? '$durationDays days' : '$durationDays day'}';
+                            String duration =
+                                '${durationDays > 1 ? '$durationDays days' : '$durationDays day'}';
 
                             return StreamBuilder<DocumentSnapshot>(
                               stream: person == "renter"
@@ -933,7 +929,8 @@ class HomePageState extends State<HomePage> {
                                                 fit: BoxFit.cover,
                                                 colorFilter:
                                                     new ColorFilter.mode(
-                                                        Colors.black.withOpacity(0.45),
+                                                        Colors.black
+                                                            .withOpacity(0.45),
                                                         BlendMode.srcATop),
                                               ),
                                               boxShadow: <BoxShadow>[cbs],
@@ -1255,20 +1252,24 @@ class HomePageState extends State<HomePage> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        body: Stack(children: <Widget> [
+        body: Stack(children: <Widget>[
           Container(
             color: coolerWhite,
             child: TabBarView(
               children: [
                 Column(
                   children: <Widget>[
-                    SizedBox(height: 30.0,),
+                    SizedBox(
+                      height: 30.0,
+                    ),
                     buildListingsList(),
                   ],
                 ),
                 Column(
                   children: <Widget>[
-                    SizedBox(height: 30.0,),
+                    SizedBox(
+                      height: 30.0,
+                    ),
                     reusableCategoryWithAll("REQUESTS", () => debugPrint),
                     buildRequests("owner"),
                     reusableCategoryWithAll("UPCOMING", () => debugPrint),
@@ -1282,30 +1283,39 @@ class HomePageState extends State<HomePage> {
               ],
             ),
           ),
-        Align(
-          alignment: Alignment.bottomLeft,
-          child: Padding(
-            padding: EdgeInsets.only(bottom: 10.0),
-            child: Container(
-              height: 30.0,
-              decoration: new BoxDecoration(
-              color: Colors.white,
-              borderRadius: new BorderRadius.all(Radius.circular(100.0),)),
-              child: new TabBar(
-                isScrollable: true,
-                tabs: [
-                  Tab(child: Text("All My Items", style: TextStyle(fontFamily: 'Quicksand'),)),
-                  Tab(child: Text("Transactions", style: TextStyle(fontFamily: 'Quicksand'),)),
-                ],
-                labelColor: primaryColor,
-                unselectedLabelColor: Colors.grey,
-                indicatorColor: Colors.transparent,
+          Align(
+            alignment: Alignment.bottomLeft,
+            child: Padding(
+              padding: EdgeInsets.only(bottom: 10.0),
+              child: Container(
+                height: 30.0,
+                decoration: new BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: new BorderRadius.all(
+                      Radius.circular(100.0),
+                    )),
+                child: new TabBar(
+                  isScrollable: true,
+                  tabs: [
+                    Tab(
+                        child: Text(
+                      "All My Items",
+                      style: TextStyle(fontFamily: 'Quicksand'),
+                    )),
+                    Tab(
+                        child: Text(
+                      "Transactions",
+                      style: TextStyle(fontFamily: 'Quicksand'),
+                    )),
+                  ],
+                  labelColor: primaryColor,
+                  unselectedLabelColor: Colors.grey,
+                  indicatorColor: Colors.transparent,
+                ),
               ),
             ),
           ),
-        ),
         ]),
-
       ),
     );
   }
@@ -1349,19 +1359,24 @@ class HomePageState extends State<HomePage> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 15.0),
       decoration: new BoxDecoration(
-        boxShadow: <BoxShadow>[
-          CustomBoxShadow(
-              color: Colors.black,
-              blurRadius: 2.0,
-              blurStyle: BlurStyle.outer),
-        ],
-        color: primaryColor,
-        borderRadius: new BorderRadius.only(
+          boxShadow: <BoxShadow>[
+            CustomBoxShadow(
+                color: Colors.black,
+                blurRadius: 2.0,
+                blurStyle: BlurStyle.outer),
+          ],
+          color: primaryColor,
+          borderRadius: new BorderRadius.only(
             bottomLeft: const Radius.circular(50.0),
-            bottomRight: const Radius.circular(50.0),)),
+            bottomRight: const Radius.circular(50.0),
+          )),
       child: StreamBuilder<DocumentSnapshot>(
-        stream: Firestore.instance.collection('users').document(myUserID).snapshots(),
-        builder: (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+        stream: Firestore.instance
+            .collection('users')
+            .document(myUserID)
+            .snapshots(),
+        builder:
+            (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
           if (snapshot.hasError) {
             return new Text('${snapshot.error}');
           }
@@ -1377,10 +1392,12 @@ class HomePageState extends State<HomePage> {
 
                 if (ds.exists) {
                   name = ds['name'];
+                  prefs.setString('name', name);
                   avatarURL = ds['avatar'];
                   email = ds['email'];
                 } else {
                   name = 'ERROR';
+                  prefs.setString('name', name);
                   avatarURL = '';
                   email = '';
                 }
@@ -1388,7 +1405,9 @@ class HomePageState extends State<HomePage> {
                 return Container(
                   child: Column(
                     children: <Widget>[
-                      SizedBox(height: 30.0,),
+                      SizedBox(
+                        height: 30.0,
+                      ),
                       Container(
                         padding: EdgeInsets.only(left: 15.0),
                         alignment: Alignment.topLeft,
@@ -1404,11 +1423,20 @@ class HomePageState extends State<HomePage> {
                       Container(
                           padding: const EdgeInsets.only(top: 8.0, left: 15.0),
                           alignment: Alignment.centerLeft,
-                          child: Text('$name', style: TextStyle(color: Colors.white, fontSize: 20.0, fontWeight: FontWeight.bold, fontFamily: 'Quicksand'))),
+                          child: Text('$name',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20.0,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'Quicksand'))),
                       Container(
                           padding: const EdgeInsets.only(top: 4.0, left: 15.0),
                           alignment: Alignment.centerLeft,
-                          child: Text('$email', style: TextStyle(color: Colors.white, fontSize: 15.0, fontFamily: 'Quicksand'))),
+                          child: Text('$email',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 15.0,
+                                  fontFamily: 'Quicksand'))),
                       Container(
                           alignment: Alignment.centerLeft,
                           child: FlatButton(
@@ -1820,9 +1848,9 @@ class HomePageState extends State<HomePage> {
         context,
         SlideUpRoute(
           page: SearchResults(
-                searchList: allItems,
-                searchQuery: searchQuery,
-              ), 
+            searchList: allItems,
+            searchQuery: searchQuery,
+          ),
         ));
   }
 
@@ -1925,9 +1953,15 @@ class HomePageState extends State<HomePage> {
 
   void logout() async {
     try {
-      await prefs.remove('userID');
-      await widget.auth.signOut();
-      widget.onSignOut();
+      prefs.remove('userID').then((_) {
+        Firestore.instance.collection('users').document(myUserID).updateData({
+          'pushToken': FieldValue.arrayRemove([deviceToken]),
+        }).then((_) {
+          widget.auth.signOut().then((_) {
+            widget.onSignOut();
+          });
+        });
+      });
     } catch (e) {
       print(e);
     }

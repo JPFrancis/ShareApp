@@ -35,6 +35,7 @@ class RentalDetail extends StatefulWidget {
 class RentalDetailState extends State<RentalDetail> {
   SharedPreferences prefs;
   String myUserId;
+  String myName;
   String url;
   String rentalCC;
   bool isLoading = true;
@@ -45,6 +46,7 @@ class RentalDetailState extends State<RentalDetail> {
   DocumentSnapshot ownerDS;
   DocumentSnapshot renterDS;
   DocumentSnapshot userDS;
+  DocumentSnapshot otherUserDS;
 
   TextStyle textStyle;
   double padding = 5.0;
@@ -82,6 +84,7 @@ class RentalDetailState extends State<RentalDetail> {
   void getMyUserID() async {
     prefs = await SharedPreferences.getInstance();
     myUserId = prefs.getString('userID') ?? '';
+    myName = prefs.getString('name') ?? '';
   }
 
   void getSnapshots() async {
@@ -111,6 +114,7 @@ class RentalDetailState extends State<RentalDetail> {
 
           if (prefs != null && ownerDS != null && renterDS != null) {
             isRenter = myUserId == renterDS.documentID ? true : false;
+            otherUserDS = isRenter ? ownerDS : renterDS;
             rentalCC = isRenter ? 'renterCC' : 'ownerCC';
             userDS = isRenter ? renterDS : ownerDS;
             delayPage();
@@ -775,6 +779,15 @@ class RentalDetailState extends State<RentalDetail> {
         .collection('rentals')
         .document(rentalDS.documentID)
         .updateData({'status': status}).then((_) {
+      if (status == 2) {
+        Firestore.instance.collection('notifications').add({
+          'title': 'Accepted pickup window',
+          'body': 'From: $myName',
+          'pushToken': otherUserDS['pushToken'],
+          'rentalID': rentalDS.documentID,
+        });
+      }
+
       if (status == 5) {
         Firestore.instance
             .collection('items')
@@ -803,7 +816,14 @@ class RentalDetailState extends State<RentalDetail> {
     Firestore.instance
         .collection('rentals')
         .document(rentalDS.documentID)
-        .updateData({'review': review});
+        .updateData({'review': review}).then((_) {
+      Firestore.instance.collection('notifications').add({
+        'title': 'Submitted review',
+        'body': 'From: $myName',
+        'pushToken': otherUserDS['pushToken'],
+        'rentalID': rentalDS.documentID,
+      });
+    });
 
     /// UPDATE USER RATINGS
   }

@@ -223,7 +223,8 @@ Widget reusableFlatButton(text, icon, action) {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
-              Text(text, style: TextStyle(fontFamily: 'Quicksand', fontSize: 15)),
+              Text(text,
+                  style: TextStyle(fontFamily: 'Quicksand', fontSize: 15)),
               Icon(icon)
             ],
           ),
@@ -276,6 +277,7 @@ void delayPage() async {
 
 class SlideUpRoute extends PageRouteBuilder {
   final Widget page;
+
   SlideUpRoute({this.page})
       : super(
           pageBuilder: (

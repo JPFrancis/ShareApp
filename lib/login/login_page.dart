@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart' show timeDilation;
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/services/auth.dart';
 import 'package:shareapp/services/const.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:flutter/scheduler.dart' show timeDilation;
 
 class LoginPage extends StatefulWidget {
   static const routeName = '/loginPage';
@@ -21,7 +21,7 @@ class LoginPage extends StatefulWidget {
 //enum FormType { login, register }
 enum FormMode { LOGIN, SIGNUP }
 
-class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin{
+class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   final formKey = new GlobalKey<FormState>();
 
   String email;
@@ -38,7 +38,13 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin{
   Animation<double> logoAnimation;
   AnimationController contentController;
   Animation<double> contentAnimation;
-
+  
+@override
+void dispose() {
+  logoController.dispose();
+  contentController.dispose();
+  super.dispose();
+}
   // Check if form is valid before perform login or signup
   bool _validateAndSave() {
     final form = formKey.currentState;
@@ -93,10 +99,14 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin{
     super.initState();
 
     timeDilation = 3.0;
-    logoController = AnimationController(duration: const Duration(milliseconds: 1000), vsync: this);
-    logoAnimation = CurvedAnimation(parent: logoController, curve: Interval(0,0.5,curve: Curves.easeIn));
-    contentController = AnimationController(duration: const Duration(milliseconds: 1000), vsync: this);
-    contentAnimation = CurvedAnimation(parent: logoController, curve: Interval(0.5,1,curve: Curves.easeIn));
+    logoController = AnimationController(
+        duration: const Duration(milliseconds: 1000), vsync: this);
+    logoAnimation = CurvedAnimation(
+        parent: logoController, curve: Interval(0, 0.5, curve: Curves.easeIn));
+    contentController = AnimationController(
+        duration: const Duration(milliseconds: 1000), vsync: this);
+    contentAnimation = CurvedAnimation(
+        parent: logoController, curve: Interval(0.5, 1, curve: Curves.easeIn));
     logoController.forward();
     delayPage();
     contentController.forward();
@@ -123,15 +133,15 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin{
     isIos = Theme.of(context).platform == TargetPlatform.iOS;
     return Material(
       color: primaryColor,
-      child: Column(children: <Widget>[
-        FadeTransition(
-          opacity: logoAnimation,
-          child: _showLogo()),
-        SizedBox(height: 20.0,),
-        FadeTransition(
-          opacity: contentAnimation,
-          child: showBody()),
-      ],),
+      child: Column(
+        children: <Widget>[
+          FadeTransition(opacity: logoAnimation, child: _showLogo()),
+          SizedBox(
+            height: 20.0,
+          ),
+          FadeTransition(opacity: contentAnimation, child: showBody()),
+        ],
+      ),
     );
   }
 
@@ -148,34 +158,43 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin{
   Widget showBody() {
     return new Container(
         child: new Form(
-          key: formKey,
-          child: new ListView(
-            padding: EdgeInsets.all(0),
-            shrinkWrap: true,
+      key: formKey,
+      child: new ListView(
+        padding: EdgeInsets.all(0),
+        shrinkWrap: true,
+        children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.only(left: 40.0),
+            child: Column(
+              children: <Widget>[
+                showEmailInput(),
+                SizedBox(
+                  height: 10.0,
+                ),
+                showPasswordInput(),
+              ],
+            ),
+          ),
+          SizedBox(
+            height: 30.0,
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+            child: showPrimaryButton(),
+          ),
+          showSecondaryButton(),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.only(left: 40.0),
-                child: Column(children: <Widget>[
-                  showEmailInput(),
-                  SizedBox(height: 10.0,),
-                  showPasswordInput(),
-                ],),
-              ),
-              SizedBox(height: 30.0,),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: showPrimaryButton(),
-              ),
-              showSecondaryButton(),
-              Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
-                googleLogin(),
-                otherUserSignin(),
-              ],),
-              /*
-              showErrorMessage(),*/
+              googleLogin(),
+              otherUserSignin(),
             ],
           ),
-        ));
+          /*
+              showErrorMessage(),*/
+        ],
+      ),
+    ));
   }
 
   Widget showErrorMessage() {
@@ -212,7 +231,9 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin{
     return Container(
       height: 70,
       padding: EdgeInsets.only(left: 10.0),
-      decoration: new BoxDecoration(border: Border(left: BorderSide(color: Colors.white, width: 3)),),
+      decoration: new BoxDecoration(
+        border: Border(left: BorderSide(color: Colors.white, width: 3)),
+      ),
       child: Center(
         child: new TextFormField(
           maxLines: 1,
@@ -234,7 +255,9 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin{
     return Container(
       height: 70,
       padding: const EdgeInsets.only(left: 10),
-      decoration: new BoxDecoration(border: Border(left: BorderSide(color: Colors.white, width: 3)),),
+      decoration: new BoxDecoration(
+        border: Border(left: BorderSide(color: Colors.white, width: 3)),
+      ),
       child: Center(
         child: new TextFormField(
           maxLines: 1,
@@ -286,7 +309,10 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin{
       height: 60.0,
       width: 60.0,
       child: new FlatButton(
-        child: Icon(Icons.play_arrow, color: Colors.white,),
+        child: Icon(
+          Icons.play_arrow,
+          color: Colors.white,
+        ),
         onPressed: validateAndSubmitOtherUser,
       ),
     );
@@ -329,7 +355,8 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin{
       height: 40.0,
       child: new RaisedButton(
         elevation: 2.0,
-        shape: new RoundedRectangleBorder(borderRadius: new BorderRadius.circular(10.0)),
+        shape: new RoundedRectangleBorder(
+            borderRadius: new BorderRadius.circular(10.0)),
         color: Colors.white,
         child: formMode == FormMode.LOGIN
             ? new Text('Login',

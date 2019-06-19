@@ -40,10 +40,10 @@ class ChatScreen extends StatefulWidget {
 }
 
 class ChatScreenState extends State<ChatScreen> {
-  DocumentSnapshot itemDS;
   DocumentSnapshot ownerDS;
   DocumentSnapshot renterDS;
   DocumentSnapshot otherUserDS;
+  DocumentSnapshot myUserDS;
   SharedPreferences prefs;
 
   File imageFile;
@@ -91,17 +91,6 @@ class ChatScreenState extends State<ChatScreen> {
     DocumentSnapshot ds = widget.rentalDS;
 
     if (ds != null) {
-      dr = widget.rentalDS['item'];
-
-      ds = await Firestore.instance
-          .collection('items')
-          .document(dr.documentID)
-          .get();
-
-      if (ds != null) {
-        itemDS = ds;
-      }
-
       dr = widget.rentalDS['owner'];
 
       ds = await Firestore.instance
@@ -124,12 +113,15 @@ class ChatScreenState extends State<ChatScreen> {
         renterDS = ds;
       }
 
-      otherUserDS = myUserID == ownerDS.documentID ? renterDS : ownerDS;
+      if (myUserID == ownerDS.documentID) {
+        otherUserDS = renterDS;
+        myUserDS = ownerDS;
+      } else {
+        otherUserDS = ownerDS;
+        myUserDS = renterDS;
+      }
 
-      if (prefs != null &&
-          itemDS != null &&
-          ownerDS != null &&
-          renterDS != null) {
+      if (prefs != null && ownerDS != null && renterDS != null) {
         delayPage();
       }
     }
@@ -184,10 +176,13 @@ class ChatScreenState extends State<ChatScreen> {
             'idTo': otherUserDS.documentID,
             'timestamp': DateTime.now().millisecondsSinceEpoch,
             'content': content,
-            'type': type
+            'type': type,
+            'pushToken': otherUserDS['pushToken'],
+            'nameFrom': myUserDS['name'],
           },
         );
       });
+
       listScrollController.animateTo(0.0,
           duration: Duration(milliseconds: 300), curve: Curves.easeOut);
     } else {

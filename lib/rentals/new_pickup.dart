@@ -35,6 +35,7 @@ class NewPickupState extends State<NewPickup> {
   bool isUploading = false;
   bool isLoading;
   String myUserID;
+  String myName;
 
   DocumentSnapshot rentalDS;
   DocumentSnapshot itemDS;
@@ -73,6 +74,7 @@ class NewPickupState extends State<NewPickup> {
   void getMyUserID() async {
     prefs = await SharedPreferences.getInstance();
     myUserID = prefs.getString('userID') ?? '';
+    myName = prefs.getString('name') ?? '';
   }
 
   Future<Null> getSnapshots() async {
@@ -331,11 +333,18 @@ class NewPickupState extends State<NewPickup> {
       'rentalEnd': pickupTime.add(Duration(days: duration, hours: 1)),
       'duration': duration,
       'note': note,
+    }).then((_) {
+      Future.delayed(Duration(seconds: 1)).then((_) {
+        Firestore.instance.collection('notifications').add({
+          'title': 'New pickup window proposal',
+          'body': 'From: ${myName}',
+          'pushToken': otherUserDS['pushToken'],
+          'rentalID': widget.rentalID,
+        }).then((docRef) {
+          Navigator.of(context).pop();
+        });
+      });
     });
-
-    await new Future.delayed(Duration(seconds: 1));
-
-    Navigator.of(context).pop();
   }
 
   Future<bool> sendItem() async {

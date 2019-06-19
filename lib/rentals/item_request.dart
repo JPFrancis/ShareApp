@@ -391,6 +391,10 @@ class ItemRequestState extends State<ItemRequest> {
       'renterCC': null,
       'ownerCC': null,
       'review': null,
+      'initialPushNotif': {
+        'pushToken': creatorDS['pushToken'],
+        'itemName': itemDS['name'],
+      },
     });
 
     if (rentalDR != null) {

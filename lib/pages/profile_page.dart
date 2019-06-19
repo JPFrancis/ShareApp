@@ -80,15 +80,16 @@ class ProfilePageState extends State<ProfilePage> {
 
   Widget showBody() {
     return ListView(
-        padding: EdgeInsets.all(0),
-        children: <Widget>[
-          showNameAndProfilePic(),
-
-          divider(),
-          reusableCategory("ITEMS"),
-          SizedBox(height: 10.0,),
-          showItems(),
-        ],
+      padding: EdgeInsets.all(0),
+      children: <Widget>[
+        showNameAndProfilePic(),
+        divider(),
+        reusableCategory("ITEMS"),
+        SizedBox(
+          height: 10.0,
+        ),
+        showItems(),
+      ],
     );
   }
 
@@ -97,18 +98,26 @@ class ProfilePageState extends State<ProfilePage> {
     double w = MediaQuery.of(context).size.width;
 
     return Container(
-      decoration: 
-        new BoxDecoration(
+        decoration: new BoxDecoration(
           image: DecorationImage(
             image: CachedNetworkImageProvider(userDS['avatar']),
             fit: BoxFit.fill,
-            colorFilter: new ColorFilter.mode(Colors.black.withOpacity(0.35), BlendMode.srcATop),
+            colorFilter: new ColorFilter.mode(
+                Colors.black.withOpacity(0.35), BlendMode.srcATop),
           ),
         ),
-      height: w,
-      child: Align(alignment: Alignment.bottomLeft,
-        child: Text('${userDS['name']}', style: TextStyle(color: Colors.white, fontSize: h/20, fontFamily: 'Quicksand',),),
-      ));
+        height: w,
+        child: Align(
+          alignment: Alignment.bottomLeft,
+          child: Text(
+            '${userDS['name']}',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: h / 20,
+              fontFamily: 'Quicksand',
+            ),
+          ),
+        ));
   }
 
   Widget showItems() {
@@ -116,11 +125,19 @@ class ProfilePageState extends State<ProfilePage> {
     double w = MediaQuery.of(context).size.width;
 
     return Container(
-      height: h/3.2,
+      height: h / 3.2,
       child: StreamBuilder(
-        stream: Firestore.instance.collection('items').where('creator', isEqualTo: Firestore.instance.collection('users').document(userDS.documentID)).snapshots(),
+        stream: Firestore.instance
+            .collection('items')
+            .where('creator',
+                isEqualTo: Firestore.instance
+                    .collection('users')
+                    .document(userDS.documentID))
+            .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.hasError) { return new Text('${snapshot.error}'); }
+          if (snapshot.hasError) {
+            return new Text('${snapshot.error}');
+          }
 
           switch (snapshot.connectionState) {
             case ConnectionState.waiting:
@@ -136,9 +153,7 @@ class ProfilePageState extends State<ProfilePage> {
                   itemBuilder: (context, index) {
                     DocumentSnapshot itemDS = itemSnaps[index];
                     return Container(
-                      width: w/2.2,
-                      child: itemCard(itemDS, context)
-                    );
+                        width: w / 2.2, child: itemCard(itemDS, context));
                   },
                 );
               } else {

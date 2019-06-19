@@ -52,7 +52,7 @@ class SearchResultsState extends State<SearchResults> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.miniStartTop,
       */
-      body: searchList != null ? showBody() : searchField()
+      body: showBody()//searchList != null ? showBody() : searchField()
     );
   }
 
@@ -104,7 +104,6 @@ class SearchResultsState extends State<SearchResults> {
                 style: TextStyle(fontFamily: 'Quicksand', fontSize: 21),
                 keyboardType: TextInputType.text,
                 controller: searchController,
-                onTap: () {if (searchList.length == 0) setState(() {getAllItems();});},
                 onChanged: (value) {setState(() {});},
                 decoration: InputDecoration(
                   hintStyle: TextStyle(fontFamily: 'Quicksand', fontSize: 20.0) ,
@@ -124,81 +123,78 @@ class SearchResultsState extends State<SearchResults> {
   Widget buildSearchResultsList() {
     double h = MediaQuery.of(context).size.height;
     return Expanded(
-      child: RefreshIndicator(
-        onRefresh: () => getAllItems(),
-        child: searchController.text.isEmpty ? Container() :
-        ListView.builder(
-          shrinkWrap: true,
-          padding: EdgeInsets.all(0),
-          itemCount: searchList.length,
-          itemBuilder: (context, index) {
-            String name = searchList[index]['name'].toLowerCase();
-            String description = searchList[index]['description'].toLowerCase();
+      child: searchController.text.isEmpty ? Container() :
+      ListView.builder(
+        shrinkWrap: true,
+        padding: EdgeInsets.all(0),
+        itemCount: searchList == null ? 0 : searchList.length,
+        itemBuilder: (context, index) {
+          String name = searchList[index]['name'].toLowerCase();
+          String description = searchList[index]['description'].toLowerCase();
 
-            List<String> splitList = List();
-            splitList.addAll(name.split(' '));
-            splitList.addAll(description.split(' '));
+          List<String> splitList = List();
+          splitList.addAll(name.split(' '));
+          splitList.addAll(description.split(' '));
 
-            RegExp regExp =
-                RegExp(r'^' + searchController.text.toLowerCase() + r'.*$');
+          RegExp regExp =
+              RegExp(r'^' + searchController.text.toLowerCase() + r'.*$');
 
-            bool show = false;
-            splitList.forEach((String str) {
-              if (regExp.hasMatch(str)) {
-                show = true;
-              }
-            });
+          bool show = false;
+          splitList.forEach((String str) {
+            if (regExp.hasMatch(str)) {
+              show = true;
+            }
+          });
 
-            Widget _searchTile() {
-              return InkWell(
-                onTap: () => navigateToDetail(searchList[index], context),
-                child: Container(
-                  child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
-                    Row(children: <Widget>[
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(5),
-                        child: Container(
-                          height: 80, width: 80,
-                          child: FittedBox(
-                            fit: BoxFit.cover,
-                            child: CachedNetworkImage(
-                              imageUrl: searchList[index]['images'][0],
-                              placeholder: (context, url) => new CircularProgressIndicator(),
-                            ),
+          Widget _searchTile() {
+            return InkWell(
+              onTap: () => navigateToDetail(searchList[index], context),
+              child: Container(
+                child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
+                  Row(children: <Widget>[
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(5),
+                      child: Container(
+                        height: 80, width: 80,
+                        child: FittedBox(
+                          fit: BoxFit.cover,
+                          child: CachedNetworkImage(
+                            imageUrl: searchList[index]['images'][0],
+                            placeholder: (context, url) => new CircularProgressIndicator(),
                           ),
                         ),
                       ),
-                      SizedBox(width: 10.0,),
-                      Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
-                        Text('${searchList[index]['name']}', style: TextStyle(fontFamily: 'Quicksand', fontWeight: FontWeight.bold, fontSize: h/45), textAlign: TextAlign.left,),
-                        Row( children: <Widget>[
-                          StarRating(rating: searchList[index]['rating'].toDouble(), sz: h / 40),
-                          SizedBox(width: 5.0,),
-                          Text('${searchList[index]['numRatings']} reviews', style: TextStyle(fontFamily: 'Quicksand', fontSize: h/65),),
-                        ],),
-                        Text('${searchList[index]['condition']}', style: TextStyle(fontFamily: 'Quicksand', fontStyle: FontStyle.italic, fontSize: h/65),),
+                    ),
+                    SizedBox(width: 10.0,),
+                    Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
+                      Text('${searchList[index]['name']}', style: TextStyle(fontFamily: 'Quicksand', fontWeight: FontWeight.bold, fontSize: h/45), textAlign: TextAlign.left,),
+                      Row( children: <Widget>[
+                        StarRating(rating: searchList[index]['rating'].toDouble(), sz: h / 40),
+                        SizedBox(width: 5.0,),
+                        Text('${searchList[index]['numRatings']} reviews', style: TextStyle(fontFamily: 'Quicksand', fontSize: h/65),),
                       ],),
-                    ],),        
-                    Column(children: <Widget>[
-                        Row(children: <Widget>[
-                            Text('\$${searchList[index]['price']}', style: TextStyle(fontFamily: 'Quicksand', fontSize: h/55)),
-                            Text(' /day', style: TextStyle(fontFamily: 'Quicksand', fontSize: h/75)),
-                        ],),
+                      Text('${searchList[index]['condition']}', style: TextStyle(fontFamily: 'Quicksand', fontStyle: FontStyle.italic, fontSize: h/65),),
                     ],),
+                  ],),        
+                  Column(children: <Widget>[
+                      Row(children: <Widget>[
+                          Text('\$${searchList[index]['price']}', style: TextStyle(fontFamily: 'Quicksand', fontSize: h/55)),
+                          Text(' /day', style: TextStyle(fontFamily: 'Quicksand', fontSize: h/75)),
+                      ],),
                   ],),
-                ),
-              );
-            }
+                ],),
+              ),
+            );
+          }
 
-            return show
-                ? Column(
-                  children: <Widget>[
-                    Container(padding:EdgeInsets.symmetric(vertical: 0.0, horizontal: 15.0), child: _searchTile()),
-                    divider(),
-                  ],
-                ): Container();
-          },
-        ),
+          return show
+              ? Column(
+                children: <Widget>[
+                  Container(padding:EdgeInsets.symmetric(vertical: 0.0, horizontal: 15.0), child: _searchTile()),
+                  divider(),
+                ],
+              ): Container();
+        },
       ),
     );
   }
