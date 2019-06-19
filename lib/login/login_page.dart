@@ -197,9 +197,14 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin{
 
   Widget _showLogo() {
     double w = MediaQuery.of(context).size.width;
-    return Container(
-      padding: EdgeInsets.only(top: w/7),
-      child: SvgPicture.asset('assets/Borderless.svg', width: w/1.5,)
+    return Column(
+      children: <Widget>[
+        Container(
+          padding: EdgeInsets.only(top: w/7),
+          child: SvgPicture.asset('assets/Borderless.svg', width: w/1.5,)
+        ),
+        Text("S H A R E", style: TextStyle(fontFamily: 'Quicksand', color: Colors.white, fontSize: w/18),)
+      ],
     );
   }
 
@@ -214,7 +219,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin{
           keyboardType: TextInputType.emailAddress,
           autofocus: false,
           decoration: new InputDecoration(
-            hintStyle: TextStyle(color: Colors.white54),
+            hintStyle: TextStyle(color: Colors.white54, fontFamily: 'Quicksand'),
             hintText: 'Email',
             border: InputBorder.none,
             icon: new Icon(Icons.mail, color: Colors.white,)),
@@ -238,7 +243,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin{
           decoration: new InputDecoration(
             hintText: 'Password',
             border: InputBorder.none,
-            hintStyle: TextStyle(color: Colors.white54),
+            hintStyle: TextStyle(color: Colors.white54, fontFamily: 'Quicksand'),
             icon: new Icon(Icons.lock, color: Colors.white,)),
           validator: (value) => value.isEmpty ? 'Password can\'t be empty' : null,
           onSaved: (value) => password = value,
@@ -250,8 +255,8 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin{
   Widget showSecondaryButton() {
     return new FlatButton(
       child: formMode == FormMode.LOGIN
-          ? new Text('Create an account', style: new TextStyle(fontSize: 18.0, fontWeight: FontWeight.w300, color: Colors.white))
-          : new Text('Have an account? Sign in', style: new TextStyle(fontSize: 18.0, fontWeight: FontWeight.w300, color: Colors.white)),
+          ? new Text('Create an account', style: new TextStyle(fontSize: 18.0, fontWeight: FontWeight.w300, color: Colors.white, fontFamily: 'Quicksand'))
+          : new Text('Have an account? Sign in', style: new TextStyle(fontSize: 18.0, fontWeight: FontWeight.w300, color: Colors.white, fontFamily: 'Quicksand')),
       onPressed:
           formMode == FormMode.LOGIN ? _changeFormToSignUp : _changeFormToLogin,
     );
@@ -328,9 +333,9 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin{
         color: Colors.white,
         child: formMode == FormMode.LOGIN
             ? new Text('Login',
-                style: new TextStyle(fontSize: 20.0, color: Colors.black))
+                style: new TextStyle(fontSize: 20.0, color: Colors.black, fontFamily: 'Quicksand'))
             : new Text('Create account',
-                style: new TextStyle(fontSize: 20.0, color: Colors.black)),
+                style: new TextStyle(fontSize: 20.0, color: Colors.black, fontFamily: 'Quicksand')),
         onPressed: _validateAndSubmit,
       ),
     );
