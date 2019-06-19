@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart' show timeDilation;
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/services/auth.dart';
+import 'package:shareapp/services/const.dart';
 
 class LoginPage extends StatefulWidget {
   static const routeName = '/loginPage';
@@ -17,7 +21,7 @@ class LoginPage extends StatefulWidget {
 //enum FormType { login, register }
 enum FormMode { LOGIN, SIGNUP }
 
-class _LoginPageState extends State<LoginPage> {
+class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   final formKey = new GlobalKey<FormState>();
 
   String email;
@@ -28,6 +32,12 @@ class _LoginPageState extends State<LoginPage> {
   FormMode formMode = FormMode.LOGIN;
   bool isIos;
   bool isLoading;
+
+  // for animation
+  AnimationController logoController;
+  Animation<double> logoAnimation;
+  AnimationController contentController;
+  Animation<double> contentAnimation;
 
   // Check if form is valid before perform login or signup
   bool _validateAndSave() {
@@ -81,6 +91,19 @@ class _LoginPageState extends State<LoginPage> {
     errorMessage = "";
     isLoading = false;
     super.initState();
+
+    timeDilation = 3.0;
+    logoController = AnimationController(
+        duration: const Duration(milliseconds: 1000), vsync: this);
+    logoAnimation = CurvedAnimation(
+        parent: logoController, curve: Interval(0, 0.5, curve: Curves.easeIn));
+    contentController = AnimationController(
+        duration: const Duration(milliseconds: 1000), vsync: this);
+    contentAnimation = CurvedAnimation(
+        parent: logoController, curve: Interval(0.5, 1, curve: Curves.easeIn));
+    logoController.forward();
+    delayPage();
+    contentController.forward();
   }
 
   void _changeFormToSignUp() {
@@ -102,16 +125,18 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     isIos = Theme.of(context).platform == TargetPlatform.iOS;
-    return new Scaffold(
-        appBar: new AppBar(
-          title: new Text('ShareApp'),
-        ),
-        body: Stack(
-          children: <Widget>[
-            showBody(),
-            //showCircularProgress(),
-          ],
-        ));
+    return Material(
+      color: primaryColor,
+      child: Column(
+        children: <Widget>[
+          FadeTransition(opacity: logoAnimation, child: _showLogo()),
+          SizedBox(
+            height: 20.0,
+          ),
+          FadeTransition(opacity: contentAnimation, child: showBody()),
+        ],
+      ),
+    );
   }
 
   Widget showCircularProgress() {
@@ -126,24 +151,44 @@ class _LoginPageState extends State<LoginPage> {
 
   Widget showBody() {
     return new Container(
-        padding: EdgeInsets.all(16.0),
         child: new Form(
-          key: formKey,
-          child: new ListView(
-            shrinkWrap: true,
+      key: formKey,
+      child: new ListView(
+        padding: EdgeInsets.all(0),
+        shrinkWrap: true,
+        children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.only(left: 40.0),
+            child: Column(
+              children: <Widget>[
+                showEmailInput(),
+                SizedBox(
+                  height: 10.0,
+                ),
+                showPasswordInput(),
+              ],
+            ),
+          ),
+          SizedBox(
+            height: 30.0,
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+            child: showPrimaryButton(),
+          ),
+          showSecondaryButton(),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              //_showLogo(),
-              showEmailInput(),
-              showPasswordInput(),
-              showPrimaryButton(),
-              showSecondaryButton(),
               googleLogin(),
-              //facebookLogin(),
               otherUserSignin(),
-              showErrorMessage(),
             ],
           ),
-        ));
+          /*
+              showErrorMessage(),*/
+        ],
+      ),
+    ));
   }
 
   Widget showErrorMessage() {
@@ -164,53 +209,66 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _showLogo() {
-    return new Hero(
-      tag: 'hero',
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(0.0, 70.0, 0.0, 0.0),
-        child: CircleAvatar(
-          backgroundColor: Colors.transparent,
-          radius: 48.0,
-          child: Image.asset('assets/flutter-icon.png'),
+    double w = MediaQuery.of(context).size.width;
+    return Container(
+        padding: EdgeInsets.only(top: w / 7),
+        child: SvgPicture.asset(
+          'assets/Borderless.svg',
+          width: w / 1.5,
+        ));
+  }
+
+  Widget showEmailInput() {
+    return Container(
+      height: 70,
+      padding: EdgeInsets.only(left: 10.0),
+      decoration: new BoxDecoration(
+        border: Border(left: BorderSide(color: Colors.white, width: 3)),
+      ),
+      child: Center(
+        child: new TextFormField(
+          maxLines: 1,
+          keyboardType: TextInputType.emailAddress,
+          autofocus: false,
+          decoration: new InputDecoration(
+              hintStyle: TextStyle(color: Colors.white54),
+              hintText: 'Email',
+              border: InputBorder.none,
+              icon: new Icon(
+                Icons.mail,
+                color: Colors.white,
+              )),
+          validator: (value) => value.isEmpty ? 'Email can\'t be empty' : null,
+          onSaved: (value) => email = value,
         ),
       ),
     );
   }
 
-  Widget showEmailInput() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(0.0, 100.0, 0.0, 0.0),
-      child: new TextFormField(
-        maxLines: 1,
-        keyboardType: TextInputType.emailAddress,
-        autofocus: false,
-        decoration: new InputDecoration(
-            hintText: 'Email',
-            icon: new Icon(
-              Icons.mail,
-              color: Colors.grey,
-            )),
-        validator: (value) => value.isEmpty ? 'Email can\'t be empty' : null,
-        onSaved: (value) => email = value,
-      ),
-    );
-  }
-
   Widget showPasswordInput() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(0.0, 15.0, 0.0, 0.0),
-      child: new TextFormField(
-        maxLines: 1,
-        obscureText: true,
-        autofocus: false,
-        decoration: new InputDecoration(
-            hintText: 'Password',
-            icon: new Icon(
-              Icons.lock,
-              color: Colors.grey,
-            )),
-        validator: (value) => value.isEmpty ? 'Password can\'t be empty' : null,
-        onSaved: (value) => password = value,
+    return Container(
+      height: 70,
+      padding: const EdgeInsets.only(left: 10),
+      decoration: new BoxDecoration(
+        border: Border(left: BorderSide(color: Colors.white, width: 3)),
+      ),
+      child: Center(
+        child: new TextFormField(
+          maxLines: 1,
+          obscureText: true,
+          autofocus: false,
+          decoration: new InputDecoration(
+              hintText: 'Password',
+              border: InputBorder.none,
+              hintStyle: TextStyle(color: Colors.white54),
+              icon: new Icon(
+                Icons.lock,
+                color: Colors.white,
+              )),
+          validator: (value) =>
+              value.isEmpty ? 'Password can\'t be empty' : null,
+          onSaved: (value) => password = value,
+        ),
       ),
     );
   }
@@ -219,19 +277,29 @@ class _LoginPageState extends State<LoginPage> {
     return new FlatButton(
       child: formMode == FormMode.LOGIN
           ? new Text('Create an account',
-              style: new TextStyle(fontSize: 18.0, fontWeight: FontWeight.w300))
+              style: new TextStyle(
+                  fontSize: 18.0,
+                  fontWeight: FontWeight.w300,
+                  color: Colors.white))
           : new Text('Have an account? Sign in',
-              style:
-                  new TextStyle(fontSize: 18.0, fontWeight: FontWeight.w300)),
+              style: new TextStyle(
+                  fontSize: 18.0,
+                  fontWeight: FontWeight.w300,
+                  color: Colors.white)),
       onPressed:
           formMode == FormMode.LOGIN ? _changeFormToSignUp : _changeFormToLogin,
     );
   }
 
   Widget googleLogin() {
-    return new RaisedButton(
-      child: Text("Login with Google"),
-      onPressed: () => initGoogleLogin(),
+    return Container(
+      height: 60.0,
+      child: new FlatButton(
+        child: ClipOval(
+          child: Image.asset('assets/google.jpg'),
+        ),
+        onPressed: () => initGoogleLogin(),
+      ),
     );
   }
 
@@ -243,11 +311,16 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget otherUserSignin() {
-    return new RaisedButton(
-      color: Colors.blueGrey,
-      textColor: Colors.white,
-      child: Text("Login as EC (TESTING PURPOSES ONLY)"),
-      onPressed: validateAndSubmitOtherUser,
+    return Container(
+      height: 60.0,
+      width: 60.0,
+      child: new FlatButton(
+        child: Icon(
+          Icons.play_arrow,
+          color: Colors.white,
+        ),
+        onPressed: validateAndSubmitOtherUser,
+      ),
     );
   }
 
@@ -284,23 +357,21 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget showPrimaryButton() {
-    return new Padding(
-        padding: EdgeInsets.fromLTRB(0.0, 45.0, 0.0, 0.0),
-        child: SizedBox(
-          height: 40.0,
-          child: new RaisedButton(
-            elevation: 5.0,
-            shape: new RoundedRectangleBorder(
-                borderRadius: new BorderRadius.circular(30.0)),
-            color: Colors.red,
-            child: formMode == FormMode.LOGIN
-                ? new Text('Login',
-                    style: new TextStyle(fontSize: 20.0, color: Colors.white))
-                : new Text('Create account',
-                    style: new TextStyle(fontSize: 20.0, color: Colors.white)),
-            onPressed: _validateAndSubmit,
-          ),
-        ));
+    return SizedBox(
+      height: 40.0,
+      child: new RaisedButton(
+        elevation: 2.0,
+        shape: new RoundedRectangleBorder(
+            borderRadius: new BorderRadius.circular(10.0)),
+        color: Colors.white,
+        child: formMode == FormMode.LOGIN
+            ? new Text('Login',
+                style: new TextStyle(fontSize: 20.0, color: Colors.black))
+            : new Text('Create account',
+                style: new TextStyle(fontSize: 20.0, color: Colors.black)),
+        onPressed: _validateAndSubmit,
+      ),
+    );
   }
 
   void validateAndSubmitOtherUser() async {

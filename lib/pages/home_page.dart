@@ -40,8 +40,7 @@ class HomePage extends StatefulWidget {
 
 class HomePageState extends State<HomePage> {
   final GlobalKey<RefreshIndicatorState> refreshIndicatorKey =
-      new GlobalKey<RefreshIndicatorState>();
-
+      GlobalKey<RefreshIndicatorState>();
   final FirebaseMessaging firebaseMessaging = FirebaseMessaging();
   StreamSubscription<QuerySnapshot> subscription;
   String deviceToken;
@@ -64,7 +63,7 @@ class HomePageState extends State<HomePage> {
   List<String> searchList;
   List<String> filteredList;
 
-  static double _initial;
+  static double _initial = 50.0;
   double _changingHeight = _initial;
 
   @override
@@ -84,7 +83,7 @@ class HomePageState extends State<HomePage> {
 
     setPrefs();
     updateLastActiveAndPushToken();
-    getAllItems();
+    //getAllItems();
 
     bottomNavBarTiles = <BottomNavigationBarItem>[
       bottomNavTile('Search', Icon(Icons.search), false),
@@ -96,6 +95,7 @@ class HomePageState extends State<HomePage> {
     //delayPage();
   }
 
+  /// TESTING ONLY, if we need to add a field to all existing documents for example
   void updateAll() async {
     var docs = await Firestore.instance.collection('rentals').getDocuments();
 
@@ -465,21 +465,18 @@ class HomePageState extends State<HomePage> {
       child: MediaQuery.removePadding(
         removeTop: true,
         context: context,
-        child: RefreshIndicator(
-          onRefresh: getAllItems,
-          child: ListView(
-            //physics: const ClampingScrollPhysics(),
+        child: ListView(
+          physics: const NeverScrollableScrollPhysics(),
 
-            // shrinkWrap: true,
-            children: <Widget>[
-              introImageAndSearch(),
-              SizedBox(
-                height: 30.0,
-              ),
-              categories(),
-              //lookingFor()
-            ],
-          ),
+          // shrinkWrap: true,
+          children: <Widget>[
+            introImageAndSearch(),
+            SizedBox(
+              height: 30.0,
+            ),
+            categories(),
+            //lookingFor()
+          ],
         ),
       ),
     );
@@ -578,115 +575,72 @@ class HomePageState extends State<HomePage> {
     }
 
     Widget searchField() {
-      setState(() {
-        _initial = MediaQuery.of(context).size.height / 4;
-      });
-      return Container(
+      return InkWell(
+        onTap: () => navToSearchResults(""),
+        splashColor: primaryColor,
         child: Container(
-          padding: EdgeInsets.only(left: 10),
-          color: Colors.white,
+          decoration: new BoxDecoration(
+              color: Colors.white,
+              borderRadius: new BorderRadius.only(
+                  bottomLeft: const Radius.circular(30.0),
+                  bottomRight: const Radius.circular(30.0),
+                  topLeft: const Radius.circular(12.0),
+                  topRight: const Radius.circular(12.0))),
           child: Row(
             children: <Widget>[
-              Icon(Icons.search),
               SizedBox(
-                width: 10.0,
+                width: 20.0,
               ),
-              Expanded(
-                child: TextField(
-                  onEditingComplete: () =>
-                      setState(() => _changingHeight = _initial),
-                  onSubmitted: (value) {
-                    if (value.length > 0) {
-                      navToSearchResults(value.toLowerCase());
-                    } else {
-                      FocusScope.of(context).requestFocus(FocusNode());
-                    }
-                  },
-                  keyboardType: TextInputType.text,
-                  controller: searchController,
-                  onTap: () {
-                    setState(() => _changingHeight = 50);
-                    if (searchList.length == 0) {
-                      setState(() {
-                        getAllItems();
-                      });
-                    }
-                  },
-                  onChanged: (value) {
-                    setState(() {});
-                  },
-                  decoration: InputDecoration(
-                    labelStyle: TextStyle(
-                      color: Colors.black54,
-                    ),
-                  ),
-                ),
+              Icon(Icons.search, color: primaryColor),
+              SizedBox(
+                width: 10,
               ),
-              Container(
-                width: 40,
-                child: FlatButton(
-                  onPressed: () {
-                    setState(() {
-                      searchController.clear();
-                      _changingHeight = _initial;
-                      FocusScope.of(context).requestFocus(FocusNode());
-                    });
-                  },
-                  child: Icon(Icons.clear),
-                ),
-              ),
+              Text("Try \"Vacuum\"", style: TextStyle(fontFamily: 'Quicksand')),
             ],
           ),
+          height: h / 20,
         ),
-        height: h / 20,
       );
     }
 
     return Container(
-      height: h / 3,
-      child: Stack(
-        children: <Widget>[
-          Container(
-            height: h / 3.2,
-            child: SizedBox.expand(
-              child: Image.asset(
-                'assets/surfing.jpg',
-                fit: BoxFit.cover,
-                gaplessPlayback: true,
-              ),
-            ),
-          ),
-          Container(height: h / 3.2, color: Colors.black12),
-          Container(
-            padding: EdgeInsets.only(left: 5, right: 5),
-            alignment: Alignment.bottomCenter,
-            child: Column(
-              children: <Widget>[
-                AnimatedContainer(
-                    height: _changingHeight, duration: Duration(seconds: 1)),
-                searchField(),
-                searchController.text.isNotEmpty && searchList != null
-                    ? Expanded(
-                        child: Container(
-                          color: Colors.white,
-                          child: ListView.builder(
-                            itemCount:
-                                searchList == null ? 0 : filteredList.length,
-                            itemBuilder: (BuildContext context, int index) {
-                              return ListTile(
-                                title: Text(filteredList[index]),
-                                onTap: () => navToSearchResults(
-                                    filteredList[index].toLowerCase()),
-                              );
-                            },
-                          ),
-                        ),
-                      )
-                    : Container(),
-              ],
-            ),
-          ),
-        ],
+      height: h / 8,
+      decoration: new BoxDecoration(
+          boxShadow: <BoxShadow>[
+            CustomBoxShadow(
+                color: Colors.black,
+                blurRadius: 3.0,
+                blurStyle: BlurStyle.outer),
+          ],
+          color: primaryColor,
+          borderRadius: new BorderRadius.only(
+              bottomLeft: const Radius.circular(30.0),
+              bottomRight: const Radius.circular(30.0))),
+      child: Container(
+        padding: EdgeInsets.only(left: 5, right: 5, top: h / 15),
+        child: Column(
+          children: <Widget>[
+            searchField(),
+            /*
+            searchController.text.isNotEmpty && searchList != null
+                ? Expanded(
+                    child: Container(
+                      color: Colors.white,
+                      child: ListView.builder(
+                        itemCount:
+                            searchList == null ? 0 : filteredList.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          return ListTile(
+                            title: Text(filteredList[index]),
+                            onTap: () => navToSearchResults(filteredList[index].toLowerCase()),
+                          );
+                        },
+                      ),
+                    ),
+                  )
+                : Container(),*/
+          ],
+        ),
       ),
     );
   }
@@ -961,8 +915,8 @@ class HomePageState extends State<HomePage> {
                                               blurRadius: 3.0,
                                               blurStyle: BlurStyle.outer)
                                           : cbs = CustomBoxShadow(
-                                              color: Colors.orange,
-                                              blurRadius: 7.0,
+                                              color: primaryColor,
+                                              blurRadius: 6.0,
                                               blurStyle: BlurStyle.outer);
                                       return Column(
                                         children: <Widget>[
@@ -1298,46 +1252,70 @@ class HomePageState extends State<HomePage> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        appBar: PreferredSize(
-          preferredSize: Size.fromHeight(h / 12),
-          child: AppBar(
-            backgroundColor: primaryColor,
-            elevation: 1.0,
-            centerTitle: false,
-            bottom: TabBar(
-              indicatorColor: Colors.black45,
-              labelStyle: TextStyle(fontFamily: 'Quicksand'),
-              tabs: [
-                Tab(text: "Transactions"),
-                Tab(text: "All My Items"),
+        body: Stack(children: <Widget>[
+          Container(
+            color: coolerWhite,
+            child: TabBarView(
+              children: [
+                Column(
+                  children: <Widget>[
+                    SizedBox(
+                      height: 30.0,
+                    ),
+                    buildListingsList(),
+                  ],
+                ),
+                Column(
+                  children: <Widget>[
+                    SizedBox(
+                      height: 30.0,
+                    ),
+                    reusableCategoryWithAll("REQUESTS", () => debugPrint),
+                    buildRequests("owner"),
+                    reusableCategoryWithAll("UPCOMING", () => debugPrint),
+                    buildTransactions('upcoming', "owner"),
+                    reusableCategoryWithAll("CURRENT", () => debugPrint),
+                    buildTransactions('current', "owner"),
+                    reusableCategoryWithAll("PAST", () => debugPrint),
+                    buildTransactions('past', "owner"),
+                  ],
+                ),
               ],
             ),
           ),
-        ),
-        body: Container(
-          color: coolerWhite,
-          child: TabBarView(
-            children: [
-              Column(
-                children: <Widget>[
-                  reusableCategoryWithAll("REQUESTS", () => debugPrint),
-                  buildRequests("owner"),
-                  reusableCategoryWithAll("UPCOMING", () => debugPrint),
-                  buildTransactions('upcoming', "owner"),
-                  reusableCategoryWithAll("CURRENT", () => debugPrint),
-                  buildTransactions('current', "owner"),
-                  reusableCategoryWithAll("PAST", () => debugPrint),
-                  buildTransactions('past', "owner"),
-                ],
+          Align(
+            alignment: Alignment.bottomLeft,
+            child: Padding(
+              padding: EdgeInsets.only(bottom: 10.0),
+              child: Container(
+                height: 30.0,
+                decoration: new BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: new BorderRadius.all(
+                      Radius.circular(100.0),
+                    )),
+                child: new TabBar(
+                  isScrollable: true,
+                  tabs: [
+                    Tab(
+                        child: Text(
+                      "All My Items",
+                      style: TextStyle(fontFamily: 'Quicksand'),
+                    )),
+                    Tab(
+                        child: Text(
+                      "Transactions",
+                      style: TextStyle(fontFamily: 'Quicksand'),
+                    )),
+                  ],
+                  labelColor: primaryColor,
+                  unselectedLabelColor: Colors.grey,
+                  indicatorColor: Colors.transparent,
+                ),
               ),
-              Column(
-                children: <Widget>[
-                  buildListingsList(),
-                ],
-              ),
-            ],
+            ),
           ),
-        ),
+        ]),
       ),
     );
   }
@@ -1363,98 +1341,120 @@ class HomePageState extends State<HomePage> {
   }
 
   Widget profileTabPage() {
-    return Padding(
-      padding: edgeInset,
-      child: Column(
-        children: <Widget>[
-          Padding(
-            padding: EdgeInsets.all(10.0),
+    return Column(
+      children: <Widget>[
+        profileIntroStream(),
+        SizedBox(height: 20.0),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 5.0),
+            child: profileTabAfterIntro(),
           ),
-          profileIntroStream(),
-          Divider(),
-          profileTabAfterIntro(),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   Widget profileIntroStream() {
-    return StreamBuilder<DocumentSnapshot>(
-      stream:
-          Firestore.instance.collection('users').document(myUserID).snapshots(),
-      builder:
-          (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
-        if (snapshot.hasError) {
-          return new Text('${snapshot.error}');
-        }
-        switch (snapshot.connectionState) {
-          case ConnectionState.waiting:
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 15.0),
+      decoration: new BoxDecoration(
+          boxShadow: <BoxShadow>[
+            CustomBoxShadow(
+                color: Colors.black,
+                blurRadius: 2.0,
+                blurStyle: BlurStyle.outer),
+          ],
+          color: primaryColor,
+          borderRadius: new BorderRadius.only(
+            bottomLeft: const Radius.circular(50.0),
+            bottomRight: const Radius.circular(50.0),
+          )),
+      child: StreamBuilder<DocumentSnapshot>(
+        stream: Firestore.instance
+            .collection('users')
+            .document(myUserID)
+            .snapshots(),
+        builder:
+            (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+          if (snapshot.hasError) {
+            return new Text('${snapshot.error}');
+          }
+          switch (snapshot.connectionState) {
+            case ConnectionState.waiting:
 
-          default:
-            if (snapshot.hasData) {
-              DocumentSnapshot ds = snapshot.data;
-              String name;
-              String avatarURL;
-              String email;
+            default:
+              if (snapshot.hasData) {
+                DocumentSnapshot ds = snapshot.data;
+                String name;
+                String avatarURL;
+                String email;
 
-              if (ds.exists) {
-                name = ds['name'];
-                prefs.setString('name', name);
-                avatarURL = ds['avatar'];
-                email = ds['email'];
-              } else {
-                name = 'ERROR';
-                prefs.setString('name', name);
-                avatarURL = '';
-                email = '';
-              }
+                if (ds.exists) {
+                  name = ds['name'];
+                  prefs.setString('name', name);
+                  avatarURL = ds['avatar'];
+                  email = ds['email'];
+                } else {
+                  name = 'ERROR';
+                  prefs.setString('name', name);
+                  avatarURL = '';
+                  email = '';
+                }
 
-              return Container(
-                child: Column(
-                  children: <Widget>[
-                    Container(
-                      padding: EdgeInsets.only(left: 15.0),
-                      alignment: Alignment.topLeft,
-                      height: 60.0,
-                      child: ClipOval(
-                        child: CachedNetworkImage(
-                          alignment: Alignment.topLeft,
-                          imageUrl: avatarURL,
-                          placeholder: (context, url) => new Container(),
+                return Container(
+                  child: Column(
+                    children: <Widget>[
+                      SizedBox(
+                        height: 30.0,
+                      ),
+                      Container(
+                        padding: EdgeInsets.only(left: 15.0),
+                        alignment: Alignment.topLeft,
+                        height: 60.0,
+                        child: ClipOval(
+                          child: CachedNetworkImage(
+                            alignment: Alignment.topLeft,
+                            imageUrl: avatarURL,
+                            placeholder: (context, url) => new Container(),
+                          ),
                         ),
                       ),
-                    ),
-                    Container(
-                        padding: const EdgeInsets.only(top: 8.0, left: 15.0),
-                        alignment: Alignment.centerLeft,
-                        child: Text('$name',
-                            style: TextStyle(
-                                fontSize: 20.0,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: 'Quicksand'))),
-                    Container(
-                        padding: const EdgeInsets.only(top: 4.0, left: 15.0),
-                        alignment: Alignment.centerLeft,
-                        child: Text('$email',
-                            style: TextStyle(
-                                fontSize: 15.0, fontFamily: 'Quicksand'))),
-                    Container(
-                        alignment: Alignment.centerLeft,
-                        child: FlatButton(
-                          child: Text("Edit Profile",
+                      Container(
+                          padding: const EdgeInsets.only(top: 8.0, left: 15.0),
+                          alignment: Alignment.centerLeft,
+                          child: Text('$name',
                               style: TextStyle(
-                                  color: Color(0xff007f6e),
-                                  fontFamily: 'Quicksand')),
-                          onPressed: () => navToProfileEdit(),
-                        )),
-                  ],
-                ),
-              );
-            } else {
-              return Container();
-            }
-        }
-      },
+                                  color: Colors.white,
+                                  fontSize: 20.0,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'Quicksand'))),
+                      Container(
+                          padding: const EdgeInsets.only(top: 4.0, left: 15.0),
+                          alignment: Alignment.centerLeft,
+                          child: Text('$email',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 15.0,
+                                  fontFamily: 'Quicksand'))),
+                      Container(
+                          alignment: Alignment.centerLeft,
+                          child: FlatButton(
+                            child: Text("Edit Profile",
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontFamily: 'Quicksand')),
+                            onPressed: () => navToProfileEdit(),
+                          )),
+                    ],
+                  ),
+                );
+              } else {
+                return Container();
+              }
+          }
+        },
+      ),
     );
   }
 
@@ -1846,11 +1846,11 @@ class HomePageState extends State<HomePage> {
   void navToSearchResults(String searchQuery) async {
     Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (BuildContext context) => SearchResults(
-                searchList: allItems,
-                searchQuery: searchQuery,
-              ),
+        SlideUpRoute(
+          page: SearchResults(
+            searchList: allItems,
+            searchQuery: searchQuery,
+          ),
         ));
   }
 

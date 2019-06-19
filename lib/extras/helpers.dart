@@ -67,6 +67,7 @@ class StarRating extends StatelessWidget {
             starCount, (index) => buildStar(context, index, sz)));
   }
 }
+
 // Reusable Widgets
 
 Widget itemCard(DocumentSnapshot ds, context) {
@@ -87,11 +88,14 @@ Widget itemCard(DocumentSnapshot ds, context) {
       ),
       child: Stack(
         children: <Widget>[
-          Container(
-              decoration: BoxDecoration(
-                  image: DecorationImage(
-                      image: NetworkImage(ds['images'][0]),
-                      fit: BoxFit.cover))),
+          Hero(
+            tag: "${ds['id']}",
+            child: Container(
+                decoration: BoxDecoration(
+                    image: DecorationImage(
+                        image: NetworkImage(ds['images'][0]),
+                        fit: BoxFit.cover))),
+          ),
           SizedBox.expand(
             child: Container(
               color: Colors.black12,
@@ -219,7 +223,8 @@ Widget reusableFlatButton(text, icon, action) {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
-              Text(text, style: TextStyle(fontFamily: 'Quicksand')),
+              Text(text,
+                  style: TextStyle(fontFamily: 'Quicksand', fontSize: 15)),
               Icon(icon)
             ],
           ),
@@ -266,4 +271,33 @@ void navigateToDetail(DocumentSnapshot itemDS, context) async {
 
 void delayPage() async {
   await Future.delayed(Duration(milliseconds: 500));
+}
+
+// transitions
+
+class SlideUpRoute extends PageRouteBuilder {
+  final Widget page;
+
+  SlideUpRoute({this.page})
+      : super(
+          pageBuilder: (
+            BuildContext context,
+            Animation<double> animation,
+            Animation<double> secondaryAnimation,
+          ) =>
+              page,
+          transitionsBuilder: (
+            BuildContext context,
+            Animation<double> animation,
+            Animation<double> secondaryAnimation,
+            Widget child,
+          ) =>
+              SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0, 1),
+                  end: Offset.zero,
+                ).animate(animation),
+                child: child,
+              ),
+        );
 }
