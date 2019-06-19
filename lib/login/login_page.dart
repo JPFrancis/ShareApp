@@ -3,6 +3,7 @@ import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/services/auth.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter/scheduler.dart' show timeDilation;
 
 class LoginPage extends StatefulWidget {
   static const routeName = '/loginPage';
@@ -33,8 +34,10 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin{
   bool isLoading;
 
   // for animation
-  AnimationController controller;
-  Animation<double> animation;
+  AnimationController logoController;
+  Animation<double> logoAnimation;
+  AnimationController contentController;
+  Animation<double> contentAnimation;
 
   // Check if form is valid before perform login or signup
   bool _validateAndSave() {
@@ -89,9 +92,14 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin{
     isLoading = false;
     super.initState();
 
-    controller = AnimationController(duration: const Duration(milliseconds: 1000), vsync: this);
-    animation = CurvedAnimation(parent: controller, curve: Curves.easeIn);
-    controller.forward();
+    timeDilation = 3.0;
+    logoController = AnimationController(duration: const Duration(milliseconds: 1000), vsync: this);
+    logoAnimation = CurvedAnimation(parent: logoController, curve: Interval(0,0.5,curve: Curves.easeIn));
+    contentController = AnimationController(duration: const Duration(milliseconds: 1000), vsync: this);
+    contentAnimation = CurvedAnimation(parent: logoController, curve: Interval(0.5,1,curve: Curves.easeIn));
+    logoController.forward();
+    delayPage();
+    contentController.forward();
   }
 
   void _changeFormToSignUp() {
@@ -112,14 +120,17 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin{
 
   @override
   Widget build(BuildContext context) {
-    double h = MediaQuery.of(context).size.height;
     isIos = Theme.of(context).platform == TargetPlatform.iOS;
     return Material(
       color: primaryColor,
       child: Column(children: <Widget>[
-        _showLogo(),
+        FadeTransition(
+          opacity: logoAnimation,
+          child: _showLogo()),
         SizedBox(height: 20.0,),
-        showBody(),
+        FadeTransition(
+          opacity: contentAnimation,
+          child: showBody()),
       ],),
     );
   }
