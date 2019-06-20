@@ -38,13 +38,14 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   Animation<double> logoAnimation;
   AnimationController contentController;
   Animation<double> contentAnimation;
-  
-@override
-void dispose() {
-  logoController.dispose();
-  contentController.dispose();
-  super.dispose();
-}
+
+  @override
+  void dispose() {
+    logoController.dispose();
+    contentController.dispose();
+    super.dispose();
+  }
+
   // Check if form is valid before perform login or signup
   bool _validateAndSave() {
     final form = formKey.currentState;
@@ -220,7 +221,7 @@ void dispose() {
     return Column(
       children: <Widget>[
         Container(
-            padding: EdgeInsets.only(top: h / 20),
+            padding: EdgeInsets.only(top: h / 24),
             child: SvgPicture.asset(
               'assets/Borderless.svg',
               width: w / 1.5,
@@ -247,10 +248,14 @@ void dispose() {
           keyboardType: TextInputType.emailAddress,
           autofocus: false,
           decoration: new InputDecoration(
-            hintStyle: TextStyle(color: Colors.white54, fontFamily: 'Quicksand'),
-            hintText: 'Email',
-            border: InputBorder.none,
-            icon: new Icon(Icons.mail, color: Colors.white,)),
+              hintStyle:
+                  TextStyle(color: Colors.white54, fontFamily: 'Quicksand'),
+              hintText: 'Email',
+              border: InputBorder.none,
+              icon: new Icon(
+                Icons.mail,
+                color: Colors.white,
+              )),
           validator: (value) => value.isEmpty ? 'Email can\'t be empty' : null,
           onSaved: (value) => email = value,
         ),
@@ -271,11 +276,16 @@ void dispose() {
           obscureText: true,
           autofocus: false,
           decoration: new InputDecoration(
-            hintText: 'Password',
-            border: InputBorder.none,
-            hintStyle: TextStyle(color: Colors.white54, fontFamily: 'Quicksand'),
-            icon: new Icon(Icons.lock, color: Colors.white,)),
-          validator: (value) => value.isEmpty ? 'Password can\'t be empty' : null,
+              hintText: 'Password',
+              border: InputBorder.none,
+              hintStyle:
+                  TextStyle(color: Colors.white54, fontFamily: 'Quicksand'),
+              icon: new Icon(
+                Icons.lock,
+                color: Colors.white,
+              )),
+          validator: (value) =>
+              value.isEmpty ? 'Password can\'t be empty' : null,
           onSaved: (value) => password = value,
         ),
       ),
@@ -285,8 +295,18 @@ void dispose() {
   Widget showSecondaryButton() {
     return new FlatButton(
       child: formMode == FormMode.LOGIN
-          ? new Text('Create an account', style: new TextStyle(fontSize: 18.0, fontWeight: FontWeight.w300, color: Colors.white, fontFamily: 'Quicksand'))
-          : new Text('Have an account? Sign in', style: new TextStyle(fontSize: 18.0, fontWeight: FontWeight.w300, color: Colors.white, fontFamily: 'Quicksand')),
+          ? new Text('Create an account',
+              style: new TextStyle(
+                  fontSize: 18.0,
+                  fontWeight: FontWeight.w300,
+                  color: Colors.white,
+                  fontFamily: 'Quicksand'))
+          : new Text('Have an account? Sign in',
+              style: new TextStyle(
+                  fontSize: 18.0,
+                  fontWeight: FontWeight.w300,
+                  color: Colors.white,
+                  fontFamily: 'Quicksand')),
       onPressed:
           formMode == FormMode.LOGIN ? _changeFormToSignUp : _changeFormToLogin,
     );
