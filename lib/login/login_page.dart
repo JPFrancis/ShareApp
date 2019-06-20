@@ -220,7 +220,7 @@ void dispose() {
     return Column(
       children: <Widget>[
         Container(
-            padding: EdgeInsets.only(top: h / 20),
+            padding: EdgeInsets.only(top: h / 24),
             child: SvgPicture.asset(
               'assets/Borderless.svg',
               width: w / 1.5,
