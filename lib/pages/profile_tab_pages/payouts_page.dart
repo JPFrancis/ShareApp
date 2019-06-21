@@ -62,7 +62,9 @@ class PayoutsPageState extends State<PayoutsPage> {
   Widget showBody() {
     return Column(
       children: <Widget>[
-        Container(height: 0,),
+        Container(
+          height: 0,
+        ),
         buildChargesList(),
       ],
     );

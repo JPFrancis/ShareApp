@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -98,12 +97,9 @@ class FeedbackPageState extends State<FeedbackPage> {
       textColor: Colors.white,
       child: Text(
         'Send feedback',
-
         textScaleFactor: 1.25,
       ),
-      onPressed: () {
-
-      },
+      onPressed: () {},
     );
   }
 

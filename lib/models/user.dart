@@ -23,7 +23,7 @@ class User {
           name: data['name'],
           description: data['description'],
           gender: data['gender'],
-          email:data['email'],
+          email: data['email'],
           phoneNum: data['phoneNum'],
           birthday: data['birthday'],
         );
@@ -34,7 +34,7 @@ class User {
           name: other.name,
           description: other.description,
           gender: other.gender,
-    email:other.email,
+          email: other.email,
           phoneNum: other.phoneNum,
           birthday: other.birthday,
         );
@@ -44,7 +44,7 @@ class User {
         this.name == other.name &&
         this.description == other.description &&
         this.gender == other.gender &&
-        this.email==other.email&&
+        this.email == other.email &&
         this.phoneNum == other.phoneNum &&
         this.birthday == other.birthday;
   }
@@ -55,7 +55,7 @@ class User {
       name: other.name,
       description: other.description,
       gender: other.gender,
-      email:other.email,
+      email: other.email,
       phoneNum: other.phoneNum,
       birthday: other.birthday,
     );

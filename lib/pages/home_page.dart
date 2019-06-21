@@ -1,10 +1,8 @@
 import 'dart:async';
 
-import 'package:shareapp/pages/profile_tab_pages/help_page.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:shareapp/pages/profile_tab_pages/feedback_page.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
@@ -16,6 +14,8 @@ import 'package:shareapp/models/user.dart';
 import 'package:shareapp/pages/item_detail.dart';
 import 'package:shareapp/pages/item_edit.dart';
 import 'package:shareapp/pages/item_filter.dart';
+import 'package:shareapp/pages/profile_tab_pages/feedback_page.dart';
+import 'package:shareapp/pages/profile_tab_pages/help_page.dart';
 import 'package:shareapp/pages/profile_tab_pages/payouts_page.dart';
 import 'package:shareapp/pages/profile_tab_pages/profile_edit.dart';
 import 'package:shareapp/pages/search_results.dart';
@@ -1491,7 +1491,8 @@ class HomePageState extends State<HomePage> {
             reusableFlatButton("Notifications", Icons.notifications, null),
             reusableCategory("SUPPORT"),
             reusableFlatButton("Get help", Icons.help_outline, navToHelpPage),
-            reusableFlatButton("Give us feedback", Icons.feedback, navToFeedbackPage),
+            reusableFlatButton(
+                "Give us feedback", Icons.feedback, navToFeedbackPage),
             reusableFlatButton("Log out", null, logout),
             //getProfileDetails()
           ],
@@ -1962,7 +1963,7 @@ class HomePageState extends State<HomePage> {
         ));
   }
 
-  void navToHelpPage(){
+  void navToHelpPage() {
     Navigator.push(
         context,
         MaterialPageRoute(

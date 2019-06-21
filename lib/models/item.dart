@@ -66,7 +66,7 @@ class Item {
           description: data['description'],
           type: data['type'],
           condition: data['condition'],
-          policy:data['policy'],
+          policy: data['policy'],
           rating: data['rating'].toDouble(),
           numRatings: data['numRatings'].toDouble(),
           price: data['price'],
@@ -85,7 +85,7 @@ class Item {
           description: other.description,
           type: other.type,
           condition: other.condition,
-          policy:other.policy,
+          policy: other.policy,
           rating: other.rating,
           numRatings: other.numRatings,
           price: other.price,
@@ -100,7 +100,7 @@ class Item {
         this.description == other.description &&
         this.type == other.type &&
         this.condition == other.condition &&
-        this.policy==other.policy&&
+        this.policy == other.policy &&
         this.price == other.price &&
         this.location == other.location;
   }
