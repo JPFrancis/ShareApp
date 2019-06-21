@@ -1817,6 +1817,173 @@ class HomePageState extends State<HomePage> {
     );
   }
 
+  Widget buildMessagesListTemp() {
+    return Expanded(
+      child: StreamBuilder<QuerySnapshot>(
+        stream: Firestore.instance
+            .collection('rentals')
+            .where('users',
+            arrayContains:
+            Firestore.instance.collection('users').document(myUserID))
+            .where('status', isLessThan: 5)
+        .or
+            .snapshots(),
+        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          switch (snapshot.connectionState) {
+            case ConnectionState.waiting:
+            default:
+              if (snapshot.hasData) {
+                return new ListView.builder(
+                  shrinkWrap: true,
+                  padding: EdgeInsets.symmetric(horizontal: 15),
+                  itemCount: snapshot.data.documents.length,
+                  itemBuilder: (context, index) {
+                    DocumentSnapshot rentalDS = snapshot.data.documents[index];
+                    DocumentReference otherUserDR =
+                    myUserID == rentalDS['users'][0].documentID
+                        ? rentalDS['users'][1]
+                        : rentalDS['users'][0];
+
+                    return StreamBuilder<DocumentSnapshot>(
+                      stream: otherUserDR.snapshots(),
+                      builder: (BuildContext context,
+                          AsyncSnapshot<DocumentSnapshot> snapshot) {
+                        switch (snapshot.connectionState) {
+                          case ConnectionState.waiting:
+
+                          default:
+                            if (snapshot.hasData) {
+                              DocumentSnapshot otherUserDS = snapshot.data;
+
+                              return StreamBuilder<QuerySnapshot>(
+                                stream: Firestore.instance
+                                    .collection('rentals')
+                                    .document(rentalDS.documentID)
+                                    .collection('chat')
+                                    .orderBy('timestamp', descending: true)
+                                    .limit(1)
+                                    .snapshots(),
+                                builder: (BuildContext context,
+                                    AsyncSnapshot<QuerySnapshot> snapshot) {
+                                  switch (snapshot.connectionState) {
+                                    case ConnectionState.waiting:
+
+                                    default:
+                                      if (snapshot.hasData &&
+                                          snapshot.data.documents.length > 0) {
+                                        DocumentSnapshot lastMessageDS =
+                                        snapshot.data.documents[0];
+                                        Text title = Text(
+                                          otherUserDS['name'],
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontFamily: 'Quicksand'),
+                                        );
+                                        Text lastActive = Text(
+                                            ('Last seen: ' +
+                                                timeago.format(DateTime
+                                                    .fromMillisecondsSinceEpoch(
+                                                    otherUserDS[
+                                                    'lastActive']))),
+                                            style: TextStyle(
+                                              fontFamily: 'Quicksand',
+                                            ));
+                                        Text itemName = Text(
+                                            'Item: ${rentalDS['itemName']}',
+                                            style: TextStyle(
+                                                fontFamily: 'Quicksand'));
+                                        String imageURL = otherUserDS['avatar'];
+                                        String lastMessage =
+                                        lastMessageDS['content'];
+                                        int cutoff = 30;
+                                        String lastMessageCrop;
+
+                                        if (lastMessage.length > cutoff) {
+                                          lastMessageCrop =
+                                              lastMessage.substring(0, cutoff);
+                                          lastMessageCrop += '...';
+                                        } else {
+                                          lastMessageCrop = lastMessage;
+                                        }
+
+                                        return Column(
+                                          children: <Widget>[
+                                            ListTile(
+                                              leading: Container(
+                                                height: 50,
+                                                width: 50,
+                                                child: ClipOval(
+                                                  child: CachedNetworkImage(
+                                                    //key: ValueKey(DateTime.now().millisecondsSinceEpoch),
+                                                    imageUrl: imageURL,
+                                                    placeholder:
+                                                        (context, url) =>
+                                                    new Container(),
+                                                  ),
+                                                ),
+                                              ),
+                                              title: title,
+                                              subtitle: Container(
+                                                alignment: Alignment.centerLeft,
+                                                child: Column(
+                                                  children: <Widget>[
+                                                    Align(
+                                                        alignment: Alignment
+                                                            .centerLeft,
+                                                        child: lastActive),
+                                                    Align(
+                                                        alignment: Alignment
+                                                            .centerLeft,
+                                                        child: itemName),
+                                                    Align(
+                                                        alignment: Alignment
+                                                            .centerLeft,
+                                                        child: Text(
+                                                          lastMessageCrop,
+                                                          style: TextStyle(
+                                                              fontFamily:
+                                                              "Quicksand"),
+                                                        )),
+                                                  ],
+                                                ),
+                                              ),
+                                              //subtitle: Text( '$lastActive\n$itemName\n$lastMessageCrop'),
+                                              onTap: () {
+                                                Navigator.pushNamed(
+                                                  context,
+                                                  Chat.routeName,
+                                                  arguments: ChatArgs(
+                                                    rentalDS,
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                            Divider(),
+                                          ],
+                                        );
+                                      } else {
+                                        return Container();
+                                      }
+                                  }
+                                },
+                              );
+                            } else {
+                              return Container();
+                            }
+                        }
+                      },
+                    );
+                  },
+                );
+              } else {
+                return Container();
+              }
+          }
+        },
+      ),
+    );
+  }
+
   void navigateToEdit(Item newItem) async {
     Navigator.pushNamed(
       context,

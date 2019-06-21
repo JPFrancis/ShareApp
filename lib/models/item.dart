@@ -1,11 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 /*
-int type
-1 = tool
-2 = leisure
-3 = home
-4 = other
+'Tool',
+'Leisure',
+'Home',
+'Equipment',
+'Other',
  */
 
 /*

@@ -21,22 +21,15 @@ class ItemFilterState extends State<ItemFilter> {
   String title;
   Stream stream;
   bool isLoading = true;
+  String font = 'Quicksand';
+  String filter;
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
 
-    if (widget.filter == 'All') {
-      title = 'All items';
-      stream = Firestore.instance.collection('items').snapshots();
-    } else {
-      title = '${widget.filter}';
-      stream = Firestore.instance
-          .collection('items')
-          .where('type', isEqualTo: widget.filter)
-          .snapshots();
-    }
+    filter = widget.filter;
 
     delayPage();
   }
@@ -51,6 +44,25 @@ class ItemFilterState extends State<ItemFilter> {
 
   @override
   Widget build(BuildContext context) {
+    if (filter == 'All') {
+      title = 'All items';
+      stream = Firestore.instance.collection('items').snapshots();
+    } else {
+      title = filter;
+      switch (title) {
+        case 'Tool':
+          title = 'Tools';
+          break;
+        case 'Home':
+          title = 'Household';
+          break;
+      }
+      stream = Firestore.instance
+          .collection('items')
+          .where('type', isEqualTo: filter)
+          .snapshots();
+    }
+
     return Scaffold(
       body: isLoading ? Container() : allItemsPage(),
     );
@@ -74,8 +86,77 @@ class ItemFilterState extends State<ItemFilter> {
                   style: TextStyle(fontFamily: 'Quicksand', fontSize: 30.0)),
             ],
           ),
+          showFilterSelector(),
           buildItemList(),
         ],
+      ),
+    );
+  }
+
+  Widget showFilterSelector() {
+    String hint = filter;
+    double padding = 20;
+
+    switch (hint) {
+      case 'Tool':
+        hint = 'Tools';
+        break;
+      case 'Home':
+        hint = 'Household';
+        break;
+    }
+
+    return Padding(
+      padding: EdgeInsets.only(left: padding, right: padding),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+            isDense: true,
+            isExpanded: true,
+            // [todo value]
+            hint: Text(
+              hint,
+              style: TextStyle(fontFamily: font, fontWeight: FontWeight.w500),
+            ),
+            onChanged: (value) {
+              switch (value) {
+                case 'Tools':
+                  setState(() => filter = 'Tool');
+                  break;
+                case 'Leisure':
+                  setState(() => filter = 'Leisure');
+                  break;
+                case 'Household':
+                  setState(() => filter = 'Home');
+                  break;
+                case 'Equipment':
+                  setState(() => filter = 'Equipment');
+                  break;
+                case 'Miscellaneous':
+                  setState(() => filter = 'Other');
+                  break;
+                case 'All':
+                  setState(() => filter = 'All');
+                  break;
+              }
+            },
+            items: [
+              'Tools',
+              'Leisure',
+              'Household',
+              'Equipment',
+              'Miscellaneous',
+              'All',
+            ]
+                .map(
+                  (selection) => DropdownMenuItem<String>(
+                        value: selection,
+                        child: Text(
+                          selection,
+                          style: TextStyle(fontFamily: font),
+                        ),
+                      ),
+                )
+                .toList()),
       ),
     );
   }
@@ -105,49 +186,6 @@ class ItemFilterState extends State<ItemFilter> {
                     children: items
                         .map((DocumentSnapshot ds) => itemCard(ds, context))
                         .toList());
-              } else {
-                return Container();
-              }
-          }
-        },
-      ),
-    );
-  }
-
-  Widget buildItemListTemp() {
-    return Expanded(
-      child: StreamBuilder<QuerySnapshot>(
-        stream: Firestore.instance
-            .collection('items')
-            .orderBy('name', descending: false)
-            .snapshots(),
-        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.hasError) {
-            return new Text('${snapshot.error}');
-          }
-          switch (snapshot.connectionState) {
-            case ConnectionState.waiting:
-
-            default:
-              if (snapshot.hasData) {
-                List<DocumentSnapshot> allItems = snapshot.data.documents;
-                return ListView.builder(
-                  itemCount: allItems.length,
-                  itemBuilder: (context, index) {
-                    return ListTile(
-                      leading: Icon(Icons.build),
-                      title: Text(
-                        '${allItems[index]['name']}',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Text('${allItems[index]['description']}'),
-                      onTap: () => navigateToDetail(allItems[index], context),
-                      trailing: StarRating(
-                          rating: 3.5,
-                          sz: MediaQuery.of(context).size.height / 15),
-                    );
-                  },
-                );
               } else {
                 return Container();
               }
