@@ -123,8 +123,7 @@ class ItemRequestState extends State<ItemRequest> {
   @override
   Widget build(BuildContext context) {
     theme = Theme.of(context);
-    textStyle =
-        Theme.of(context).textTheme.headline.merge(TextStyle(fontSize: 20));
+    textStyle = Theme.of(context).textTheme.headline.merge(TextStyle(fontSize: 20));
     inputTextStyle = Theme.of(context).textTheme.subtitle;
 
     return Scaffold(
@@ -301,17 +300,14 @@ class ItemRequestState extends State<ItemRequest> {
           onChangedWindow: (int value) {
             setState(() {
               window = value;
-
-              pickupTime = updateDateTime(pickupTime.year, pickupTime.month,
-                  pickupTime.day, windows, window, amPm);
+              pickupTime = updateDateTime(pickupTime.year, pickupTime.month, pickupTime.day, windows, window, amPm);
             });
           },
           onChangedAmPm: (int value) {
             setState(() {
               amPm = value;
 
-              pickupTime = updateDateTime(pickupTime.year, pickupTime.month,
-                  pickupTime.day, windows, window, amPm);
+              pickupTime = updateDateTime(pickupTime.year, pickupTime.month, pickupTime.day, windows, window, amPm);
             });
           },
           onChangedDuration: (int value) {
@@ -638,13 +634,12 @@ class DateTimeItem extends StatelessWidget {
             onTap: () {
               showDatePicker(
                 context: context,
-                initialDate: dateTime,
-                firstDate: DateTime(2000),
-                lastDate: DateTime(2100),
+                initialDate:  DateTime.now(),
+                firstDate: DateTime.now(),
+                lastDate: DateTime.now().add(Duration(days: 300))
               ).then<void>((DateTime value) {
                 if (value != null) {
-                  onChangedDateTime(updateDateTime(value.year, value.month,
-                      value.day, windows, window, amPm));
+                  onChangedDateTime(updateDateTime(value.year, value.month, value.day, windows, window, amPm));
                 }
               });
             },
