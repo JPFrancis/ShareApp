@@ -1,50 +1,63 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class User {
-  String id;
-  String photoUrl;
-  String displayName;
+  String avatar;
+  String name;
+  String description;
+  String gender;
   String email;
-  List<DocumentReference> items;
-  List<DocumentReference> rentals;
+  String phoneNum;
+  DateTime birthday;
 
   User({
-    this.id,
-    this.photoUrl,
-    this.displayName,
+    this.avatar,
+    this.name,
+    this.description,
+    this.gender,
     this.email,
-    this.items,
-    this.rentals,
+    this.phoneNum,
+    this.birthday,
   });
 
-  User.fromMap(Map<String, dynamic> data, String id)
+  User.fromMap(Map<String, dynamic> data)
       : this(
-          id: id,
-          photoUrl: data['imageURL'],
-          displayName: data['name'],
-          email: data['email'],
-          items: data['myListings'],
-          rentals: data['myRentals'],
+          avatar: data['avatar'],
+          name: data['name'],
+          description: data['description'],
+          gender: data['gender'],
+          email:data['email'],
+          phoneNum: data['phoneNum'],
+          birthday: data['birthday'],
         );
 
   User.copy(User other)
       : this(
-          id: other.id,
-          photoUrl: other.photoUrl,
-          displayName: other.displayName,
-          email: other.email,
-          items: other.items.toList(),
-          rentals: other.rentals.toList(),
+          avatar: other.avatar,
+          name: other.name,
+          description: other.description,
+          gender: other.gender,
+    email:other.email,
+          phoneNum: other.phoneNum,
+          birthday: other.birthday,
         );
 
+  bool compare(User other) {
+    return this.avatar == other.avatar &&
+        this.name == other.name &&
+        this.description == other.description &&
+        this.gender == other.gender &&
+        this.email==other.email&&
+        this.phoneNum == other.phoneNum &&
+        this.birthday == other.birthday;
+  }
+
   User fromUser(User other) {
-    return new User(
-      id: other.id,
-      photoUrl: other.photoUrl,
-      displayName: other.displayName,
-      email: other.email,
-      items: other.items.toList(),
-      rentals: other.rentals.toList(),
+    return User(
+      avatar: other.avatar,
+      name: other.name,
+      description: other.description,
+      gender: other.gender,
+      email:other.email,
+      phoneNum: other.phoneNum,
+      birthday: other.birthday,
     );
   }
 }

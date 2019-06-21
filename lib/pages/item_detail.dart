@@ -529,6 +529,66 @@ class ItemDetailState extends State<ItemDetail> {
     double lat = gp.latitude;
     double long = gp.longitude;
 
+    Widget showMap() {
+      return GoogleMap(
+        mapType: MapType.normal,
+        rotateGesturesEnabled: false,
+        initialCameraPosition: CameraPosition(
+          target: LatLng(lat, long),
+          //zoom: 11.5,
+          zoom: 10,
+        ),
+        onMapCreated: (GoogleMapController controller) {
+          googleMapController = controller;
+        },
+        /*
+        markers: Set<Marker>.of(
+          <Marker>[
+            Marker(
+              markerId: MarkerId("test_marker_id"),
+              position: LatLng(
+                lat,
+                long,
+              ),
+              infoWindow: InfoWindow(
+                title: 'Item Location',
+                snippet: '${lat}, ${long}',
+              ),
+            )
+          ],
+        ),
+        */
+        gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>[
+          Factory<OneSequenceGestureRecognizer>(
+            () =>
+
+                /// to enable dragging, use EagerGestureRecognizer()
+                /// to disable dragging, use ScaleGestureRecognizer()
+                EagerGestureRecognizer(),
+            //ScaleGestureRecognizer(),
+          ),
+        ].toSet(),
+      );
+    }
+
+    Widget showCircle() {
+      double size = 100;
+
+      return Center(
+        child: Opacity(
+          opacity: .5,
+          child: Container(
+            width: size,
+            height: size,
+            decoration: new BoxDecoration(
+              color: Colors.blue,
+              shape: BoxShape.circle,
+            ),
+          ),
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.only(left: 20.0, right: 20.0),
       child: Column(
@@ -549,41 +609,11 @@ class ItemDetailState extends State<ItemDetail> {
             child: SizedBox(
               width: widthOfScreen,
               height: 200.0,
-              child: GoogleMap(
-                mapType: MapType.normal,
-                rotateGesturesEnabled: false,
-                initialCameraPosition: CameraPosition(
-                  target: LatLng(lat, long),
-                  zoom: 11.5,
-                ),
-                onMapCreated: (GoogleMapController controller) {
-                  googleMapController = controller;
-                },
-                markers: Set<Marker>.of(
-                  <Marker>[
-                    Marker(
-                      markerId: MarkerId("test_marker_id"),
-                      position: LatLng(
-                        lat,
-                        long,
-                      ),
-                      infoWindow: InfoWindow(
-                        title: 'Item Location',
-                        snippet: '${lat}, ${long}',
-                      ),
-                    )
-                  ],
-                ),
-                gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>[
-                  Factory<OneSequenceGestureRecognizer>(
-                    () =>
-
-                        /// to disable dragging, use ScaleGestureRecognizer()
-                        /// to enable dragging, use EagerGestureRecognizer()
-                        EagerGestureRecognizer(),
-                    //ScaleGestureRecognizer(),
-                  ),
-                ].toSet(),
+              child: Stack(
+                children: <Widget>[
+                  showMap(),
+                  showCircle(),
+                ],
               ),
             ),
           ),

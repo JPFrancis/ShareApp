@@ -1,8 +1,10 @@
 import 'dart:async';
 
+import 'package:shareapp/pages/profile_tab_pages/help_page.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shareapp/pages/profile_tab_pages/feedback_page.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
@@ -10,11 +12,12 @@ import 'package:intl/intl.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/models/item.dart';
-import 'package:shareapp/models/user_edit.dart';
+import 'package:shareapp/models/user.dart';
 import 'package:shareapp/pages/item_detail.dart';
 import 'package:shareapp/pages/item_edit.dart';
 import 'package:shareapp/pages/item_filter.dart';
-import 'package:shareapp/pages/profile_edit.dart';
+import 'package:shareapp/pages/profile_tab_pages/payouts_page.dart';
+import 'package:shareapp/pages/profile_tab_pages/profile_edit.dart';
 import 'package:shareapp/pages/search_results.dart';
 import 'package:shareapp/rentals/chat.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
@@ -46,6 +49,7 @@ class HomePageState extends State<HomePage> {
   String deviceToken;
 
   SharedPreferences prefs;
+  DocumentSnapshot myUserDS;
   String myUserID;
   List<Item> itemList;
 
@@ -97,18 +101,23 @@ class HomePageState extends State<HomePage> {
 
   /// TESTING ONLY, if we need to add a field to all existing documents for example
   void updateAll() async {
-    var docs = await Firestore.instance.collection('rentals').getDocuments();
+    /*
+    String collection = 'users';
+    var docs = await Firestore.instance.collection(collection).getDocuments();
 
     if (docs != null) {
       docs.documents.forEach((ds) {
         Firestore.instance
-            .collection('users')
+            .collection(collection)
             .document(ds.documentID)
             .updateData({
-          'pushToken': '',
+
+          'birthday': null,
+
         });
       });
     }
+    */
   }
 
   void delayPage() async {
@@ -247,6 +256,7 @@ class HomePageState extends State<HomePage> {
                   description: '',
                   type: null,
                   condition: null,
+                  policy: '',
                   price: 0,
                   numImages: 0,
                   images: new List(),
@@ -1138,7 +1148,10 @@ class HomePageState extends State<HomePage> {
                                         return Container(
                                           padding: EdgeInsets.only(left: 10.0),
                                           child: InkWell(
-                                            onTap: () => navigateToDetail(ds),
+                                            onTap: () => Navigator.pushNamed(
+                                                context, RentalDetail.routeName,
+                                                arguments:
+                                                    RentalDetailArgs(rentalDS)),
                                             child: Container(
                                               width: MediaQuery.of(context)
                                                       .size
@@ -1395,6 +1408,7 @@ class HomePageState extends State<HomePage> {
                   prefs.setString('name', name);
                   avatarURL = ds['avatar'];
                   email = ds['email'];
+                  myUserDS = ds;
                 } else {
                   name = 'ERROR';
                   prefs.setString('name', name);
@@ -1472,11 +1486,12 @@ class HomePageState extends State<HomePage> {
             reusableCategory("ACCOUNT SETTINGS"),
             reusableFlatButton(
                 "Personal information", Icons.person_outline, null),
-            reusableFlatButton("Payments and payouts", Icons.payment, null),
+            reusableFlatButton(
+                "Payments and payouts", Icons.payment, navToPayouts),
             reusableFlatButton("Notifications", Icons.notifications, null),
             reusableCategory("SUPPORT"),
-            reusableFlatButton("Get help", Icons.help_outline, null),
-            reusableFlatButton("Give us feedback", Icons.feedback, null),
+            reusableFlatButton("Get help", Icons.help_outline, navToHelpPage),
+            reusableFlatButton("Give us feedback", Icons.feedback, navToFeedbackPage),
             reusableFlatButton("Log out", null, logout),
             //getProfileDetails()
           ],
@@ -1821,18 +1836,6 @@ class HomePageState extends State<HomePage> {
     );
   }
 
-  Future<UserEdit> getUserEdit() async {
-    UserEdit out;
-    DocumentSnapshot ds =
-        await Firestore.instance.collection('users').document(myUserID).get();
-    if (ds != null) {
-      out = new UserEdit(
-          id: myUserID, photoUrl: ds['avatar'], displayName: ds['name']);
-    }
-
-    return out;
-  }
-
   void navToItemFilter(String filter) async {
     Navigator.push(
         context,
@@ -1852,22 +1855,17 @@ class HomePageState extends State<HomePage> {
   }
 
   void navToProfileEdit() async {
-    UserEdit userEdit = await getUserEdit();
+    if (myUserDS != null && myUserDS.exists) {
+      User userEdit = User.fromMap(myUserDS.data);
 
-    UserEdit result = await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (BuildContext context) => ProfileEdit(
-                userEdit: userEdit,
-              ),
-          fullscreenDialog: true,
-        ));
-
-    if (result != null) {
-      Firestore.instance.collection('users').document(myUserID).updateData({
-        'name': result.displayName,
-        'avatar': result.photoUrl,
-      });
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (BuildContext context) => ProfileEdit(
+                  userEdit: userEdit,
+                ),
+            fullscreenDialog: true,
+          ));
     }
   }
 
@@ -1946,6 +1944,30 @@ class HomePageState extends State<HomePage> {
         await Firestore.instance.collection('users').document(userID).get();
 
     return ds;
+  }
+
+  void navToPayouts() {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (BuildContext context) => PayoutsPage(),
+        ));
+  }
+
+  void navToFeedbackPage() {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (BuildContext context) => FeedbackPage(),
+        ));
+  }
+
+  void navToHelpPage(){
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (BuildContext context) => HelpPage(),
+        ));
   }
 
   void logout() async {

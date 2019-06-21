@@ -29,11 +29,11 @@ exports.createUser = functions.auth.user().onCreate(event => {
         lastActive: Date.now(),
         creationDate: creationDate,
         custId: 'new',
-        pushToken: null,
+        pushToken: [],
         description: '',
         gender: '',
         phoneNum: '',
-        birthday: '',
+        birthday: null,
     }).then(function () {
         console.log('Created user: ', userID);
         return 'Created user $userID';

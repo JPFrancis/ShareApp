@@ -99,7 +99,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     isLoading = false;
     super.initState();
 
-    timeDilation = 3.0;
+    timeDilation = 2.0; // 3.0
     logoController = AnimationController(
         duration: const Duration(milliseconds: 1000), vsync: this);
     logoAnimation = CurvedAnimation(
