@@ -72,6 +72,12 @@ class ChatScreenState extends State<ChatScreen> {
     getSnapshots();
   }
 
+  @override
+  void dispose() {
+    textEditingController.dispose();
+    super.dispose();
+  }
+
   void delayPage() async {
     isLoading = true;
     Future.delayed(Duration(milliseconds: 750)).then((_) {

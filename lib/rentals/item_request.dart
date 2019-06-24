@@ -74,6 +74,13 @@ class ItemRequestState extends State<ItemRequest> {
     getSnapshots();
   }
 
+  @override
+  void dispose() {
+    // Clean up the controller when the widget is disposed.
+    noteController.dispose();
+    super.dispose();
+  }
+
   void initPickerData() {
     List pickerData = JsonDecoder().convert(PickerData);
     windows = pickerData[0];
@@ -637,8 +644,8 @@ class DateTimeItem extends StatelessWidget {
             onTap: () {
               showDatePicker(
                       context: context,
-                      initialDate: DateTime.now(),
                       firstDate: DateTime.now(),
+                      initialDate: DateTime.now().add(Duration(seconds: 10)),
                       lastDate: DateTime.now().add(Duration(days: 300)))
                   .then<void>((DateTime value) {
                 if (value != null) {

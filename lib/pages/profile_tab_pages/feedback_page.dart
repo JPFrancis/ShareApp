@@ -29,6 +29,12 @@ class FeedbackPageState extends State<FeedbackPage> {
     //delayPage();
   }
 
+  @override
+  void dispose() {
+    feedbackController.dispose();
+    super.dispose();
+  }
+
   void delayPage() async {
     Future.delayed(Duration(milliseconds: 750)).then((_) {
       setState(() {

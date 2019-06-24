@@ -18,7 +18,7 @@ import 'package:shareapp/pages/profile_tab_pages/feedback_page.dart';
 import 'package:shareapp/pages/profile_tab_pages/help_page.dart';
 import 'package:shareapp/pages/profile_tab_pages/payouts_page.dart';
 import 'package:shareapp/pages/profile_tab_pages/profile_edit.dart';
-import 'package:shareapp/pages/search_results.dart';
+import 'package:shareapp/pages/search_page.dart';
 import 'package:shareapp/rentals/chat.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/auth.dart';
@@ -58,6 +58,7 @@ class HomePageState extends State<HomePage> {
   int currentTabIndex;
   int badge;
   bool isLoading = false;
+  bool isAuthenticated;
 
   EdgeInsets edgeInset;
   double padding;
@@ -75,18 +76,21 @@ class HomePageState extends State<HomePage> {
     // TODO: implement initState
     super.initState();
 
-    //updateAll();
-
     currentTabIndex = 0;
 
     padding = 18;
     edgeInset = EdgeInsets.only(
         left: padding, right: padding, bottom: padding, top: 30);
 
-    myUserID = widget.firebaseUser.uid;
+    if (widget.firebaseUser == null) {
+      isAuthenticated = false;
+    } else {
+      isAuthenticated = true;
+      myUserID = widget.firebaseUser.uid;
+      setPrefs();
+      updateLastActiveAndPushToken();
+    }
 
-    setPrefs();
-    updateLastActiveAndPushToken();
     //getAllItems();
 
     bottomNavBarTiles = <BottomNavigationBarItem>[
@@ -96,25 +100,50 @@ class HomePageState extends State<HomePage> {
       bottomNavTile('Messages', Icon(Icons.forum), false),
       bottomNavTile('Profile', Icon(Icons.account_circle), false),
     ];
-    //delayPage();
+
+    //updateAll();
   }
 
-  /// TESTING ONLY, if we need to add a field to all existing documents for example
+  /// TESTING ONLY
   void updateAll() async {
     /*
-    String collection = 'users';
-    var docs = await Firestore.instance.collection(collection).getDocuments();
+    String collection = 'items';
+    var docs = await Firestore.instance
+        .collection(collection)
+        .orderBy('name', descending: false)
+        .getDocuments();
 
     if (docs != null) {
       docs.documents.forEach((ds) {
+        List<String> searchKeyList = [];
+        String name = ds['name'].toLowerCase();
+        String description = ds['description'].toLowerCase();
+        List<String> nameList = name.split(' ');
+        List<String> descriptionList = description.split(' ');
+
+        nameList.forEach((str) {
+          searchKeyList.add(str.substring(0, 1));
+        });
+
+        descriptionList.forEach((str) {
+          searchKeyList.add(str.substring(0, 1));
+        });
+
+        searchKeyList = searchKeyList.toSet().toList();
+        searchKeyList.sort();
+        RegExp regExp = RegExp('[a-z]');
+        searchKeyList.removeWhere((str) => !regExp.hasMatch(str));
+
+        //debugPrint('$name: $searchKeyList');
+
+
         Firestore.instance
             .collection(collection)
             .document(ds.documentID)
             .updateData({
-
-          'birthday': null,
-
+          'searchKey': searchKeyList,
         });
+
       });
     }
     */
@@ -145,8 +174,6 @@ class HomePageState extends State<HomePage> {
       String tempUserID = await prefs.get('userID');
 
       if (tempUserID != null) {
-        debugPrint('======= myUserID: ${myUserID}');
-        debugPrint('======= tempUserID: ${tempUserID}');
         if (myUserID != tempUserID) {
           setPrefs();
         } else {
@@ -1356,7 +1383,7 @@ class HomePageState extends State<HomePage> {
   Widget profileTabPage() {
     return Column(
       children: <Widget>[
-        profileIntroStream(),
+        isAuthenticated ? profileIntroStream() : Container(),
         SizedBox(height: 20.0),
         Expanded(
           child: Padding(
@@ -1817,173 +1844,6 @@ class HomePageState extends State<HomePage> {
     );
   }
 
-  Widget buildMessagesListTemp() {
-    return Expanded(
-      child: StreamBuilder<QuerySnapshot>(
-        stream: Firestore.instance
-            .collection('rentals')
-            .where('users',
-            arrayContains:
-            Firestore.instance.collection('users').document(myUserID))
-            .where('status', isLessThan: 5)
-        .or
-            .snapshots(),
-        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          switch (snapshot.connectionState) {
-            case ConnectionState.waiting:
-            default:
-              if (snapshot.hasData) {
-                return new ListView.builder(
-                  shrinkWrap: true,
-                  padding: EdgeInsets.symmetric(horizontal: 15),
-                  itemCount: snapshot.data.documents.length,
-                  itemBuilder: (context, index) {
-                    DocumentSnapshot rentalDS = snapshot.data.documents[index];
-                    DocumentReference otherUserDR =
-                    myUserID == rentalDS['users'][0].documentID
-                        ? rentalDS['users'][1]
-                        : rentalDS['users'][0];
-
-                    return StreamBuilder<DocumentSnapshot>(
-                      stream: otherUserDR.snapshots(),
-                      builder: (BuildContext context,
-                          AsyncSnapshot<DocumentSnapshot> snapshot) {
-                        switch (snapshot.connectionState) {
-                          case ConnectionState.waiting:
-
-                          default:
-                            if (snapshot.hasData) {
-                              DocumentSnapshot otherUserDS = snapshot.data;
-
-                              return StreamBuilder<QuerySnapshot>(
-                                stream: Firestore.instance
-                                    .collection('rentals')
-                                    .document(rentalDS.documentID)
-                                    .collection('chat')
-                                    .orderBy('timestamp', descending: true)
-                                    .limit(1)
-                                    .snapshots(),
-                                builder: (BuildContext context,
-                                    AsyncSnapshot<QuerySnapshot> snapshot) {
-                                  switch (snapshot.connectionState) {
-                                    case ConnectionState.waiting:
-
-                                    default:
-                                      if (snapshot.hasData &&
-                                          snapshot.data.documents.length > 0) {
-                                        DocumentSnapshot lastMessageDS =
-                                        snapshot.data.documents[0];
-                                        Text title = Text(
-                                          otherUserDS['name'],
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontFamily: 'Quicksand'),
-                                        );
-                                        Text lastActive = Text(
-                                            ('Last seen: ' +
-                                                timeago.format(DateTime
-                                                    .fromMillisecondsSinceEpoch(
-                                                    otherUserDS[
-                                                    'lastActive']))),
-                                            style: TextStyle(
-                                              fontFamily: 'Quicksand',
-                                            ));
-                                        Text itemName = Text(
-                                            'Item: ${rentalDS['itemName']}',
-                                            style: TextStyle(
-                                                fontFamily: 'Quicksand'));
-                                        String imageURL = otherUserDS['avatar'];
-                                        String lastMessage =
-                                        lastMessageDS['content'];
-                                        int cutoff = 30;
-                                        String lastMessageCrop;
-
-                                        if (lastMessage.length > cutoff) {
-                                          lastMessageCrop =
-                                              lastMessage.substring(0, cutoff);
-                                          lastMessageCrop += '...';
-                                        } else {
-                                          lastMessageCrop = lastMessage;
-                                        }
-
-                                        return Column(
-                                          children: <Widget>[
-                                            ListTile(
-                                              leading: Container(
-                                                height: 50,
-                                                width: 50,
-                                                child: ClipOval(
-                                                  child: CachedNetworkImage(
-                                                    //key: ValueKey(DateTime.now().millisecondsSinceEpoch),
-                                                    imageUrl: imageURL,
-                                                    placeholder:
-                                                        (context, url) =>
-                                                    new Container(),
-                                                  ),
-                                                ),
-                                              ),
-                                              title: title,
-                                              subtitle: Container(
-                                                alignment: Alignment.centerLeft,
-                                                child: Column(
-                                                  children: <Widget>[
-                                                    Align(
-                                                        alignment: Alignment
-                                                            .centerLeft,
-                                                        child: lastActive),
-                                                    Align(
-                                                        alignment: Alignment
-                                                            .centerLeft,
-                                                        child: itemName),
-                                                    Align(
-                                                        alignment: Alignment
-                                                            .centerLeft,
-                                                        child: Text(
-                                                          lastMessageCrop,
-                                                          style: TextStyle(
-                                                              fontFamily:
-                                                              "Quicksand"),
-                                                        )),
-                                                  ],
-                                                ),
-                                              ),
-                                              //subtitle: Text( '$lastActive\n$itemName\n$lastMessageCrop'),
-                                              onTap: () {
-                                                Navigator.pushNamed(
-                                                  context,
-                                                  Chat.routeName,
-                                                  arguments: ChatArgs(
-                                                    rentalDS,
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                            Divider(),
-                                          ],
-                                        );
-                                      } else {
-                                        return Container();
-                                      }
-                                  }
-                                },
-                              );
-                            } else {
-                              return Container();
-                            }
-                        }
-                      },
-                    );
-                  },
-                );
-              } else {
-                return Container();
-              }
-          }
-        },
-      ),
-    );
-  }
-
   void navigateToEdit(Item newItem) async {
     Navigator.pushNamed(
       context,
@@ -2018,7 +1878,7 @@ class HomePageState extends State<HomePage> {
     Navigator.push(
         context,
         SlideUpRoute(
-          page: SearchResults(),
+          page: SearchPage(),
         ));
   }
 
@@ -2140,15 +2000,19 @@ class HomePageState extends State<HomePage> {
 
   void logout() async {
     try {
-      prefs.remove('userID').then((_) {
+      if (isAuthenticated) {
+        prefs.remove('userID');
+
         Firestore.instance.collection('users').document(myUserID).updateData({
           'pushToken': FieldValue.arrayRemove([deviceToken]),
-        }).then((_) {
-          widget.auth.signOut().then((_) {
-            widget.onSignOut();
-          });
         });
-      });
+
+        widget.auth.signOut().then((_) {
+          widget.onSignOut();
+        });
+      } else {
+        widget.onSignOut();
+      }
     } catch (e) {
       print(e);
     }

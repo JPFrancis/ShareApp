@@ -71,6 +71,13 @@ class NewPickupState extends State<NewPickup> {
     getSnapshots();
   }
 
+  @override
+  void dispose() {
+    // Clean up the controller when the widget is disposed.
+    noteController.dispose();
+    super.dispose();
+  }
+
   void getMyUserID() async {
     prefs = await SharedPreferences.getInstance();
     myUserID = prefs.getString('userID') ?? '';
@@ -340,7 +347,8 @@ class NewPickupState extends State<NewPickup> {
           'body': 'From: ${myName}',
           'pushToken': otherUserDS['pushToken'],
           'rentalID': widget.rentalID,
-        }).then((docRef) {
+          'timestamp': DateTime.now().millisecondsSinceEpoch,
+        }).then((_) {
           Navigator.of(context).pop();
         });
       });

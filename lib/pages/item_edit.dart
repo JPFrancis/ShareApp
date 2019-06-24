@@ -123,6 +123,16 @@ class ItemEditState extends State<ItemEdit> {
     getUserLocation();
   }
 
+  @override
+  void dispose() {
+    nameController.dispose();
+    descriptionController.dispose();
+    priceController.dispose();
+    policyController.dispose();
+
+    super.dispose();
+  }
+
   getUserLocation() async {
     if (isEdit) {
       setState(() {
@@ -642,6 +652,24 @@ class ItemEditState extends State<ItemEdit> {
     itemCopy.description = itemCopy.description.trim();
     itemCopy.policy = itemCopy.policy.trim();
 
+    List<String> searchKeyList = [];
+    String name = itemCopy.name.toLowerCase();
+    String description = itemCopy.description.toLowerCase();
+    List<String> nameList = name.split(' ');
+    List<String> descriptionList = description.split(' ');
+
+    nameList.forEach((str) {
+      searchKeyList.add(str.substring(0, 1));
+    });
+
+    descriptionList.forEach((str) {
+      searchKeyList.add(str.substring(0, 1));
+    });
+
+    searchKeyList = searchKeyList.toSet().toList();
+    searchKeyList.sort();
+    searchKeyList.removeWhere((str) => !RegExp('[a-z]').hasMatch(str));
+
     // new item
     if (itemCopy.id == null) {
       final DocumentReference documentReference =
@@ -660,6 +688,7 @@ class ItemEditState extends State<ItemEdit> {
         'numImages': totalImagesCount,
         'location': itemCopy.location,
         'rental': itemCopy.rental,
+        'searchKey': searchKeyList,
       });
 /*
       CloudFunctions.instance.getHttpsCallable(
@@ -727,6 +756,7 @@ class ItemEditState extends State<ItemEdit> {
         'price': itemCopy.price,
         'numImages': totalImagesCount,
         'location': itemCopy.location,
+        'searchKey': searchKeyList,
       });
 
       if (imageAssets.length == 0) {

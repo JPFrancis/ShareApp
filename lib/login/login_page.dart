@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' show timeDilation;
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shareapp/extras/helpers.dart';
+import 'package:shareapp/main.dart';
+import 'package:shareapp/pages/home_page.dart';
 import 'package:shareapp/services/auth.dart';
 import 'package:shareapp/services/const.dart';
 
@@ -218,20 +220,54 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   Widget _showLogo() {
     double h = MediaQuery.of(context).size.height;
     double w = MediaQuery.of(context).size.width;
-    return Column(
+
+    return Stack(
       children: <Widget>[
-        Container(
-            padding: EdgeInsets.only(top: h / 24),
-            child: SvgPicture.asset(
-              'assets/Borderless.svg',
-              width: w / 1.5,
-            )),
-        Text(
-          "S H A R E",
-          style: TextStyle(
-              fontFamily: 'Quicksand', color: Colors.white, fontSize: w / 18),
-        )
+        Column(
+          children: <Widget>[
+            Container(
+                padding: EdgeInsets.only(top: h / 24),
+                child: SvgPicture.asset(
+                  'assets/Borderless.svg',
+                  width: w / 1.5,
+                )),
+            Text(
+              "S H A R E",
+              style: TextStyle(
+                  fontFamily: 'Quicksand',
+                  color: Colors.white,
+                  fontSize: w / 18),
+            )
+          ],
+        ),
+        anonSignIn(),
       ],
+    );
+  }
+
+  Widget anonSignIn() {
+    return Container(
+      height: 60.0,
+      width: 60.0,
+      child: FlatButton(
+        child: Icon(
+          Icons.close,
+          color: Colors.white,
+        ),
+        onPressed: () => navToAnonHomePage(),
+      ),
+    );
+  }
+
+  void navToAnonHomePage() async {
+    Navigator.pushNamed(
+      context,
+      HomePage.routeName,
+      arguments: HomePageArgs(
+        null,
+        null,
+        () => Navigator.of(context).pop(),
+      ),
     );
   }
 
