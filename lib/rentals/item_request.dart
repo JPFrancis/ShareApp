@@ -179,7 +179,7 @@ class ItemRequestState extends State<ItemRequest> {
         showItemPriceInfo(),
         divider(),
         // showNoteEdit(),
-        showTimeInfo(), // testing purposes only
+        //showTimeInfo(), // testing purposes only
       ],
     );
   }

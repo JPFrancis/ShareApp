@@ -1826,7 +1826,6 @@ class HomePageState extends State<HomePage> {
             arrayContains:
             Firestore.instance.collection('users').document(myUserID))
             .where('status', isLessThan: 5)
-        .or
             .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           switch (snapshot.connectionState) {

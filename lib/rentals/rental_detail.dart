@@ -4,9 +4,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:intl/intl.dart';
+import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/rentals/chat.dart';
 import 'package:shareapp/rentals/new_pickup.dart';
+import 'package:shareapp/services/const.dart';
 import 'package:shareapp/services/payment_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smooth_star_rating/smooth_star_rating.dart';
@@ -128,44 +130,24 @@ class RentalDetailState extends State<RentalDetail> {
   Widget build(BuildContext context) {
     textStyle = Theme.of(context).textTheme.title;
 
-    return WillPopScope(
-      onWillPop: () {
-        goToLastScreen();
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text('Item Rental'),
-          // back button
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back),
-            onPressed: () {
-              goToLastScreen();
-            },
-          ),
-          actions: <Widget>[
-            IconButton(
-              icon: Icon(Icons.delete),
-              tooltip: 'Delete rental',
-              onPressed: () {
-                setState(() {
-                  deleteRentalDialog();
-                });
-              },
-            ),
-          ],
-        ),
-        body: isLoading
-            ? Container(
-                child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      Center(child: CircularProgressIndicator())
-                    ]),
-              )
-            : showBody(),
-        floatingActionButton: showFAB(),
+    return Scaffold(
+      backgroundColor: coolerWhite,
+      body: isLoading
+          ? Container(
+              child: Center(child: CircularProgressIndicator()),
+            )
+          : showBody(),
+      floatingActionButton: Container(
+      padding: const EdgeInsets.only(top: 120.0, left: 5.0),
+      child: FloatingActionButton(
+        onPressed: () => Navigator.pop(context),
+        child: Icon(Icons.close),
+        elevation: 1,
+        backgroundColor: Colors.white70,
+        foregroundColor: primaryColor,
       ),
+    ),
+    floatingActionButtonLocation: FloatingActionButtonLocation.miniStartTop,
     );
   }
 
@@ -197,38 +179,30 @@ class RentalDetailState extends State<RentalDetail> {
   Widget showBody() {
     return StreamBuilder<DocumentSnapshot>(
       stream: rentalDS.reference.snapshots(),
-      builder:
-          (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
-        if (snapshot.hasError) {
-          return new Text('${snapshot.error}');
-        }
+      builder: (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+        if (snapshot.hasError) {return new Text('${snapshot.error}');}
         switch (snapshot.connectionState) {
           case ConnectionState.waiting:
           default:
             if (snapshot.hasData) {
               rentalDS = snapshot.data;
 
-              return Padding(
-                padding: EdgeInsets.all(15),
-                child: ListView(
-                  children: <Widget>[
-                    showItemName(),
-                    Divider(
-                      height: 20,
-                    ),
-                    showItemRequestStatus(),
-                    Container(
-                      height: 10,
-                    ),
-                    showRequestButtons(),
-                    showCreditCardButton(),
-                    showPaymentInfo(),
-                    showReceiveItemButton(),
-                    showReturnedItemButton(),
-                    showReview(),
-                    //paymentButtonTEST(),
-                  ],
-                ),
+              return ListView(
+                children: <Widget>[
+                  //showItemImage(),
+                  showItemCreator(),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width / 25),
+                    height: MediaQuery.of(context).size.height / 4,
+                    child: showItemRequestStatus()),
+                  showRequestButtons(),
+                  showCreditCardButton(),
+                  showPaymentInfo(),
+                  showReceiveItemButton(),
+                  showReturnedItemButton(),
+                  showReview(),
+                  //paymentButtonTEST(),
+                ],
               );
             } else {
               return Container();
@@ -237,7 +211,29 @@ class RentalDetailState extends State<RentalDetail> {
       },
     );
   }
+  Widget showItemImage() {
+    double widthOfScreen = MediaQuery.of(context).size.width;
+    var images;
+    rentalDS['item'].get().then((ds)=> images = ds['images']);
+    _getItemImage(BuildContext context) {
+      return new Container(
+        child: FittedBox(
+          fit: BoxFit.cover,
+          child: CachedNetworkImage(
+            imageUrl: images[0],
+            placeholder: (context, url) => new CircularProgressIndicator(),
+          ),
+        ),
+      );
+    }
 
+    return images.length > 0
+        ? Container(
+            height: widthOfScreen / 1,
+            child: _getItemImage(context),
+          )
+        : Text('No images yet\n');
+  }
   Widget paymentButtonTEST() {
     return RaisedButton(
       onPressed: () {
@@ -249,7 +245,46 @@ class RentalDetailState extends State<RentalDetail> {
       child: Text('Charge'),
     );
   }
-
+  Widget showItemCreator() {
+    return Padding(
+      padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 10.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          Text(
+            rentalDS['itemName'],
+            style: TextStyle(
+                fontFamily: 'Quicksand',
+                fontSize: 25.0,
+                fontWeight: FontWeight.bold),
+          ),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Container(
+                height: 50.0,
+                child: ClipOval(
+                  child: CachedNetworkImage(
+                    imageUrl: ownerDS['avatar'],
+                    placeholder: (context, url) =>
+                        new CircularProgressIndicator(),
+                  ),
+                ),
+              ),
+              Text(
+                '${ownerDS['name']}',
+                style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 15.0,
+                    fontFamily: 'Quicksand'),
+                textAlign: TextAlign.left,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
   Widget showItemName() {
     String itemOwner = 'Item owner: ${ownerDS['name']}';
     String itemRenter = 'Item renter: ${renterDS['name']}';
@@ -390,10 +425,22 @@ class RentalDetailState extends State<RentalDetail> {
     }
 
     return Container(
-      child: Text(
-        statusMessage,
-        style: TextStyle(
-          fontSize: 18,
+      decoration: new BoxDecoration(
+        color: Colors.white,
+        borderRadius: new BorderRadius.all(Radius.circular(12.0)),
+        boxShadow: <BoxShadow>[
+          CustomBoxShadow(
+              color: Colors.black45,
+              blurRadius: 3.0,
+              blurStyle: BlurStyle.outer),
+        ],
+      ),
+      child: Center(
+        child: Text(
+          statusMessage,
+          style: TextStyle(
+            fontSize: 18,
+          ),
         ),
       ),
     );

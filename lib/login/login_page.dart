@@ -38,11 +38,14 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   Animation<double> logoAnimation;
   AnimationController contentController;
   Animation<double> contentAnimation;
+  AnimationController slideController;
+  Animation<double> slideAnimation;
 
   @override
   void dispose() {
     logoController.dispose();
     contentController.dispose();
+    slideController.dispose();
     super.dispose();
   }
 
@@ -100,17 +103,16 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     super.initState();
 
     timeDilation = 2.0; // 3.0
-    logoController = AnimationController(
-        duration: const Duration(milliseconds: 1000), vsync: this);
-    logoAnimation = CurvedAnimation(
-        parent: logoController, curve: Interval(0, 0.5, curve: Curves.easeIn));
-    contentController = AnimationController(
-        duration: const Duration(milliseconds: 1000), vsync: this);
-    contentAnimation = CurvedAnimation(
-        parent: logoController, curve: Interval(0.5, 1, curve: Curves.easeIn));
+    logoController = AnimationController(duration: const Duration(milliseconds: 1000), vsync: this);
+    logoAnimation = CurvedAnimation(parent: logoController, curve: Interval(0, 0.5, curve: Curves.easeIn));
+    contentController = AnimationController(duration: const Duration(milliseconds: 1000), vsync: this);
+    contentAnimation = CurvedAnimation(parent: contentController, curve: Interval(0.4, 1, curve: Curves.easeIn));
+    slideController = new AnimationController(vsync: this, duration: Duration(milliseconds: 500));
+    slideAnimation = CurvedAnimation(parent: slideController, curve: Interval(0, 1, curve: Curves.easeIn));
+
     logoController.forward();
-    delayPage();
     contentController.forward();
+    slideController.repeat(reverse: true);
   }
 
   void _changeFormToSignUp() {
@@ -132,70 +134,166 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     isIos = Theme.of(context).platform == TargetPlatform.iOS;
-    return Material(
-      color: primaryColor,
-      child: Column(
-        children: <Widget>[
-          FadeTransition(opacity: logoAnimation, child: _showLogo()),
-          SizedBox(
-            height: 20.0,
-          ),
-          FadeTransition(opacity: contentAnimation, child: showBody()),
-        ],
-      ),
-    );
-  }
+    double h = MediaQuery.of(context).size.height;
+    double w = MediaQuery.of(context).size.width;
 
-  Widget showCircularProgress() {
-    if (isLoading) {
-      return Center(child: CircularProgressIndicator());
+    _loginPage(){
+      return Material(
+        color: primaryColor,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: <Widget>[
+           // SizedBox(height: h/24,),
+            FadeTransition(opacity: logoAnimation, child: _showLogo(false)),
+           // SizedBox(height: 20.0,),
+            FadeTransition(opacity: contentAnimation, child: showBody()),
+          ],
+        ),
+      );
     }
-    return Container(
-      height: 0.0,
-      width: 0.0,
-    );
-  }
 
-  Widget showBody() {
-    return new Container(
-        child: new Form(
-      key: formKey,
-      child: new ListView(
-        padding: EdgeInsets.all(0),
-        shrinkWrap: true,
-        children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.only(left: 40.0),
-            child: Column(
-              children: <Widget>[
-                showEmailInput(),
-                SizedBox(
-                  height: 10.0,
-                ),
-                showPasswordInput(),
-              ],
+    _getStartedPage(){
+       return Container(
+        decoration: BoxDecoration(
+            color: Colors.purple,
+            gradient: LinearGradient(
+              colors: [primaryColor, Colors.black87] ,
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight
             ),
           ),
-          SizedBox(
-            height: 30.0,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: <Widget>[
+            FadeTransition(opacity: logoAnimation, child: _showLogo(false)),
+            FadeTransition(
+            opacity: slideAnimation,
+            child: Text("Get Started ⟹", textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontFamily: appFont, fontSize: h/40))),
+          ],
+        )
+      );
+    }
+
+    _info1(){
+      return Stack(children: <Widget>[
+        Container(
+          height: h, width: w,
+          decoration: BoxDecoration(
+            color: Colors.purple,
+            gradient: LinearGradient(
+              colors: [Colors.black, primaryColor] ,
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight
+            ),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0),
-            child: showPrimaryButton(),
+        ),
+        Column(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: <Widget>[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 30),
+            child: ClipRRect(
+              child: Image.asset('assets/search.png'),
+              borderRadius: BorderRadius.circular(40),
+            ),
           ),
-          showSecondaryButton(),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          Text("Search anything you need", style: TextStyle(fontSize: h/45, fontFamily: appFont, color: Colors.white),)
+        ],)
+      ],);
+    }
+
+    _info2(){
+      return Stack(children: <Widget>[
+        Container(
+          height: h, width: w,
+          decoration: BoxDecoration(
+            color: Colors.purple,
+            gradient: LinearGradient(
+              colors: [primaryColor, Colors.black] ,
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight
+            ),
+          ),
+        ),
+        Column(mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: <Widget>[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 30),
+            child: ClipRRect(
+              child: Image.asset('assets/request.png'),
+              borderRadius: BorderRadius.circular(40),
+            ),
+          ),
+          Text("Request an item at your convenience", style: TextStyle(fontSize: h/45, fontFamily: appFont, color: Colors.white),)
+        ],)
+      ],);
+    }
+
+    List<Widget> pages = [
+      Material(child: _getStartedPage()),
+      Material(child: _info1()),
+      Material(child: _info2()),
+      Material(child: _loginPage()),
+    ];
+
+    return PageView.builder(
+      itemCount: pages.length,
+      itemBuilder: (context, index){
+        return pages[index];
+      }
+    );
+  }
+  
+
+  Widget showBody() {
+    return new Form(
+    key: formKey,
+    child: new ListView(
+      padding: EdgeInsets.all(0),
+      shrinkWrap: true,
+      children: <Widget>[
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          child: FlatButton(
+            child: Text('Sign Up', style: new TextStyle(fontSize: 18.0, fontWeight: FontWeight.w300, color: Colors.white, fontFamily: 'Quicksand')),
+            onPressed: null
+          ),
+        ),
+        SizedBox(height: 10.0,),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          child: FlatButton(
+            child: Text('Try It Out', style: new TextStyle(fontSize: 18.0, fontWeight: FontWeight.w300, color: Colors.white, fontFamily: 'Quicksand')),
+            onPressed: validateAndSubmitOtherUser,
+          ),
+        ),
+        googleLogin(),
+        /*
+        Padding(
+          padding: const EdgeInsets.only(left: 40.0),
+          child: Column(
             children: <Widget>[
-              googleLogin(),
-              otherUserSignin(),
+              showEmailInput(),
+              SizedBox(height: 10.0,),
+              showPasswordInput(),
             ],
           ),
-          /*
-              showErrorMessage(),*/
-        ],
-      ),
-    ));
+        ),
+        SizedBox(height: 30.0,),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          child: showPrimaryButton(),
+        ),
+        showSecondaryButton(),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            googleLogin(),
+            otherUserSignin(),
+          ],
+        ),
+        showErrorMessage(),*/
+      ],
+    ),
+    );
   }
 
   Widget showErrorMessage() {
@@ -215,17 +313,15 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     }
   }
 
-  Widget _showLogo() {
-    double h = MediaQuery.of(context).size.height;
+  Widget _showLogo(bordered) {
     double w = MediaQuery.of(context).size.width;
     return Column(
       children: <Widget>[
-        Container(
-            padding: EdgeInsets.only(top: h / 24),
-            child: SvgPicture.asset(
-              'assets/Borderless.svg',
-              width: w / 1.5,
-            )),
+        SvgPicture.asset(
+          bordered ? 'assets/Border.svg' : 'assets/Borderless.svg',
+          width: w / 1.5,
+          height: w / 1.5,
+        ),
         Text(
           "S H A R E",
           style: TextStyle(
