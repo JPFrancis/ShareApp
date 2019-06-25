@@ -8,23 +8,24 @@ import 'package:flutter/rendering.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/services/const.dart';
 
-class SearchResults extends StatefulWidget {
-  static const routeName = '/searchResults';
+class SearchPage extends StatefulWidget {
+  static const routeName = '/searchPage';
 
-  SearchResults({Key key}) : super(key: key);
+  SearchPage({Key key}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
-    return SearchResultsState();
+    return SearchPageState();
   }
 }
 
-class SearchResultsState extends State<SearchResults> {
+class SearchPageState extends State<SearchPage> {
   TextEditingController searchController = TextEditingController();
-  List<DocumentSnapshot> allItems;
-  List<String> filteredList;
-  List<String> searchList;
-  List<String> suggestionsList;
+
+  List<String> recommendedItems = [];
+  List<DocumentSnapshot> prefixSnaps = [];
+  List<String> prefixList = [];
+  List<String> suggestions = [];
   bool showSuggestions = true;
   bool isLoading = true;
 
@@ -33,20 +34,36 @@ class SearchResultsState extends State<SearchResults> {
     super.initState();
 
     searchController.text = '';
-    getAllItems();
+    getSuggestions();
   }
 
-  Future<Null> getAllItems() async {
-    searchList = [];
-    filteredList = [];
-    suggestionsList = [];
+  @override
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
+  }
+
+  Future<Null> getSuggestions() async {
+    //searchList = [];
+    //filteredList = [];
+    //recommendedItems = [];
 
     QuerySnapshot querySnapshot = await Firestore.instance
         .collection('items')
         .orderBy('name', descending: false)
+        .limit(3)
         .getDocuments();
 
     if (querySnapshot != null) {
+      List<DocumentSnapshot> suggestedItems = querySnapshot.documents;
+
+      suggestedItems.forEach((DocumentSnapshot ds) {
+        String name = ds['name'].toLowerCase();
+
+        recommendedItems.add(name);
+      });
+
+      /*
       allItems = querySnapshot.documents;
 
       allItems.forEach((DocumentSnapshot ds) {
@@ -70,6 +87,7 @@ class SearchResultsState extends State<SearchResults> {
       searchList.sort();
       searchList.remove('');
       filteredList = searchList;
+      */
 
       //debugPrint('LIST: $searchList, LENGTH: ${searchList.length}');
       setState(() {
@@ -100,24 +118,70 @@ class SearchResultsState extends State<SearchResults> {
     );
   }
 
+  handleSearch(String searchText) async {
+    searchText.trim().toLowerCase();
+
+    // text field is empty
+    if (searchText.length == 0) {
+      setState(() {
+        prefixSnaps = [];
+        prefixList = [];
+        suggestions = [];
+      });
+    }
+
+    // user types in one letter
+    else if (/*prefixSnaps.length == 0 &&*/ searchText.length == 1) {
+      suggestions = prefixList;
+      prefixSnaps = [];
+
+      QuerySnapshot docs = await Firestore.instance
+          .collection('items')
+          .where('searchKey',
+              arrayContains: searchText.substring(0, 1).toLowerCase())
+          .getDocuments();
+
+      if (docs != null) {
+        docs.documents.forEach((ds) {
+          prefixSnaps.add(ds);
+
+          String name = ds['name'].toLowerCase();
+          String description = ds['description'].toLowerCase();
+
+          List<String> temp = [];
+
+          temp.addAll(name.split(' '));
+          temp.addAll(description.split(' '));
+
+          temp.forEach((str) {
+            if (str.startsWith(searchText) && !prefixList.contains(str)) {
+              prefixList.add(str);
+            }
+          });
+        });
+
+        prefixList.sort();
+        suggestions = prefixList;
+      }
+    }
+
+    // user types more than one letter
+    else {
+      suggestions = [];
+      prefixList.forEach((str) {
+        RegExp regExp = RegExp(r'^' + searchText + r'.*$');
+        if (regExp.hasMatch(str) && !suggestions.contains(str)) {
+          suggestions.add(str);
+        }
+      });
+    }
+
+    setState(() {});
+  }
+
   Widget showBody() {
     double h = MediaQuery.of(context).size.height;
     double w = MediaQuery.of(context).size.width;
-
-    RegExp regExp = RegExp(r'^' + searchController.text.toLowerCase() + r'.*$');
-
-    if (searchController.text.isNotEmpty) {
-      List<String> temp = [];
-      for (int i = 0; i < filteredList.length; i++) {
-        if (regExp.hasMatch(filteredList[i])) {
-          temp.add(filteredList[i]);
-        }
-      }
-
-      filteredList = temp;
-    } else {
-      filteredList = searchList;
-    }
 
     return Container(
       height: h,
@@ -192,6 +256,7 @@ class SearchResultsState extends State<SearchResults> {
                 },
                 onChanged: (value) {
                   setState(() {
+                    handleSearch(value);
                     showSuggestions = true;
                   });
                 },
@@ -217,7 +282,6 @@ class SearchResultsState extends State<SearchResults> {
 
     return Expanded(
       child: showSuggestions ? buildSuggestionsList() : buildItemsList(),
-      //child: buildSuggestionsList(),
     );
   }
 
@@ -227,10 +291,10 @@ class SearchResultsState extends State<SearchResults> {
     return ListView.builder(
       shrinkWrap: true,
       padding: EdgeInsets.all(0),
-      itemCount: allItems == null ? 0 : allItems.length,
+      itemCount: prefixSnaps == null ? 0 : prefixSnaps.length,
       itemBuilder: (context, index) {
-        String name = allItems[index]['name'].toLowerCase();
-        String description = allItems[index]['description'].toLowerCase();
+        String name = prefixSnaps[index]['name'].toLowerCase();
+        String description = prefixSnaps[index]['description'].toLowerCase();
         String searchText = searchController.text.trim().toLowerCase();
 
         List<String> splitList = List();
@@ -252,7 +316,7 @@ class SearchResultsState extends State<SearchResults> {
 
         Widget _searchTile() {
           return InkWell(
-            onTap: () => navigateToDetail(allItems[index], context),
+            onTap: () => navigateToDetail(prefixSnaps[index], context),
             child: Container(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -267,7 +331,7 @@ class SearchResultsState extends State<SearchResults> {
                           child: FittedBox(
                             fit: BoxFit.cover,
                             child: CachedNetworkImage(
-                              imageUrl: allItems[index]['images'][0],
+                              imageUrl: prefixSnaps[index]['images'][0],
                               placeholder: (context, url) =>
                                   new CircularProgressIndicator(),
                             ),
@@ -281,7 +345,7 @@ class SearchResultsState extends State<SearchResults> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           Text(
-                            '${allItems[index]['name']}',
+                            '${prefixSnaps[index]['name']}',
                             style: TextStyle(
                                 fontFamily: 'Quicksand',
                                 fontWeight: FontWeight.bold,
@@ -291,20 +355,21 @@ class SearchResultsState extends State<SearchResults> {
                           Row(
                             children: <Widget>[
                               StarRating(
-                                  rating: allItems[index]['rating'].toDouble(),
+                                  rating:
+                                      prefixSnaps[index]['rating'].toDouble(),
                                   sz: h / 40),
                               SizedBox(
                                 width: 5.0,
                               ),
                               Text(
-                                '${allItems[index]['numRatings']} reviews',
+                                '${prefixSnaps[index]['numRatings']} reviews',
                                 style: TextStyle(
                                     fontFamily: 'Quicksand', fontSize: h / 65),
                               ),
                             ],
                           ),
                           Text(
-                            '${allItems[index]['condition']}',
+                            '${prefixSnaps[index]['condition']}',
                             style: TextStyle(
                                 fontFamily: 'Quicksand',
                                 fontStyle: FontStyle.italic,
@@ -318,7 +383,7 @@ class SearchResultsState extends State<SearchResults> {
                     children: <Widget>[
                       Row(
                         children: <Widget>[
-                          Text('\$${allItems[index]['price']}',
+                          Text('\$${prefixSnaps[index]['price']}',
                               style: TextStyle(
                                   fontFamily: 'Quicksand', fontSize: h / 55)),
                           Text(' /day',
@@ -351,7 +416,7 @@ class SearchResultsState extends State<SearchResults> {
 
   Widget buildSuggestionsList() {
     List builderList =
-        searchController.text.isEmpty ? suggestionsList : filteredList;
+        searchController.text.isEmpty ? recommendedItems : suggestions;
 
     return ListView.builder(
         itemCount: builderList.length,
@@ -367,12 +432,14 @@ class SearchResultsState extends State<SearchResults> {
                       text: builderList[index],
                       selection: TextSelection.collapsed(
                           offset: builderList[index].length));
+                  //handleSearch(searchController.text.substring(0, 1));
                 });
               },
             ),
             onTap: () {
               setState(() {
                 searchController.text = builderList[index];
+                handleSearch(searchController.text.substring(0, 1));
                 showSuggestions = false;
                 FocusScope.of(context).requestFocus(FocusNode());
               });

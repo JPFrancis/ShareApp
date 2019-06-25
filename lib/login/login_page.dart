@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' show timeDilation;
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shareapp/extras/helpers.dart';
+import 'package:shareapp/main.dart';
+import 'package:shareapp/pages/home_page.dart';
 import 'package:shareapp/services/auth.dart';
 import 'package:shareapp/services/const.dart';
 
@@ -262,7 +264,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
           padding: const EdgeInsets.symmetric(horizontal: 20.0),
           child: FlatButton(
             child: Text('Try It Out', style: new TextStyle(fontSize: 18.0, fontWeight: FontWeight.w300, color: Colors.white, fontFamily: 'Quicksand')),
-            onPressed: validateAndSubmitOtherUser,
+            onPressed: navToAnonHomePage,
           ),
         ),
         googleLogin(),
@@ -315,6 +317,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
 
   Widget _showLogo(bordered) {
     double w = MediaQuery.of(context).size.width;
+
     return Column(
       children: <Widget>[
         SvgPicture.asset(
@@ -326,8 +329,20 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
           "S H A R E",
           style: TextStyle(
               fontFamily: 'Quicksand', color: Colors.white, fontSize: w / 18),
-        )
+        ),
       ],
+    );
+  }
+
+  void navToAnonHomePage() async {
+    Navigator.pushNamed(
+      context,
+      HomePage.routeName,
+      arguments: HomePageArgs(
+        null,
+        null,
+        () => Navigator.of(context).pop(),
+      ),
     );
   }
 

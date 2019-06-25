@@ -9,7 +9,7 @@ import 'package:shareapp/pages/item_detail.dart';
 import 'package:shareapp/pages/item_edit.dart';
 import 'package:shareapp/pages/item_filter.dart';
 import 'package:shareapp/pages/profile_page.dart';
-import 'package:shareapp/pages/search_results.dart';
+import 'package:shareapp/pages/search_page.dart';
 import 'package:shareapp/rentals/chat.dart';
 import 'package:shareapp/rentals/item_request.dart';
 import 'package:shareapp/rentals/new_pickup.dart';
@@ -141,13 +141,13 @@ class MyApp extends StatelessWidget {
                 },
               );
             }
-          case SearchResults.routeName:
+          case SearchPage.routeName:
             {
               final SearchResultsArgs args = settings.arguments;
 
               return MaterialPageRoute(
                 builder: (context) {
-                  return SearchResults();
+                  return SearchPage();
                 },
               );
             }

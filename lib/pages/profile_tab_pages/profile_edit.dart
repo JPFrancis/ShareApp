@@ -67,6 +67,13 @@ class ProfileEditState extends State<ProfileEdit> {
     descriptionController.text = userCopy.description;
   }
 
+  @override
+  void dispose() {
+    nameController.dispose();
+    descriptionController.dispose();
+    super.dispose();
+  }
+
   void setUserID() async {
     FirebaseAuth.instance.currentUser().then((user) {
       myUserID = user.uid;

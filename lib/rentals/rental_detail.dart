@@ -45,6 +45,7 @@ class RentalDetailState extends State<RentalDetail> {
   bool stripeInit;
 
   DocumentSnapshot rentalDS;
+  DocumentSnapshot itemDS;
   DocumentSnapshot ownerDS;
   DocumentSnapshot renterDS;
   DocumentSnapshot userDS;
@@ -104,22 +105,36 @@ class RentalDetailState extends State<RentalDetail> {
       if (ds != null) {
         ownerDS = ds;
 
-        dr = rentalDS['renter'];
+        dr = rentalDS['item'];
 
         ds = await Firestore.instance
-            .collection('users')
+            .collection('items')
             .document(dr.documentID)
             .get();
 
         if (ds != null) {
-          renterDS = ds;
+          itemDS = ds;
 
-          if (prefs != null && ownerDS != null && renterDS != null) {
-            isRenter = myUserId == renterDS.documentID ? true : false;
-            otherUserDS = isRenter ? ownerDS : renterDS;
-            rentalCC = isRenter ? 'renterCC' : 'ownerCC';
-            userDS = isRenter ? renterDS : ownerDS;
-            delayPage();
+          dr = rentalDS['renter'];
+
+          ds = await Firestore.instance
+              .collection('users')
+              .document(dr.documentID)
+              .get();
+
+          if (ds != null) {
+            renterDS = ds;
+
+            if (prefs != null &&
+                ownerDS != null &&
+                renterDS != null &&
+                itemDS != null) {
+              isRenter = myUserId == renterDS.documentID ? true : false;
+              otherUserDS = isRenter ? ownerDS : renterDS;
+              rentalCC = isRenter ? 'renterCC' : 'ownerCC';
+              userDS = isRenter ? renterDS : ownerDS;
+              delayPage();
+            }
           }
         }
       }
@@ -832,6 +847,7 @@ class RentalDetailState extends State<RentalDetail> {
           'body': 'From: $myName',
           'pushToken': otherUserDS['pushToken'],
           'rentalID': rentalDS.documentID,
+          'timestamp': DateTime.now().millisecondsSinceEpoch,
         });
       }
 
@@ -869,6 +885,7 @@ class RentalDetailState extends State<RentalDetail> {
         'body': 'From: $myName',
         'pushToken': otherUserDS['pushToken'],
         'rentalID': rentalDS.documentID,
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
       });
     });
 
