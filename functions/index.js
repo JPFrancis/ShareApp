@@ -104,9 +104,12 @@ exports.chatNotification = functions.firestore.document('rentals/{rentalId}/chat
                     "sound": "default",
                 },
                 "data": {
+                    "type": "chat",
                     "idFrom": msgData.idFrom,
                     "idTo": msgData.idTo,
                     "message": msgData.content,
+                    "rentalID": context.params.rentalId,
+                    "click_action": "FLUTTER_NOTIFICATION_CLICK",
                 }
             }
 
@@ -137,7 +140,9 @@ exports.newRentalNotification = functions.firestore.document('rentals/{rentalId}
                     "sound": "default",
                 },
                 "data": {
+                    "type": "rental",
                     "rentalID": context.params.rentalId,
+                    "click_action": "FLUTTER_NOTIFICATION_CLICK",
                 }
             }
 
@@ -167,7 +172,9 @@ exports.pushNotifications = functions.firestore.document('notifications/{notific
                     "sound": "default",
                 },
                 "data": {
-                    //"rentalID": msgData.rentalID,
+                    "type": "rental",
+                    "rentalID": msgData.rentalID,
+                    "click_action": "FLUTTER_NOTIFICATION_CLICK",
                 }
             }
 

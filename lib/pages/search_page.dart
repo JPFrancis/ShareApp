@@ -98,6 +98,8 @@ class SearchPageState extends State<SearchPage> {
 
   @override
   Widget build(BuildContext context) {
+    handleSearch(searchController.text);
+
     return Scaffold(
       backgroundColor: coolerWhite,
       /*
@@ -256,7 +258,7 @@ class SearchPageState extends State<SearchPage> {
                 },
                 onChanged: (value) {
                   setState(() {
-                    handleSearch(value);
+                    //handleSearch(value);
                     showSuggestions = true;
                   });
                 },
@@ -432,7 +434,7 @@ class SearchPageState extends State<SearchPage> {
                       text: builderList[index],
                       selection: TextSelection.collapsed(
                           offset: builderList[index].length));
-                  //handleSearch(searchController.text.substring(0, 1));
+                  handleSearch(searchController.text.substring(0, 1));
                 });
               },
             ),

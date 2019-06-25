@@ -6,6 +6,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:multi_image_picker/multi_image_picker.dart';
@@ -65,6 +66,7 @@ class ItemEditState extends State<ItemEdit> {
 
   Item itemCopy;
   Position currentLocation;
+  Geoflutterfire geo = Geoflutterfire();
 
   @override
   void initState() {
@@ -154,7 +156,7 @@ class ItemEditState extends State<ItemEdit> {
 
           if (currentLocation != null) {
             setState(() {
-              itemCopy.location =
+              itemCopy.location['geopoint'] =
                   GeoPoint(currentLocation.latitude, currentLocation.longitude);
               isLoading = false;
             });
@@ -504,7 +506,7 @@ class ItemEditState extends State<ItemEdit> {
     return Container(
       child: itemCopy.location != null
           ? Text(
-              "Selected location: ${itemCopy.location.latitude}, ${itemCopy.location.longitude}",
+              "Selected location: ${itemCopy.location['geopoint'].latitude}, ${itemCopy.location['geopoint'].longitude}",
               style: TextStyle(fontSize: 16),
             )
           : Text(
@@ -519,7 +521,7 @@ class ItemEditState extends State<ItemEdit> {
       return Container();
     } else {
       double widthOfScreen = MediaQuery.of(context).size.width;
-      GeoPoint gp = itemCopy.location;
+      GeoPoint gp = itemCopy.location['geopoint'];
       double lat = gp.latitude;
       double long = gp.longitude;
 
@@ -670,6 +672,10 @@ class ItemEditState extends State<ItemEdit> {
     searchKeyList.sort();
     searchKeyList.removeWhere((str) => !RegExp('[a-z]').hasMatch(str));
 
+    GeoPoint gp = itemCopy.location['geopoint'];
+    GeoFirePoint myLocation =
+        geo.point(latitude: gp.latitude, longitude: gp.longitude);
+
     // new item
     if (itemCopy.id == null) {
       final DocumentReference documentReference =
@@ -686,7 +692,7 @@ class ItemEditState extends State<ItemEdit> {
         'numRatings': 0,
         'price': itemCopy.price,
         'numImages': totalImagesCount,
-        'location': itemCopy.location,
+        'location': myLocation.data,
         'rental': itemCopy.rental,
         'searchKey': searchKeyList,
       });
@@ -755,7 +761,7 @@ class ItemEditState extends State<ItemEdit> {
         'condition': itemCopy.condition,
         'price': itemCopy.price,
         'numImages': totalImagesCount,
-        'location': itemCopy.location,
+        'location': myLocation.data,
         'searchKey': searchKeyList,
       });
 
@@ -876,19 +882,19 @@ class ItemEditState extends State<ItemEdit> {
   void navToLocation() async {
     GeoPoint returnLoc = await Navigator.push(context,
         MaterialPageRoute<GeoPoint>(builder: (BuildContext context) {
-      return SelectLocation(itemCopy.location);
+      return SelectLocation(itemCopy.location['geopoint']);
     }));
 
     if (returnLoc != null) {
       setState(() {
-        itemCopy.location = returnLoc;
+        itemCopy.location['geopoint'] = returnLoc;
         setCamera();
       });
     }
   }
 
   setCamera() async {
-    GeoPoint gp = itemCopy.location;
+    GeoPoint gp = itemCopy.location['geopoint'];
     double lat = gp.latitude;
     double long = gp.longitude;
 
@@ -1070,7 +1076,6 @@ class ItemEditState extends State<ItemEdit> {
                 FlatButton(
                   child: const Text('Close'),
                   onPressed: () {
-                    deleteAssets();
                     Navigator.of(context).pop(
                         false); // Pops the confirmation dialog but not the page.
                   },

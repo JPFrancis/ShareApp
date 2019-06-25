@@ -6,6 +6,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:geoflutterfire/geoflutterfire.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
@@ -60,16 +62,18 @@ class HomePageState extends State<HomePage> {
   bool isLoading = false;
   bool isAuthenticated;
 
-  EdgeInsets edgeInset;
-  double padding;
-
   TextEditingController searchController = TextEditingController();
   List<DocumentSnapshot> allItems;
   List<String> searchList;
   List<String> filteredList;
 
+  Geoflutterfire geo = Geoflutterfire();
+  Position currentLocation;
+
   static double _initial = 50.0;
   double _changingHeight = _initial;
+  EdgeInsets edgeInset;
+  double padding;
 
   @override
   void initState() {
@@ -89,6 +93,41 @@ class HomePageState extends State<HomePage> {
       myUserID = widget.firebaseUser.uid;
       setPrefs();
       updateLastActiveAndPushToken();
+
+      firebaseMessaging.configure(
+        /// called when app is running in foreground
+        onMessage: (Map<String, dynamic> message) async {
+          //handleNotifications(message);
+          /*
+          print("onMessage: $message");
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+                  content: ListTile(
+                    title: Text(message['notification']['title']),
+                    subtitle: Text(message['notification']['body']),
+                  ),
+                  actions: <Widget>[
+                    FlatButton(
+                      child: Text('Ok'),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
+          );
+          */
+        },
+
+        /// called if app is closed but running in background
+        onResume: (Map<String, dynamic> message) async {
+          handleNotifications(message);
+        },
+
+        /// called if app is fully closed
+        onLaunch: (Map<String, dynamic> message) async {
+          handleNotifications(message);
+        },
+      );
     }
 
     //getAllItems();
@@ -104,49 +143,60 @@ class HomePageState extends State<HomePage> {
     //updateAll();
   }
 
+  /*
   /// TESTING ONLY
   void updateAll() async {
-    /*
     String collection = 'items';
-    var docs = await Firestore.instance
-        .collection(collection)
-        .orderBy('name', descending: false)
-        .getDocuments();
+    var docs = await Firestore.instance.collection(collection).getDocuments();
 
     if (docs != null) {
       docs.documents.forEach((ds) {
-        List<String> searchKeyList = [];
-        String name = ds['name'].toLowerCase();
-        String description = ds['description'].toLowerCase();
-        List<String> nameList = name.split(' ');
-        List<String> descriptionList = description.split(' ');
+        GeoPoint gp = ds['location'];
 
-        nameList.forEach((str) {
-          searchKeyList.add(str.substring(0, 1));
-        });
-
-        descriptionList.forEach((str) {
-          searchKeyList.add(str.substring(0, 1));
-        });
-
-        searchKeyList = searchKeyList.toSet().toList();
-        searchKeyList.sort();
-        RegExp regExp = RegExp('[a-z]');
-        searchKeyList.removeWhere((str) => !regExp.hasMatch(str));
-
-        //debugPrint('$name: $searchKeyList');
-
+        GeoFirePoint myLocation =
+            geo.point(latitude: gp.latitude, longitude: gp.longitude);
 
         Firestore.instance
             .collection(collection)
             .document(ds.documentID)
             .updateData({
-          'searchKey': searchKeyList,
+          'location': myLocation.data,
         });
-
       });
     }
-    */
+  }
+  */
+
+  void handleNotifications(Map<String, dynamic> message) async {
+    var data = message['data'];
+    DocumentSnapshot rentalDS = await Firestore.instance
+        .collection('rentals')
+        .document(data['rentalID'])
+        .get();
+
+    if (rentalDS != null) {
+      switch (data['type']) {
+        case 'rental':
+          Navigator.pushNamed(
+            context,
+            RentalDetail.routeName,
+            arguments: RentalDetailArgs(
+              rentalDS,
+            ),
+          );
+          break;
+
+        case 'chat':
+          Navigator.pushNamed(
+            context,
+            Chat.routeName,
+            arguments: ChatArgs(
+              rentalDS,
+            ),
+          );
+          break;
+      }
+    }
   }
 
   void delayPage() async {
@@ -245,7 +295,9 @@ class HomePageState extends State<HomePage> {
     return Scaffold(
       backgroundColor: coolerWhite,
       body: isLoading
-          ? Container()
+          ? Center(
+              child: CircularProgressIndicator(),
+            )
           : IndexedStack(
               index: currentTabIndex,
               children: bottomTabPages,
@@ -267,7 +319,7 @@ class HomePageState extends State<HomePage> {
   }
 
   RaisedButton showFAB() {
-    return currentTabIndex == 2
+    return isAuthenticated && currentTabIndex == 2
         ? RaisedButton(
             elevation: 3,
             color: primaryColor,
@@ -512,11 +564,144 @@ class HomePageState extends State<HomePage> {
               height: 30.0,
             ),
             categories(),
-            //lookingFor()
+            //lookingFor()s
+            nearby(),
           ],
         ),
       ),
     );
+  }
+
+  Widget nearby() {
+    String loc =
+        currentLocation == null ? 'No location yet' : '$currentLocation';
+    return Column(
+      children: <Widget>[
+        RaisedButton(
+          shape: new RoundedRectangleBorder(
+              borderRadius: new BorderRadius.circular(5.0)),
+          color: Colors.green,
+          textColor: Colors.white,
+          onPressed: getUserLocation,
+          child: Text('Get my location'),
+        ),
+        Text(loc),
+        currentLocation == null ? Container() : showNearbyItems(),
+      ],
+    );
+  }
+
+  Widget showNearbyItems() {
+    GeoFirePoint center = geo.point(
+        latitude: currentLocation.latitude,
+        longitude: currentLocation.longitude);
+
+    var collectionReference = Firestore.instance.collection('items');
+
+    // kilometers
+    double radius = 160;
+    String field = 'location';
+
+    Stream<List<DocumentSnapshot>> stream = geo
+        .collection(collectionRef: collectionReference)
+        .within(center: center, radius: radius, field: field);
+
+    double h = MediaQuery.of(context).size.height;
+    double w = MediaQuery.of(context).size.width;
+
+    return Container(
+      height: h / 3.2,
+      child: StreamBuilder(
+        stream: stream,
+        builder: (BuildContext context,
+            AsyncSnapshot<List<DocumentSnapshot>> snapshot) {
+          if (snapshot.hasError) {
+            return new Text('${snapshot.error}');
+          }
+          switch (snapshot.connectionState) {
+            case ConnectionState.waiting:
+
+            default:
+              if (snapshot.hasData) {
+                List<DocumentSnapshot> items = snapshot.data;
+
+                return ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  shrinkWrap: true,
+                  itemCount: items.length,
+                  itemBuilder: (context, index) {
+                    DocumentSnapshot itemDS = items[index];
+                    return Container(
+                        width: w / 2.2, child: itemCard(itemDS, context));
+                  },
+                );
+              } else {
+                return Container();
+              }
+          }
+        },
+      ),
+    );
+  }
+
+  getUserLocation() async {
+    setState(() {
+      isLoading = true;
+    });
+    GeolocationStatus geolocationStatus =
+        await Geolocator().checkGeolocationPermissionStatus();
+
+    if (geolocationStatus != null) {
+      if (geolocationStatus != GeolocationStatus.granted) {
+        setState(() {
+          isLoading = false;
+        });
+
+        showUserLocationError();
+      } else {
+        currentLocation = await locateUser();
+
+        if (currentLocation != null) {
+          setState(() {
+            isLoading = false;
+          });
+        }
+      }
+    }
+  }
+
+  Future<Position> locateUser() async {
+    return Geolocator()
+        .getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+  }
+
+  Future<bool> showUserLocationError() async {
+    final ThemeData theme = Theme.of(context);
+    final TextStyle dialogTextStyle =
+        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+
+    return await showDialog<bool>(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Error'),
+              content: Text(
+                'Problem with getting your current location',
+                style: dialogTextStyle,
+              ),
+              actions: <Widget>[
+                FlatButton(
+                  child: const Text('Close'),
+                  onPressed: () {
+                    Navigator.of(context).pop(
+                        false); // Pops the confirmation dialog but not the page.
+                  },
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
   }
 
   Widget lookingFor() {
