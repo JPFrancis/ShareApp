@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -47,6 +48,7 @@ class ItemDetailState extends State<ItemDetail> {
   List<DocumentSnapshot> recentReviews;
   List<DocumentSnapshot> recentReviewsUsers = List();
 
+  bool isAuthenticated;
   bool isLoading = true;
   bool isOwner;
 
@@ -70,8 +72,14 @@ class ItemDetailState extends State<ItemDetail> {
   }
 
   void getMyUserID() async {
-    prefs = await SharedPreferences.getInstance();
-    myUserID = prefs.getString('userID') ?? '';
+    FirebaseUser user = await FirebaseAuth.instance.currentUser();
+
+    if (user != null) {
+      isAuthenticated = true;
+      myUserID = user.uid;
+    } else {
+      isAuthenticated = false;
+    }
   }
 
   Future<Null> getSnapshots(bool refreshItemDS) async {
@@ -128,8 +136,7 @@ class ItemDetailState extends State<ItemDetail> {
           }
         }
 
-        if (prefs != null &&
-            itemDS != null &&
+        if (itemDS != null &&
             creatorDS != null &&
             recentReviews != null &&
             recentReviewsUsers != null) {
@@ -202,8 +209,9 @@ class ItemDetailState extends State<ItemDetail> {
 
   RaisedButton requestButton() {
     return RaisedButton(
-        onPressed:
-            itemDS['rental'] != null ? null : () => handleRequestItemPressed(),
+        onPressed: itemDS['rental'] != null || !isAuthenticated
+            ? null
+            : () => handleRequestItemPressed(),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5.0)),
         color: primaryColor,
         child: Text('Request Item', //Text("Check Availability",

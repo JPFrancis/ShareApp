@@ -89,6 +89,41 @@ class HomePageState extends State<HomePage> {
       myUserID = widget.firebaseUser.uid;
       setPrefs();
       updateLastActiveAndPushToken();
+
+      firebaseMessaging.configure(
+        /// called when app is running in foreground
+        onMessage: (Map<String, dynamic> message) async {
+          //handleNotifications(message);
+          /*
+          print("onMessage: $message");
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+                  content: ListTile(
+                    title: Text(message['notification']['title']),
+                    subtitle: Text(message['notification']['body']),
+                  ),
+                  actions: <Widget>[
+                    FlatButton(
+                      child: Text('Ok'),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
+          );
+          */
+        },
+
+        /// called if app is closed but running in background
+        onResume: (Map<String, dynamic> message) async {
+          handleNotifications(message);
+        },
+
+        /// called if app is fully closed
+        onLaunch: (Map<String, dynamic> message) async {
+          handleNotifications(message);
+        },
+      );
     }
 
     //getAllItems();
@@ -102,6 +137,38 @@ class HomePageState extends State<HomePage> {
     ];
 
     //updateAll();
+  }
+
+  void handleNotifications(Map<String, dynamic> message) async {
+    var data = message['data'];
+    DocumentSnapshot rentalDS = await Firestore.instance
+        .collection('rentals')
+        .document(data['rentalID'])
+        .get();
+
+    if (rentalDS != null) {
+      switch (data['type']) {
+        case 'rental':
+          Navigator.pushNamed(
+            context,
+            RentalDetail.routeName,
+            arguments: RentalDetailArgs(
+              rentalDS,
+            ),
+          );
+          break;
+
+        case 'chat':
+          Navigator.pushNamed(
+            context,
+            Chat.routeName,
+            arguments: ChatArgs(
+              rentalDS,
+            ),
+          );
+          break;
+      }
+    }
   }
 
   /// TESTING ONLY
@@ -267,7 +334,7 @@ class HomePageState extends State<HomePage> {
   }
 
   RaisedButton showFAB() {
-    return currentTabIndex == 2
+    return isAuthenticated && currentTabIndex == 2
         ? RaisedButton(
             elevation: 3,
             color: primaryColor,
