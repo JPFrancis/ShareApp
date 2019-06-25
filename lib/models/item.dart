@@ -36,7 +36,7 @@ class Item {
   int price;
   int numImages;
   List images;
-  GeoPoint location;
+  Map<String, dynamic> location;
   DocumentReference rental;
 
   Item({

@@ -533,7 +533,7 @@ class ItemDetailState extends State<ItemDetail> {
 
   Widget showItemLocation() {
     double widthOfScreen = MediaQuery.of(context).size.width;
-    GeoPoint gp = itemDS['location'];
+    GeoPoint gp = itemDS['location']['geopoint'];
     double lat = gp.latitude;
     double long = gp.longitude;
 
@@ -762,7 +762,7 @@ class ItemDetailState extends State<ItemDetail> {
   }
 
   setCamera() async {
-    GeoPoint gp = itemDS['location'];
+    GeoPoint gp = itemDS['location']['geopoint'];
     double lat = gp.latitude;
     double long = gp.longitude;
 
