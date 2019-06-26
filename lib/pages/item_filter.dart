@@ -8,9 +8,9 @@ import 'package:shareapp/extras/helpers.dart';
 
 class ItemFilter extends StatefulWidget {
   static const routeName = '/allItems';
-  final String filter;
+  final String typeFilter;
 
-  ItemFilter({Key key, this.filter}) : super(key: key);
+  ItemFilter({Key key, this.typeFilter}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
@@ -21,9 +21,11 @@ class ItemFilter extends StatefulWidget {
 class ItemFilterState extends State<ItemFilter> {
   String myUserID;
 
-  String title;
   Stream stream;
-  String filter;
+  String typeFilter;
+  String conditionFilter;
+  int priceFilter;
+  String orderByFilter;
 
   bool isLoading = true;
   bool isAuthenticated;
@@ -35,7 +37,10 @@ class ItemFilterState extends State<ItemFilter> {
     // TODO: implement initState
     super.initState();
 
-    filter = widget.filter;
+    typeFilter = widget.typeFilter;
+    conditionFilter = 'All';
+    priceFilter = 0;
+    orderByFilter = 'Alphabetically';
 
     getMyUserID();
     delayPage();
@@ -62,24 +67,33 @@ class ItemFilterState extends State<ItemFilter> {
 
   @override
   Widget build(BuildContext context) {
-    if (filter == 'All') {
-      title = 'All items';
-      stream = Firestore.instance.collection('items').snapshots();
-    } else {
-      title = filter;
-      switch (title) {
-        case 'Tool':
-          title = 'Tools';
-          break;
-        case 'Home':
-          title = 'Household';
-          break;
-      }
-      stream = Firestore.instance
-          .collection('items')
-          .where('type', isEqualTo: filter)
-          .snapshots();
+    Query query = Firestore.instance.collection('items');
+
+    if (typeFilter != 'All') {
+      query = query.where('type', isEqualTo: typeFilter);
     }
+
+    if (conditionFilter != 'All') {
+      query = query.where('condition', isEqualTo: conditionFilter);
+    }
+
+    if (priceFilter != 0) {
+      query = query.where('price', isLessThanOrEqualTo: priceFilter);
+    }
+
+    switch (orderByFilter) {
+      case 'Alphabetically':
+        query = query.orderBy('name', descending: false);
+        break;
+      case 'Price low to high':
+        query = query.orderBy('price', descending: false);
+        break;
+      case 'Rating':
+        query = query.orderBy('rating', descending: true);
+        break;
+    }
+
+    stream = query.snapshots();
 
     return Scaffold(
       body: isLoading ? Container() : allItemsPage(),
@@ -100,27 +114,39 @@ class ItemFilterState extends State<ItemFilter> {
                 child: BackButton(),
                 onPressed: () => goBack(),
               ),
-              Text(title,
+              Text('Item Filter Page',
                   style: TextStyle(fontFamily: 'Quicksand', fontSize: 30.0)),
             ],
           ),
-          showFilterSelector(),
+          typeSelector(),
+          Container(
+            height: 20,
+          ),
+          conditionSelector(),
+          Container(
+            height: 20,
+          ),
+          priceSelector(),
+          Container(
+            height: 20,
+          ),
+          orderBy(),
           buildItemList(),
         ],
       ),
     );
   }
 
-  Widget showFilterSelector() {
-    String hint = filter;
+  Widget typeSelector() {
+    String hint = 'Type: $typeFilter';
     double padding = 20;
 
     switch (hint) {
       case 'Tool':
-        hint = 'Tools';
+        hint = 'Type: Tools';
         break;
       case 'Home':
-        hint = 'Household';
+        hint = 'Type: Household';
         break;
     }
 
@@ -138,38 +164,164 @@ class ItemFilterState extends State<ItemFilter> {
             onChanged: (value) {
               switch (value) {
                 case 'Tools':
-                  setState(() => filter = 'Tool');
+                  setState(() => typeFilter = 'Tool');
                   break;
                 case 'Leisure':
-                  setState(() => filter = 'Leisure');
+                  setState(() => typeFilter = 'Leisure');
                   break;
                 case 'Household':
-                  setState(() => filter = 'Home');
+                  setState(() => typeFilter = 'Home');
                   break;
                 case 'Equipment':
-                  setState(() => filter = 'Equipment');
+                  setState(() => typeFilter = 'Equipment');
                   break;
                 case 'Miscellaneous':
-                  setState(() => filter = 'Other');
+                  setState(() => typeFilter = 'Other');
                   break;
                 case 'All':
-                  setState(() => filter = 'All');
+                  setState(() => typeFilter = 'All');
                   break;
               }
             },
             items: [
+              'All',
               'Tools',
               'Leisure',
               'Household',
               'Equipment',
               'Miscellaneous',
-              'All',
             ]
                 .map(
                   (selection) => DropdownMenuItem<String>(
                         value: selection,
                         child: Text(
                           selection,
+                          style: TextStyle(fontFamily: font),
+                        ),
+                      ),
+                )
+                .toList()),
+      ),
+    );
+  }
+
+  Widget conditionSelector() {
+    String hint = 'Condition: $conditionFilter';
+    double padding = 20;
+
+    return Padding(
+      padding: EdgeInsets.only(left: padding, right: padding),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+            isDense: true,
+            isExpanded: true,
+            // [todo value]
+            hint: Text(
+              hint,
+              style: TextStyle(fontFamily: font, fontWeight: FontWeight.w500),
+            ),
+            onChanged: (value) {
+              setState(() {
+                conditionFilter = value;
+              });
+            },
+            items: [
+              'All',
+              'Lightly Used',
+              'Good',
+              'Fair',
+              'Has Character',
+            ]
+                .map(
+                  (selection) => DropdownMenuItem<String>(
+                        value: selection,
+                        child: Text(
+                          selection,
+                          style: TextStyle(fontFamily: font),
+                        ),
+                      ),
+                )
+                .toList()),
+      ),
+    );
+  }
+
+  Widget priceSelector() {
+    String hint = 'Max price: $priceFilter';
+    if (priceFilter == 0) {
+      hint = 'Max price: none';
+    }
+
+    double padding = 20;
+
+    return Padding(
+      padding: EdgeInsets.only(left: padding, right: padding),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<int>(
+            isDense: true,
+            isExpanded: true,
+            // [todo value]
+            hint: Text(
+              hint,
+              style: TextStyle(fontFamily: font, fontWeight: FontWeight.w500),
+            ),
+            onChanged: (value) {
+              setState(() {
+                priceFilter = value;
+              });
+            },
+            items: [
+              0,
+              5,
+              10,
+              25,
+              50,
+            ]
+                .map(
+                  (selection) => DropdownMenuItem<int>(
+                        value: selection,
+                        child: Text(
+                          '$selection',
+                          style: TextStyle(fontFamily: font),
+                        ),
+                      ),
+                )
+                .toList()),
+      ),
+    );
+  }
+
+  Widget orderBy() {
+    String hint = 'Sort by: $orderByFilter';
+
+    double padding = 20;
+
+    return Padding(
+      padding: EdgeInsets.only(left: padding, right: padding),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+            isDense: true,
+            isExpanded: true,
+            // [todo value]
+            hint: Text(
+              hint,
+              style: TextStyle(fontFamily: font, fontWeight: FontWeight.w500),
+            ),
+            onChanged: (value) {
+              setState(() {
+                orderByFilter = value;
+              });
+            },
+            items: [
+              'Alphabetically',
+              'Price low to high',
+              'Rating',
+            ]
+                .map(
+                  (selection) => DropdownMenuItem<String>(
+                        value: selection,
+                        child: Text(
+                          '$selection',
                           style: TextStyle(fontFamily: font),
                         ),
                       ),

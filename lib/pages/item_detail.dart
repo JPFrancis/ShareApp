@@ -159,6 +159,7 @@ class ItemDetailState extends State<ItemDetail> {
       floatingActionButton: Container(
         padding: const EdgeInsets.only(top: 120.0, left: 5.0),
         child: FloatingActionButton(
+          heroTag: 'back',
           onPressed: () => Navigator.pop(context),
           child: Icon(Icons.arrow_back),
           elevation: 1,
@@ -254,7 +255,7 @@ class ItemDetailState extends State<ItemDetail> {
                       padding: const EdgeInsets.only(top: 30.0, right: 5.0),
                       child: FloatingActionButton(
                         mini: true,
-                        //heroTag: "Edit",
+                        heroTag: "edit",
                         onPressed: () => navigateToEdit(),
                         child: Icon(Icons.edit),
                         elevation: 0,

@@ -345,7 +345,7 @@ class HomePageState extends State<HomePage> {
                   price: 0,
                   numImages: 0,
                   images: new List(),
-                  location: null,
+                  location: {'geopoint':null},
                   rental: null,
                 ),
               );
@@ -2158,7 +2158,7 @@ class HomePageState extends State<HomePage> {
         context,
         MaterialPageRoute(
           builder: (BuildContext context) => ItemFilter(
-                filter: filter,
+                typeFilter: filter,
               ),
         ));
   }
