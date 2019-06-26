@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shareapp/extras/helpers.dart';
@@ -18,11 +19,16 @@ class ItemFilter extends StatefulWidget {
 }
 
 class ItemFilterState extends State<ItemFilter> {
+  String myUserID;
+
   String title;
   Stream stream;
-  bool isLoading = true;
-  String font = 'Quicksand';
   String filter;
+
+  bool isLoading = true;
+  bool isAuthenticated;
+
+  String font = 'Quicksand';
 
   @override
   void initState() {
@@ -31,6 +37,7 @@ class ItemFilterState extends State<ItemFilter> {
 
     filter = widget.filter;
 
+    getMyUserID();
     delayPage();
   }
 
@@ -40,6 +47,17 @@ class ItemFilterState extends State<ItemFilter> {
         isLoading = false;
       });
     });
+  }
+
+  void getMyUserID() async {
+    FirebaseUser user = await FirebaseAuth.instance.currentUser();
+
+    if (user != null) {
+      isAuthenticated = true;
+      myUserID = user.uid;
+    } else {
+      isAuthenticated = false;
+    }
   }
 
   @override
@@ -176,16 +194,24 @@ class ItemFilterState extends State<ItemFilter> {
             default:
               if (snapshot.hasData) {
                 List<DocumentSnapshot> items = snapshot.data.documents;
+                List<Widget> cards = [];
+
+                items.forEach((ds) {
+                  if (!isAuthenticated ||
+                      ds['creator'].documentID != myUserID) {
+                    cards.add(itemCard(ds, context));
+                  }
+                });
+
                 return GridView.count(
-                    shrinkWrap: true,
-                    mainAxisSpacing: 15.0,
-                    crossAxisCount: tilerows,
-                    childAspectRatio: (2 / 3),
-                    padding: const EdgeInsets.all(20.0),
-                    crossAxisSpacing: MediaQuery.of(context).size.width / 20,
-                    children: items
-                        .map((DocumentSnapshot ds) => itemCard(ds, context))
-                        .toList());
+                  shrinkWrap: true,
+                  mainAxisSpacing: 15.0,
+                  crossAxisCount: tilerows,
+                  childAspectRatio: (2 / 3),
+                  padding: const EdgeInsets.all(20.0),
+                  crossAxisSpacing: MediaQuery.of(context).size.width / 20,
+                  children: cards,
+                );
               } else {
                 return Container();
               }
