@@ -10,10 +10,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 /*
 int condition
-1 = lightly used
-2 = good
-3 = fair
-4 = has character
+'Lightly Used',
+'Good',
+'Fair',
+'Has Character',
  */
 
 /*
@@ -36,7 +36,7 @@ class Item {
   int price;
   int numImages;
   List images;
-  Map<String, dynamic> location;
+  Map<dynamic, dynamic> location;
   DocumentReference rental;
 
   Item({

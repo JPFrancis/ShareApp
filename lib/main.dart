@@ -136,7 +136,7 @@ class MyApp extends StatelessWidget {
               return MaterialPageRoute(
                 builder: (context) {
                   return ItemFilter(
-                    filter: args.filter,
+                    typeFilter: args.filter,
                   );
                 },
               );

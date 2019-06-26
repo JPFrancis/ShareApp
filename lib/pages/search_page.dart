@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/services/const.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class SearchPage extends StatefulWidget {
   static const routeName = '/searchPage';
@@ -26,14 +27,19 @@ class SearchPageState extends State<SearchPage> {
   List<DocumentSnapshot> prefixSnaps = [];
   List<String> prefixList = [];
   List<String> suggestions = [];
+
   bool showSuggestions = true;
   bool isLoading = true;
+  bool isAuthenticated;
+
+  String myUserID;
 
   @override
   void initState() {
     super.initState();
 
     searchController.text = '';
+    getMyUserID();
     getSuggestions();
   }
 
@@ -41,6 +47,17 @@ class SearchPageState extends State<SearchPage> {
   void dispose() {
     searchController.dispose();
     super.dispose();
+  }
+
+  void getMyUserID() async {
+    FirebaseUser user = await FirebaseAuth.instance.currentUser();
+
+    if (user != null) {
+      isAuthenticated = true;
+      myUserID = user.uid;
+    } else {
+      isAuthenticated = false;
+    }
   }
 
   Future<Null> getSuggestions() async {
@@ -51,7 +68,7 @@ class SearchPageState extends State<SearchPage> {
     QuerySnapshot querySnapshot = await Firestore.instance
         .collection('items')
         .orderBy('name', descending: false)
-        .limit(3)
+        .limit(5)
         .getDocuments();
 
     if (querySnapshot != null) {
@@ -60,7 +77,9 @@ class SearchPageState extends State<SearchPage> {
       suggestedItems.forEach((DocumentSnapshot ds) {
         String name = ds['name'].toLowerCase();
 
-        recommendedItems.add(name);
+        if (!isAuthenticated||ds['creator'].documentID != myUserID) {
+          recommendedItems.add(name);
+        }
       });
 
       /*
@@ -145,7 +164,8 @@ class SearchPageState extends State<SearchPage> {
 
       if (docs != null) {
         docs.documents.forEach((ds) {
-          prefixSnaps.add(ds);
+          if (!isAuthenticated||ds['creator'].documentID != myUserID)
+          {prefixSnaps.add(ds);}
 
           String name = ds['name'].toLowerCase();
           String description = ds['description'].toLowerCase();
@@ -157,7 +177,8 @@ class SearchPageState extends State<SearchPage> {
 
           temp.forEach((str) {
             if (str.startsWith(searchText) && !prefixList.contains(str)) {
-              prefixList.add(str);
+              if (!isAuthenticated||ds['creator'].documentID != myUserID)
+              {prefixList.add(str);}
             }
           });
         });
