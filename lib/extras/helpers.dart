@@ -72,6 +72,14 @@ class StarRating extends StatelessWidget {
 // Reusable Widgets
 
 Widget itemCard(DocumentSnapshot ds, context) {
+  String priceAndDistance = "\$${ds['price']} per day";
+  double distance = ds.data['distance'];
+
+  if (distance != null) {
+    distance /= 1.609;
+    priceAndDistance += ' | ${distance.toStringAsFixed(1)} miles away';
+  }
+
   var card = new Container(child: new LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
     double h = constraints.maxHeight;
@@ -159,7 +167,7 @@ Widget itemCard(DocumentSnapshot ds, context) {
                   SizedBox(
                     height: 2.0,
                   ),
-                  Text("\$${ds['price']} per day",
+                  Text(priceAndDistance,
                       style: TextStyle(
                           fontSize: h / 21,
                           fontFamily: 'Quicksand',
@@ -179,7 +187,7 @@ Widget itemCard(DocumentSnapshot ds, context) {
                             fontWeight: FontWeight.w400),
                       )
                     ],
-                  )
+                  ),
                 ],
               ),
             ),

@@ -666,13 +666,13 @@ class HomePageState extends State<HomePage> {
   }
 
   Widget showNearbyItems() {
-    double h = MediaQuery.of(context).size.height;
+    double h = MediaQuery.of(context).size.height / 3.2;
     double w = MediaQuery.of(context).size.width;
 
     if (locIsLoading) {
       //return Text('Getting location...');
       return Container(
-        height: h / 3.2,
+        height: h,
         child: Center(
           child: CircularProgressIndicator(),
         ),
@@ -687,7 +687,7 @@ class HomePageState extends State<HomePage> {
       var collectionReference = Firestore.instance.collection('items');
 
       // kilometers
-      double radius = searchRange * 1.61;
+      double radius = searchRange * 1.609;
       String field = 'location';
 
       Stream<List<DocumentSnapshot>> stream = geo
@@ -695,7 +695,7 @@ class HomePageState extends State<HomePage> {
           .within(center: center, radius: radius, field: field);
 
       return Container(
-        height: h / 3.2,
+        height: h,
         child: StreamBuilder(
           stream: stream,
           builder: (BuildContext context,
@@ -716,8 +716,11 @@ class HomePageState extends State<HomePage> {
                     itemCount: items.length,
                     itemBuilder: (context, index) {
                       DocumentSnapshot itemDS = items[index];
+
                       return Container(
-                          width: w / 2.2, child: itemCard(itemDS, context));
+                        width: w / 2.2,
+                        child: itemCard(itemDS, context),
+                      );
                     },
                   );
                 } else {
