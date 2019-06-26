@@ -88,20 +88,15 @@ class ProfileEditState extends State<ProfileEdit> {
 
   @override
   Widget build(BuildContext context) {
-    theme = Theme.of(context);
-    textStyle =
-        Theme.of(context).textTheme.headline.merge(TextStyle(fontSize: 20));
+    textStyle = TextStyle(fontSize: 20, fontFamily: 'Quicksand');
     inputTextStyle = Theme.of(context).textTheme.subtitle;
 
     return Scaffold(
       body: Stack(
         children: <Widget>[
-          isLoading
-              ? Container(
-                  decoration:
-                      new BoxDecoration(color: Colors.white.withOpacity(0.0)),
-                )
-              : showBody(),
+          isLoading 
+            ? Container(decoration: new BoxDecoration(color: Colors.white.withOpacity(0.0)))
+            : showBody(),
           showCircularProgress(),
         ],
       ),
@@ -119,19 +114,19 @@ class ProfileEditState extends State<ProfileEdit> {
       key: formKey,
       onWillPop: onWillPop,
       child: ListView(
-          padding: EdgeInsets.only(top: 40.0, left: 25.0, right: 25.0),
+          padding: EdgeInsets.only(top: 30.0, left: 25.0, right: 25.0),
           children: <Widget>[
             Container(
               alignment: Alignment.topLeft,
               child: FloatingActionButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Icon(Icons.arrow_back),
+                  child: Icon(Icons.close),
                   elevation: 1,
                   backgroundColor: Colors.white70,
                   foregroundColor: primaryColor),
             ),
             image(),
-            SizedBox(height: 10.0),
+            SizedBox(height: 15.0),
             showDisplayNameEditor(),
             divider(),
             reusableCategory("ABOUT ME"),

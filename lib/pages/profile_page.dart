@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shareapp/extras/helpers.dart';
+import 'package:shareapp/extras/quote_icons.dart';
 import 'package:shareapp/services/const.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -83,6 +84,7 @@ class ProfilePageState extends State<ProfilePage> {
       padding: EdgeInsets.all(0),
       children: <Widget>[
         showNameAndProfilePic(),
+        showUserDescription(),
         divider(),
         reusableCategory("ITEMS"),
         SizedBox(
@@ -91,6 +93,16 @@ class ProfilePageState extends State<ProfilePage> {
         showItems(),
       ],
     );
+  }
+
+  Widget showUserDescription() {
+    bool empty = userDS['description'].toString().isEmpty ? true : false;
+    String desc = userDS['description'].toString().isEmpty ? "The user hasn't added a description yet!" : userDS['description'];
+    return Column(children: <Widget>[
+      Align(alignment: Alignment.topLeft, child: Icon(QuoteIcons.quote_left)),
+      Text("$desc", style: TextStyle(fontSize: MediaQuery.of(context).size.width/25, fontFamily: appFont, color: empty? Colors.grey : Colors.black54)),
+      Align(alignment: Alignment.bottomRight, child: Icon(QuoteIcons.quote_right)),
+    ],);
   }
 
   Widget showNameAndProfilePic() {
