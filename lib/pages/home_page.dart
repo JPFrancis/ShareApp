@@ -59,7 +59,9 @@ class HomePageState extends State<HomePage> {
   List bottomTabPages;
   int currentTabIndex;
   int badge;
-  bool isLoading = false;
+
+  bool pageIsLoading = false;
+  bool locIsLoading = false;
   bool isAuthenticated;
 
   TextEditingController searchController = TextEditingController();
@@ -69,11 +71,13 @@ class HomePageState extends State<HomePage> {
 
   Geoflutterfire geo = Geoflutterfire();
   Position currentLocation;
+  double searchRange = 25.0; // in miles
 
   static double _initial = 50.0;
   double _changingHeight = _initial;
   EdgeInsets edgeInset;
   double padding;
+  String font = 'Quicksand';
 
   @override
   void initState() {
@@ -140,6 +144,8 @@ class HomePageState extends State<HomePage> {
       bottomNavTile('Profile', Icon(Icons.account_circle), false),
     ];
 
+    getUserLocation();
+
     //updateAll();
   }
 
@@ -202,7 +208,7 @@ class HomePageState extends State<HomePage> {
   void delayPage() async {
     Future.delayed(Duration(milliseconds: 750)).then((_) {
       setState(() {
-        isLoading = false;
+        pageIsLoading = false;
       });
     });
   }
@@ -228,7 +234,7 @@ class HomePageState extends State<HomePage> {
           setPrefs();
         } else {
           setState(() {
-            isLoading = false;
+            pageIsLoading = false;
           });
         }
       }
@@ -294,7 +300,7 @@ class HomePageState extends State<HomePage> {
 
     return Scaffold(
       backgroundColor: coolerWhite,
-      body: isLoading
+      body: pageIsLoading
           ? Center(
               child: CircularProgressIndicator(),
             )
@@ -555,16 +561,19 @@ class HomePageState extends State<HomePage> {
         removeTop: true,
         context: context,
         child: ListView(
-          physics: const NeverScrollableScrollPhysics(),
-
+          //physics: const NeverScrollableScrollPhysics(),
           // shrinkWrap: true,
           children: <Widget>[
             introImageAndSearch(),
             SizedBox(
               height: 30.0,
             ),
-            categories(),
-            //lookingFor()s
+            //categories(),
+            iconCategories(),
+            //lookingFor()
+            Container(
+              height: 10,
+            ),
             nearby(),
           ],
         ),
@@ -573,80 +582,157 @@ class HomePageState extends State<HomePage> {
   }
 
   Widget nearby() {
-    String loc =
-        currentLocation == null ? 'No location yet' : '$currentLocation';
-    return Column(
-      children: <Widget>[
-        RaisedButton(
-          shape: new RoundedRectangleBorder(
-              borderRadius: new BorderRadius.circular(5.0)),
-          color: Colors.green,
-          textColor: Colors.white,
-          onPressed: getUserLocation,
-          child: Text('Get my location'),
-        ),
-        Text(loc),
-        currentLocation == null ? Container() : showNearbyItems(),
-      ],
-    );
-  }
-
-  Widget showNearbyItems() {
-    GeoFirePoint center = geo.point(
-        latitude: currentLocation.latitude,
-        longitude: currentLocation.longitude);
-
-    var collectionReference = Firestore.instance.collection('items');
-
-    // kilometers
-    double radius = 160;
-    String field = 'location';
-
-    Stream<List<DocumentSnapshot>> stream = geo
-        .collection(collectionRef: collectionReference)
-        .within(center: center, radius: radius, field: field);
-
     double h = MediaQuery.of(context).size.height;
-    double w = MediaQuery.of(context).size.width;
 
-    return Container(
-      height: h / 3.2,
-      child: StreamBuilder(
-        stream: stream,
-        builder: (BuildContext context,
-            AsyncSnapshot<List<DocumentSnapshot>> snapshot) {
-          if (snapshot.hasError) {
-            return new Text('${snapshot.error}');
-          }
-          switch (snapshot.connectionState) {
-            case ConnectionState.waiting:
-
-            default:
-              if (snapshot.hasData) {
-                List<DocumentSnapshot> items = snapshot.data;
-
-                return ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  shrinkWrap: true,
-                  itemCount: items.length,
-                  itemBuilder: (context, index) {
-                    DocumentSnapshot itemDS = items[index];
-                    return Container(
-                        width: w / 2.2, child: itemCard(itemDS, context));
-                  },
-                );
-              } else {
-                return Container();
-              }
-          }
-        },
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: h / 55),
+      child: Column(
+        children: <Widget>[
+          Text(
+            'Nearby Items',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              fontFamily: font,
+            ),
+          ),
+          Row(
+            //mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              searchRangeDropdown(),
+              ButtonTheme(
+                minWidth: 40,
+                child: RaisedButton(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(5.0),
+                  ),
+                  color: Colors.green,
+                  textColor: Colors.white,
+                  onPressed: getUserLocation,
+                  child: Icon(Icons.location_searching),
+                ),
+              ),
+            ],
+          ),
+          Container(
+            height: 10,
+          ),
+          showNearbyItems(),
+        ],
       ),
     );
   }
 
+  Widget searchRangeDropdown() {
+    return Expanded(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 10),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<double>(
+              isDense: true,
+              isExpanded: true,
+              hint: Text(
+                '$searchRange mile range',
+                style: TextStyle(fontFamily: font, fontWeight: FontWeight.w500),
+              ),
+              onChanged: (value) {
+                setState(() {
+                  searchRange = value;
+                  if (currentLocation == null) {
+                    getUserLocation();
+                  }
+                });
+              },
+              items: [
+                5.0,
+                10.0,
+                25.0,
+                50.0,
+                100.0,
+              ]
+                  .map(
+                    (selection) => DropdownMenuItem<double>(
+                          value: selection,
+                          child: Text(
+                            '$selection',
+                            style: TextStyle(fontFamily: font),
+                          ),
+                        ),
+                  )
+                  .toList()),
+        ),
+      ),
+    );
+  }
+
+  Widget showNearbyItems() {
+    double h = MediaQuery.of(context).size.height;
+    double w = MediaQuery.of(context).size.width;
+
+    if (locIsLoading) {
+      //return Text('Getting location...');
+      return Container(
+        height: h / 3.2,
+        child: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    } else if (currentLocation == null) {
+      return Text('No location data');
+    } else {
+      GeoFirePoint center = geo.point(
+          latitude: currentLocation.latitude,
+          longitude: currentLocation.longitude);
+
+      var collectionReference = Firestore.instance.collection('items');
+
+      // kilometers
+      double radius = searchRange * 1.61;
+      String field = 'location';
+
+      Stream<List<DocumentSnapshot>> stream = geo
+          .collection(collectionRef: collectionReference)
+          .within(center: center, radius: radius, field: field);
+
+      return Container(
+        height: h / 3.2,
+        child: StreamBuilder(
+          stream: stream,
+          builder: (BuildContext context,
+              AsyncSnapshot<List<DocumentSnapshot>> snapshot) {
+            if (snapshot.hasError) {
+              return new Text('${snapshot.error}');
+            }
+            switch (snapshot.connectionState) {
+              case ConnectionState.waiting:
+
+              default:
+                if (snapshot.hasData) {
+                  List<DocumentSnapshot> items = snapshot.data;
+
+                  return ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    shrinkWrap: true,
+                    itemCount: items.length,
+                    itemBuilder: (context, index) {
+                      DocumentSnapshot itemDS = items[index];
+                      return Container(
+                          width: w / 2.2, child: itemCard(itemDS, context));
+                    },
+                  );
+                } else {
+                  return Container();
+                }
+            }
+          },
+        ),
+      );
+    }
+  }
+
   getUserLocation() async {
     setState(() {
-      isLoading = true;
+      locIsLoading = true;
     });
     GeolocationStatus geolocationStatus =
         await Geolocator().checkGeolocationPermissionStatus();
@@ -654,7 +740,7 @@ class HomePageState extends State<HomePage> {
     if (geolocationStatus != null) {
       if (geolocationStatus != GeolocationStatus.granted) {
         setState(() {
-          isLoading = false;
+          locIsLoading = false;
         });
 
         showUserLocationError();
@@ -663,7 +749,7 @@ class HomePageState extends State<HomePage> {
 
         if (currentLocation != null) {
           setState(() {
-            isLoading = false;
+            locIsLoading = false;
           });
         }
       }
@@ -867,39 +953,8 @@ class HomePageState extends State<HomePage> {
     );
   }
 
-  Widget categories() {
+  Widget iconCategories() {
     double h = MediaQuery.of(context).size.height;
-
-    /*
-    Widget _categoryTile(category, image) {
-      return ClipRRect(
-        borderRadius: new BorderRadius.circular(5.0),
-        child: Container(
-          height: h / 7.5,
-          width: h / 7.5,
-          child: Stack(
-            children: <Widget>[
-              SizedBox.expand(
-                  child: Image.asset(
-                    image,
-                    fit: BoxFit.cover,
-                    gaplessPlayback: true,
-                  )),
-              SizedBox.expand(
-                child: Container(color: Colors.black45),
-              ),
-              Center(
-                  child: Text(category,
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontFamily: 'Quicksand',
-                          fontSize: h / 60)))
-            ],
-          ),
-        ),
-      );
-    }
-    */
 
     Widget _categoryTile(category, icon) {
       return ClipRRect(
@@ -976,8 +1031,40 @@ class HomePageState extends State<HomePage> {
         ],
       ),
     );
+  }
 
-    /*
+  Widget categories() {
+    double h = MediaQuery.of(context).size.height;
+
+    Widget _categoryTile(category, image) {
+      return ClipRRect(
+        borderRadius: new BorderRadius.circular(5.0),
+        child: Container(
+          height: h / 7.5,
+          width: h / 7.5,
+          child: Stack(
+            children: <Widget>[
+              SizedBox.expand(
+                  child: Image.asset(
+                image,
+                fit: BoxFit.cover,
+                gaplessPlayback: true,
+              )),
+              SizedBox.expand(
+                child: Container(color: Colors.black45),
+              ),
+              Center(
+                  child: Text(category,
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontFamily: 'Quicksand',
+                          fontSize: h / 60)))
+            ],
+          ),
+        ),
+      );
+    }
+
     return Container(
       padding: EdgeInsets.symmetric(horizontal: h / 55),
       child: Column(
@@ -985,9 +1072,18 @@ class HomePageState extends State<HomePage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
-              _categoryTile("Tools", 'assets/hammer.jpg'),
-              _categoryTile("Leisure", 'assets/golfclub.jpg'),
-              _categoryTile("Household", 'assets/vacuum2.jpg'),
+              InkWell(
+                onTap: () => navToItemFilter('Tools'),
+                child: _categoryTile('Tools', 'assets/hammer.jpg'),
+              ),
+              InkWell(
+                onTap: () => navToItemFilter('Leisure'),
+                child: _categoryTile('Leisure', 'assets/golfclub.jpg'),
+              ),
+              InkWell(
+                onTap: () => navToItemFilter('Household'),
+                child: _categoryTile('Household', 'assets/vacuum2.jpg'),
+              ),
             ],
           ),
           SizedBox(
@@ -996,18 +1092,23 @@ class HomePageState extends State<HomePage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
-              _categoryTile("Equipment", 'assets/lawnmower.jpg'),
-              _categoryTile("Miscellaneous", 'assets/lawnchair.jpg'),
               InkWell(
-                onTap: navToAllItems,
-                child: _categoryTile("More", 'assets/misc.jpg'),
+                onTap: () => navToItemFilter('Equipment'),
+                child: _categoryTile('Equipment', 'assets/lawnmower.jpg'),
+              ),
+              InkWell(
+                onTap: () => navToItemFilter('Miscellaneous'),
+                child: _categoryTile('Miscellaneous', 'assets/lawnchair.jpg'),
+              ),
+              InkWell(
+                onTap: () => navToItemFilter('All'),
+                child: _categoryTile('More', 'assets/misc.jpg'),
               ),
             ],
           ),
         ],
       ),
     );
-    */
   }
 
   Widget myRentalsPage() {

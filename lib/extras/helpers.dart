@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:shareapp/main.dart';
@@ -88,14 +89,30 @@ Widget itemCard(DocumentSnapshot ds, context) {
       ),
       child: Stack(
         children: <Widget>[
+          Container(
+            height: h,
+            width: w,
+            child: FittedBox(
+              fit: BoxFit.cover,
+              child: CachedNetworkImage(
+                imageUrl: ds['images'][0],
+                placeholder: (context, url) => CircularProgressIndicator(),
+              ),
+            ),
+          ),
+          /*
           Hero(
             tag: "${ds['id']}",
             child: Container(
-                decoration: BoxDecoration(
-                    image: DecorationImage(
-                        image: NetworkImage(ds['images'][0]),
-                        fit: BoxFit.cover))),
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: NetworkImage(ds['images'][0]),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
           ),
+          */
           SizedBox.expand(
             child: Container(
               color: Colors.black12,

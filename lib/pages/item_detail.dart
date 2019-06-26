@@ -115,6 +115,7 @@ class ItemDetailState extends State<ItemDetail> {
         }
       }
 
+      /*
       QuerySnapshot querySnapshot = await Firestore.instance
           .collection('rentals')
           .where('item',
@@ -142,7 +143,9 @@ class ItemDetailState extends State<ItemDetail> {
             recentReviewsUsers != null) {
           delayPage();
         }
-      }
+      }*/
+
+      delayPage();
     }
   }
 
@@ -251,7 +254,7 @@ class ItemDetailState extends State<ItemDetail> {
                       padding: const EdgeInsets.only(top: 30.0, right: 5.0),
                       child: FloatingActionButton(
                         mini: true,
-                        heroTag: "Edit",
+                        //heroTag: "Edit",
                         onPressed: () => navigateToEdit(),
                         child: Icon(Icons.edit),
                         elevation: 0,
@@ -271,7 +274,7 @@ class ItemDetailState extends State<ItemDetail> {
         divider(),
         showItemLocation(),
         divider(),
-        recentReviews.length >= 3 ? showReviews() : Container(),
+        //recentReviews.length >= 3 ? showReviews() : Container(),
       ],
     );
   }
