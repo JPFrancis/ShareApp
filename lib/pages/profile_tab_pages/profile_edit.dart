@@ -94,9 +94,11 @@ class ProfileEditState extends State<ProfileEdit> {
     return Scaffold(
       body: Stack(
         children: <Widget>[
-          isLoading 
-            ? Container(decoration: new BoxDecoration(color: Colors.white.withOpacity(0.0)))
-            : showBody(),
+          isLoading
+              ? Container(
+                  decoration:
+                      new BoxDecoration(color: Colors.white.withOpacity(0.0)))
+              : showBody(),
           showCircularProgress(),
         ],
       ),

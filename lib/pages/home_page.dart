@@ -97,41 +97,7 @@ class HomePageState extends State<HomePage> {
       myUserID = widget.firebaseUser.uid;
       setPrefs();
       updateLastActiveAndPushToken();
-
-      firebaseMessaging.configure(
-        /// called when app is running in foreground
-        onMessage: (Map<String, dynamic> message) async {
-          //handleNotifications(message);
-          /*
-          print("onMessage: $message");
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-                  content: ListTile(
-                    title: Text(message['notification']['title']),
-                    subtitle: Text(message['notification']['body']),
-                  ),
-                  actions: <Widget>[
-                    FlatButton(
-                      child: Text('Ok'),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                  ],
-                ),
-          );
-          */
-        },
-
-        /// called if app is closed but running in background
-        onResume: (Map<String, dynamic> message) async {
-          handleNotifications(message);
-        },
-
-        /// called if app is fully closed
-        onLaunch: (Map<String, dynamic> message) async {
-          handleNotifications(message);
-        },
-      );
+      configureFCM();
     }
 
     //getAllItems();
@@ -173,14 +139,33 @@ class HomePageState extends State<HomePage> {
   }
   */
 
+  void configureFCM() {
+    firebaseMessaging.configure(
+      /// called if app is closed but running in background
+      onResume: (Map<String, dynamic> message) async {
+        handleNotifications(message);
+      },
+
+      /// called if app is fully closed
+      onLaunch: (Map<String, dynamic> message) async {
+        handleNotifications(message);
+      },
+
+      /// called when app is running in foreground
+      onMessage: (Map<String, dynamic> message) async {
+        //handleNotifications(message);
+      },
+    );
+  }
+
   void handleNotifications(Map<String, dynamic> message) async {
     var data = message['data'];
-    DocumentSnapshot rentalDS = await Firestore.instance
+
+    Firestore.instance
         .collection('rentals')
         .document(data['rentalID'])
-        .get();
-
-    if (rentalDS != null) {
+        .get()
+        .then((rentalDS) {
       switch (data['type']) {
         case 'rental':
           Navigator.pushNamed(
@@ -202,7 +187,7 @@ class HomePageState extends State<HomePage> {
           );
           break;
       }
-    }
+    });
   }
 
   void delayPage() async {
@@ -345,7 +330,7 @@ class HomePageState extends State<HomePage> {
                   price: 0,
                   numImages: 0,
                   images: new List(),
-                  location: {'geopoint':null},
+                  location: {'geopoint': null},
                   rental: null,
                 ),
               );

@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:shareapp/login/login_page.dart';
 import 'package:shareapp/pages/home_page.dart';
@@ -20,6 +21,7 @@ enum AuthStatus {
 }
 
 class _RootPageState extends State<RootPage> {
+  final FirebaseMessaging firebaseMessaging = FirebaseMessaging();
   AuthStatus authStatus = AuthStatus.notSignedIn;
   bool isLoading = true;
 

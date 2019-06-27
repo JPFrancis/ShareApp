@@ -97,12 +97,22 @@ class ProfilePageState extends State<ProfilePage> {
 
   Widget showUserDescription() {
     bool empty = userDS['description'].toString().isEmpty ? true : false;
-    String desc = userDS['description'].toString().isEmpty ? "The user hasn't added a description yet!" : userDS['description'];
-    return Column(children: <Widget>[
-      Align(alignment: Alignment.topLeft, child: Icon(QuoteIcons.quote_left)),
-      Text("$desc", style: TextStyle(fontSize: MediaQuery.of(context).size.width/25, fontFamily: appFont, color: empty? Colors.grey : Colors.black54)),
-      Align(alignment: Alignment.bottomRight, child: Icon(QuoteIcons.quote_right)),
-    ],);
+    String desc = userDS['description'].toString().isEmpty
+        ? "The user hasn't added a description yet!"
+        : userDS['description'];
+    return Column(
+      children: <Widget>[
+        Align(alignment: Alignment.topLeft, child: Icon(QuoteIcons.quote_left)),
+        Text("$desc",
+            style: TextStyle(
+                fontSize: MediaQuery.of(context).size.width / 25,
+                fontFamily: appFont,
+                color: empty ? Colors.grey : Colors.black54)),
+        Align(
+            alignment: Alignment.bottomRight,
+            child: Icon(QuoteIcons.quote_right)),
+      ],
+    );
   }
 
   Widget showNameAndProfilePic() {

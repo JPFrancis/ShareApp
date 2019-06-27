@@ -30,7 +30,8 @@ class MyApp extends StatelessWidget {
         accentColor: Color(0xff007f6e),
       ),
       home: new RootPage(auth: new Auth()),
-      //initialRoute: RootPage.routeName,
+      initialRoute: '/',
+      //RootPage.routeName,
       onGenerateRoute: (settings) {
         switch (settings.name) {
           case HomePage.routeName:

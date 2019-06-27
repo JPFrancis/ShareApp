@@ -2,12 +2,12 @@ import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/services/const.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class SearchPage extends StatefulWidget {
   static const routeName = '/searchPage';
@@ -77,7 +77,7 @@ class SearchPageState extends State<SearchPage> {
       suggestedItems.forEach((DocumentSnapshot ds) {
         String name = ds['name'].toLowerCase();
 
-        if (!isAuthenticated||ds['creator'].documentID != myUserID) {
+        if (!isAuthenticated || ds['creator'].documentID != myUserID) {
           recommendedItems.add(name);
         }
       });
@@ -164,8 +164,9 @@ class SearchPageState extends State<SearchPage> {
 
       if (docs != null) {
         docs.documents.forEach((ds) {
-          if (!isAuthenticated||ds['creator'].documentID != myUserID)
-          {prefixSnaps.add(ds);}
+          if (!isAuthenticated || ds['creator'].documentID != myUserID) {
+            prefixSnaps.add(ds);
+          }
 
           String name = ds['name'].toLowerCase();
           String description = ds['description'].toLowerCase();
@@ -177,8 +178,9 @@ class SearchPageState extends State<SearchPage> {
 
           temp.forEach((str) {
             if (str.startsWith(searchText) && !prefixList.contains(str)) {
-              if (!isAuthenticated||ds['creator'].documentID != myUserID)
-              {prefixList.add(str);}
+              if (!isAuthenticated || ds['creator'].documentID != myUserID) {
+                prefixList.add(str);
+              }
             }
           });
         });

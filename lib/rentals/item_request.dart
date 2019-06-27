@@ -161,7 +161,6 @@ class ItemRequestState extends State<ItemRequest> {
         height: 60.0,
         padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
         child: RaisedButton(
-          splashColor: Colors.red,
           elevation: 3.0,
           onPressed: () => validateSend(sendItem),
           color: primaryColor,
@@ -635,6 +634,9 @@ class DateTimeItem extends StatelessWidget {
     String range = parseWindow(windows, window, amPm);
     double w = MediaQuery.of(context).size.width;
 
+    DateTime now = DateTime.now();
+    DateTime firstDate = DateTime(now.year, now.month, now.day);
+
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 15.0),
       child: Row(
@@ -644,8 +646,8 @@ class DateTimeItem extends StatelessWidget {
             onTap: () {
               showDatePicker(
                       context: context,
-                      firstDate: DateTime.now(),
-                      initialDate: DateTime.now().add(Duration(seconds: 10)),
+                      firstDate: firstDate,
+                      initialDate: dateTime,
                       lastDate: DateTime.now().add(Duration(days: 300)))
                   .then<void>((DateTime value) {
                 if (value != null) {
