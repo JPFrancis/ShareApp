@@ -89,7 +89,7 @@ exports.deleteItemImages = functions.firestore.document('items/{itemId}')
     })
 
 // chat push notifications
-exports.chatNotification = functions.firestore.document('rentals/{rentalId}/chat/{msgTimestamp}')
+exports.chatNotification = functions.firestore.document('messages/{groupChatId}/messages/{msgTimestamp}')
     .onCreate(async (snapshot, context) => {
         var msgData = snapshot.data();
         var token = msgData.pushToken;
@@ -107,8 +107,9 @@ exports.chatNotification = functions.firestore.document('rentals/{rentalId}/chat
                     "type": "chat",
                     "idFrom": msgData.idFrom,
                     "idTo": msgData.idTo,
+                    "nameFrom": msgData.nameFrom, 
                     "message": msgData.content,
-                    "rentalID": context.params.rentalId,
+                    "groupChatId": context.params.groupChatId,
                     "click_action": "FLUTTER_NOTIFICATION_CLICK",
                 }
             }

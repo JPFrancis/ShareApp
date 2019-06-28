@@ -139,7 +139,7 @@ class HomePageState extends State<HomePage> {
   }
   */
 
-  void configureFCM() {
+  void configureFCM() async {
     firebaseMessaging.configure(
       /// called if app is closed but running in background
       onResume: (Map<String, dynamic> message) async {
@@ -154,40 +154,52 @@ class HomePageState extends State<HomePage> {
       /// called when app is running in foreground
       onMessage: (Map<String, dynamic> message) async {
         //handleNotifications(message);
+        /*
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+                content: ListTile(
+                  title: Text(message['notification']['title']),
+                  subtitle: Text(message['notification']['body']),
+                ),
+                actions: <Widget>[
+                  FlatButton(
+                    child: Text('Ok'),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
+        );
+        */
       },
     );
   }
 
-  void handleNotifications(Map<String, dynamic> message) async {
+  void handleNotifications(Map<String, dynamic> message) {
     var data = message['data'];
+    var rentalID = data['rentalID'];
 
-    Firestore.instance
-        .collection('rentals')
-        .document(data['rentalID'])
-        .get()
-        .then((rentalDS) {
-      switch (data['type']) {
-        case 'rental':
-          Navigator.pushNamed(
-            context,
-            RentalDetail.routeName,
-            arguments: RentalDetailArgs(
-              rentalDS,
-            ),
-          );
-          break;
+    switch (data['type']) {
+      case 'rental':
+        Navigator.of(context).pushNamed(
+          RentalDetail.routeName,
+          arguments: RentalDetailArgs(
+            rentalID,
+          ),
+        );
+        break;
 
-        case 'chat':
-          Navigator.pushNamed(
-            context,
-            Chat.routeName,
-            arguments: ChatArgs(
-              rentalDS,
-            ),
-          );
-          break;
-      }
-    });
+      case 'chat':
+        //Navigator.of(context).pushReplacementNamed('/');
+        //Navigator.of(context).popUntil(ModalRoute.withName('/'));
+        Navigator.of(context).pushNamed(
+          Chat.routeName,
+          arguments: ChatArgs(
+            rentalID,
+          ),
+        );
+        break;
+    }
   }
 
   void delayPage() async {
@@ -1251,7 +1263,7 @@ class HomePageState extends State<HomePage> {
                                                 Navigator.pushNamed(context,
                                                     RentalDetail.routeName,
                                                     arguments: RentalDetailArgs(
-                                                        rentalDS));
+                                                        rentalDS.documentID));
                                               },
                                               child: Row(
                                                 mainAxisAlignment:
@@ -1451,8 +1463,8 @@ class HomePageState extends State<HomePage> {
                                           child: InkWell(
                                             onTap: () => Navigator.pushNamed(
                                                 context, RentalDetail.routeName,
-                                                arguments:
-                                                    RentalDetailArgs(rentalDS)),
+                                                arguments: RentalDetailArgs(
+                                                    rentalDS.documentID)),
                                             child: Container(
                                               width: MediaQuery.of(context)
                                                       .size
@@ -1956,30 +1968,33 @@ class HomePageState extends State<HomePage> {
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
         stream: Firestore.instance
-            .collection('rentals')
-            .where('users',
-                arrayContains:
-                    Firestore.instance.collection('users').document(myUserID))
-            .where('status', isLessThan: 5)
+            .collection('messages')
+            .where('users', arrayContains: myUserID)
             .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           switch (snapshot.connectionState) {
             case ConnectionState.waiting:
             default:
               if (snapshot.hasData) {
-                return new ListView.builder(
+                return ListView.builder(
                   shrinkWrap: true,
                   padding: EdgeInsets.symmetric(horizontal: 15),
                   itemCount: snapshot.data.documents.length,
                   itemBuilder: (context, index) {
-                    DocumentSnapshot rentalDS = snapshot.data.documents[index];
-                    DocumentReference otherUserDR =
-                        myUserID == rentalDS['users'][0].documentID
-                            ? rentalDS['users'][1]
-                            : rentalDS['users'][0];
+                    DocumentSnapshot chatDS = snapshot.data.documents[index];
+                    List combinedID = chatDS['users'];
+                    String otherUserID = '';
+
+                    if (combinedID.length == 2) {
+                      if (myUserID == combinedID[0]) {
+                        otherUserID = combinedID[1];
+                      } else if (myUserID == combinedID[1]) {
+                        otherUserID = combinedID[0];
+                      }
+                    }
 
                     return StreamBuilder<DocumentSnapshot>(
-                      stream: otherUserDR.snapshots(),
+                      stream: Firestore.instance.collection('users').document(otherUserID).snapshots(),
                       builder: (BuildContext context,
                           AsyncSnapshot<DocumentSnapshot> snapshot) {
                         switch (snapshot.connectionState) {
@@ -1991,9 +2006,9 @@ class HomePageState extends State<HomePage> {
 
                               return StreamBuilder<QuerySnapshot>(
                                 stream: Firestore.instance
-                                    .collection('rentals')
-                                    .document(rentalDS.documentID)
-                                    .collection('chat')
+                                    .collection('messages')
+                                    .document(chatDS.documentID)
+                                    .collection('messages')
                                     .orderBy('timestamp', descending: true)
                                     .limit(1)
                                     .snapshots(),
@@ -2022,10 +2037,6 @@ class HomePageState extends State<HomePage> {
                                             style: TextStyle(
                                               fontFamily: 'Quicksand',
                                             ));
-                                        Text itemName = Text(
-                                            'Item: ${rentalDS['itemName']}',
-                                            style: TextStyle(
-                                                fontFamily: 'Quicksand'));
                                         String imageURL = otherUserDS['avatar'];
                                         String lastMessage =
                                             lastMessageDS['content'];
@@ -2065,10 +2076,7 @@ class HomePageState extends State<HomePage> {
                                                         alignment: Alignment
                                                             .centerLeft,
                                                         child: lastActive),
-                                                    Align(
-                                                        alignment: Alignment
-                                                            .centerLeft,
-                                                        child: itemName),
+
                                                     Align(
                                                         alignment: Alignment
                                                             .centerLeft,
@@ -2086,9 +2094,8 @@ class HomePageState extends State<HomePage> {
                                                 Navigator.pushNamed(
                                                   context,
                                                   Chat.routeName,
-                                                  arguments: ChatArgs(
-                                                    rentalDS,
-                                                  ),
+                                                  arguments:
+                                                      ChatArgs(otherUserDS),
                                                 );
                                               },
                                             ),

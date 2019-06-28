@@ -35,7 +35,6 @@ class Rental {
   DocumentReference renter;
   DateTime start;
   DateTime end;
-  DocumentReference chat;
 
   Rental({
     this.status,
@@ -44,7 +43,6 @@ class Rental {
     this.renter,
     this.start,
     this.end,
-    this.chat,
   });
 
   Rental.fromMap(Map<String, dynamic> data)
@@ -55,6 +53,5 @@ class Rental {
           renter: data['renter'],
           start: data['start'],
           end: data['end'],
-          chat: data['chat'],
         );
 }

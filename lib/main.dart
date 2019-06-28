@@ -15,6 +15,7 @@ import 'package:shareapp/rentals/item_request.dart';
 import 'package:shareapp/rentals/new_pickup.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/auth.dart';
+import 'package:shareapp/models/user.dart';
 
 void main() => runApp(MyApp());
 
@@ -97,7 +98,7 @@ class MyApp extends StatelessWidget {
               return MaterialPageRoute(
                 builder: (context) {
                   return RentalDetail(
-                    initRentalDS: args.initRentalDS,
+                    rentalID: args.rentalID,
                   );
                 },
               );
@@ -110,7 +111,7 @@ class MyApp extends StatelessWidget {
               return MaterialPageRoute(
                 builder: (context) {
                   return Chat(
-                    rentalDS: args.rentalDS,
+                    otherUser: args.otherUser,
                   );
                 },
               );
@@ -211,15 +212,15 @@ class ItemRequestArgs {
 }
 
 class RentalDetailArgs {
-  final DocumentSnapshot initRentalDS;
+  final String rentalID;
 
-  RentalDetailArgs(this.initRentalDS);
+  RentalDetailArgs(this.rentalID);
 }
 
 class ChatArgs {
-  final DocumentSnapshot rentalDS;
+  final DocumentSnapshot otherUser;
 
-  ChatArgs(this.rentalDS);
+  ChatArgs(this.otherUser);
 }
 
 class NewPickupArgs {

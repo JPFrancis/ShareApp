@@ -24,9 +24,9 @@ enum Status {
 
 class RentalDetail extends StatefulWidget {
   static const routeName = '/itemRental';
-  final DocumentSnapshot initRentalDS;
+  final String rentalID;
 
-  RentalDetail({Key key, this.initRentalDS}) : super(key: key);
+  RentalDetail({Key key, this.rentalID}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
@@ -69,8 +69,6 @@ class RentalDetailState extends State<RentalDetail> {
     itemQualityRating = 0.0;
     overallExpRating = 0.0;
 
-    rentalDS = widget.initRentalDS;
-
     getMyUserID();
     getSnapshots();
     //delayPage();
@@ -92,9 +90,14 @@ class RentalDetailState extends State<RentalDetail> {
 
   void getSnapshots() async {
     DocumentReference dr;
-    DocumentSnapshot ds = rentalDS;
+    DocumentSnapshot ds = await Firestore.instance
+        .collection('rentals')
+        .document(widget.rentalID)
+        .get();
 
     if (ds != null) {
+      rentalDS = ds;
+
       dr = rentalDS['owner'];
 
       ds = await Firestore.instance
@@ -166,19 +169,18 @@ class RentalDetailState extends State<RentalDetail> {
     );
   }
 
-  FloatingActionButton showFAB() {
-    return FloatingActionButton(
+  Widget chatButton() {
+    return RaisedButton(
       onPressed: () {
         Navigator.pushNamed(
           context,
           Chat.routeName,
           arguments: ChatArgs(
-            rentalDS,
+            otherUserDS,
           ),
         );
       },
-      tooltip: 'Chat',
-      child: Icon(Icons.message),
+      child: Text('Chat'),
     );
   }
 
@@ -210,6 +212,7 @@ class RentalDetailState extends State<RentalDetail> {
                 children: <Widget>[
                   showItemImage(),
                   showItemCreator(),
+                  chatButton(),
                   SizedBox(
                     height: 10.0,
                   ),
@@ -1531,19 +1534,6 @@ class RentalDetailState extends State<RentalDetail> {
         .collection('rentals')
         .document(rentalDS.documentID)
         .delete();
-
-    await new Future.delayed(Duration(milliseconds: delay));
-
-    Firestore.instance
-        .collection('rentals')
-        .document(rentalDS.documentID)
-        .collection('chat')
-        .getDocuments()
-        .then((snapshot) {
-      for (DocumentSnapshot ds in snapshot.documents) {
-        ds.reference.delete();
-      }
-    });
 
     await new Future.delayed(Duration(milliseconds: delay));
 

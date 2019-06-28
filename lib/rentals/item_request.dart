@@ -13,6 +13,8 @@ import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:shareapp/services/picker_data.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shareapp/extras/helpers.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 enum DismissDialogAction {
   cancel,
@@ -38,6 +40,7 @@ class ItemRequestState extends State<ItemRequest> {
 
   bool isUploading = false;
   bool isLoading;
+  String myName;
   String myUserID;
   String photoURL;
 
@@ -97,7 +100,13 @@ class ItemRequestState extends State<ItemRequest> {
 
   void getMyUserID() async {
     prefs = await SharedPreferences.getInstance();
-    myUserID = prefs.getString('userID') ?? '';
+    myName = prefs.getString('name') ?? '';
+
+    var user = await FirebaseAuth.instance.currentUser();
+
+    if (user != null) {
+      myUserID = user.uid;
+    }
   }
 
   Future<Null> getSnapshots() async {
@@ -417,11 +426,13 @@ class ItemRequestState extends State<ItemRequest> {
       if (itemRental != null) {
         await new Future.delayed(Duration(milliseconds: delay));
 
+        String groupChatId = combineID(myUserID, creatorDS.documentID);
+
         // create chat and send the default request message
         var dr = Firestore.instance
-            .collection('rentals')
-            .document(rentalID)
-            .collection('chat')
+            .collection('messages')
+            .document(groupChatId)
+            .collection('messages')
             .document(DateTime.now().millisecondsSinceEpoch.toString());
 
         Future chat = Firestore.instance.runTransaction((transaction) async {
@@ -433,6 +444,9 @@ class ItemRequestState extends State<ItemRequest> {
               'timestamp': DateTime.now().millisecondsSinceEpoch,
               'content': message,
               'type': 0,
+              'pushToken': creatorDS['pushToken'],
+              'nameFrom': myName,
+              'rental': rentalDR,
             },
           );
         });
@@ -446,7 +460,7 @@ class ItemRequestState extends State<ItemRequest> {
                 context,
                 RentalDetail.routeName,
                 arguments: RentalDetailArgs(
-                  ds,
+                  ds.documentID,
                 ),
               );
             }

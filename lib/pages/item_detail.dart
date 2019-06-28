@@ -16,6 +16,8 @@ import 'package:shareapp/rentals/item_request.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shareapp/rentals/chat.dart';
+import 'package:shareapp/models/user.dart';
 
 class ItemDetail extends StatefulWidget {
   static const routeName = '/itemDetail';
@@ -267,6 +269,7 @@ class ItemDetailState extends State<ItemDetail> {
             ],
           ),
         ]),
+        chatButton(),
         showItemType(),
         showItemName(),
         showItemCondition(),
@@ -277,6 +280,21 @@ class ItemDetailState extends State<ItemDetail> {
         divider(),
         //recentReviews.length >= 3 ? showReviews() : Container(),
       ],
+    );
+  }
+
+  Widget chatButton() {
+    return isOwner ? Container(): RaisedButton(
+      onPressed: (){
+        Navigator.of(context).pushNamed(
+          Chat.routeName,
+          arguments: ChatArgs(
+
+            creatorDS,
+          ),
+        );
+      },
+      child: Text('Chat'),
     );
   }
 
@@ -717,7 +735,7 @@ class ItemDetailState extends State<ItemDetail> {
           context,
           RentalDetail.routeName,
           arguments: RentalDetailArgs(
-            rentalDS,
+            rentalDS.documentID,
           ),
         );
       },
