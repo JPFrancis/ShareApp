@@ -136,8 +136,8 @@ exports.newRentalNotification = functions.firestore.document('rentals/{rentalId}
         } else {
             var payload = {
                 "notification": {
-                    "title": "Someone has requested your item!",
-                    "body": `Item: ${initialPushNotif.itemName}`,
+                    "title": `${initialPushNotif.nameFrom} is requesting to rent your ${initialPushNotif.itemName}`,
+                    "body": ``,
                     "sound": "default",
                 },
                 "data": {

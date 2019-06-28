@@ -1441,8 +1441,8 @@ class RentalDetailState extends State<RentalDetail> {
         .updateData({'status': status}).then((_) {
       if (status == 2) {
         Firestore.instance.collection('notifications').add({
-          'title': 'Accepted pickup window',
-          'body': 'From: $myName',
+          'title': '$myName accepted your pickup window',
+          'body': 'Item: ${itemDS['name']}',
           'pushToken': otherUserDS['pushToken'],
           'rentalID': rentalDS.documentID,
           'timestamp': DateTime.now().millisecondsSinceEpoch,
@@ -1479,8 +1479,8 @@ class RentalDetailState extends State<RentalDetail> {
         .document(rentalDS.documentID)
         .updateData({'review': review}).then((_) {
       Firestore.instance.collection('notifications').add({
-        'title': 'Submitted review',
-        'body': 'From: $myName',
+        'title': '$myName left you a review',
+        'body': '',
         'pushToken': otherUserDS['pushToken'],
         'rentalID': rentalDS.documentID,
         'timestamp': DateTime.now().millisecondsSinceEpoch,

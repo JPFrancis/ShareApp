@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -13,8 +14,6 @@ import 'package:shareapp/main.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:shareapp/models/user.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class Chat extends StatefulWidget {
   static const routeName = '/chat';
@@ -32,7 +31,7 @@ class ChatState extends State<Chat> {
   DocumentSnapshot chatDS;
 
   //DocumentSnapshot otherUserDS;
-  User otherUserDS;
+  //User otherUserDS;
 
   //DocumentSnapshot myUserDS;
   SharedPreferences prefs;
@@ -43,7 +42,7 @@ class ChatState extends State<Chat> {
   bool isLoading = true;
   String imageUrl;
   String myUserID;
-  String groupChatId;
+  String groupChatId = '';
   String myName;
 
   var listMessage;
@@ -91,14 +90,14 @@ class ChatState extends State<Chat> {
 
     if (user != null) {
       myUserID = user.uid;
-    }
 
-    if (myUserID.hashCode <= otherUser.documentID.hashCode) {
-      groupChatId = '$myUserID-${otherUser.documentID}';
-      combinedID = [myUserID, otherUser.documentID];
-    } else {
-      groupChatId = '${otherUser.documentID}-$myUserID';
-      combinedID = [otherUser.documentID, myUserID];
+      if (myUserID.hashCode <= otherUser.documentID.hashCode) {
+        groupChatId = '$myUserID-${otherUser.documentID}';
+        combinedID = [myUserID, otherUser.documentID];
+      } else {
+        groupChatId = '${otherUser.documentID}-$myUserID';
+        combinedID = [otherUser.documentID, myUserID];
+      }
     }
   }
 
@@ -220,9 +219,10 @@ class ChatState extends State<Chat> {
               // Text
               ? Container(
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       textWidget,
-                      showRental?viewRentalWidget:Container(),
+                      showRental ? viewRentalWidget : Container(),
                     ],
                   ),
                   padding: EdgeInsets.fromLTRB(15.0, 10.0, 15.0, 10.0),
@@ -338,9 +338,10 @@ class ChatState extends State<Chat> {
                 ds['type'] == 0
                     ? Container(
                         child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
                             textWidget,
-                            showRental?viewRentalWidget:Container(),
+                            showRental ? viewRentalWidget : Container(),
                           ],
                         ),
                         padding: EdgeInsets.fromLTRB(15.0, 10.0, 15.0, 10.0),

@@ -327,8 +327,8 @@ class SlideUpRoute extends PageRouteBuilder {
         );
 }
 
-String combineID(String myId, String otherId){
-  String groupChatId ='';
+String combineID(String myId, String otherId) {
+  String groupChatId = '';
 
   if (myId.hashCode <= otherId.hashCode) {
     groupChatId = '$myId-$otherId';

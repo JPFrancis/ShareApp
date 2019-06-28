@@ -15,7 +15,6 @@ import 'package:shareapp/rentals/item_request.dart';
 import 'package:shareapp/rentals/new_pickup.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/auth.dart';
-import 'package:shareapp/models/user.dart';
 
 void main() => runApp(MyApp());
 

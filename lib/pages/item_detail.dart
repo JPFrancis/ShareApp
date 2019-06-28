@@ -12,12 +12,11 @@ import 'package:shareapp/models/item.dart';
 import 'package:shareapp/pages/all_reviews.dart';
 import 'package:shareapp/pages/item_edit.dart';
 import 'package:shareapp/pages/profile_page.dart';
+import 'package:shareapp/rentals/chat.dart';
 import 'package:shareapp/rentals/item_request.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:shareapp/rentals/chat.dart';
-import 'package:shareapp/models/user.dart';
 
 class ItemDetail extends StatefulWidget {
   static const routeName = '/itemDetail';
@@ -284,18 +283,19 @@ class ItemDetailState extends State<ItemDetail> {
   }
 
   Widget chatButton() {
-    return isOwner ? Container(): RaisedButton(
-      onPressed: (){
-        Navigator.of(context).pushNamed(
-          Chat.routeName,
-          arguments: ChatArgs(
-
-            creatorDS,
-          ),
-        );
-      },
-      child: Text('Chat'),
-    );
+    return isOwner
+        ? Container()
+        : RaisedButton(
+            onPressed: () {
+              Navigator.of(context).pushNamed(
+                Chat.routeName,
+                arguments: ChatArgs(
+                  creatorDS,
+                ),
+              );
+            },
+            child: Text('Chat'),
+          );
   }
 
   Widget showReviews() {

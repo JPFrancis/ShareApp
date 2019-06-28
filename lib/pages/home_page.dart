@@ -178,6 +178,7 @@ class HomePageState extends State<HomePage> {
   void handleNotifications(Map<String, dynamic> message) {
     var data = message['data'];
     var rentalID = data['rentalID'];
+    String otherUserID = data['idFrom'];
 
     switch (data['type']) {
       case 'rental':
@@ -190,14 +191,18 @@ class HomePageState extends State<HomePage> {
         break;
 
       case 'chat':
-        //Navigator.of(context).pushReplacementNamed('/');
-        //Navigator.of(context).popUntil(ModalRoute.withName('/'));
-        Navigator.of(context).pushNamed(
-          Chat.routeName,
-          arguments: ChatArgs(
-            rentalID,
-          ),
-        );
+        Firestore.instance
+            .collection('users')
+            .document(otherUserID)
+            .get()
+            .then((DocumentSnapshot otherUserDS) {
+          Navigator.of(context).pushNamed(
+            Chat.routeName,
+            arguments: ChatArgs(
+              otherUserDS,
+            ),
+          );
+        });
         break;
     }
   }
@@ -1994,7 +1999,10 @@ class HomePageState extends State<HomePage> {
                     }
 
                     return StreamBuilder<DocumentSnapshot>(
-                      stream: Firestore.instance.collection('users').document(otherUserID).snapshots(),
+                      stream: Firestore.instance
+                          .collection('users')
+                          .document(otherUserID)
+                          .snapshots(),
                       builder: (BuildContext context,
                           AsyncSnapshot<DocumentSnapshot> snapshot) {
                         switch (snapshot.connectionState) {
@@ -2076,7 +2084,6 @@ class HomePageState extends State<HomePage> {
                                                         alignment: Alignment
                                                             .centerLeft,
                                                         child: lastActive),
-
                                                     Align(
                                                         alignment: Alignment
                                                             .centerLeft,

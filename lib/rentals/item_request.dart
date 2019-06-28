@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_picker/flutter_picker.dart';
 import 'package:intl/intl.dart';
@@ -13,8 +14,6 @@ import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:shareapp/services/picker_data.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:shareapp/extras/helpers.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 enum DismissDialogAction {
   cancel,
@@ -408,6 +407,7 @@ class ItemRequestState extends State<ItemRequest> {
       'initialPushNotif': {
         'pushToken': creatorDS['pushToken'],
         'itemName': itemDS['name'],
+        'nameFrom': myName,
       },
     });
 
