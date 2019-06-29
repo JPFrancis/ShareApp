@@ -1581,6 +1581,7 @@ class HomePageState extends State<HomePage> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
+        appBar: AppBar(),
         body: Stack(children: <Widget>[
           Container(
             color: coolerWhite,

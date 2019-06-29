@@ -191,6 +191,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
         ),
         Column(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: <Widget>[
           Container(
+            height: h/1.2,
             padding: const EdgeInsets.symmetric(horizontal: 30),
             child: ClipRRect(
               child: Image.asset('assets/search.png'),
@@ -218,6 +219,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
         Column(mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
           Container(
+            height: h/1.2,
             padding: const EdgeInsets.symmetric(horizontal: 30),
             child: ClipRRect(
               child: Image.asset('assets/request.png'),
@@ -244,7 +246,6 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     );
   }
   
-
   Widget showBody() {
     return new Form(
     key: formKey,
