@@ -97,41 +97,7 @@ class HomePageState extends State<HomePage> {
       myUserID = widget.firebaseUser.uid;
       setPrefs();
       updateLastActiveAndPushToken();
-
-      firebaseMessaging.configure(
-        /// called when app is running in foreground
-        onMessage: (Map<String, dynamic> message) async {
-          //handleNotifications(message);
-          /*
-          print("onMessage: $message");
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-                  content: ListTile(
-                    title: Text(message['notification']['title']),
-                    subtitle: Text(message['notification']['body']),
-                  ),
-                  actions: <Widget>[
-                    FlatButton(
-                      child: Text('Ok'),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                  ],
-                ),
-          );
-          */
-        },
-
-        /// called if app is closed but running in background
-        onResume: (Map<String, dynamic> message) async {
-          handleNotifications(message);
-        },
-
-        /// called if app is fully closed
-        onLaunch: (Map<String, dynamic> message) async {
-          handleNotifications(message);
-        },
-      );
+      configureFCM();
     }
 
     //getAllItems();
@@ -173,35 +139,71 @@ class HomePageState extends State<HomePage> {
   }
   */
 
-  void handleNotifications(Map<String, dynamic> message) async {
+  void configureFCM() async {
+    firebaseMessaging.configure(
+      /// called if app is closed but running in background
+      onResume: (Map<String, dynamic> message) async {
+        handleNotifications(message);
+      },
+
+      /// called if app is fully closed
+      onLaunch: (Map<String, dynamic> message) async {
+        handleNotifications(message);
+      },
+
+      /// called when app is running in foreground
+      onMessage: (Map<String, dynamic> message) async {
+        //handleNotifications(message);
+        /*
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+                content: ListTile(
+                  title: Text(message['notification']['title']),
+                  subtitle: Text(message['notification']['body']),
+                ),
+                actions: <Widget>[
+                  FlatButton(
+                    child: Text('Ok'),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
+        );
+        */
+      },
+    );
+  }
+
+  void handleNotifications(Map<String, dynamic> message) {
     var data = message['data'];
-    DocumentSnapshot rentalDS = await Firestore.instance
-        .collection('rentals')
-        .document(data['rentalID'])
-        .get();
+    var rentalID = data['rentalID'];
+    String otherUserID = data['idFrom'];
 
-    if (rentalDS != null) {
-      switch (data['type']) {
-        case 'rental':
-          Navigator.pushNamed(
-            context,
-            RentalDetail.routeName,
-            arguments: RentalDetailArgs(
-              rentalDS,
-            ),
-          );
-          break;
+    switch (data['type']) {
+      case 'rental':
+        Navigator.of(context).pushNamed(
+          RentalDetail.routeName,
+          arguments: RentalDetailArgs(
+            rentalID,
+          ),
+        );
+        break;
 
-        case 'chat':
-          Navigator.pushNamed(
-            context,
+      case 'chat':
+        Firestore.instance
+            .collection('users')
+            .document(otherUserID)
+            .get()
+            .then((DocumentSnapshot otherUserDS) {
+          Navigator.of(context).pushNamed(
             Chat.routeName,
             arguments: ChatArgs(
-              rentalDS,
+              otherUserDS,
             ),
           );
-          break;
-      }
+        });
+        break;
     }
   }
 
@@ -345,7 +347,7 @@ class HomePageState extends State<HomePage> {
                   price: 0,
                   numImages: 0,
                   images: new List(),
-                  location: {'geopoint':null},
+                  location: {'geopoint': null},
                   rental: null,
                 ),
               );
@@ -1115,20 +1117,29 @@ class HomePageState extends State<HomePage> {
   }
 
   Widget myRentalsPage() {
-    return Column(
-      children: <Widget>[
-        SizedBox(
-          height: 30.0,
-        ),
-        reusableCategoryWithAll("REQUESTING", () => debugPrint),
-        buildRequests("renter"),
-        reusableCategoryWithAll("UPCOMING", () => debugPrint),
-        buildTransactions("upcoming", "renter"),
-        reusableCategoryWithAll("CURRENT", () => debugPrint),
-        buildTransactions("current", "renter"),
-        reusableCategoryWithAll("PAST", () => debugPrint),
-        buildTransactions("past", "renter"),
-      ],
+    return Scaffold(
+      appBar: AppBar(
+        elevation: 3.0,
+        title: Text("Others' Items That You Are Renting", style: TextStyle(fontFamily: appFont, fontWeight: FontWeight.w400)), 
+        //titleSpacing: 0.0,
+        centerTitle: false,
+        shape: RoundedRectangleBorder(
+          borderRadius: new BorderRadius.only(
+            bottomRight: const Radius.elliptical(150.0, 30),
+          )
+        )),
+      body: Column(
+        children: <Widget>[
+          reusableCategoryWithAll("REQUESTING", () => debugPrint),
+          buildRequests("renter"),
+          reusableCategoryWithAll("UPCOMING", () => debugPrint),
+          buildTransactions("upcoming", "renter"),
+          reusableCategoryWithAll("CURRENT", () => debugPrint),
+          buildTransactions("current", "renter"),
+          reusableCategoryWithAll("PAST", () => debugPrint),
+          buildTransactions("past", "renter"),
+        ],
+      )
     );
   }
 
@@ -1266,7 +1277,7 @@ class HomePageState extends State<HomePage> {
                                                 Navigator.pushNamed(context,
                                                     RentalDetail.routeName,
                                                     arguments: RentalDetailArgs(
-                                                        rentalDS));
+                                                        rentalDS.documentID));
                                               },
                                               child: Row(
                                                 mainAxisAlignment:
@@ -1466,8 +1477,8 @@ class HomePageState extends State<HomePage> {
                                           child: InkWell(
                                             onTap: () => Navigator.pushNamed(
                                                 context, RentalDetail.routeName,
-                                                arguments:
-                                                    RentalDetailArgs(rentalDS)),
+                                                arguments: RentalDetailArgs(
+                                                    rentalDS.documentID)),
                                             child: Container(
                                               width: MediaQuery.of(context)
                                                       .size
@@ -1581,7 +1592,15 @@ class HomePageState extends State<HomePage> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        appBar: AppBar(),
+        appBar: AppBar(
+          elevation: 3.0,
+          title: Text("Your Items That Others Can Rent", style: TextStyle(fontFamily: appFont, fontWeight: FontWeight.w400)), 
+          centerTitle: false,
+          shape: RoundedRectangleBorder(
+            borderRadius: new BorderRadius.only(
+              bottomRight: const Radius.elliptical(150.0, 30),
+            )
+          )),
         body: Stack(children: <Widget>[
           Container(
             color: coolerWhite,
@@ -1589,17 +1608,11 @@ class HomePageState extends State<HomePage> {
               children: [
                 Column(
                   children: <Widget>[
-                    SizedBox(
-                      height: 30.0,
-                    ),
                     buildListingsList(),
                   ],
                 ),
                 Column(
                   children: <Widget>[
-                    SizedBox(
-                      height: 30.0,
-                    ),
                     reusableCategoryWithAll("REQUESTS", () => debugPrint),
                     buildRequests("owner"),
                     reusableCategoryWithAll("UPCOMING", () => debugPrint),
@@ -1972,30 +1985,36 @@ class HomePageState extends State<HomePage> {
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
         stream: Firestore.instance
-            .collection('rentals')
-            .where('users',
-                arrayContains:
-                    Firestore.instance.collection('users').document(myUserID))
-            .where('status', isLessThan: 5)
+            .collection('messages')
+            .where('users', arrayContains: myUserID)
             .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           switch (snapshot.connectionState) {
             case ConnectionState.waiting:
             default:
               if (snapshot.hasData) {
-                return new ListView.builder(
+                return ListView.builder(
                   shrinkWrap: true,
                   padding: EdgeInsets.symmetric(horizontal: 15),
                   itemCount: snapshot.data.documents.length,
                   itemBuilder: (context, index) {
-                    DocumentSnapshot rentalDS = snapshot.data.documents[index];
-                    DocumentReference otherUserDR =
-                        myUserID == rentalDS['users'][0].documentID
-                            ? rentalDS['users'][1]
-                            : rentalDS['users'][0];
+                    DocumentSnapshot chatDS = snapshot.data.documents[index];
+                    List combinedID = chatDS['users'];
+                    String otherUserID = '';
+
+                    if (combinedID.length == 2) {
+                      if (myUserID == combinedID[0]) {
+                        otherUserID = combinedID[1];
+                      } else if (myUserID == combinedID[1]) {
+                        otherUserID = combinedID[0];
+                      }
+                    }
 
                     return StreamBuilder<DocumentSnapshot>(
-                      stream: otherUserDR.snapshots(),
+                      stream: Firestore.instance
+                          .collection('users')
+                          .document(otherUserID)
+                          .snapshots(),
                       builder: (BuildContext context,
                           AsyncSnapshot<DocumentSnapshot> snapshot) {
                         switch (snapshot.connectionState) {
@@ -2007,9 +2026,9 @@ class HomePageState extends State<HomePage> {
 
                               return StreamBuilder<QuerySnapshot>(
                                 stream: Firestore.instance
-                                    .collection('rentals')
-                                    .document(rentalDS.documentID)
-                                    .collection('chat')
+                                    .collection('messages')
+                                    .document(chatDS.documentID)
+                                    .collection('messages')
                                     .orderBy('timestamp', descending: true)
                                     .limit(1)
                                     .snapshots(),
@@ -2038,10 +2057,6 @@ class HomePageState extends State<HomePage> {
                                             style: TextStyle(
                                               fontFamily: 'Quicksand',
                                             ));
-                                        Text itemName = Text(
-                                            'Item: ${rentalDS['itemName']}',
-                                            style: TextStyle(
-                                                fontFamily: 'Quicksand'));
                                         String imageURL = otherUserDS['avatar'];
                                         String lastMessage =
                                             lastMessageDS['content'];
@@ -2084,10 +2099,6 @@ class HomePageState extends State<HomePage> {
                                                     Align(
                                                         alignment: Alignment
                                                             .centerLeft,
-                                                        child: itemName),
-                                                    Align(
-                                                        alignment: Alignment
-                                                            .centerLeft,
                                                         child: Text(
                                                           lastMessageCrop,
                                                           style: TextStyle(
@@ -2102,9 +2113,8 @@ class HomePageState extends State<HomePage> {
                                                 Navigator.pushNamed(
                                                   context,
                                                   Chat.routeName,
-                                                  arguments: ChatArgs(
-                                                    rentalDS,
-                                                  ),
+                                                  arguments:
+                                                      ChatArgs(otherUserDS),
                                                 );
                                               },
                                             ),

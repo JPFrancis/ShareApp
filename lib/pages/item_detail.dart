@@ -12,6 +12,7 @@ import 'package:shareapp/models/item.dart';
 import 'package:shareapp/pages/all_reviews.dart';
 import 'package:shareapp/pages/item_edit.dart';
 import 'package:shareapp/pages/profile_page.dart';
+import 'package:shareapp/rentals/chat.dart';
 import 'package:shareapp/rentals/item_request.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/const.dart';
@@ -267,6 +268,7 @@ class ItemDetailState extends State<ItemDetail> {
             ],
           ),
         ]),
+        chatButton(),
         showItemType(),
         showItemName(),
         showItemCondition(),
@@ -278,6 +280,22 @@ class ItemDetailState extends State<ItemDetail> {
         //recentReviews.length >= 3 ? showReviews() : Container(),
       ],
     );
+  }
+
+  Widget chatButton() {
+    return isOwner
+        ? Container()
+        : RaisedButton(
+            onPressed: () {
+              Navigator.of(context).pushNamed(
+                Chat.routeName,
+                arguments: ChatArgs(
+                  creatorDS,
+                ),
+              );
+            },
+            child: Text('Chat'),
+          );
   }
 
   Widget showReviews() {
@@ -717,7 +735,7 @@ class ItemDetailState extends State<ItemDetail> {
           context,
           RentalDetail.routeName,
           arguments: RentalDetailArgs(
-            rentalDS,
+            rentalDS.documentID,
           ),
         );
       },

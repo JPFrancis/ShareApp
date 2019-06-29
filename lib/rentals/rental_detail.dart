@@ -24,9 +24,9 @@ enum Status {
 
 class RentalDetail extends StatefulWidget {
   static const routeName = '/itemRental';
-  final DocumentSnapshot initRentalDS;
+  final String rentalID;
 
-  RentalDetail({Key key, this.initRentalDS}) : super(key: key);
+  RentalDetail({Key key, this.rentalID}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
@@ -69,8 +69,6 @@ class RentalDetailState extends State<RentalDetail> {
     itemQualityRating = 0.0;
     overallExpRating = 0.0;
 
-    rentalDS = widget.initRentalDS;
-
     getMyUserID();
     getSnapshots();
     //delayPage();
@@ -92,9 +90,14 @@ class RentalDetailState extends State<RentalDetail> {
 
   void getSnapshots() async {
     DocumentReference dr;
-    DocumentSnapshot ds = rentalDS;
+    DocumentSnapshot ds = await Firestore.instance
+        .collection('rentals')
+        .document(widget.rentalID)
+        .get();
 
     if (ds != null) {
+      rentalDS = ds;
+
       dr = rentalDS['owner'];
 
       ds = await Firestore.instance
@@ -153,32 +156,31 @@ class RentalDetailState extends State<RentalDetail> {
             )
           : showBody(),
       floatingActionButton: Container(
-      padding: const EdgeInsets.only(top: 120.0, left: 5.0),
-      child: FloatingActionButton(
-        onPressed: () => Navigator.pop(context),
-        child: Icon(Icons.close),
-        elevation: 1,
-        backgroundColor: Colors.white70,
-        foregroundColor: primaryColor,
+        padding: const EdgeInsets.only(top: 120.0, left: 5.0),
+        child: FloatingActionButton(
+          onPressed: () => Navigator.pop(context),
+          child: Icon(Icons.close),
+          elevation: 1,
+          backgroundColor: Colors.white70,
+          foregroundColor: primaryColor,
+        ),
       ),
-    ),
-    floatingActionButtonLocation: FloatingActionButtonLocation.miniStartTop,
+      floatingActionButtonLocation: FloatingActionButtonLocation.miniStartTop,
     );
   }
 
-  FloatingActionButton showFAB() {
-    return FloatingActionButton(
+  Widget chatButton() {
+    return RaisedButton(
       onPressed: () {
         Navigator.pushNamed(
           context,
           Chat.routeName,
           arguments: ChatArgs(
-            rentalDS,
+            otherUserDS,
           ),
         );
       },
-      tooltip: 'Chat',
-      child: Icon(Icons.message),
+      child: Text('Chat'),
     );
   }
 
@@ -194,8 +196,11 @@ class RentalDetailState extends State<RentalDetail> {
   Widget showBody() {
     return StreamBuilder<DocumentSnapshot>(
       stream: rentalDS.reference.snapshots(),
-      builder: (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
-        if (snapshot.hasError) {return new Text('${snapshot.error}');}
+      builder:
+          (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+        if (snapshot.hasError) {
+          return new Text('${snapshot.error}');
+        }
         switch (snapshot.connectionState) {
           case ConnectionState.waiting:
           default:
@@ -207,11 +212,15 @@ class RentalDetailState extends State<RentalDetail> {
                 children: <Widget>[
                   showItemImage(),
                   showItemCreator(),
-                  SizedBox(height: 10.0,),
+                  chatButton(),
+                  SizedBox(
+                    height: 10.0,
+                  ),
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width / 25),
-                    height: MediaQuery.of(context).size.height / 4,
-                    child: showItemRequestStatus()),
+                      padding: EdgeInsets.symmetric(
+                          horizontal: MediaQuery.of(context).size.width / 25),
+                      height: MediaQuery.of(context).size.height / 4,
+                      child: showItemRequestStatus()),
                   divider(),
                   showRequestButtons(),
                   showCreditCardButton(),
@@ -349,247 +358,705 @@ class RentalDetailState extends State<RentalDetail> {
 
   Widget showItemRequestStatus() {
     int itemStatus = rentalDS['status'];
-    String start = DateFormat('h:mm a on d MMM yyyy').format(rentalDS['pickupStart'].toDate());
-    String end = DateFormat('h:mm a on d MMM yyyy').format(rentalDS['pickupEnd'].toDate());
+    String start = DateFormat('h:mm a on d MMM yyyy')
+        .format(rentalDS['pickupStart'].toDate());
+    String end = DateFormat('h:mm a on d MMM yyyy')
+        .format(rentalDS['pickupEnd'].toDate());
     int durationDays = rentalDS['duration'];
     double price = itemDS['price'].toDouble() * durationDays.toDouble();
-    String duration = '${durationDays > 1 ? '$durationDays days' : '$durationDays day'}';
-    
+    String duration =
+        '${durationDays > 1 ? '$durationDays days' : '$durationDays day'}';
+
     Widget info;
 
     switch (itemStatus) {
       case 0: //requested, renter has sent request
-        info = isRenter 
-        ? Column(children: <Widget>[
-            Text("Waiting for response from ${ownerDS['name']}", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            Text("Your proposal", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            Divider(),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
-              Text("Pickup Time:", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-              Text("$start", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            ],),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
-              Text("Duration:", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-              Text("$duration", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            ],),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
-              Text("Total:", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-              Text("$price", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            ],),
-        ],)
-        : Column(children: <Widget>[
-            Text("${ownerDS['name']} has proposed a pickup!", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            Text("Proposal", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            Divider(),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
-              Text("Pickup Time:", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-              Text("$start", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            ],),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
-              Text("Duration:", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-              Text("$duration", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            ],),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
-              Text("Total:", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-              Text("$price", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            ],),
-        ],);
+        info = isRenter
+            ? Column(
+                children: <Widget>[
+                  Text(
+                    "Waiting for response from ${ownerDS['name']}",
+                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                  ),
+                  Text(
+                    "Your proposal",
+                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                  ),
+                  Divider(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        "Pickup Time:",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                      Text(
+                        "$start",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        "Duration:",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                      Text(
+                        "$duration",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        "Total:",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                      Text(
+                        "$price",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ],
+              )
+            : Column(
+                children: <Widget>[
+                  Text(
+                    "${ownerDS['name']} has proposed a pickup!",
+                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                  ),
+                  Text(
+                    "Proposal",
+                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                  ),
+                  Divider(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        "Pickup Time:",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                      Text(
+                        "$start",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        "Duration:",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                      Text(
+                        "$duration",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        "Total:",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                      Text(
+                        "$price",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ],
+              );
         break;
 
-      case 1: // requested, renter need to accept/reject pickup window 
-        info = isRenter 
-        ? Column(children: <Widget>[
-            Text("${ownerDS['name']} has proposed a new pickup!", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            Text("New proposal", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            Divider(),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
-              Text("Pickup Time:", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-              Text("$start", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            ],),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
-              Text("Duration:", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-              Text("$duration", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            ],),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
-              Text("Total:", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-              Text("\$$price", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            ],),
-        ],)
-        : Column(children: <Widget>[
-            Text("Waiting from response from ${renterDS['name']}", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            Text("Proposal", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            Divider(),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
-              Text("Pickup Time:", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-              Text("$start", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            ],),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
-              Text("Duration:", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-              Text("$duration", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            ],),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
-              Text("Total:", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-              Text("\$$price", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            ],),
-        ],);
+      case 1: // requested, renter need to accept/reject pickup window
+        info = isRenter
+            ? Column(
+                children: <Widget>[
+                  Text(
+                    "${ownerDS['name']} has proposed a new pickup!",
+                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                  ),
+                  Text(
+                    "New proposal",
+                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                  ),
+                  Divider(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        "Pickup Time:",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                      Text(
+                        "$start",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        "Duration:",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                      Text(
+                        "$duration",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        "Total:",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                      Text(
+                        "\$$price",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ],
+              )
+            : Column(
+                children: <Widget>[
+                  Text(
+                    "Waiting from response from ${renterDS['name']}",
+                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                  ),
+                  Text(
+                    "Proposal",
+                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                  ),
+                  Divider(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        "Pickup Time:",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                      Text(
+                        "$start",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        "Duration:",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                      Text(
+                        "$duration",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        "Total:",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                      Text(
+                        "\$$price",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ],
+              );
         break;
 
       case 2: // accepted
-        info = isRenter 
-        ? Column(children: <Widget>[
-            Text("${ownerDS['name']} has accepted your request! Make sure to pick it up on time!", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            Text("Transaction Details", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            Divider(),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
-              Text("Pickup Time:", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-              Text("$start", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            ],),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
-              Text("Duration:", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-              Text("$duration", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            ],),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
-              Text("Total:", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-              Text("\$$price", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            ],),
-        ],)
-        : Column(children: <Widget>[
-            Text("You have accepted ${renterDS['name']}'s request! Be prepared for their pickup!", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            Text("Transaction Details", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            Divider(),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
-              Text("Pickup Time:", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-              Text("$start", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            ],),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
-              Text("Duration:", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-              Text("$duration", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            ],),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
-              Text("Total:", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-              Text("\$$price", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            ],),
-        ],);
+        info = isRenter
+            ? Column(
+                children: <Widget>[
+                  Text(
+                    "${ownerDS['name']} has accepted your request! Make sure to pick it up on time!",
+                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                  ),
+                  Text(
+                    "Transaction Details",
+                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                  ),
+                  Divider(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        "Pickup Time:",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                      Text(
+                        "$start",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        "Duration:",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                      Text(
+                        "$duration",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        "Total:",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                      Text(
+                        "\$$price",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ],
+              )
+            : Column(
+                children: <Widget>[
+                  Text(
+                    "You have accepted ${renterDS['name']}'s request! Be prepared for their pickup!",
+                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                  ),
+                  Text(
+                    "Transaction Details",
+                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                  ),
+                  Divider(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        "Pickup Time:",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                      Text(
+                        "$start",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        "Duration:",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                      Text(
+                        "$duration",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        "Total:",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                      Text(
+                        "\$$price",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ],
+              );
         break;
 
       case 3: // active
-        info = isRenter 
-        ? Column(children: <Widget>[
-            Text("You are currently renting the item!", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            Text("Transaction Details", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            Divider(),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
-              Text("Return Time:", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-              Text("$end", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            ],),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
-              Text("Duration:", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-              Text("$duration", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            ],),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
-              Text("Total:", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-              Text("\$$price", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            ],),
-        ],)
-        : Column(children: <Widget>[
-            Text("${renterDS['name']} has your item!", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            Text("Transaction Details", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            Divider(),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
-              Text("Return Time:", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-              Text("$end", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            ],),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
-              Text("Duration:", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-              Text("$duration", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            ],),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
-              Text("Total:", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-              Text("\$$price", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            ],),
-        ],);
+        info = isRenter
+            ? Column(
+                children: <Widget>[
+                  Text(
+                    "You are currently renting the item!",
+                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                  ),
+                  Text(
+                    "Transaction Details",
+                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                  ),
+                  Divider(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        "Return Time:",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                      Text(
+                        "$end",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        "Duration:",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                      Text(
+                        "$duration",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        "Total:",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                      Text(
+                        "\$$price",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ],
+              )
+            : Column(
+                children: <Widget>[
+                  Text(
+                    "${renterDS['name']} has your item!",
+                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                  ),
+                  Text(
+                    "Transaction Details",
+                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                  ),
+                  Divider(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        "Return Time:",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                      Text(
+                        "$end",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        "Duration:",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                      Text(
+                        "$duration",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        "Total:",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                      Text(
+                        "\$$price",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ],
+              );
         break;
 
       case 4: // returned
-        info = isRenter 
-        ? Column(children: <Widget>[
-            Text("You have returned the item.", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            Text("Transaction Details", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            Divider(),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
-              Text("Returned On:", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-              Text("$end", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            ],),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
-              Text("Rented for:", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-              Text("$duration", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            ],),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
-              Text("Total:", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-              Text("\$$price", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            ],),
-        ],)
-        : Column(children: <Widget>[
-            Text("Your item has been returned to you.", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            Text("Transaction Details", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            Divider(),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
-              Text("Returned On:", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-              Text("$end", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            ],),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
-              Text("Rented for:", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-              Text("$duration", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            ],),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
-              Text("Total:", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-              Text("\$$price", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            ],),
-        ],);
+        info = isRenter
+            ? Column(
+                children: <Widget>[
+                  Text(
+                    "You have returned the item.",
+                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                  ),
+                  Text(
+                    "Transaction Details",
+                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                  ),
+                  Divider(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        "Returned On:",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                      Text(
+                        "$end",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        "Rented for:",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                      Text(
+                        "$duration",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        "Total:",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                      Text(
+                        "\$$price",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ],
+              )
+            : Column(
+                children: <Widget>[
+                  Text(
+                    "Your item has been returned to you.",
+                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                  ),
+                  Text(
+                    "Transaction Details",
+                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                  ),
+                  Divider(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        "Returned On:",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                      Text(
+                        "$end",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        "Rented for:",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                      Text(
+                        "$duration",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        "Total:",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                      Text(
+                        "\$$price",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ],
+              );
         break;
 
       case 5: // completed
-        info = 
-          Column(children: <Widget>[
-            Text("The transaction is complete.", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            Text("Transaction Details", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
-              Text("Rented Out On:", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-              Text("$start", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            ],),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
-              Text("Returned On:", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-              Text("$end", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            ],),
-            Row(children: <Widget>[
-              Text("Rented for:", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-              Text("$duration", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            ],),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
-              Text("Total:", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-              Text("\$$price", style: TextStyle(fontFamily: appFont, color: Colors.white),),
-            ],),
-        ],);
+        info = Column(
+          children: <Widget>[
+            Text(
+              "The transaction is complete.",
+              style: TextStyle(fontFamily: appFont, color: Colors.white),
+            ),
+            Text(
+              "Transaction Details",
+              style: TextStyle(fontFamily: appFont, color: Colors.white),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                Text(
+                  "Rented Out On:",
+                  style: TextStyle(fontFamily: appFont, color: Colors.white),
+                ),
+                Text(
+                  "$start",
+                  style: TextStyle(fontFamily: appFont, color: Colors.white),
+                ),
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                Text(
+                  "Returned On:",
+                  style: TextStyle(fontFamily: appFont, color: Colors.white),
+                ),
+                Text(
+                  "$end",
+                  style: TextStyle(fontFamily: appFont, color: Colors.white),
+                ),
+              ],
+            ),
+            Row(
+              children: <Widget>[
+                Text(
+                  "Rented for:",
+                  style: TextStyle(fontFamily: appFont, color: Colors.white),
+                ),
+                Text(
+                  "$duration",
+                  style: TextStyle(fontFamily: appFont, color: Colors.white),
+                ),
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                Text(
+                  "Total:",
+                  style: TextStyle(fontFamily: appFont, color: Colors.white),
+                ),
+                Text(
+                  "\$$price",
+                  style: TextStyle(fontFamily: appFont, color: Colors.white),
+                ),
+              ],
+            ),
+          ],
+        );
         break;
 
       default:
         info = Container();
         break;
     }
-   
+
     return Container(
-      decoration: new BoxDecoration(
-        color: primaryColor,
-        borderRadius: new BorderRadius.all(Radius.circular(12.0)),
-        boxShadow: <BoxShadow>[
-          CustomBoxShadow(
-              color: Colors.black45,
-              blurRadius: 3.0,
-              blurStyle: BlurStyle.outer),
-        ],
-      ),
-      child: Container(padding: EdgeInsets.all(10), child: info)//Text(statusMessage, style: TextStyle(fontSize: 18, color: Colors.white, fontFamily: appFont)),
-    );
+        decoration: new BoxDecoration(
+          color: primaryColor,
+          borderRadius: new BorderRadius.all(Radius.circular(12.0)),
+          boxShadow: <BoxShadow>[
+            CustomBoxShadow(
+                color: Colors.black45,
+                blurRadius: 3.0,
+                blurStyle: BlurStyle.outer),
+          ],
+        ),
+        child: Container(
+            padding: EdgeInsets.all(10),
+            child:
+                info) //Text(statusMessage, style: TextStyle(fontSize: 18, color: Colors.white, fontFamily: appFont)),
+        );
   }
 
   Widget showRequestButtons() {
@@ -974,8 +1441,8 @@ class RentalDetailState extends State<RentalDetail> {
         .updateData({'status': status}).then((_) {
       if (status == 2) {
         Firestore.instance.collection('notifications').add({
-          'title': 'Accepted pickup window',
-          'body': 'From: $myName',
+          'title': '$myName accepted your pickup window',
+          'body': 'Item: ${itemDS['name']}',
           'pushToken': otherUserDS['pushToken'],
           'rentalID': rentalDS.documentID,
           'timestamp': DateTime.now().millisecondsSinceEpoch,
@@ -1012,8 +1479,8 @@ class RentalDetailState extends State<RentalDetail> {
         .document(rentalDS.documentID)
         .updateData({'review': review}).then((_) {
       Firestore.instance.collection('notifications').add({
-        'title': 'Submitted review',
-        'body': 'From: $myName',
+        'title': '$myName left you a review',
+        'body': '',
         'pushToken': otherUserDS['pushToken'],
         'rentalID': rentalDS.documentID,
         'timestamp': DateTime.now().millisecondsSinceEpoch,
@@ -1067,19 +1534,6 @@ class RentalDetailState extends State<RentalDetail> {
         .collection('rentals')
         .document(rentalDS.documentID)
         .delete();
-
-    await new Future.delayed(Duration(milliseconds: delay));
-
-    Firestore.instance
-        .collection('rentals')
-        .document(rentalDS.documentID)
-        .collection('chat')
-        .getDocuments()
-        .then((snapshot) {
-      for (DocumentSnapshot ds in snapshot.documents) {
-        ds.reference.delete();
-      }
-    });
 
     await new Future.delayed(Duration(milliseconds: delay));
 

@@ -30,7 +30,8 @@ class MyApp extends StatelessWidget {
         accentColor: Color(0xff007f6e),
       ),
       home: new RootPage(auth: new Auth()),
-      //initialRoute: RootPage.routeName,
+      initialRoute: '/',
+      //RootPage.routeName,
       onGenerateRoute: (settings) {
         switch (settings.name) {
           case HomePage.routeName:
@@ -96,7 +97,7 @@ class MyApp extends StatelessWidget {
               return MaterialPageRoute(
                 builder: (context) {
                   return RentalDetail(
-                    initRentalDS: args.initRentalDS,
+                    rentalID: args.rentalID,
                   );
                 },
               );
@@ -109,7 +110,7 @@ class MyApp extends StatelessWidget {
               return MaterialPageRoute(
                 builder: (context) {
                   return Chat(
-                    rentalDS: args.rentalDS,
+                    otherUser: args.otherUser,
                   );
                 },
               );
@@ -210,15 +211,15 @@ class ItemRequestArgs {
 }
 
 class RentalDetailArgs {
-  final DocumentSnapshot initRentalDS;
+  final String rentalID;
 
-  RentalDetailArgs(this.initRentalDS);
+  RentalDetailArgs(this.rentalID);
 }
 
 class ChatArgs {
-  final DocumentSnapshot rentalDS;
+  final DocumentSnapshot otherUser;
 
-  ChatArgs(this.rentalDS);
+  ChatArgs(this.otherUser);
 }
 
 class NewPickupArgs {

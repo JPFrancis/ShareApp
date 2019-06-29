@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -14,42 +15,35 @@ import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class Chat extends StatelessWidget {
+class Chat extends StatefulWidget {
   static const routeName = '/chat';
-  final DocumentSnapshot rentalDS;
+  final DocumentSnapshot otherUser;
 
-  Chat({Key key, this.rentalDS}) : super(key: key);
+  Chat({Key key, this.otherUser}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    return new Scaffold(
-      body: new ChatScreen(
-        rentalDS: rentalDS,
-      ),
-    );
+  State<StatefulWidget> createState() {
+    return ChatState();
   }
 }
 
-class ChatScreen extends StatefulWidget {
-  final DocumentSnapshot rentalDS;
+class ChatState extends State<Chat> {
+  DocumentSnapshot chatDS;
 
-  ChatScreen({Key key, this.rentalDS}) : super(key: key);
+  //DocumentSnapshot otherUserDS;
+  //User otherUserDS;
 
-  @override
-  State createState() => new ChatScreenState();
-}
-
-class ChatScreenState extends State<ChatScreen> {
-  DocumentSnapshot ownerDS;
-  DocumentSnapshot renterDS;
-  DocumentSnapshot otherUserDS;
-  DocumentSnapshot myUserDS;
+  //DocumentSnapshot myUserDS;
   SharedPreferences prefs;
+  DocumentSnapshot otherUser;
+  List<String> combinedID;
 
   File imageFile;
   bool isLoading = true;
   String imageUrl;
   String myUserID;
+  String groupChatId = '';
+  String myName;
 
   var listMessage;
 
@@ -67,6 +61,7 @@ class ChatScreenState extends State<ChatScreen> {
   void initState() {
     super.initState();
 
+    otherUser = widget.otherUser;
     imageUrl = '';
     getMyUserID();
     getSnapshots();
@@ -89,45 +84,47 @@ class ChatScreenState extends State<ChatScreen> {
 
   void getMyUserID() async {
     prefs = await SharedPreferences.getInstance();
-    myUserID = prefs.getString('userID') ?? '';
+    myName = prefs.getString('name') ?? '';
+
+    var user = await FirebaseAuth.instance.currentUser();
+
+    if (user != null) {
+      myUserID = user.uid;
+
+      if (myUserID.hashCode <= otherUser.documentID.hashCode) {
+        groupChatId = '$myUserID-${otherUser.documentID}';
+        combinedID = [myUserID, otherUser.documentID];
+      } else {
+        groupChatId = '${otherUser.documentID}-$myUserID';
+        combinedID = [otherUser.documentID, myUserID];
+      }
+    }
   }
 
   void getSnapshots() async {
-    DocumentReference dr;
-    DocumentSnapshot ds = widget.rentalDS;
+    DocumentSnapshot ds = await Firestore.instance
+        .collection('messages')
+        .document(groupChatId)
+        .get();
 
     if (ds != null) {
-      dr = widget.rentalDS['owner'];
+      if (!ds.exists) {
+        var documentReference =
+            Firestore.instance.collection('messages').document(groupChatId);
 
-      ds = await Firestore.instance
-          .collection('users')
-          .document(dr.documentID)
-          .get();
-
-      if (ds != null) {
-        ownerDS = ds;
+        Firestore.instance.runTransaction((transaction) async {
+          await transaction.set(
+            documentReference,
+            {
+              'users': combinedID,
+            },
+          );
+        });
       }
 
-      dr = widget.rentalDS['renter'];
+      chatDS = ds;
 
-      ds = await Firestore.instance
-          .collection('users')
-          .document(dr.documentID)
-          .get();
-
-      if (ds != null) {
-        renterDS = ds;
-      }
-
-      if (myUserID == ownerDS.documentID) {
-        otherUserDS = renterDS;
-        myUserDS = ownerDS;
-      } else {
-        otherUserDS = ownerDS;
-        myUserDS = renterDS;
-      }
-
-      if (prefs != null && ownerDS != null && renterDS != null) {
+      if (chatDS != null) {
         delayPage();
       }
     }
@@ -169,9 +166,9 @@ class ChatScreenState extends State<ChatScreen> {
       textEditingController.clear();
 
       var documentReference = Firestore.instance
-          .collection('rentals')
-          .document(widget.rentalDS.documentID)
-          .collection('chat')
+          .collection('messages')
+          .document(groupChatId)
+          .collection('messages')
           .document(DateTime.now().millisecondsSinceEpoch.toString());
 
       Firestore.instance.runTransaction((transaction) async {
@@ -179,12 +176,12 @@ class ChatScreenState extends State<ChatScreen> {
           documentReference,
           {
             'idFrom': myUserID,
-            'idTo': otherUserDS.documentID,
+            'idTo': otherUser.documentID,
             'timestamp': DateTime.now().millisecondsSinceEpoch,
             'content': content,
             'type': type,
-            'pushToken': otherUserDS['pushToken'],
-            'nameFrom': myUserDS['name'],
+            'pushToken': otherUser['pushToken'],
+            'nameFrom': myName,
           },
         );
       });
@@ -196,20 +193,37 @@ class ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  Widget buildItem(int index, DocumentSnapshot document) {
-    if (document['idFrom'] == myUserID) {
+  Widget buildItem(int index, DocumentSnapshot ds) {
+    bool showRental = false;
+    Widget viewRentalWidget;
+
+    Widget textWidget = Text(
+      ds['content'],
+      style: TextStyle(
+          color: Colors.white, fontFamily: 'Quicksand', fontSize: 15.0),
+    );
+
+    if (ds['rental'] != null) {
+      showRental = true;
+      viewRentalWidget = RaisedButton(
+        onPressed: () => navToRental(ds['rental']),
+        child: Text('View rental'),
+      );
+    }
+
+    if (ds['idFrom'] == myUserID) {
       // Right (my message)
       return Row(
         children: <Widget>[
-          document['type'] == 0
+          ds['type'] == 0
               // Text
               ? Container(
-                  child: Text(
-                    document['content'],
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontFamily: 'Quicksand',
-                        fontSize: 15.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      textWidget,
+                      showRental ? viewRentalWidget : Container(),
+                    ],
                   ),
                   padding: EdgeInsets.fromLTRB(15.0, 10.0, 15.0, 10.0),
                   width: 200.0,
@@ -231,7 +245,7 @@ class ChatScreenState extends State<ChatScreen> {
                       bottom: isLastMessageRight(index) ? 20.0 : 10.0,
                       right: 10.0),
                 )
-              : document['type'] == 1
+              : ds['type'] == 1
                   // Image
                   ? Container(
                       child: Material(
@@ -263,7 +277,7 @@ class ChatScreenState extends State<ChatScreen> {
                                 ),
                                 clipBehavior: Clip.hardEdge,
                               ),
-                          imageUrl: document['content'],
+                          imageUrl: ds['content'],
                           width: 200.0,
                           height: 200.0,
                           fit: BoxFit.cover,
@@ -278,7 +292,7 @@ class ChatScreenState extends State<ChatScreen> {
                   // Sticker
                   : Container(
                       child: new Image.asset(
-                        'images/${document['content']}.gif',
+                        'images/${ds['content']}.gif',
                         width: 100.0,
                         height: 100.0,
                         fit: BoxFit.cover,
@@ -310,7 +324,7 @@ class ChatScreenState extends State<ChatScreen> {
                                 height: 35.0,
                                 padding: EdgeInsets.all(10.0),
                               ),
-                          imageUrl: otherUserDS['avatar'],
+                          imageUrl: otherUser['avatar'],
                           width: 35.0,
                           height: 35.0,
                           fit: BoxFit.cover,
@@ -321,14 +335,14 @@ class ChatScreenState extends State<ChatScreen> {
                         clipBehavior: Clip.hardEdge,
                       )
                     : Container(width: 35.0),
-                document['type'] == 0
+                ds['type'] == 0
                     ? Container(
-                        child: Text(
-                          document['content'],
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: fontSize,
-                              fontFamily: 'Quicksand'),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            textWidget,
+                            showRental ? viewRentalWidget : Container(),
+                          ],
                         ),
                         padding: EdgeInsets.fromLTRB(15.0, 10.0, 15.0, 10.0),
                         width: 200.0,
@@ -348,7 +362,7 @@ class ChatScreenState extends State<ChatScreen> {
                             )),
                         margin: EdgeInsets.only(left: 10.0),
                       )
-                    : document['type'] == 1
+                    : ds['type'] == 1
                         ? Container(
                             child: Material(
                               child: CachedNetworkImage(
@@ -379,7 +393,7 @@ class ChatScreenState extends State<ChatScreen> {
                                       ),
                                       clipBehavior: Clip.hardEdge,
                                     ),
-                                imageUrl: document['content'],
+                                imageUrl: ds['content'],
                                 width: 200.0,
                                 height: 200.0,
                                 fit: BoxFit.cover,
@@ -392,7 +406,7 @@ class ChatScreenState extends State<ChatScreen> {
                           )
                         : Container(
                             child: new Image.asset(
-                              'images/${document['content']}.gif',
+                              'images/${ds['content']}.gif',
                               width: 100.0,
                               height: 100.0,
                               fit: BoxFit.cover,
@@ -409,8 +423,7 @@ class ChatScreenState extends State<ChatScreen> {
                 ? Container(
                     child: Text(
                       DateFormat('dd MMM kk:mm').format(
-                          DateTime.fromMillisecondsSinceEpoch(
-                              document['timestamp'])),
+                          DateTime.fromMillisecondsSinceEpoch(ds['timestamp'])),
                       style: TextStyle(
                           color: greyColor,
                           fontSize: 12.0,
@@ -457,107 +470,55 @@ class ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    int stat = widget.rentalDS['status'];
-    String status;
-    switch (stat) {
-      case 0:
-        status = "Waiting for Owner's response";
-        break;
-      case 1:
-        status = "Waiting for your response";
-        break;
-      case 2:
-        status = "Accepted";
-        break;
-      case 3:
-        status = "You have the item";
-        break;
-      case 4:
-        status = "Waiting for your review";
-        break;
-      case 5:
-        status = "Completed";
-        break;
-      case 6:
-        status = "Rejected";
-        break;
-    }
-    return WillPopScope(
-      child: isLoading
-          ? Container()
-          : Stack(
-              children: <Widget>[
-                Column(
-                  children: <Widget>[
-                    SizedBox(
-                      height: 30.0,
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: <Widget>[
-                        FlatButton(
-                          child: BackButton(),
-                          onPressed: () => Navigator.pop(context),
-                        ),
-                        Align(
-                          alignment: Alignment.bottomCenter,
-                          child: Text(
-                            '${otherUserDS['name']}',
-                            style: TextStyle(
-                                fontSize: 20.0, fontFamily: 'Quicksand'),
-                          ),
-                        ),
-                        FlatButton(
-                          child: Icon(Icons.more_horiz),
-                          onPressed: null,
-                        )
-                      ],
-                    ),
-                    Divider(
-                      color: Colors.black45,
-                    ),
-                    Container(
-                      height: 40.0,
-                      child: Row(
+    return Scaffold(
+      body: WillPopScope(
+        child: isLoading
+            ? Container()
+            : Stack(
+                children: <Widget>[
+                  Column(
+                    children: <Widget>[
+                      SizedBox(
+                        height: 30.0,
+                      ),
+                      Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: <Widget>[
+                          FlatButton(
+                            child: BackButton(),
+                            onPressed: () => Navigator.pop(context),
+                          ),
                           Align(
                             alignment: Alignment.bottomCenter,
-                            child: FlatButton(
-                                child: Text(
-                                  status,
-                                  style: TextStyle(
-                                      fontSize: 15.0,
-                                      fontFamily: 'Quicksand',
-                                      color: Colors.grey),
-                                ),
-                                onPressed: null),
+                            child: Text(
+                              '${otherUser['name']}',
+                              style: TextStyle(
+                                  fontSize: 20.0, fontFamily: 'Quicksand'),
+                            ),
                           ),
                           FlatButton(
-                            onPressed: navToRental,
-                            child: Text(
-                              "Details",
-                              style: TextStyle(
-                                  fontFamily: 'Quicksand', color: primaryColor),
-                            ),
+                            child: Icon(Icons.more_horiz),
+                            onPressed: null,
                           )
                         ],
                       ),
-                    ),
-                    Divider(),
-                    // List of messages
-                    buildListMessage(),
-                    Divider(),
-                    // Input content
-                    buildInput(),
-                  ],
-                ),
+                      Divider(
+                        color: Colors.black45,
+                      ),
+                      // List of messages
+                      buildListMessage(),
+                      Divider(),
+                      // Input content
+                      buildInput(),
+                    ],
+                  ),
 
-                // Loading
-                buildLoading()
-              ],
-            ),
-      onWillPop: onBackPress,
+                  // Loading
+                  buildLoading()
+                ],
+              ),
+        onWillPop: onBackPress,
+      ),
     );
   }
 
@@ -736,15 +697,15 @@ class ChatScreenState extends State<ChatScreen> {
   Widget buildListMessage() {
     return Expanded(
       flex: 5,
-      child: widget.rentalDS.documentID == ''
+      child: chatDS.documentID == ''
           ? Center(
               child: CircularProgressIndicator(
                   valueColor: AlwaysStoppedAnimation<Color>(red)))
           : StreamBuilder(
               stream: Firestore.instance
-                  .collection('rentals')
-                  .document(widget.rentalDS.documentID)
-                  .collection('chat')
+                  .collection('messages')
+                  .document(groupChatId)
+                  .collection('messages')
                   .orderBy('timestamp', descending: true)
                   .limit(20)
                   .snapshots(),
@@ -769,13 +730,10 @@ class ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  void navToRental() async {
-    Navigator.pushNamed(
-      context,
-      RentalDetail.routeName,
-      arguments: RentalDetailArgs(
-        widget.rentalDS,
-      ),
-    );
+  void navToRental(DocumentReference rentalDR) async {
+    Navigator.of(context).pushNamed(RentalDetail.routeName,
+        arguments: RentalDetailArgs(
+          rentalDR.documentID,
+        ));
   }
 }

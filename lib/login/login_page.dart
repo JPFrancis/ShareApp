@@ -42,6 +42,8 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   Animation<double> contentAnimation;
   AnimationController slideController;
   Animation<double> slideAnimation;
+  
+  var pageController = PageController();
 
   @override
   void dispose() {
@@ -105,12 +107,19 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     super.initState();
 
     timeDilation = 2.0; // 3.0
-    logoController = AnimationController(duration: const Duration(milliseconds: 1000), vsync: this);
-    logoAnimation = CurvedAnimation(parent: logoController, curve: Interval(0, 0.5, curve: Curves.easeIn));
-    contentController = AnimationController(duration: const Duration(milliseconds: 1000), vsync: this);
-    contentAnimation = CurvedAnimation(parent: contentController, curve: Interval(0.4, 1, curve: Curves.easeIn));
-    slideController = new AnimationController(vsync: this, duration: Duration(milliseconds: 500));
-    slideAnimation = CurvedAnimation(parent: slideController, curve: Interval(0, 1, curve: Curves.easeIn));
+    logoController = AnimationController(
+        duration: const Duration(milliseconds: 1000), vsync: this);
+    logoAnimation = CurvedAnimation(
+        parent: logoController, curve: Interval(0, 0.5, curve: Curves.easeIn));
+    contentController = AnimationController(
+        duration: const Duration(milliseconds: 1000), vsync: this);
+    contentAnimation = CurvedAnimation(
+        parent: contentController,
+        curve: Interval(0.4, 1, curve: Curves.easeIn));
+    slideController = new AnimationController(
+        vsync: this, duration: Duration(milliseconds: 500));
+    slideAnimation = CurvedAnimation(
+        parent: slideController, curve: Interval(0, 1, curve: Curves.easeIn));
 
     logoController.forward();
     contentController.forward();
@@ -139,96 +148,118 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     double h = MediaQuery.of(context).size.height;
     double w = MediaQuery.of(context).size.width;
 
-    _loginPage(){
+    _loginPage() {
       return Material(
         color: primaryColor,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
-           // SizedBox(height: h/24,),
+            // SizedBox(height: h/24,),
             FadeTransition(opacity: logoAnimation, child: _showLogo(false)),
-           // SizedBox(height: 20.0,),
+            // SizedBox(height: 20.0,),
             FadeTransition(opacity: contentAnimation, child: showBody()),
           ],
         ),
       );
     }
 
-    _getStartedPage(){
-       return Container(
-        decoration: BoxDecoration(
+    _getStartedPage() {
+      return Container(
+          decoration: BoxDecoration(
             color: Colors.purple,
             gradient: LinearGradient(
-              colors: [primaryColor, Colors.black87] ,
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight
+                colors: [primaryColor, Colors.black87],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              FadeTransition(opacity: logoAnimation, child: _showLogo(false)),
+              FadeTransition(
+                  opacity: slideAnimation,
+                  child: Text("Get Started ⟹",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontFamily: appFont,
+                          fontSize: h / 40))),
+            ],
+          ));
+    }
+
+    _info1() {
+      return Stack(
+        children: <Widget>[
+          Container(
+            height: h,
+            width: w,
+            decoration: BoxDecoration(
+              color: Colors.purple,
+              gradient: LinearGradient(
+                  colors: [Colors.black, primaryColor],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight),
             ),
           ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: <Widget>[
-            FadeTransition(opacity: logoAnimation, child: _showLogo(false)),
-            FadeTransition(
-            opacity: slideAnimation,
-            child: Text("Get Started ⟹", textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontFamily: appFont, fontSize: h/40))),
-          ],
-        )
+          Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              Container(
+                alignment: Alignment.center,
+                height: h / 1.2,
+                padding: const EdgeInsets.symmetric(horizontal: 30),
+                child: ClipRRect(
+                  child: Image.asset('assets/search.png'),
+                  borderRadius: BorderRadius.circular(40),
+                ),
+              ),
+              Text(
+                "Search anything you need",
+                style: TextStyle(
+                    fontSize: h / 45, fontFamily: appFont, color: Colors.white),
+              )
+            ],
+          )
+        ],
       );
     }
 
-    _info1(){
-      return Stack(children: <Widget>[
-        Container(
-          height: h, width: w,
-          decoration: BoxDecoration(
-            color: Colors.purple,
-            gradient: LinearGradient(
-              colors: [Colors.black, primaryColor] ,
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight
-            ),
-          ),
-        ),
-        Column(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: <Widget>[
+    _info2() {
+      return Stack(
+        children: <Widget>[
           Container(
-            height: h/1.2,
-            padding: const EdgeInsets.symmetric(horizontal: 30),
-            child: ClipRRect(
-              child: Image.asset('assets/search.png'),
-              borderRadius: BorderRadius.circular(40),
+            height: h,
+            width: w,
+            decoration: BoxDecoration(
+              color: Colors.purple,
+              gradient: LinearGradient(
+                  colors: [primaryColor, Colors.black],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight),
             ),
           ),
-          Text("Search anything you need", style: TextStyle(fontSize: h/45, fontFamily: appFont, color: Colors.white),)
-        ],)
-      ],);
-    }
-
-    _info2(){
-      return Stack(children: <Widget>[
-        Container(
-          height: h, width: w,
-          decoration: BoxDecoration(
-            color: Colors.purple,
-            gradient: LinearGradient(
-              colors: [primaryColor, Colors.black] ,
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight
-            ),
-          ),
-        ),
-        Column(mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: <Widget>[
-          Container(
-            height: h/1.2,
-            padding: const EdgeInsets.symmetric(horizontal: 30),
-            child: ClipRRect(
-              child: Image.asset('assets/request.png'),
-              borderRadius: BorderRadius.circular(40),
-            ),
-          ),
-          Text("Request an item at your convenience", style: TextStyle(fontSize: h/45, fontFamily: appFont, color: Colors.white),)
-        ],)
-      ],);
+          Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              Container(
+                height: h / 1.2,
+                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(horizontal: 30),
+                child: ClipRRect(
+                  child: Image.asset('assets/request.png'),
+                  borderRadius: BorderRadius.circular(40),
+                ),
+              ),
+              Text(
+                "Request an item at your convenience",
+                style: TextStyle(
+                    fontSize: h / 45, fontFamily: appFont, color: Colors.white),
+              )
+            ],
+          )
+        ],
+      );
     }
 
     List<Widget> pages = [
@@ -238,38 +269,68 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       Material(child: _loginPage()),
     ];
 
-    return PageView.builder(
-      itemCount: pages.length,
-      itemBuilder: (context, index){
-        return pages[index];
-      }
-    );
+    return Stack(children: <Widget>[
+      PageView.builder(
+        controller: pageController,
+          itemCount: pages.length,
+          itemBuilder: (context, index) {
+            return pages[index];
+          }),
+      Positioned(
+        bottom: 30, 
+        left: w/3,
+        right: w/3,
+        child: new DotsIndicator(
+          controller: pageController,
+          itemCount: pages.length,
+          onPageSelected: (int page) {
+            pageController.animateToPage(
+              page,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.ease,
+            );
+          },
+        ),
+      ),
+    ],);
   }
-  
+
   Widget showBody() {
     return new Form(
-    key: formKey,
-    child: new ListView(
-      padding: EdgeInsets.all(0),
-      shrinkWrap: true,
-      children: <Widget>[
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-          child: FlatButton(
-            child: Text('Sign Up', style: new TextStyle(fontSize: 18.0, fontWeight: FontWeight.w300, color: Colors.white, fontFamily: 'Quicksand')),
-            onPressed: null
+      key: formKey,
+      child: new ListView(
+        padding: EdgeInsets.all(0),
+        shrinkWrap: true,
+        children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+            child: FlatButton(
+                child: Text('Sign Up',
+                    style: new TextStyle(
+                        fontSize: 18.0,
+                        fontWeight: FontWeight.w300,
+                        color: Colors.white,
+                        fontFamily: 'Quicksand')),
+                onPressed: null),
           ),
-        ),
-        SizedBox(height: 10.0,),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-          child: FlatButton(
-            child: Text('Try It Out', style: new TextStyle(fontSize: 18.0, fontWeight: FontWeight.w300, color: Colors.white, fontFamily: 'Quicksand')),
-            onPressed: navToAnonHomePage,
+          SizedBox(
+            height: 10.0,
           ),
-        ),
-        googleLogin(),
-        /*
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+            child: FlatButton(
+              child: Text('Try It Out',
+                  style: new TextStyle(
+                      fontSize: 18.0,
+                      fontWeight: FontWeight.w300,
+                      color: Colors.white,
+                      fontFamily: 'Quicksand')),
+              onPressed: navToAnonHomePage,
+            ),
+          ),
+          googleLogin(),
+          ecSignIn(),
+          /*
         Padding(
           padding: const EdgeInsets.only(left: 40.0),
           child: Column(
@@ -294,8 +355,8 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
           ],
         ),
         showErrorMessage(),*/
-      ],
-    ),
+        ],
+      ),
     );
   }
 
@@ -443,16 +504,16 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
         );
   }
 
-  Widget otherUserSignin() {
+  Widget ecSignIn() {
     return Container(
       height: 60.0,
       width: 60.0,
-      child: new FlatButton(
-        child: Icon(
-          Icons.play_arrow,
-          color: Colors.white,
+      child: FlatButton(
+        onPressed: signInEC,
+        child: Text(
+          'Sign in as EC\n(TESTING ONLY)',
+          textAlign: TextAlign.center,
         ),
-        onPressed: validateAndSubmitOtherUser,
       ),
     );
   }
@@ -513,7 +574,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     );
   }
 
-  void validateAndSubmitOtherUser() async {
+  void signInEC() async {
     setState(() {
       errorMessage = "";
       isLoading = true;

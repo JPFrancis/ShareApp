@@ -74,13 +74,6 @@ class ItemRequestState extends State<ItemRequest> {
     getSnapshots();
   }
 
-  @override
-  void dispose() {
-    // Clean up the controller when the widget is disposed.
-    noteController.dispose();
-    super.dispose();
-  }
-
   void initPickerData() {
     List pickerData = JsonDecoder().convert(PickerData);
     windows = pickerData[0];
@@ -192,8 +185,8 @@ class ItemRequestState extends State<ItemRequest> {
   }
 
   Widget showItemImage() {
+    double widthOfScreen = MediaQuery.of(context).size.width;
     _getItemImage(BuildContext context) {
-      double widthOfScreen = MediaQuery.of(context).size.width;
       var image = itemDS['images'][0];
       return new Container(
         child: FittedBox(
@@ -206,7 +199,6 @@ class ItemRequestState extends State<ItemRequest> {
       );
     }
 
-    double widthOfScreen = MediaQuery.of(context).size.width;
     List imagesList = itemDS['images'];
     return imagesList.length > 0
         ? Container(
@@ -447,7 +439,7 @@ class ItemRequestState extends State<ItemRequest> {
                 context,
                 RentalDetail.routeName,
                 arguments: RentalDetailArgs(
-                  ds,
+                  ds.documentID,
                 ),
               );
             }
@@ -644,8 +636,8 @@ class DateTimeItem extends StatelessWidget {
             onTap: () {
               showDatePicker(
                       context: context,
+                      initialDate: DateTime.now(),
                       firstDate: DateTime.now(),
-                      initialDate: DateTime.now().add(Duration(seconds: 10)),
                       lastDate: DateTime.now().add(Duration(days: 300)))
                   .then<void>((DateTime value) {
                 if (value != null) {
