@@ -122,12 +122,8 @@ class ItemRequestState extends State<ItemRequest> {
 
   @override
   Widget build(BuildContext context) {
-    theme = Theme.of(context);
-    textStyle =
-        Theme.of(context).textTheme.headline.merge(TextStyle(fontSize: 20));
-    inputTextStyle = Theme.of(context).textTheme.subtitle;
-
     return Scaffold(
+      backgroundColor: primaryColor.withBlue(155).withGreen(157).withRed(92),
       floatingActionButton: Container(
         padding: const EdgeInsets.only(top: 120.0, left: 5.0),
         child: FloatingActionButton(
@@ -142,25 +138,25 @@ class ItemRequestState extends State<ItemRequest> {
       body: Stack(
         children: <Widget>[
           isLoading
-              ? Container(
-                  decoration:
-                      new BoxDecoration(color: Colors.white.withOpacity(0.0)),
-                )
+              ? Container(decoration: new BoxDecoration(color: Colors.white.withOpacity(0.0)),)
               : showBody(),
           showCircularProgress(),
         ],
       ),
-      bottomNavigationBar: Container(
-        height: 60.0,
-        padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
-        child: RaisedButton(
-          splashColor: Colors.red,
-          elevation: 3.0,
-          onPressed: () => validateSend(sendItem),
-          color: primaryColor,
-          child: Text(
-            "Request",
-            style: TextStyle(color: Colors.white, fontFamily: 'Quicksand'),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.only(bottom: 10.0),
+        child: Container(
+          height: 60.0,
+          padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
+          child: RaisedButton(
+            splashColor: Colors.red,
+            elevation: 3.0,
+            onPressed: () => validateSend(sendItem),
+            color: Colors.white,
+            child: Text(
+              "Request",
+              style: TextStyle(color: primaryColor, fontFamily: 'Quicksand'),
+            ),
           ),
         ),
       ),
@@ -169,15 +165,38 @@ class ItemRequestState extends State<ItemRequest> {
 
   Widget showBody() {
     return ListView(
+      physics: NeverScrollableScrollPhysics(),
       padding: EdgeInsets.all(0),
       children: <Widget>[
         showItemImage(),
-        showItemCreator(),
-        divider(),
-        showTimePickers(),
-        divider(),
-        showItemPriceInfo(),
-        divider(),
+        SizedBox(height: 10.0,),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10.0),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 5.0),
+            decoration: new BoxDecoration(
+            boxShadow: <BoxShadow>[
+              CustomBoxShadow(
+                color: Colors.black,
+                blurRadius: 2.0,
+                blurStyle: BlurStyle.outer),
+              ],
+            color: Colors.white,
+            borderRadius: new BorderRadius.all(
+              Radius.circular(20.0),
+            )),
+            child: Container(
+              height: MediaQuery.of(context).size.height,
+              child: Column(children: <Widget>[
+                showItemCreator(),
+                divider(),
+                showTimePickers(),
+                divider(),
+                showItemPriceInfo(),
+              ],),
+            ),
+          ),
+        ),
         // showNoteEdit(),
         //showTimeInfo(), // testing purposes only
       ],
@@ -188,7 +207,8 @@ class ItemRequestState extends State<ItemRequest> {
     double widthOfScreen = MediaQuery.of(context).size.width;
     _getItemImage(BuildContext context) {
       var image = itemDS['images'][0];
-      return new Container(
+      return ClipRRect(
+        borderRadius: new BorderRadius.all(Radius.circular(20.0)),
         child: FittedBox(
           fit: BoxFit.cover,
           child: CachedNetworkImage(
@@ -202,6 +222,16 @@ class ItemRequestState extends State<ItemRequest> {
     List imagesList = itemDS['images'];
     return imagesList.length > 0
         ? Container(
+          decoration: BoxDecoration(
+             borderRadius: new BorderRadius.all(
+              Radius.circular(20.0),
+            ),
+            boxShadow: <BoxShadow>[
+            CustomBoxShadow(
+                color: Colors.black,
+                blurRadius: 7.0,
+                blurStyle: BlurStyle.outer),
+          ],),
             height: widthOfScreen / 1,
             child: _getItemImage(context),
           )
@@ -233,9 +263,10 @@ class ItemRequestState extends State<ItemRequest> {
           Text(
             itemDS['name'],
             style: TextStyle(
-                fontFamily: 'Quicksand',
-                fontSize: 25.0,
-                fontWeight: FontWeight.bold),
+              color: Colors.black,
+              fontFamily: 'Quicksand',
+              fontSize: 25.0,
+              fontWeight: FontWeight.w500),
           ),
           Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -628,18 +659,17 @@ class DateTimeItem extends StatelessWidget {
     double w = MediaQuery.of(context).size.width;
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 15.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
           InkWell(
             onTap: () {
               showDatePicker(
-                      context: context,
-                      initialDate: DateTime.now(),
-                      firstDate: DateTime.now(),
-                      lastDate: DateTime.now().add(Duration(days: 300)))
-                  .then<void>((DateTime value) {
+                context: context,
+                initialDate: DateTime.now(),
+                firstDate: DateTime.now(),
+                lastDate: DateTime.now().add(Duration(days: 300)))
+              .then<void>((DateTime value) {
                 if (value != null) {
                   onChangedDateTime(updateDateTime(value.year, value.month,
                       value.day, windows, window, amPm));
