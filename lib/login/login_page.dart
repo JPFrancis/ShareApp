@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' show timeDilation;
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/pages/home_page.dart';
 import 'package:shareapp/services/auth.dart';
@@ -41,12 +42,17 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   Animation<double> contentAnimation;
   AnimationController slideController;
   Animation<double> slideAnimation;
+  AnimationController textController;
+  Animation<Offset> textAnimation;
+
+  var pageController = PageController();
 
   @override
   void dispose() {
     logoController.dispose();
     contentController.dispose();
     slideController.dispose();
+    textController.dispose();
     super.dispose();
   }
 
@@ -104,23 +110,27 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     super.initState();
 
     timeDilation = 2.0; // 3.0
-    logoController = AnimationController(
-        duration: const Duration(milliseconds: 1000), vsync: this);
-    logoAnimation = CurvedAnimation(
-        parent: logoController, curve: Interval(0, 0.5, curve: Curves.easeIn));
-    contentController = AnimationController(
-        duration: const Duration(milliseconds: 1000), vsync: this);
-    contentAnimation = CurvedAnimation(
-        parent: contentController,
-        curve: Interval(0.4, 1, curve: Curves.easeIn));
-    slideController = new AnimationController(
-        vsync: this, duration: Duration(milliseconds: 500));
-    slideAnimation = CurvedAnimation(
-        parent: slideController, curve: Interval(0, 1, curve: Curves.easeIn));
+    logoController = AnimationController( duration: const Duration(milliseconds: 1000), vsync: this);
+    logoAnimation = CurvedAnimation( parent: logoController, curve: Interval(0, 0.5, curve: Curves.easeIn));
+    contentController = AnimationController( duration: const Duration(milliseconds: 1000), vsync: this);
+    contentAnimation = CurvedAnimation( parent: contentController, curve: Interval(0.4, 1, curve: Curves.easeIn));
+    slideController = new AnimationController( vsync: this, duration: Duration(milliseconds: 500));
+    slideAnimation = CurvedAnimation( parent: slideController, curve: Interval(0, 1, curve: Curves.easeIn));
+    textController = new AnimationController( vsync: this, duration: Duration(milliseconds: 500));
+    textAnimation = Tween(
+        begin: Offset(0.0, 0.0),
+        end: Offset(0.2, 0.0),
+    ).animate(
+        CurvedAnimation(
+            parent: textController,
+            curve: Interval(0, 1, curve: Curves.fastOutSlowIn),
+        ),
+    );
 
     logoController.forward();
     contentController.forward();
     slideController.repeat(reverse: true);
+    textController.repeat(reverse: true);
   }
 
   void _changeFormToSignUp() {
@@ -173,14 +183,26 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: <Widget>[
               FadeTransition(opacity: logoAnimation, child: _showLogo(false)),
-              FadeTransition(
-                  opacity: slideAnimation,
-                  child: Text("Get Started ⟹",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontFamily: appFont,
-                          fontSize: h / 40))),
+              AnimatedBuilder(
+                animation: textController, builder: (BuildContext context, Widget child) {
+                  return FractionalTranslation(
+                    child: Text("Get Started ⟹",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontFamily: appFont,
+                            fontSize: h / 40)), translation: textAnimation.value);
+
+                },
+                /*
+                child: FractionalTranslation(
+                    child: Text("Swipe To Get Started ⟹",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontFamily: appFont,
+                            fontSize: h / 40)), translation: textAnimation.value), */
+              ),
             ],
           ));
     }
@@ -266,11 +288,30 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       Material(child: _loginPage()),
     ];
 
-    return PageView.builder(
-        itemCount: pages.length,
-        itemBuilder: (context, index) {
-          return pages[index];
-        });
+    return Stack(children: <Widget>[
+      PageView.builder(
+        controller: pageController,
+          itemCount: pages.length,
+          itemBuilder: (context, index) {
+            return pages[index];
+          }),
+      Positioned(
+        bottom: 30, 
+        left: w/3,
+        right: w/3,
+        child: new DotsIndicator(
+          controller: pageController,
+          itemCount: pages.length,
+          onPageSelected: (int page) {
+            pageController.animateToPage(
+              page,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.ease,
+            );
+          },
+        ),
+      ),
+    ],);
   }
 
   Widget showBody() {

@@ -4,7 +4,6 @@ import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_picker/flutter_picker.dart';
 import 'package:intl/intl.dart';
@@ -39,7 +38,6 @@ class ItemRequestState extends State<ItemRequest> {
 
   bool isUploading = false;
   bool isLoading;
-  String myName;
   String myUserID;
   String photoURL;
 
@@ -76,13 +74,6 @@ class ItemRequestState extends State<ItemRequest> {
     getSnapshots();
   }
 
-  @override
-  void dispose() {
-    // Clean up the controller when the widget is disposed.
-    noteController.dispose();
-    super.dispose();
-  }
-
   void initPickerData() {
     List pickerData = JsonDecoder().convert(PickerData);
     windows = pickerData[0];
@@ -99,13 +90,7 @@ class ItemRequestState extends State<ItemRequest> {
 
   void getMyUserID() async {
     prefs = await SharedPreferences.getInstance();
-    myName = prefs.getString('name') ?? '';
-
-    var user = await FirebaseAuth.instance.currentUser();
-
-    if (user != null) {
-      myUserID = user.uid;
-    }
+    myUserID = prefs.getString('userID') ?? '';
   }
 
   Future<Null> getSnapshots() async {
@@ -137,12 +122,8 @@ class ItemRequestState extends State<ItemRequest> {
 
   @override
   Widget build(BuildContext context) {
-    theme = Theme.of(context);
-    textStyle =
-        Theme.of(context).textTheme.headline.merge(TextStyle(fontSize: 20));
-    inputTextStyle = Theme.of(context).textTheme.subtitle;
-
     return Scaffold(
+      backgroundColor: primaryColor.withBlue(155).withGreen(157).withRed(92),
       floatingActionButton: Container(
         padding: const EdgeInsets.only(top: 120.0, left: 5.0),
         child: FloatingActionButton(
@@ -157,24 +138,25 @@ class ItemRequestState extends State<ItemRequest> {
       body: Stack(
         children: <Widget>[
           isLoading
-              ? Container(
-                  decoration:
-                      new BoxDecoration(color: Colors.white.withOpacity(0.0)),
-                )
+              ? Container(decoration: new BoxDecoration(color: Colors.white.withOpacity(0.0)),)
               : showBody(),
           showCircularProgress(),
         ],
       ),
-      bottomNavigationBar: Container(
-        height: 60.0,
-        padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
-        child: RaisedButton(
-          elevation: 3.0,
-          onPressed: () => validateSend(sendItem),
-          color: primaryColor,
-          child: Text(
-            "Request",
-            style: TextStyle(color: Colors.white, fontFamily: 'Quicksand'),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.only(bottom: 10.0),
+        child: Container(
+          height: 60.0,
+          padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
+          child: RaisedButton(
+            splashColor: Colors.red,
+            elevation: 3.0,
+            onPressed: () => validateSend(sendItem),
+            color: Colors.white,
+            child: Text(
+              "Request",
+              style: TextStyle(color: primaryColor, fontFamily: 'Quicksand'),
+            ),
           ),
         ),
       ),
@@ -183,15 +165,38 @@ class ItemRequestState extends State<ItemRequest> {
 
   Widget showBody() {
     return ListView(
+      physics: NeverScrollableScrollPhysics(),
       padding: EdgeInsets.all(0),
       children: <Widget>[
         showItemImage(),
-        showItemCreator(),
-        divider(),
-        showTimePickers(),
-        divider(),
-        showItemPriceInfo(),
-        divider(),
+        SizedBox(height: 10.0,),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10.0),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 5.0),
+            decoration: new BoxDecoration(
+            boxShadow: <BoxShadow>[
+              CustomBoxShadow(
+                color: Colors.black,
+                blurRadius: 2.0,
+                blurStyle: BlurStyle.outer),
+              ],
+            color: Colors.white,
+            borderRadius: new BorderRadius.all(
+              Radius.circular(20.0),
+            )),
+            child: Container(
+              height: MediaQuery.of(context).size.height,
+              child: Column(children: <Widget>[
+                showItemCreator(),
+                divider(),
+                showTimePickers(),
+                divider(),
+                showItemPriceInfo(),
+              ],),
+            ),
+          ),
+        ),
         // showNoteEdit(),
         //showTimeInfo(), // testing purposes only
       ],
@@ -199,10 +204,11 @@ class ItemRequestState extends State<ItemRequest> {
   }
 
   Widget showItemImage() {
+    double widthOfScreen = MediaQuery.of(context).size.width;
     _getItemImage(BuildContext context) {
-      double widthOfScreen = MediaQuery.of(context).size.width;
       var image = itemDS['images'][0];
-      return new Container(
+      return ClipRRect(
+        borderRadius: new BorderRadius.all(Radius.circular(20.0)),
         child: FittedBox(
           fit: BoxFit.cover,
           child: CachedNetworkImage(
@@ -213,10 +219,19 @@ class ItemRequestState extends State<ItemRequest> {
       );
     }
 
-    double widthOfScreen = MediaQuery.of(context).size.width;
     List imagesList = itemDS['images'];
     return imagesList.length > 0
         ? Container(
+          decoration: BoxDecoration(
+             borderRadius: new BorderRadius.all(
+              Radius.circular(20.0),
+            ),
+            boxShadow: <BoxShadow>[
+            CustomBoxShadow(
+                color: Colors.black,
+                blurRadius: 7.0,
+                blurStyle: BlurStyle.outer),
+          ],),
             height: widthOfScreen / 1,
             child: _getItemImage(context),
           )
@@ -248,9 +263,10 @@ class ItemRequestState extends State<ItemRequest> {
           Text(
             itemDS['name'],
             style: TextStyle(
-                fontFamily: 'Quicksand',
-                fontSize: 25.0,
-                fontWeight: FontWeight.bold),
+              color: Colors.black,
+              fontFamily: 'Quicksand',
+              fontSize: 25.0,
+              fontWeight: FontWeight.w500),
           ),
           Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -407,7 +423,6 @@ class ItemRequestState extends State<ItemRequest> {
       'initialPushNotif': {
         'pushToken': creatorDS['pushToken'],
         'itemName': itemDS['name'],
-        'nameFrom': myName,
       },
     });
 
@@ -426,13 +441,11 @@ class ItemRequestState extends State<ItemRequest> {
       if (itemRental != null) {
         await new Future.delayed(Duration(milliseconds: delay));
 
-        String groupChatId = combineID(myUserID, creatorDS.documentID);
-
         // create chat and send the default request message
         var dr = Firestore.instance
-            .collection('messages')
-            .document(groupChatId)
-            .collection('messages')
+            .collection('rentals')
+            .document(rentalID)
+            .collection('chat')
             .document(DateTime.now().millisecondsSinceEpoch.toString());
 
         Future chat = Firestore.instance.runTransaction((transaction) async {
@@ -444,9 +457,6 @@ class ItemRequestState extends State<ItemRequest> {
               'timestamp': DateTime.now().millisecondsSinceEpoch,
               'content': message,
               'type': 0,
-              'pushToken': creatorDS['pushToken'],
-              'nameFrom': myName,
-              'rental': rentalDR,
             },
           );
         });
@@ -648,22 +658,18 @@ class DateTimeItem extends StatelessWidget {
     String range = parseWindow(windows, window, amPm);
     double w = MediaQuery.of(context).size.width;
 
-    DateTime now = DateTime.now();
-    DateTime firstDate = DateTime(now.year, now.month, now.day);
-
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 15.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
           InkWell(
             onTap: () {
               showDatePicker(
-                      context: context,
-                      firstDate: firstDate,
-                      initialDate: dateTime,
-                      lastDate: DateTime.now().add(Duration(days: 300)))
-                  .then<void>((DateTime value) {
+                context: context,
+                initialDate: DateTime.now(),
+                firstDate: DateTime.now(),
+                lastDate: DateTime.now().add(Duration(days: 300)))
+              .then<void>((DateTime value) {
                 if (value != null) {
                   onChangedDateTime(updateDateTime(value.year, value.month,
                       value.day, windows, window, amPm));

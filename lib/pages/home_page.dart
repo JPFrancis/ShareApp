@@ -1216,20 +1216,29 @@ class HomePageState extends State<HomePage> {
   }
 
   Widget myRentalsPage() {
-    return Column(
-      children: <Widget>[
-        SizedBox(
-          height: 30.0,
-        ),
-        reusableCategoryWithAll("REQUESTING", () => debugPrint),
-        buildRequests("renter"),
-        reusableCategoryWithAll("UPCOMING", () => debugPrint),
-        buildTransactions("upcoming", "renter"),
-        reusableCategoryWithAll("CURRENT", () => debugPrint),
-        buildTransactions("current", "renter"),
-        reusableCategoryWithAll("PAST", () => debugPrint),
-        buildTransactions("past", "renter"),
-      ],
+    return Scaffold(
+      appBar: AppBar(
+        elevation: 3.0,
+        title: Text("Others' Items That You Are Renting", style: TextStyle(fontFamily: appFont, fontWeight: FontWeight.w400)), 
+        //titleSpacing: 0.0,
+        centerTitle: false,
+        shape: RoundedRectangleBorder(
+          borderRadius: new BorderRadius.only(
+            bottomRight: const Radius.elliptical(150.0, 30),
+          )
+        )),
+      body: Column(
+        children: <Widget>[
+          reusableCategoryWithAll("REQUESTING", () => debugPrint),
+          buildRequests("renter"),
+          reusableCategoryWithAll("UPCOMING", () => debugPrint),
+          buildTransactions("upcoming", "renter"),
+          reusableCategoryWithAll("CURRENT", () => debugPrint),
+          buildTransactions("current", "renter"),
+          reusableCategoryWithAll("PAST", () => debugPrint),
+          buildTransactions("past", "renter"),
+        ],
+      )
     );
   }
 
@@ -1682,6 +1691,15 @@ class HomePageState extends State<HomePage> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
+        appBar: AppBar(
+          elevation: 3.0,
+          title: Text("Your Items That Others Can Rent", style: TextStyle(fontFamily: appFont, fontWeight: FontWeight.w400)), 
+          centerTitle: false,
+          shape: RoundedRectangleBorder(
+            borderRadius: new BorderRadius.only(
+              bottomRight: const Radius.elliptical(150.0, 30),
+            )
+          )),
         body: Stack(children: <Widget>[
           Container(
             color: coolerWhite,
@@ -1689,17 +1707,11 @@ class HomePageState extends State<HomePage> {
               children: [
                 Column(
                   children: <Widget>[
-                    SizedBox(
-                      height: 30.0,
-                    ),
                     buildListingsList(),
                   ],
                 ),
                 Column(
                   children: <Widget>[
-                    SizedBox(
-                      height: 30.0,
-                    ),
                     reusableCategoryWithAll("REQUESTS", () => debugPrint),
                     buildRequests("owner"),
                     reusableCategoryWithAll("UPCOMING", () => debugPrint),
