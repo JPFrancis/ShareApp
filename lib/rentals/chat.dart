@@ -42,7 +42,7 @@ class ChatState extends State<Chat> {
   bool isLoading = true;
   String imageUrl;
   String myUserID;
-  String groupChatId = '';
+  String groupChatId;
   String myName;
 
   var listMessage;

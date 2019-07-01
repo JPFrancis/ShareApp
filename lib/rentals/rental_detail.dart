@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -84,8 +85,11 @@ class RentalDetailState extends State<RentalDetail> {
 
   void getMyUserID() async {
     prefs = await SharedPreferences.getInstance();
-    myUserId = prefs.getString('userID') ?? '';
     myName = prefs.getString('name') ?? '';
+    var user = await FirebaseAuth.instance.currentUser();
+    if (user != null) {
+      myUserId = user.uid;
+    }
   }
 
   void getSnapshots() async {
