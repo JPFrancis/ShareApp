@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -9,8 +10,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:shareapp/extras/helpers.dart';
+import 'package:shareapp/extras/quote_icons.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/models/item.dart';
 import 'package:shareapp/models/user.dart';
@@ -45,8 +48,7 @@ class HomePage extends StatefulWidget {
 }
 
 class HomePageState extends State<HomePage> {
-  final GlobalKey<RefreshIndicatorState> refreshIndicatorKey =
-      GlobalKey<RefreshIndicatorState>();
+  final GlobalKey<RefreshIndicatorState> refreshIndicatorKey = GlobalKey<RefreshIndicatorState>();
   final FirebaseMessaging firebaseMessaging = FirebaseMessaging();
   StreamSubscription<QuerySnapshot> subscription;
   String deviceToken;
@@ -55,6 +57,8 @@ class HomePageState extends State<HomePage> {
   DocumentSnapshot myUserDS;
   String myUserID;
   List<Item> itemList;
+  Future<File> selectedImage;
+  File imageFile;
 
   List bottomNavBarTiles;
   List bottomTabPages;
@@ -66,6 +70,9 @@ class HomePageState extends State<HomePage> {
   bool isAuthenticated;
 
   TextEditingController searchController = TextEditingController();
+  TextEditingController nameController = TextEditingController();  
+  TextEditingController descriptionController = TextEditingController();
+
   List<DocumentSnapshot> allItems;
   List<String> searchList;
   List<String> filteredList;
@@ -670,8 +677,6 @@ class HomePageState extends State<HomePage> {
               height: 30.0,
             ),
             categories(),
-            //iconCategories(),
-            //lookingFor()
             Container(
               height: 10,
             ),
@@ -992,12 +997,13 @@ class HomePageState extends State<HomePage> {
         splashColor: primaryColor,
         child: Container(
           decoration: new BoxDecoration(
-              color: Colors.white,
-              borderRadius: new BorderRadius.only(
-                  bottomLeft: const Radius.circular(30.0),
-                  bottomRight: const Radius.circular(30.0),
-                  topLeft: const Radius.circular(12.0),
-                  topRight: const Radius.circular(12.0))),
+            color: Colors.white,
+            borderRadius: new BorderRadius.only(
+              bottomLeft: const Radius.circular(10.0),
+              bottomRight: const Radius.circular(10.0),
+              topLeft: const Radius.circular(10.0),
+              topRight: const Radius.circular(10.0))
+          ),
           child: Row(
             children: <Widget>[
               SizedBox(
@@ -1016,43 +1022,24 @@ class HomePageState extends State<HomePage> {
     }
 
     return Container(
-      height: h / 8,
+      height: h / 4,
       decoration: new BoxDecoration(
-          boxShadow: <BoxShadow>[
-            CustomBoxShadow(
-                color: Colors.black,
-                blurRadius: 3.0,
-                blurStyle: BlurStyle.outer),
-          ],
-          color: primaryColor,
-          borderRadius: new BorderRadius.only(
-              bottomLeft: const Radius.circular(30.0),
-              bottomRight: const Radius.circular(30.0))),
-      child: Container(
-        padding: EdgeInsets.only(left: 5, right: 5, top: h / 15),
-        child: Column(
-          children: <Widget>[
-            searchField(),
-            /*
-            searchController.text.isNotEmpty && searchList != null
-                ? Expanded(
-                    child: Container(
-                      color: Colors.white,
-                      child: ListView.builder(
-                        itemCount:
-                            searchList == null ? 0 : filteredList.length,
-                        itemBuilder: (BuildContext context, int index) {
-                          return ListTile(
-                            title: Text(filteredList[index]),
-                            onTap: () => navToSearchResults(filteredList[index].toLowerCase()),
-                          );
-                        },
-                      ),
-                    ),
-                  )
-                : Container(),*/
-          ],
+        image: DecorationImage(image: AssetImage('assets/compressed_surfer.jpg'), fit: BoxFit.fill),
+        boxShadow: <BoxShadow>[
+          CustomBoxShadow(
+              color: Colors.black,
+              blurRadius: 3.0,
+              blurStyle: BlurStyle.outer),
+        ],
+        color: primaryColor,
+       borderRadius: new BorderRadius.only(
+          bottomLeft: const Radius.circular(40.0),
+          bottomRight: const Radius.circular(40.0)) 
         ),
+      child: Stack(
+        children: <Widget>[
+          Align(alignment: Alignment.bottomCenter, child: searchField(),),
+        ],
       ),
     );
   }
@@ -1797,6 +1784,163 @@ class HomePageState extends State<HomePage> {
     );
   }
 
+
+
+  Widget showPersonalInformation(){
+    Widget _userImage() {
+      void onImageButtonPressed(ImageSource source) {
+        setState(() {
+          selectedImage = ImagePicker.pickImage(source: source);
+        });
+      }
+
+      Widget showCurrentProfilePic() {
+        double height = MediaQuery.of(context).size.height;
+        double width = MediaQuery.of(context).size.width;
+        return Container(
+          padding: EdgeInsets.only(left: width / 5, right: width / 5),
+          height: height / 5,
+          child: FittedBox(
+            fit: BoxFit.cover,
+            child: CachedNetworkImage(
+              //key: ValueKey(DateTime.now().millisecondsSinceEpoch),
+              imageUrl: myUserDS['avatar'],
+              placeholder: (context, url) => CircularProgressIndicator(),
+            ),
+          ),
+        );
+      }
+
+      return Center(
+        child: InkWell(
+          onTap: () => onImageButtonPressed(ImageSource.gallery),
+          child: FutureBuilder<File>(
+              future: selectedImage,
+              builder: (BuildContext context, AsyncSnapshot<File> snapshot) {
+                if (snapshot.connectionState == ConnectionState.done &&
+                    snapshot.data != null) {
+                  imageFile = snapshot.data;
+                  return Image.file(imageFile);
+                } else if (snapshot.error != null) {
+                  return const Text(
+                    'Error',
+                    textAlign: TextAlign.center,
+                  );
+                } else {
+                  return showCurrentProfilePic();
+                }
+              }),
+        ),
+        // Icon(Icons.edit)
+      );
+    }
+
+    Widget _showDisplayNameEditor() {
+      double width = MediaQuery.of(context).size.width;
+      return Center(
+        child: TextField(
+          textAlign: TextAlign.center,
+          cursorColor: Colors.blueAccent,
+          controller: nameController,
+          style: TextStyle(fontFamily: font, fontSize: width / 15),
+          decoration: InputDecoration.collapsed(hintText: "Name"),
+        ),
+      );
+    }
+
+    Widget _showAboutMe() {
+      double width = MediaQuery.of(context).size.width;
+      return Center(
+        child: Column(children: <Widget>[
+          Align(alignment: Alignment.topLeft, child: Icon(QuoteIcons.quote_left)),
+          TextField(
+            maxLines: null,
+            keyboardType: TextInputType.multiline,
+            textAlign: TextAlign.center,
+            controller: descriptionController,
+            cursorColor: Colors.blueAccent,
+            style: TextStyle(fontFamily: font, fontSize: width / 20),
+            decoration: InputDecoration(
+              border: InputBorder.none,
+              hintText: "Description",
+            ),
+          ),
+          Align(alignment: Alignment.bottomRight, child: Icon(QuoteIcons.quote_right)),
+        ]),
+      );
+    }
+
+    Widget _showGenderSelecter() {
+      return Container(
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+              isDense: true,
+              isExpanded: true,
+              // [todo value]
+              hint: Text('Gender', style: TextStyle(fontFamily: font, fontWeight: FontWeight.w500),),
+              onChanged: (String newValue) { // [todo]
+              },
+              items: ["Male", "Female", "Other"].map((gender) => DropdownMenuItem<String>(value: gender, child: Text(gender, style: TextStyle(fontFamily: font),),),) .toList()),
+        ),
+      );
+    }
+
+/*
+    Widget birthPicker() {
+      var formatter = new intl.DateFormat('MMMM d, y');
+      String formatted = formatter.format(selectedDate);
+
+      Future<Null> _selectDate(BuildContext context) async {
+        final DateTime picked = await showDatePicker(
+          context: context,
+          initialDate: selectedDate,
+          firstDate: DateTime(1930),
+          lastDate: DateTime(2020),
+        );
+        if (picked != null && picked != selectedDate)
+          setState(() {
+            selectedDate = picked;
+          });
+    }*/
+    
+    Widget _emailEntry() {
+      return InkWell(
+        child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
+            Text("Email", style: TextStyle(fontFamily: font, fontWeight: FontWeight.w500)),
+            Text('${myUserDS['email']}', style: TextStyle(fontFamily: font),)
+          ],
+        ),
+        onTap: null);
+    }
+
+      Widget phoneEntry() {
+        return InkWell(
+          child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
+              Text("Phone", style: TextStyle(fontFamily: font, fontWeight: FontWeight.w500)),
+              Text("999-999-9999", style: TextStyle(fontFamily: font),)
+            ],
+          ),
+          onTap: null);
+      }
+    return Column(children: <Widget>[
+      _userImage(),
+      _showDisplayNameEditor(),
+      _showAboutMe(),
+      Container(
+      color: Colors.white,
+        child: Column(
+          children: <Widget>[
+            _showGenderSelecter(),
+            _emailEntry(),
+            phoneEntry(),
+          ].map((Widget child) => Container(padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
+                  child: Column(children: <Widget>[child, Divider()],),
+                )).toList(),
+      )),
+    ],);
+  }
+
+
   Widget profileIntroStream() {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 15.0),
@@ -1848,9 +1992,7 @@ class HomePageState extends State<HomePage> {
                 return Container(
                   child: Column(
                     children: <Widget>[
-                      SizedBox(
-                        height: 30.0,
-                      ),
+                      SizedBox(height: 30.0,),
                       Container(
                         padding: EdgeInsets.only(left: 15.0),
                         alignment: Alignment.topLeft,
@@ -1912,16 +2054,15 @@ class HomePageState extends State<HomePage> {
         child: ListView(
           shrinkWrap: true,
           children: <Widget>[
+            reusableCategory("PERSONAL INFORMATION"),
+            showPersonalInformation(),
             reusableCategory("ACCOUNT SETTINGS"),
-            reusableFlatButton(
-                "Personal information", Icons.person_outline, null),
-            reusableFlatButton(
-                "Payments and payouts", Icons.payment, navToPayouts),
+            reusableFlatButton("Personal information", Icons.person_outline, null),
+            reusableFlatButton("Payments and payouts", Icons.payment, navToPayouts),
             reusableFlatButton("Notifications", Icons.notifications, null),
             reusableCategory("SUPPORT"),
             reusableFlatButton("Get help", Icons.help_outline, navToHelpPage),
-            reusableFlatButton(
-                "Give us feedback", Icons.feedback, navToFeedbackPage),
+            reusableFlatButton("Give us feedback", Icons.feedback, navToFeedbackPage),
             reusableFlatButton("Log out", null, logout),
             //getProfileDetails()
           ],

@@ -299,16 +299,15 @@ class ItemRequestState extends State<ItemRequest> {
   Widget showItemPriceInfo() {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 20.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
         children: <Widget>[
-          Text('Total',
-              style: TextStyle(fontSize: 15.0, fontFamily: 'Quicksand')),
-          Text('\$${itemDS['price'] * duration}',
-              style: TextStyle(
-                  fontSize: 15.0,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Quicksand')),
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
+            Text('Total', style: TextStyle(fontSize: 15.0, fontFamily: 'Quicksand')),
+            Text('\$${itemDS['price'] * duration}', style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.bold, fontFamily: 'Quicksand')),
+          ],),
+          SizedBox(height: 5.0,),
+          Align(alignment: Alignment.bottomLeft,
+            child: Text('* You will not be charged until the Owner accepts your proposal', style: TextStyle(fontSize: 10.0, fontFamily: 'Quicksand', fontWeight: FontWeight.w100, fontStyle: FontStyle.italic))),
         ],
       ),
     );
