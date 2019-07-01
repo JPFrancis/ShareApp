@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_picker/flutter_picker.dart';
 import 'package:intl/intl.dart';
@@ -80,8 +81,11 @@ class NewPickupState extends State<NewPickup> {
 
   void getMyUserID() async {
     prefs = await SharedPreferences.getInstance();
-    myUserID = prefs.getString('userID') ?? '';
     myName = prefs.getString('name') ?? '';
+    var user = await FirebaseAuth.instance.currentUser();
+    if (user != null) {
+      myUserID = user.uid;
+    }
   }
 
   Future<Null> getSnapshots() async {

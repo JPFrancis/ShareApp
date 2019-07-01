@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
@@ -79,10 +80,28 @@ class HomePageState extends State<HomePage> {
   double padding;
   String font = 'Quicksand';
 
+  FlutterLocalNotificationsPlugin localNotificationManager =
+      FlutterLocalNotificationsPlugin();
+  var initializationSettingsAndroid;
+  var initializationSettingsIOS;
+  var initializationSettings;
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+
+    initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    initializationSettingsIOS = IOSInitializationSettings(
+        onDidReceiveLocalNotification: onDidReceiveLocalNotification);
+
+    initializationSettings = InitializationSettings(
+        initializationSettingsAndroid, initializationSettingsIOS);
+
+    localNotificationManager.initialize(initializationSettings,
+        onSelectNotification: onSelectNotification);
 
     currentTabIndex = 0;
 
@@ -110,34 +129,76 @@ class HomePageState extends State<HomePage> {
       bottomNavTile('Profile', Icon(Icons.account_circle), false),
     ];
 
+    //scheduleNotifications();
+
     getUserLocation();
-
-    //updateAll();
   }
 
-  /*
-  /// TESTING ONLY
-  void updateAll() async {
-    String collection = 'items';
-    var docs = await Firestore.instance.collection(collection).getDocuments();
+  void scheduleNotifications() async {
+    await localNotificationManager.cancelAll();
 
-    if (docs != null) {
-      docs.documents.forEach((ds) {
-        GeoPoint gp = ds['location'];
+    var androidSpecs = AndroidNotificationDetails('Default channel ID',
+        'Rental notifications', 'Notifications for rental updates',
+        importance: Importance.Max, priority: Priority.High, ticker: 'ticker');
+    var iosSpecs = IOSNotificationDetails();
+    NotificationDetails specs = NotificationDetails(androidSpecs, iosSpecs);
 
-        GeoFirePoint myLocation =
-            geo.point(latitude: gp.latitude, longitude: gp.longitude);
+    DocumentReference userDR =
+        Firestore.instance.collection('users').document(myUserID);
+    var rentalQuerySnaps = await Firestore.instance
+        .collection('rentals')
+        .where('users', arrayContains: userDR)
+        .where('status', isEqualTo: 2)
+        .getDocuments();
+    List<DocumentSnapshot> rentalSnaps = rentalQuerySnaps.documents;
 
-        Firestore.instance
-            .collection(collection)
-            .document(ds.documentID)
-            .updateData({
-          'location': myLocation.data,
-        });
-      });
+    for (int i = 0; i < rentalSnaps.length; i++) {
+      DocumentSnapshot rentalDS = rentalSnaps[i];
+      DateTime pickupStart = rentalDS['pickupStart'].toDate();
+      DateTime pickupEnd = rentalDS['pickupEnd'].toDate();
+      DateTime rentalEnd = rentalDS['rentalEnd'].toDate();
+      String itemName = rentalDS['itemName'];
+
+      int id = i * 10;
+      int idCounter = 0;
+
+      id += idCounter;
+      await localNotificationManager.schedule(
+        id,
+        'Pickup window has begun!',
+        'Item: $itemName',
+        pickupStart,
+        specs,
+        payload: '$id',
+      );
+      idCounter++;
+
+      id += idCounter;
+      await localNotificationManager.schedule(
+        id,
+        'Pickup window has ended! Begin rental',
+        'Item: $itemName',
+        pickupEnd,
+        specs,
+        payload: '$id',
+      );
+      idCounter++;
+
+      id += idCounter;
+      await localNotificationManager.schedule(
+        id,
+        'Item rental has ended',
+        'Item: $itemName',
+        rentalEnd,
+        specs,
+        payload: '$id',
+      );
+      //idCounter++;
     }
+
+    //await flutterLocalNotificationsPlugin.cancel(0);
+    //await flutterLocalNotificationsPlugin.cancelAll();
   }
-  */
 
   void configureFCM() async {
     firebaseMessaging.configure(
@@ -175,14 +236,14 @@ class HomePageState extends State<HomePage> {
     );
   }
 
-  void handleNotifications(Map<String, dynamic> message) {
+  void handleNotifications(Map<String, dynamic> message) async {
     var data = message['data'];
     var rentalID = data['rentalID'];
     String otherUserID = data['idFrom'];
 
     switch (data['type']) {
       case 'rental':
-        Navigator.of(context).pushNamed(
+        await Navigator.of(context).pushNamed(
           RentalDetail.routeName,
           arguments: RentalDetailArgs(
             rentalID,
@@ -191,20 +252,58 @@ class HomePageState extends State<HomePage> {
         break;
 
       case 'chat':
-        Firestore.instance
+        DocumentSnapshot otherUserDS = await Firestore.instance
             .collection('users')
             .document(otherUserID)
-            .get()
-            .then((DocumentSnapshot otherUserDS) {
-          Navigator.of(context).pushNamed(
+            .get();
+
+        if (otherUserDS != null && otherUserDS.exists) {
+          await Navigator.of(context).pushNamed(
             Chat.routeName,
             arguments: ChatArgs(
               otherUserDS,
             ),
           );
-        });
+        }
         break;
     }
+  }
+
+  Future onSelectNotification(String payload) async {
+    if (payload != null) {
+      debugPrint('notification payload: ' + payload);
+    }
+
+    await Navigator.of(context).pushNamed(HelpPage.routeName);
+  }
+
+  Future onDidReceiveLocalNotification(
+      int id, String title, String body, String payload) async {
+    // display a dialog with the notification details, tap ok to go to another page
+    /*
+    showDialog(
+      context: context,
+      builder: (BuildContext context) => new CupertinoAlertDialog(
+        title: new Text(title),
+        content: new Text(body),
+        actions: [
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            child: new Text('Ok'),
+            onPressed: () async {
+              Navigator.of(context, rootNavigator: true).pop();
+              await Navigator.push(
+                context,
+                new MaterialPageRoute(
+                  builder: (context) => new SecondScreen(payload),
+                ),
+              );
+            },
+          )
+        ],
+      ),
+    );
+    */
   }
 
   void delayPage() async {
@@ -570,8 +669,8 @@ class HomePageState extends State<HomePage> {
             SizedBox(
               height: 30.0,
             ),
-            //categories(),
-            iconCategories(),
+            categories(),
+            //iconCategories(),
             //lookingFor()
             Container(
               height: 10,
@@ -1087,7 +1186,7 @@ class HomePageState extends State<HomePage> {
               ),
               InkWell(
                 onTap: () => navToItemFilter('Household'),
-                child: _categoryTile('Household', 'assets/vacuum2.jpg'),
+                child: _categoryTile('Household', 'assets/vacuum.jpg'),
               ),
             ],
           ),
