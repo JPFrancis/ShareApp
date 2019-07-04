@@ -70,6 +70,7 @@ class ProfileEditState extends State<ProfileEdit> {
     nameController.text = userCopy.name;
     descriptionController.text = userCopy.description;
     phoneNumController.text = userCopy.phoneNum ?? '';
+    //userCopy.birthday=u
   }
 
   @override
