@@ -81,8 +81,6 @@ class HomePageState extends State<HomePage> {
   Position currentLocation;
   double searchRange = 25.0; // in miles
 
-  static double _initial = 50.0;
-  double _changingHeight = _initial;
   EdgeInsets edgeInset;
   double padding;
   String font = 'Quicksand';
@@ -417,51 +415,55 @@ class HomePageState extends State<HomePage> {
               children: bottomTabPages,
             ),
       floatingActionButton: showFAB(),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: coolerWhite,
-        selectedItemColor: primaryColor,
-        items: bottomNavBarTiles,
-        currentIndex: currentTabIndex,
-        type: BottomNavigationBarType.fixed,
-        onTap: (int index) {
-          setState(() {
-            currentTabIndex = index;
-          });
-        },
+      bottomNavigationBar: SizedBox(
+        //height: 90,
+        child: BottomNavigationBar(
+          backgroundColor: coolerWhite,
+          selectedItemColor: primaryColor,
+          items: bottomNavBarTiles,
+          currentIndex: currentTabIndex,
+          type: BottomNavigationBarType.fixed,
+          onTap: (int index) {
+            setState(() {
+              currentTabIndex = index;
+            });
+          },
+        ),
       ),
     );
   }
 
-  RaisedButton showFAB() {
-    return isAuthenticated && currentTabIndex == 2
-        ? RaisedButton(
-            elevation: 3,
-            color: primaryColor,
-            textColor: Colors.white,
-            onPressed: () {
-              navigateToEdit(
-                Item(
-                  id: null,
-                  status: true,
-                  creator:
-                      Firestore.instance.collection('users').document(myUserID),
-                  name: '',
-                  description: '',
-                  type: null,
-                  condition: null,
-                  price: 0,
-                  numImages: 0,
-                  images: new List(),
-                  location: {'geopoint': null},
-                  rental: null,
-                ),
-              );
-            },
-            child: Text("Add Item",
-                style: TextStyle(
-                    fontFamily: 'Quicksand', fontWeight: FontWeight.normal)),
-          )
-        : null;
+  Widget showFAB() {
+    if (isAuthenticated && currentTabIndex == 2) {
+      return RaisedButton(
+          elevation: 3,
+          color: Theme.of(context).primaryColor,
+          textColor: Colors.white,
+          onPressed: () {
+            navigateToEdit(
+              Item(
+                id: null,
+                status: true,
+                creator:
+                    Firestore.instance.collection('users').document(myUserID),
+                name: '',
+                description: '',
+                type: null,
+                condition: null,
+                price: 0,
+                numImages: 0,
+                images: new List(),
+                location: {'geopoint': null},
+                rental: null,
+              ),
+            );
+          },
+          child: Text("Add Item",
+              style: TextStyle(
+                  fontFamily: 'Quicksand', fontWeight: FontWeight.normal)));
+    } else {
+      return null;
+    }
   }
 
   BottomNavigationBarItem bottomNavTile(
@@ -1021,6 +1023,7 @@ class HomePageState extends State<HomePage> {
 
     return Container(
       height: h / 4,
+      width: MediaQuery.of(context).size.width,
       decoration: new BoxDecoration(
           image: DecorationImage(
               image: AssetImage('assets/surfer.jpg'), fit: BoxFit.fill),
@@ -1772,220 +1775,123 @@ class HomePageState extends State<HomePage> {
   }
 
   Widget profileTabPage() {
-    return Column(
-      children: <Widget>[
-        isAuthenticated ? profileIntroStream() : Container(),
-        SizedBox(height: 20.0),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 5.0),
-            child: profileTabAfterIntro(),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget showPersonalInformation() {
-    Widget _userImage() {
-      void onImageButtonPressed(ImageSource source) {
-        setState(() {
-          selectedImage = ImagePicker.pickImage(source: source);
-        });
-      }
-
-      Widget showCurrentProfilePic() {
-        double height = MediaQuery.of(context).size.height;
-        double width = MediaQuery.of(context).size.width;
-        return Container(
-          padding: EdgeInsets.only(left: width / 5, right: width / 5),
-          height: height / 5,
-          child: FittedBox(
-            fit: BoxFit.cover,
-            child: CachedNetworkImage(
-              //key: ValueKey(DateTime.now().millisecondsSinceEpoch),
-              imageUrl: myUserDS['avatar'],
-              placeholder: (context, url) => CircularProgressIndicator(),
-            ),
-          ),
-        );
-      }
-
-      return Center(
-        child: InkWell(
-          onTap: () => onImageButtonPressed(ImageSource.gallery),
-          child: FutureBuilder<File>(
-              future: selectedImage,
-              builder: (BuildContext context, AsyncSnapshot<File> snapshot) {
-                if (snapshot.connectionState == ConnectionState.done &&
-                    snapshot.data != null) {
-                  imageFile = snapshot.data;
-                  return Image.file(imageFile);
-                } else if (snapshot.error != null) {
-                  return const Text(
-                    'Error',
-                    textAlign: TextAlign.center,
-                  );
-                } else {
-                  return showCurrentProfilePic();
-                }
-              }),
-        ),
-        // Icon(Icons.edit)
-      );
-    }
-
-    Widget _showDisplayNameEditor() {
-      double width = MediaQuery.of(context).size.width;
-      return Center(
-        child: TextField(
-          textAlign: TextAlign.center,
-          cursorColor: Colors.blueAccent,
-          controller: nameController,
-          style: TextStyle(fontFamily: font, fontSize: width / 15),
-          decoration: InputDecoration.collapsed(hintText: "Name"),
-        ),
-      );
-    }
-
-    Widget _showAboutMe() {
-      double width = MediaQuery.of(context).size.width;
-      return Center(
-        child: Column(children: <Widget>[
-          Align(
-              alignment: Alignment.topLeft, child: Icon(QuoteIcons.quote_left)),
-          TextField(
-            maxLines: null,
-            keyboardType: TextInputType.multiline,
-            textAlign: TextAlign.center,
-            controller: descriptionController,
-            cursorColor: Colors.blueAccent,
-            style: TextStyle(fontFamily: font, fontSize: width / 20),
-            decoration: InputDecoration(
-              border: InputBorder.none,
-              hintText: "Description",
-            ),
-          ),
-          Align(
-              alignment: Alignment.bottomRight,
-              child: Icon(QuoteIcons.quote_right)),
-        ]),
-      );
-    }
-
-    Widget _showGenderSelecter() {
-      return Container(
-        child: DropdownButtonHideUnderline(
-          child: DropdownButton<String>(
-              isDense: true,
-              isExpanded: true,
-              // [todo value]
-              hint: Text(
-                'Gender',
-                style: TextStyle(fontFamily: font, fontWeight: FontWeight.w500),
-              ),
-              onChanged: (String newValue) {
-                // [todo]
-              },
-              items: ["Male", "Female", "Other"]
-                  .map(
-                    (gender) => DropdownMenuItem<String>(
-                          value: gender,
-                          child: Text(
-                            gender,
-                            style: TextStyle(fontFamily: font),
-                          ),
-                        ),
-                  )
-                  .toList()),
-        ),
-      );
-    }
-
-/*
-    Widget birthPicker() {
-      var formatter = new intl.DateFormat('MMMM d, y');
-      String formatted = formatter.format(selectedDate);
-
-      Future<Null> _selectDate(BuildContext context) async {
-        final DateTime picked = await showDatePicker(
-          context: context,
-          initialDate: selectedDate,
-          firstDate: DateTime(1930),
-          lastDate: DateTime(2020),
-        );
-        if (picked != null && picked != selectedDate)
-          setState(() {
-            selectedDate = picked;
-          });
-    }*/
-
-    Widget _emailEntry() {
-      return InkWell(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              Text("Email",
-                  style:
-                      TextStyle(fontFamily: font, fontWeight: FontWeight.w500)),
-              myUserDS != null && myUserDS.exists
-                  ? Text(
-                      '${myUserDS['email']}',
-                      style: TextStyle(fontFamily: font),
-                    )
-                  : Container(),
-            ],
-          ),
-          onTap: null);
-    }
-
-    Widget phoneEntry() {
-      return InkWell(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              Text("Phone",
-                  style:
-                      TextStyle(fontFamily: font, fontWeight: FontWeight.w500)),
-              Text(
-                "999-999-9999",
-                style: TextStyle(fontFamily: font),
-              )
-            ],
-          ),
-          onTap: null);
-    }
-
-    return Column(
-      children: <Widget>[
-        _userImage(),
-        _showDisplayNameEditor(),
-        _showAboutMe(),
-        Container(
-            color: Colors.white,
-            child: Column(
-              children: <Widget>[
-                _showGenderSelecter(),
-                _emailEntry(),
-                phoneEntry(),
-              ]
-                  .map((Widget child) => Container(
-                        padding: EdgeInsets.symmetric(
-                            horizontal: 10.0, vertical: 10.0),
-                        child: Column(
-                          children: <Widget>[child, Divider()],
-                        ),
-                      ))
-                  .toList(),
-            )),
-      ],
-    );
+    return isAuthenticated ? profileIntroStream() : Container();
   }
 
   Widget profileIntroStream() {
+    Widget showPersonalInformation() {
+      double width = MediaQuery.of(context).size.width;
+
+      Widget _userImage() {
+        void onImageButtonPressed(ImageSource source) {
+          setState(() {
+            selectedImage = ImagePicker.pickImage(source: source);
+          });
+        }
+
+        Widget __showCurrentProfilePic() {
+          double height = MediaQuery.of(context).size.height;
+          double width = MediaQuery.of(context).size.width;
+          return Container(
+            padding: EdgeInsets.only(left: width / 5, right: width / 5),
+            height: height / 5,
+            child: FittedBox(
+              fit: BoxFit.cover,
+              child: CachedNetworkImage(
+                //key: ValueKey(DateTime.now().millisecondsSinceEpoch),
+                imageUrl: myUserDS['avatar'],
+                placeholder: (context, url) => CircularProgressIndicator(),
+              ),
+            ),
+          );
+        }
+
+        return Center(
+          child: InkWell(
+            //onTap: () => onImageButtonPressed(ImageSource.gallery),
+            child: FutureBuilder<File>(
+                future: selectedImage,
+                builder: (BuildContext context, AsyncSnapshot<File> snapshot) {
+                  if (snapshot.connectionState == ConnectionState.done &&
+                      snapshot.data != null) {
+                    imageFile = snapshot.data;
+                    return Image.file(imageFile);
+                  } else if (snapshot.error != null) {
+                    return const Text(
+                      'Error',
+                      textAlign: TextAlign.center,
+                    );
+                  } else {
+                    return __showCurrentProfilePic();
+                  }
+                }),
+          ),
+          // Icon(Icons.edit)
+        );
+      }
+
+      return Column(
+        children: <Widget>[
+          _userImage(),
+          SizedBox(
+            height: 10.0,
+          ),
+          Center(
+              child: Text("${myUserDS['name']}",
+                  style: TextStyle(fontFamily: font, fontSize: width / 15))),
+          Center(
+              child: Text('${myUserDS['email']}',
+                  style: TextStyle(
+                      color: Colors.black,
+                      fontSize: width / 27,
+                      fontFamily: 'Quicksand'))),
+          SizedBox(
+            height: 5.0,
+          ),
+          Center(
+              child: Column(children: <Widget>[
+            Align(
+                alignment: Alignment.topLeft,
+                child: Icon(
+                  QuoteIcons.quote_left,
+                  size: width / 22,
+                )),
+            Text(
+              myUserDS['description'].toString().isEmpty
+                  ? "The user hasn't added a description yet!"
+                  : myUserDS['description'],
+              style: TextStyle(fontFamily: font, fontSize: width / 22),
+            ),
+            Align(
+                alignment: Alignment.bottomRight,
+                child: Icon(
+                  QuoteIcons.quote_right,
+                  size: width / 22,
+                )),
+          ])),
+          SizedBox(
+            height: 10.0,
+          ),
+          Container(
+              color: Colors.white,
+              child: Column(
+                children: <Widget>[]
+                    .map((Widget child) => Container(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 10.0, vertical: 10.0),
+                          child: Column(
+                            children: <Widget>[child, Divider()],
+                          ),
+                        ))
+                    .toList(),
+              )),
+        ],
+      );
+    }
+
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 15.0),
-      decoration: new BoxDecoration(
+      padding: EdgeInsets.only(left: 10.0, right: 10.0, top: 40.0),
+      /* decoration: new BoxDecoration(
           boxShadow: <BoxShadow>[
             CustomBoxShadow(
                 color: Colors.black,
@@ -1996,7 +1902,7 @@ class HomePageState extends State<HomePage> {
           borderRadius: new BorderRadius.only(
             bottomLeft: const Radius.circular(50.0),
             bottomRight: const Radius.circular(50.0),
-          )),
+          )),*/
       child: StreamBuilder<DocumentSnapshot>(
         stream: Firestore.instance
             .collection('users')
@@ -2009,110 +1915,65 @@ class HomePageState extends State<HomePage> {
           }
           switch (snapshot.connectionState) {
             case ConnectionState.waiting:
-
             default:
               if (snapshot.hasData) {
                 DocumentSnapshot ds = snapshot.data;
                 String name;
-                String avatarURL;
-                String email;
 
                 if (ds.exists) {
                   name = ds['name'];
                   prefs.setString('name', name);
-                  avatarURL = ds['avatar'];
-                  email = ds['email'];
                   myUserDS = ds;
                 } else {
                   name = 'ERROR';
                   prefs.setString('name', name);
-                  avatarURL = '';
-                  email = '';
                 }
 
-                return Container(
-                  child: Column(
-                    children: <Widget>[
-                      SizedBox(
-                        height: 30.0,
+                return Stack(
+                  children: <Widget>[
+                    Container(
+                      height: MediaQuery.of(context).size.height - 90,
+                      child: ListView(
+                        shrinkWrap: true,
+                        padding: EdgeInsets.all(0),
+                        children: <Widget>[
+                          showPersonalInformation(),
+                          reusableCategory("ACCOUNT"),
+                          //reusableFlatButton("Personal information", Icons.person_outline, null),
+                          reusableFlatButton("Payments and Payouts",
+                              Icons.payment, navToPayouts),
+                          reusableFlatButton(
+                              "Notifications", Icons.notifications, null),
+                          reusableCategory("SUPPORT"),
+                          reusableFlatButton(
+                              "Get help", Icons.help_outline, navToHelpPage),
+                          reusableFlatButton("Give us feedback", Icons.feedback,
+                              navToFeedbackPage),
+                          reusableFlatButton("Log out", null, logout),
+                          //getProfileDetails()
+                        ],
                       ),
-                      Container(
-                        padding: EdgeInsets.only(left: 15.0),
-                        alignment: Alignment.topLeft,
-                        height: 60.0,
-                        child: ClipOval(
-                          child: CachedNetworkImage(
-                            alignment: Alignment.topLeft,
-                            imageUrl: avatarURL,
-                            placeholder: (context, url) => new Container(),
-                          ),
-                        ),
-                      ),
-                      Container(
-                          padding: const EdgeInsets.only(top: 8.0, left: 15.0),
-                          alignment: Alignment.centerLeft,
-                          child: Text('$name',
+                    ),
+                    Align(
+                      alignment: Alignment.topRight,
+                      child: OutlineButton(
+                          color: Colors.white,
+                          textColor: primaryColor,
+                          onPressed: () {
+                            navToProfileEdit();
+                          },
+                          child: Text("Edit Profile",
                               style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20.0,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: 'Quicksand'))),
-                      Container(
-                          padding: const EdgeInsets.only(top: 4.0, left: 15.0),
-                          alignment: Alignment.centerLeft,
-                          child: Text('$email',
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 15.0,
-                                  fontFamily: 'Quicksand'))),
-                      Container(
-                          alignment: Alignment.centerLeft,
-                          child: FlatButton(
-                            child: Text("Edit Profile",
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontFamily: 'Quicksand')),
-                            onPressed: () => navToProfileEdit(),
-                          )),
-                    ],
-                  ),
+                                  fontFamily: 'Quicksand',
+                                  fontWeight: FontWeight.normal))),
+                    ),
+                  ],
                 );
               } else {
                 return Container();
               }
           }
         },
-      ),
-    );
-  }
-
-  Widget profileTabAfterIntro() {
-    // [TEMPORARY SOLUTION]
-    double height = (MediaQuery.of(context).size.height) - 335;
-    return Container(
-      height: height,
-      child: MediaQuery.removePadding(
-        removeTop: true,
-        context: context,
-        child: ListView(
-          shrinkWrap: true,
-          children: <Widget>[
-            reusableCategory("PERSONAL INFORMATION"),
-            showPersonalInformation(),
-            reusableCategory("ACCOUNT SETTINGS"),
-            reusableFlatButton(
-                "Personal information", Icons.person_outline, null),
-            reusableFlatButton(
-                "Payments and payouts", Icons.payment, navToPayouts),
-            reusableFlatButton("Notifications", Icons.notifications, null),
-            reusableCategory("SUPPORT"),
-            reusableFlatButton("Get help", Icons.help_outline, navToHelpPage),
-            reusableFlatButton(
-                "Give us feedback", Icons.feedback, navToFeedbackPage),
-            reusableFlatButton("Log out", null, logout),
-            //getProfileDetails()
-          ],
-        ),
       ),
     );
   }

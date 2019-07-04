@@ -110,21 +110,29 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     super.initState();
 
     timeDilation = 2.0; // 3.0
-    logoController = AnimationController( duration: const Duration(milliseconds: 1000), vsync: this);
-    logoAnimation = CurvedAnimation( parent: logoController, curve: Interval(0, 0.5, curve: Curves.easeIn));
-    contentController = AnimationController( duration: const Duration(milliseconds: 1000), vsync: this);
-    contentAnimation = CurvedAnimation( parent: contentController, curve: Interval(0.4, 1, curve: Curves.easeIn));
-    slideController = new AnimationController( vsync: this, duration: Duration(milliseconds: 500));
-    slideAnimation = CurvedAnimation( parent: slideController, curve: Interval(0, 1, curve: Curves.easeIn));
-    textController = new AnimationController( vsync: this, duration: Duration(milliseconds: 500));
+    logoController = AnimationController(
+        duration: const Duration(milliseconds: 1000), vsync: this);
+    logoAnimation = CurvedAnimation(
+        parent: logoController, curve: Interval(0, 0.5, curve: Curves.easeIn));
+    contentController = AnimationController(
+        duration: const Duration(milliseconds: 1000), vsync: this);
+    contentAnimation = CurvedAnimation(
+        parent: contentController,
+        curve: Interval(0.4, 1, curve: Curves.easeIn));
+    slideController = new AnimationController(
+        vsync: this, duration: Duration(milliseconds: 500));
+    slideAnimation = CurvedAnimation(
+        parent: slideController, curve: Interval(0, 1, curve: Curves.easeIn));
+    textController = new AnimationController(
+        vsync: this, duration: Duration(milliseconds: 500));
     textAnimation = Tween(
-        begin: Offset(0.0, 0.0),
-        end: Offset(0.2, 0.0),
+      begin: Offset(0.0, 0.0),
+      end: Offset(0.2, 0.0),
     ).animate(
-        CurvedAnimation(
-            parent: textController,
-            curve: Interval(0, 1, curve: Curves.fastOutSlowIn),
-        ),
+      CurvedAnimation(
+        parent: textController,
+        curve: Interval(0, 1, curve: Curves.fastOutSlowIn),
+      ),
     );
 
     logoController.forward();
@@ -184,15 +192,16 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
             children: <Widget>[
               FadeTransition(opacity: logoAnimation, child: _showLogo(false)),
               AnimatedBuilder(
-                animation: textController, builder: (BuildContext context, Widget child) {
+                animation: textController,
+                builder: (BuildContext context, Widget child) {
                   return FractionalTranslation(
-                    child: Text("Get Started ⟹",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontFamily: appFont,
-                            fontSize: h / 40)), translation: textAnimation.value);
-
+                      child: Text("Get Started ⟹",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontFamily: appFont,
+                              fontSize: h / 40)),
+                      translation: textAnimation.value);
                 },
                 /*
                 child: FractionalTranslation(
@@ -288,30 +297,32 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       Material(child: _loginPage()),
     ];
 
-    return Stack(children: <Widget>[
-      PageView.builder(
-        controller: pageController,
-          itemCount: pages.length,
-          itemBuilder: (context, index) {
-            return pages[index];
-          }),
-      Positioned(
-        bottom: 30, 
-        left: w/3,
-        right: w/3,
-        child: new DotsIndicator(
-          controller: pageController,
-          itemCount: pages.length,
-          onPageSelected: (int page) {
-            pageController.animateToPage(
-              page,
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.ease,
-            );
-          },
+    return Stack(
+      children: <Widget>[
+        PageView.builder(
+            controller: pageController,
+            itemCount: pages.length,
+            itemBuilder: (context, index) {
+              return pages[index];
+            }),
+        Positioned(
+          bottom: 30,
+          left: w / 3,
+          right: w / 3,
+          child: new DotsIndicator(
+            controller: pageController,
+            itemCount: pages.length,
+            onPageSelected: (int page) {
+              pageController.animateToPage(
+                page,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.ease,
+              );
+            },
+          ),
         ),
-      ),
-    ],);
+      ],
+    );
   }
 
   Widget showBody() {

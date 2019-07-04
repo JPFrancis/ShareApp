@@ -84,12 +84,11 @@ class ProfilePageState extends State<ProfilePage> {
       padding: EdgeInsets.all(0),
       children: <Widget>[
         showNameAndProfilePic(),
+        SizedBox(height: 20.0),
         showUserDescription(),
         divider(),
         reusableCategory("ITEMS"),
-        SizedBox(
-          height: 10.0,
-        ),
+        SizedBox(height: 10.0),
         showItems(),
       ],
     );
@@ -103,11 +102,13 @@ class ProfilePageState extends State<ProfilePage> {
     return Column(
       children: <Widget>[
         Align(alignment: Alignment.topLeft, child: Icon(QuoteIcons.quote_left)),
+        SizedBox(height: 10.0),
         Text("$desc",
             style: TextStyle(
                 fontSize: MediaQuery.of(context).size.width / 25,
                 fontFamily: appFont,
                 color: empty ? Colors.grey : Colors.black54)),
+        SizedBox(height: 10.0),
         Align(
             alignment: Alignment.bottomRight,
             child: Icon(QuoteIcons.quote_right)),
