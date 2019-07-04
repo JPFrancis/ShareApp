@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/pages/item_detail.dart';
 import 'package:shareapp/services/const.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 // Reusable Classes
 
@@ -404,4 +406,140 @@ String combineID(String myId, String otherId) {
   }
 
   return groupChatId;
+}
+
+Widget searchTile(ds, context) {
+  double h = MediaQuery.of(context).size.height;
+  String milesAway = '';
+
+  if (ds.data['distance'] != null) {
+    double distance = ds.data['distance'];
+    distance /= 1.609;
+    milesAway = distance.toStringAsFixed(1);
+    milesAway += ' mi away';
+  }
+
+  return InkWell(
+    onTap: () => navigateToDetail(ds, context),
+    child: Container(
+      padding: EdgeInsets.only(top: 5, bottom: 5),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              ClipRRect(
+                borderRadius: BorderRadius.circular(5),
+                child: Container(
+                  height: 80,
+                  width: 80,
+                  child: FittedBox(
+                    fit: BoxFit.cover,
+                    child: CachedNetworkImage(
+                      imageUrl: ds['images'][0],
+                      placeholder: (context, url) =>
+                          new CircularProgressIndicator(),
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: 10.0,
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    '${ds['name']}',
+                    style: TextStyle(
+                        fontFamily: 'Quicksand',
+                        fontWeight: FontWeight.bold,
+                        fontSize: h / 45),
+                    textAlign: TextAlign.left,
+                  ),
+                  Row(
+                    children: <Widget>[
+                      StarRating(rating: ds['rating'].toDouble(), sz: h / 40),
+                      SizedBox(
+                        width: 5.0,
+                      ),
+                      Text(
+                        '${ds['numRatings']} reviews',
+                        style: TextStyle(
+                            fontFamily: 'Quicksand', fontSize: h / 65),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    '${ds['condition']}',
+                    style: TextStyle(
+                        fontFamily: 'Quicksand',
+                        fontStyle: FontStyle.italic,
+                        fontSize: h / 65),
+                  ),
+                  Text(
+                    '$milesAway',
+                    style: TextStyle(
+                        fontFamily: 'Quicksand',
+                        fontStyle: FontStyle.italic,
+                        fontSize: h / 65),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          Column(
+            children: <Widget>[
+              Row(
+                children: <Widget>[
+                  Text('\$${ds['price']}',
+                      style:
+                          TextStyle(fontFamily: 'Quicksand', fontSize: h / 55)),
+                  Text(' /day',
+                      style:
+                          TextStyle(fontFamily: 'Quicksand', fontSize: h / 75)),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class UsNumberTextInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final int newTextLength = newValue.text.length;
+    int selectionIndex = newValue.selection.end;
+    int usedSubstringIndex = 0;
+    final StringBuffer newText = StringBuffer();
+    if (newTextLength >= 1) {
+      newText.write('(');
+      if (newValue.selection.end >= 1) selectionIndex++;
+    }
+    if (newTextLength >= 4) {
+      newText.write(newValue.text.substring(0, usedSubstringIndex = 3) + ') ');
+      if (newValue.selection.end >= 3) selectionIndex += 2;
+    }
+    if (newTextLength >= 7) {
+      newText.write(newValue.text.substring(3, usedSubstringIndex = 6) + '-');
+      if (newValue.selection.end >= 6) selectionIndex++;
+    }
+    if (newTextLength >= 11) {
+      newText.write(newValue.text.substring(6, usedSubstringIndex = 10) + ' ');
+      if (newValue.selection.end >= 10) selectionIndex++;
+    }
+
+    if (newTextLength >= usedSubstringIndex)
+      newText.write(newValue.text.substring(usedSubstringIndex));
+    return TextEditingValue(
+      text: newText.toString(),
+      selection: TextSelection.collapsed(offset: selectionIndex),
+    );
+  }
 }

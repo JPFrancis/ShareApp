@@ -25,7 +25,7 @@ class User {
           gender: data['gender'],
           email: data['email'],
           phoneNum: data['phoneNum'],
-          birthday: data['birthday'],
+          birthday: data['birthday'].toDate(),
         );
 
   User.copy(User other)

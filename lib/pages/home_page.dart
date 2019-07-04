@@ -1887,7 +1887,6 @@ class HomePageState extends State<HomePage> {
                       children: <Widget>[
                         showPersonalInformation(),
                         reusableCategory("ACCOUNT"),
-                        //reusableFlatButton("Personal information", Icons.person_outline, null),
                         reusableFlatButton("Payments and Payouts", Icons.payment, navToPayouts),
                         reusableFlatButton("Notifications", Icons.notifications, null),
                         reusableCategory("SUPPORT"),

@@ -7,7 +7,6 @@ import 'package:shareapp/pages/all_reviews.dart';
 import 'package:shareapp/pages/home_page.dart';
 import 'package:shareapp/pages/item_detail.dart';
 import 'package:shareapp/pages/item_edit.dart';
-import 'package:shareapp/pages/item_filter.dart';
 import 'package:shareapp/pages/profile_page.dart';
 import 'package:shareapp/pages/search_page.dart';
 import 'package:shareapp/rentals/chat.dart';
@@ -130,25 +129,16 @@ class MyApp extends StatelessWidget {
               );
             }
 
-          case ItemFilter.routeName:
-            {
-              final ItemFilterArgs args = settings.arguments;
-
-              return MaterialPageRoute(
-                builder: (context) {
-                  return ItemFilter(
-                    typeFilter: args.filter,
-                  );
-                },
-              );
-            }
           case SearchPage.routeName:
             {
-              final SearchResultsArgs args = settings.arguments;
+              final SearchPageArgs args = settings.arguments;
 
               return MaterialPageRoute(
                 builder: (context) {
-                  return SearchPage();
+                  return SearchPage(
+                    typeFilter: args.typeFilter,
+                    showSearch: args.showSearch,
+                  );
                 },
               );
             }
@@ -229,14 +219,11 @@ class NewPickupArgs {
   NewPickupArgs(this.rentalID, this.isRenter);
 }
 
-class ItemFilterArgs {
-  final String filter;
+class SearchPageArgs {
+  final String typeFilter;
+  final bool showSearch;
 
-  ItemFilterArgs(this.filter);
-}
-
-class SearchResultsArgs {
-  SearchResultsArgs();
+  SearchPageArgs(this.typeFilter,this.showSearch);
 }
 
 class AllReviewsArgs {
