@@ -268,8 +268,13 @@ class ItemDetailState extends State<ItemDetail> {
             ],
           ),
         ]),
-        chatButton(),
-        showItemType(),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
+          showItemType(),
+          Padding(
+            padding: const EdgeInsets.only(right: 15.0, top: 20),
+            child: chatButton(),
+          ),
+        ],),
         showItemName(),
         showItemCondition(),
         showItemCreator(),
@@ -283,19 +288,20 @@ class ItemDetailState extends State<ItemDetail> {
   }
 
   Widget chatButton() {
-    return isOwner
-        ? Container()
-        : RaisedButton(
-            onPressed: () {
-              Navigator.of(context).pushNamed(
-                Chat.routeName,
-                arguments: ChatArgs(
-                  creatorDS,
-                ),
-              );
-            },
-            child: Text('Chat'),
-          );
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 1),
+      child: isOwner
+          ? Container()
+          : GestureDetector(
+            onTap: () { Navigator.of(context).pushNamed(Chat.routeName, arguments: ChatArgs(creatorDS)); }, 
+            child: 
+              Row(children: <Widget>[
+                Text("Chat", style: TextStyle(fontFamily: appFont, fontSize: 14.0, fontWeight: FontWeight.w400)),
+                SizedBox(width: 5.0,),
+                Icon(Icons.chat_bubble_outline)
+              ],) 
+            ),
+    );
   }
 
   Widget showReviews() {
@@ -543,13 +549,12 @@ class ItemDetailState extends State<ItemDetail> {
   }
 
   Widget showItemImages() {
-    double widthOfScreen = MediaQuery.of(context).size.width;
+    double w = MediaQuery.of(context).size.width;
     List imagesList = itemDS['images'];
     return imagesList.length > 0
         ? Hero(
             tag: "${itemDS['id']}",
-            child: Container(
-                height: widthOfScreen, child: getImagesListView(context)))
+            child: Container(height: w, width: w, child: getImagesListView(context)))
         : Text('No images yet\n');
   }
 
@@ -653,7 +658,7 @@ class ItemDetailState extends State<ItemDetail> {
   }
 
   getImagesListView(BuildContext context) {
-    double widthOfScreen = MediaQuery.of(context).size.width;
+    double w = MediaQuery.of(context).size.width;
     List imagesList = itemDS['images'];
     return ListView.builder(
       shrinkWrap: true,
@@ -661,8 +666,8 @@ class ItemDetailState extends State<ItemDetail> {
       itemCount: imagesList.length,
       itemBuilder: (BuildContext context, int index) {
         return new Container(
-          width: widthOfScreen,
-          height: widthOfScreen,
+          width: w,
+          height: w,
           child: FittedBox(
             fit: BoxFit.cover,
             child: CachedNetworkImage(
