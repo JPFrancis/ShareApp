@@ -2336,7 +2336,14 @@ class HomePageState extends State<HomePage> {
 
   void navToProfileEdit() async {
     if (myUserDS != null && myUserDS.exists) {
-      User userEdit = User.fromMap(myUserDS.data);
+      Timestamp timestampBirthday = myUserDS['birthday'];
+      DateTime birthday;
+
+      if (timestampBirthday!=null){
+    birthday= timestampBirthday.toDate();
+      }
+
+      User userEdit = User.fromMap(myUserDS.data, birthday);
 
       Navigator.push(
           context,

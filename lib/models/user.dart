@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class User {
   String avatar;
   String name;
@@ -17,7 +19,7 @@ class User {
     this.birthday,
   });
 
-  User.fromMap(Map<String, dynamic> data)
+  User.fromMap(Map<String, dynamic> data, DateTime birthdayAsDateTime)
       : this(
           avatar: data['avatar'],
           name: data['name'],
@@ -25,7 +27,7 @@ class User {
           gender: data['gender'],
           email: data['email'],
           phoneNum: data['phoneNum'],
-          birthday: data['birthday'].toDate(),
+          birthday: birthdayAsDateTime,
         );
 
   User.copy(User other)
