@@ -19,7 +19,6 @@ import 'package:shareapp/models/item.dart';
 import 'package:shareapp/models/user.dart';
 import 'package:shareapp/pages/item_detail.dart';
 import 'package:shareapp/pages/item_edit.dart';
-import 'package:shareapp/pages/item_filter.dart';
 import 'package:shareapp/pages/profile_tab_pages/feedback_page.dart';
 import 'package:shareapp/pages/profile_tab_pages/help_page.dart';
 import 'package:shareapp/pages/profile_tab_pages/payouts_page.dart';
@@ -48,7 +47,8 @@ class HomePage extends StatefulWidget {
 }
 
 class HomePageState extends State<HomePage> {
-  final GlobalKey<RefreshIndicatorState> refreshIndicatorKey = GlobalKey<RefreshIndicatorState>();
+  final GlobalKey<RefreshIndicatorState> refreshIndicatorKey =
+      GlobalKey<RefreshIndicatorState>();
   final FirebaseMessaging firebaseMessaging = FirebaseMessaging();
   StreamSubscription<QuerySnapshot> subscription;
   String deviceToken;
@@ -70,7 +70,7 @@ class HomePageState extends State<HomePage> {
   bool isAuthenticated;
 
   TextEditingController searchController = TextEditingController();
-  TextEditingController nameController = TextEditingController();  
+  TextEditingController nameController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
 
   List<DocumentSnapshot> allItems;
@@ -449,7 +449,6 @@ class HomePageState extends State<HomePage> {
                   description: '',
                   type: null,
                   condition: null,
-                  policy: '',
                   price: 0,
                   numImages: 0,
                   images: new List(),
@@ -997,13 +996,12 @@ class HomePageState extends State<HomePage> {
         splashColor: primaryColor,
         child: Container(
           decoration: new BoxDecoration(
-            color: Colors.white,
-            borderRadius: new BorderRadius.only(
-              bottomLeft: const Radius.circular(10.0),
-              bottomRight: const Radius.circular(10.0),
-              topLeft: const Radius.circular(10.0),
-              topRight: const Radius.circular(10.0))
-          ),
+              color: Colors.white,
+              borderRadius: new BorderRadius.only(
+                  bottomLeft: const Radius.circular(10.0),
+                  bottomRight: const Radius.circular(10.0),
+                  topLeft: const Radius.circular(10.0),
+                  topRight: const Radius.circular(10.0))),
           child: Row(
             children: <Widget>[
               SizedBox(
@@ -1024,21 +1022,24 @@ class HomePageState extends State<HomePage> {
     return Container(
       height: h / 4,
       decoration: new BoxDecoration(
-        image: DecorationImage(image: AssetImage('assets/compressed_surfer.jpg'), fit: BoxFit.fill),
-        boxShadow: <BoxShadow>[
-          CustomBoxShadow(
-              color: Colors.black,
-              blurRadius: 3.0,
-              blurStyle: BlurStyle.outer),
-        ],
-        color: primaryColor,
-       borderRadius: new BorderRadius.only(
-          bottomLeft: const Radius.circular(40.0),
-          bottomRight: const Radius.circular(40.0)) 
-        ),
+          image: DecorationImage(
+              image: AssetImage('assets/surfer.jpg'), fit: BoxFit.fill),
+          boxShadow: <BoxShadow>[
+            CustomBoxShadow(
+                color: Colors.black,
+                blurRadius: 3.0,
+                blurStyle: BlurStyle.outer),
+          ],
+          color: primaryColor,
+          borderRadius: new BorderRadius.only(
+              bottomLeft: const Radius.circular(40.0),
+              bottomRight: const Radius.circular(40.0))),
       child: Stack(
         children: <Widget>[
-          Align(alignment: Alignment.bottomCenter, child: searchField(),),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: searchField(),
+          ),
         ],
       ),
     );
@@ -1204,29 +1205,29 @@ class HomePageState extends State<HomePage> {
 
   Widget myRentalsPage() {
     return Scaffold(
-      appBar: AppBar(
-        elevation: 3.0,
-        title: Text("Others' Items That You Are Renting", style: TextStyle(fontFamily: appFont, fontWeight: FontWeight.w400)), 
-        //titleSpacing: 0.0,
-        centerTitle: false,
-        shape: RoundedRectangleBorder(
-          borderRadius: new BorderRadius.only(
-            bottomRight: const Radius.elliptical(150.0, 30),
-          )
-        )),
-      body: Column(
-        children: <Widget>[
-          reusableCategoryWithAll("REQUESTING", () => debugPrint),
-          buildRequests("renter"),
-          reusableCategoryWithAll("UPCOMING", () => debugPrint),
-          buildTransactions("upcoming", "renter"),
-          reusableCategoryWithAll("CURRENT", () => debugPrint),
-          buildTransactions("current", "renter"),
-          reusableCategoryWithAll("PAST", () => debugPrint),
-          buildTransactions("past", "renter"),
-        ],
-      )
-    );
+        appBar: AppBar(
+            elevation: 3.0,
+            title: Text("Others' Items That You Are Renting",
+                style: TextStyle(
+                    fontFamily: appFont, fontWeight: FontWeight.w400)),
+            //titleSpacing: 0.0,
+            centerTitle: false,
+            shape: RoundedRectangleBorder(
+                borderRadius: new BorderRadius.only(
+              bottomRight: const Radius.elliptical(150.0, 30),
+            ))),
+        body: Column(
+          children: <Widget>[
+            reusableCategoryWithAll("REQUESTING", () => debugPrint),
+            buildRequests("renter"),
+            reusableCategoryWithAll("UPCOMING", () => debugPrint),
+            buildTransactions("upcoming", "renter"),
+            reusableCategoryWithAll("CURRENT", () => debugPrint),
+            buildTransactions("current", "renter"),
+            reusableCategoryWithAll("PAST", () => debugPrint),
+            buildTransactions("past", "renter"),
+          ],
+        ));
   }
 
   Widget buildListingsList() {
@@ -1679,14 +1680,15 @@ class HomePageState extends State<HomePage> {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          elevation: 3.0,
-          title: Text("Your Items That Others Can Rent", style: TextStyle(fontFamily: appFont, fontWeight: FontWeight.w400)), 
-          centerTitle: false,
-          shape: RoundedRectangleBorder(
-            borderRadius: new BorderRadius.only(
+            elevation: 3.0,
+            title: Text("Your Items That Others Can Rent",
+                style: TextStyle(
+                    fontFamily: appFont, fontWeight: FontWeight.w400)),
+            centerTitle: false,
+            shape: RoundedRectangleBorder(
+                borderRadius: new BorderRadius.only(
               bottomRight: const Radius.elliptical(150.0, 30),
-            )
-          )),
+            ))),
         body: Stack(children: <Widget>[
           Container(
             color: coolerWhite,
@@ -1784,9 +1786,7 @@ class HomePageState extends State<HomePage> {
     );
   }
 
-
-
-  Widget showPersonalInformation(){
+  Widget showPersonalInformation() {
     Widget _userImage() {
       void onImageButtonPressed(ImageSource source) {
         setState(() {
@@ -1852,7 +1852,8 @@ class HomePageState extends State<HomePage> {
       double width = MediaQuery.of(context).size.width;
       return Center(
         child: Column(children: <Widget>[
-          Align(alignment: Alignment.topLeft, child: Icon(QuoteIcons.quote_left)),
+          Align(
+              alignment: Alignment.topLeft, child: Icon(QuoteIcons.quote_left)),
           TextField(
             maxLines: null,
             keyboardType: TextInputType.multiline,
@@ -1865,7 +1866,9 @@ class HomePageState extends State<HomePage> {
               hintText: "Description",
             ),
           ),
-          Align(alignment: Alignment.bottomRight, child: Icon(QuoteIcons.quote_right)),
+          Align(
+              alignment: Alignment.bottomRight,
+              child: Icon(QuoteIcons.quote_right)),
         ]),
       );
     }
@@ -1877,10 +1880,24 @@ class HomePageState extends State<HomePage> {
               isDense: true,
               isExpanded: true,
               // [todo value]
-              hint: Text('Gender', style: TextStyle(fontFamily: font, fontWeight: FontWeight.w500),),
-              onChanged: (String newValue) { // [todo]
+              hint: Text(
+                'Gender',
+                style: TextStyle(fontFamily: font, fontWeight: FontWeight.w500),
+              ),
+              onChanged: (String newValue) {
+                // [todo]
               },
-              items: ["Male", "Female", "Other"].map((gender) => DropdownMenuItem<String>(value: gender, child: Text(gender, style: TextStyle(fontFamily: font),),),) .toList()),
+              items: ["Male", "Female", "Other"]
+                  .map(
+                    (gender) => DropdownMenuItem<String>(
+                          value: gender,
+                          child: Text(
+                            gender,
+                            style: TextStyle(fontFamily: font),
+                          ),
+                        ),
+                  )
+                  .toList()),
         ),
       );
     }
@@ -1902,44 +1919,68 @@ class HomePageState extends State<HomePage> {
             selectedDate = picked;
           });
     }*/
-    
+
     Widget _emailEntry() {
       return InkWell(
-        child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
-            Text("Email", style: TextStyle(fontFamily: font, fontWeight: FontWeight.w500)),
-            Text('${myUserDS['email']}', style: TextStyle(fontFamily: font),)
-          ],
-        ),
-        onTap: null);
-    }
-
-      Widget phoneEntry() {
-        return InkWell(
-          child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
-              Text("Phone", style: TextStyle(fontFamily: font, fontWeight: FontWeight.w500)),
-              Text("999-999-9999", style: TextStyle(fontFamily: font),)
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Text("Email",
+                  style:
+                      TextStyle(fontFamily: font, fontWeight: FontWeight.w500)),
+              myUserDS != null && myUserDS.exists
+                  ? Text(
+                      '${myUserDS['email']}',
+                      style: TextStyle(fontFamily: font),
+                    )
+                  : Container(),
             ],
           ),
           onTap: null);
-      }
-    return Column(children: <Widget>[
-      _userImage(),
-      _showDisplayNameEditor(),
-      _showAboutMe(),
-      Container(
-      color: Colors.white,
-        child: Column(
-          children: <Widget>[
-            _showGenderSelecter(),
-            _emailEntry(),
-            phoneEntry(),
-          ].map((Widget child) => Container(padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
-                  child: Column(children: <Widget>[child, Divider()],),
-                )).toList(),
-      )),
-    ],);
-  }
+    }
 
+    Widget phoneEntry() {
+      return InkWell(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Text("Phone",
+                  style:
+                      TextStyle(fontFamily: font, fontWeight: FontWeight.w500)),
+              Text(
+                "999-999-9999",
+                style: TextStyle(fontFamily: font),
+              )
+            ],
+          ),
+          onTap: null);
+    }
+
+    return Column(
+      children: <Widget>[
+        _userImage(),
+        _showDisplayNameEditor(),
+        _showAboutMe(),
+        Container(
+            color: Colors.white,
+            child: Column(
+              children: <Widget>[
+                _showGenderSelecter(),
+                _emailEntry(),
+                phoneEntry(),
+              ]
+                  .map((Widget child) => Container(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 10.0, vertical: 10.0),
+                        child: Column(
+                          children: <Widget>[child, Divider()],
+                        ),
+                      ))
+                  .toList(),
+            )),
+      ],
+    );
+  }
 
   Widget profileIntroStream() {
     return Container(
@@ -1992,7 +2033,9 @@ class HomePageState extends State<HomePage> {
                 return Container(
                   child: Column(
                     children: <Widget>[
-                      SizedBox(height: 30.0,),
+                      SizedBox(
+                        height: 30.0,
+                      ),
                       Container(
                         padding: EdgeInsets.only(left: 15.0),
                         alignment: Alignment.topLeft,
@@ -2057,12 +2100,15 @@ class HomePageState extends State<HomePage> {
             reusableCategory("PERSONAL INFORMATION"),
             showPersonalInformation(),
             reusableCategory("ACCOUNT SETTINGS"),
-            reusableFlatButton("Personal information", Icons.person_outline, null),
-            reusableFlatButton("Payments and payouts", Icons.payment, navToPayouts),
+            reusableFlatButton(
+                "Personal information", Icons.person_outline, null),
+            reusableFlatButton(
+                "Payments and payouts", Icons.payment, navToPayouts),
             reusableFlatButton("Notifications", Icons.notifications, null),
             reusableCategory("SUPPORT"),
             reusableFlatButton("Get help", Icons.help_outline, navToHelpPage),
-            reusableFlatButton("Give us feedback", Icons.feedback, navToFeedbackPage),
+            reusableFlatButton(
+                "Give us feedback", Icons.feedback, navToFeedbackPage),
             reusableFlatButton("Log out", null, logout),
             //getProfileDetails()
           ],
@@ -2311,56 +2357,12 @@ class HomePageState extends State<HomePage> {
                                           lastMessageCrop = lastMessage;
                                         }
 
-                                        return Column(
-                                          children: <Widget>[
-                                            ListTile(
-                                              leading: Container(
-                                                height: 50,
-                                                width: 50,
-                                                child: ClipOval(
-                                                  child: CachedNetworkImage(
-                                                    //key: ValueKey(DateTime.now().millisecondsSinceEpoch),
-                                                    imageUrl: imageURL,
-                                                    placeholder:
-                                                        (context, url) =>
-                                                            new Container(),
-                                                  ),
-                                                ),
-                                              ),
-                                              title: title,
-                                              subtitle: Container(
-                                                alignment: Alignment.centerLeft,
-                                                child: Column(
-                                                  children: <Widget>[
-                                                    Align(
-                                                        alignment: Alignment
-                                                            .centerLeft,
-                                                        child: lastActive),
-                                                    Align(
-                                                        alignment: Alignment
-                                                            .centerLeft,
-                                                        child: Text(
-                                                          lastMessageCrop,
-                                                          style: TextStyle(
-                                                              fontFamily:
-                                                                  "Quicksand"),
-                                                        )),
-                                                  ],
-                                                ),
-                                              ),
-                                              //subtitle: Text( '$lastActive\n$itemName\n$lastMessageCrop'),
-                                              onTap: () {
-                                                Navigator.pushNamed(
-                                                  context,
-                                                  Chat.routeName,
-                                                  arguments:
-                                                      ChatArgs(otherUserDS),
-                                                );
-                                              },
-                                            ),
-                                            Divider(),
-                                          ],
-                                        );
+                                        return messageCard(
+                                            imageURL,
+                                            title,
+                                            lastActive,
+                                            lastMessageCrop,
+                                            otherUserDS);
                                       } else {
                                         return Container();
                                       }
@@ -2381,6 +2383,51 @@ class HomePageState extends State<HomePage> {
           }
         },
       ),
+    );
+  }
+
+  Widget messageCard(
+      imageURL, title, lastActive, lastMessageCrop, otherUserDS) {
+    return Column(
+      children: <Widget>[
+        ListTile(
+          leading: Container(
+            height: 50,
+            width: 50,
+            child: ClipOval(
+              child: CachedNetworkImage(
+                //key: ValueKey(DateTime.now().millisecondsSinceEpoch),
+                imageUrl: imageURL,
+                placeholder: (context, url) => new Container(),
+              ),
+            ),
+          ),
+          title: title,
+          subtitle: Container(
+            alignment: Alignment.centerLeft,
+            child: Column(
+              children: <Widget>[
+                Align(alignment: Alignment.centerLeft, child: lastActive),
+                Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      lastMessageCrop,
+                      style: TextStyle(fontFamily: "Quicksand"),
+                    )),
+              ],
+            ),
+          ),
+          //subtitle: Text( '$lastActive\n$itemName\n$lastMessageCrop'),
+          onTap: () {
+            Navigator.pushNamed(
+              context,
+              Chat.routeName,
+              arguments: ChatArgs(otherUserDS),
+            );
+          },
+        ),
+        Divider(),
+      ],
     );
   }
 
@@ -2408,8 +2455,9 @@ class HomePageState extends State<HomePage> {
     Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (BuildContext context) => ItemFilter(
+          builder: (BuildContext context) => SearchPage(
                 typeFilter: filter,
+                showSearch: false,
               ),
         ));
   }
@@ -2418,7 +2466,10 @@ class HomePageState extends State<HomePage> {
     Navigator.push(
         context,
         SlideUpRoute(
-          page: SearchPage(),
+          page: SearchPage(
+            typeFilter: 'All',
+            showSearch: true,
+          ),
         ));
   }
 

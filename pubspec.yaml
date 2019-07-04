@@ -14,68 +14,39 @@ environment:
 
 dependencies:
 
+  flutter_datetime_picker: ^1.2.4
+  flutter_range_slider:
   flutter_local_notifications:
-
   geoflutterfire:
-
-  flutter_svg: 
-
+  flutter_svg:
   firebase_messaging: #^5.0.3
-
   cloud_functions:
-
   dio:
-
   smooth_star_rating:
-
   fluttertoast:
-
   uuid:
-
   stripe_payment: ^0.1.0
-
   numberpicker:
-
   timeago:
-
   flutter_picker:
-
   shared_preferences:
-
   intl:
-
   geolocator:
-
   cached_network_image:
-
   flutter_google_places: ^0.2.2
-
   google_maps_webservice: ^0.0.14
-
   google_maps_flutter: ^0.5.13
-
   firestore_helpers:
-
   location:
-
   path_provider:
-
   firebase_core: #^0.4.0+5
-
   firebase_storage:
-
   image_picker:
-
   firebase_auth:
-
   http:
-
   multi_image_picker:
-
   google_sign_in:
-
   flutter_facebook_login:
-
   cloud_firestore:
 
   path: any

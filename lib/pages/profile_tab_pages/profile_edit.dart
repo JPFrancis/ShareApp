@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -36,9 +37,11 @@ class ProfileEdit extends StatefulWidget {
 /// We initially assume we are in editing mode
 class ProfileEditState extends State<ProfileEdit> {
   final GlobalKey<FormState> formKey = new GlobalKey<FormState>();
+  final UsNumberTextInputFormatter phoneNumberFormatter = UsNumberTextInputFormatter();
 
   TextEditingController nameController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
+  TextEditingController phoneNumController = TextEditingController();
 
   DateTime selectedDate = DateTime.now();
 
@@ -65,12 +68,14 @@ class ProfileEditState extends State<ProfileEdit> {
     userCopy = User.copy(widget.userEdit);
     nameController.text = userCopy.name;
     descriptionController.text = userCopy.description;
+    phoneNumController.text = userCopy.phoneNum ?? '';
   }
 
   @override
   void dispose() {
     nameController.dispose();
     descriptionController.dispose();
+    phoneNumController.dispose();
     super.dispose();
   }
 
@@ -140,7 +145,7 @@ class ProfileEditState extends State<ProfileEdit> {
                 child: Column(
                   children: <Widget>[
                     showGenderSelecter(),
-                    birthPicker(),
+                    birthDatePicker(),
                     emailEntry(),
                     phoneEntry(),
                   ]
@@ -189,6 +194,8 @@ class ProfileEditState extends State<ProfileEdit> {
   }
 
   Widget phoneEntry() {
+    String phoneNum = userCopy.phoneNum ?? 'Tap to enter';
+
     return InkWell(
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -197,29 +204,67 @@ class ProfileEditState extends State<ProfileEdit> {
                 style:
                     TextStyle(fontFamily: font, fontWeight: FontWeight.w500)),
             Text(
-              "999-999-9999",
+              '$phoneNum',
               style: TextStyle(fontFamily: font),
             )
           ],
         ),
-        onTap: null);
+        onTap: () => showPhoneNumEditor(context));
   }
 
-  Widget birthPicker() {
-    var formatter = new intl.DateFormat('MMMM d, y');
-    String formatted = formatter.format(selectedDate);
-
-    Future<Null> _selectDate(BuildContext context) async {
-      final DateTime picked = await showDatePicker(
+  showPhoneNumEditor(BuildContext context) async {
+    return showDialog(
         context: context,
-        initialDate: selectedDate,
-        firstDate: DateTime(1930),
-        lastDate: DateTime(2020),
-      );
-      if (picked != null && picked != selectedDate)
-        setState(() {
-          selectedDate = picked;
+        builder: (context) {
+          return AlertDialog(
+            title: Text('Enter Phone Number'),
+            content: TextField(
+              autofocus: true,
+              controller: phoneNumController,
+              maxLength: 14,
+              inputFormatters: <TextInputFormatter> [
+                WhitelistingTextInputFormatter.digitsOnly,
+                phoneNumberFormatter,
+              ],
+              keyboardType: TextInputType.numberWithOptions(
+                signed: false,
+                decimal: false,
+              ),
+              onSubmitted: (text) {
+                if (phoneNumController.text.length==14)
+                {
+                  setState(() {
+                    userCopy.phoneNum = text;
+                  });
+
+                  Navigator.of(context).pop();
+                }
+              },
+            ),
+            actions: <Widget>[
+              FlatButton(
+                child: new Text('SAVE'),
+                onPressed: () {
+                  if (phoneNumController.text.length==14){
+                    setState(() {
+                      userCopy.phoneNum = phoneNumController.text;
+                    });
+
+                    Navigator.of(context).pop();
+                  }
+                },
+              )
+            ],
+          );
         });
+  }
+
+  Widget birthDatePicker() {
+    var dateFormat = intl.DateFormat('MMMM d, y');
+    String userBirthDate = 'Tap to select';
+
+    if (userCopy.birthday != null) {
+      userBirthDate = dateFormat.format(userCopy.birthday);
     }
 
     return InkWell(
@@ -227,16 +272,32 @@ class ProfileEditState extends State<ProfileEdit> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
           Text(
-            "Birth Date",
+            'Birth Date',
             style: TextStyle(fontFamily: font, fontWeight: FontWeight.w500),
           ),
           Text(
-            formatted,
+            '$userBirthDate',
             style: TextStyle(fontFamily: font),
           ),
         ],
       ),
-      onTap: () => null, //_selectDate(context),
+      onTap: showBirthDatePicker,
+    );
+  }
+
+  void showBirthDatePicker() {
+    DatePicker.showDatePicker(
+      context,
+      showTitleActions: true,
+      minTime: DateTime(1900, 1, 1),
+      maxTime: DateTime.now(),
+      onConfirm: (date) {
+        setState(() {
+          userCopy.birthday = date;
+        });
+      },
+      currentTime: userCopy.birthday??DateTime.now(),
+      locale: LocaleType.en,
     );
   }
 
@@ -246,15 +307,20 @@ class ProfileEditState extends State<ProfileEdit> {
         child: DropdownButton<String>(
             isDense: true,
             isExpanded: true,
-            // [todo value]
             hint: Text(
-              'Gender',
+              '${userCopy.gender ?? 'Gender'}',
               style: TextStyle(fontFamily: font, fontWeight: FontWeight.w500),
             ),
             onChanged: (String newValue) {
-              // [todo]
+              setState(() {
+                userCopy.gender = newValue;
+              });
             },
-            items: ["Male", "Female", "Other"]
+            items: [
+              "Male",
+              "Female",
+              "Other",
+            ]
                 .map(
                   (gender) => DropdownMenuItem<String>(
                         value: gender,
@@ -397,6 +463,9 @@ class ProfileEditState extends State<ProfileEdit> {
         'avatar': userCopy.avatar,
         'name': name,
         'description': description,
+        'gender': userCopy.gender,
+        'birthday': userCopy.birthday,
+        'phoneNum': userCopy.phoneNum,
       });
 
       setState(() {
@@ -406,6 +475,9 @@ class ProfileEditState extends State<ProfileEdit> {
       Firestore.instance.collection('users').document(myUserID).updateData({
         'name': name,
         'description': description,
+        'gender': userCopy.gender,
+        'birthday': userCopy.birthday,
+        'phoneNum': userCopy.phoneNum,
       });
     }
 

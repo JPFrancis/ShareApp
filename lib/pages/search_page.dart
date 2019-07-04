@@ -1,18 +1,21 @@
 import 'dart:async';
-
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
+import 'package:shareapp/extras/helpers.dart';
+import 'package:flutter_range_slider/flutter_range_slider.dart';
+import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/services/const.dart';
 
 class SearchPage extends StatefulWidget {
   static const routeName = '/searchPage';
+  final String typeFilter;
+  final bool showSearch;
 
-  SearchPage({Key key}) : super(key: key);
+  SearchPage({Key key, this.typeFilter, this.showSearch}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
@@ -21,32 +24,61 @@ class SearchPage extends StatefulWidget {
 }
 
 class SearchPageState extends State<SearchPage> {
-  TextEditingController searchController = TextEditingController();
+  Geoflutterfire geo = Geoflutterfire();
+  Position currentLocation;
 
+  TextEditingController searchController = TextEditingController();
+  bool showSuggestions = false;
   List<String> recommendedItems = [];
   List<DocumentSnapshot> prefixSnaps = [];
   List<String> prefixList = [];
   List<String> suggestions = [];
 
-  bool showSuggestions = true;
-  bool isLoading = true;
+  String myUserID;
+  String typeFilter;
+  String conditionFilter;
+  double minPrice;
+  double maxPrice;
+  double rangeFilter;
+  String sortByFilter;
+
+  bool distanceIsInfinite = true;
+  bool pageIsLoading = true;
+  bool locIsLoading = false;
   bool isAuthenticated;
 
-  String myUserID;
+  String font = 'Quicksand';
 
   @override
   void initState() {
+    // TODO: implement initState
     super.initState();
 
-    searchController.text = '';
+    typeFilter = widget.typeFilter;
+    conditionFilter = 'All';
+    minPrice = 0.0;
+    maxPrice = 50.0;
+    rangeFilter = 30.0;
+    sortByFilter = 'Alphabetically';
+
     getMyUserID();
     getSuggestions();
+    getUserLocation();
+    delayPage();
   }
 
   @override
   void dispose() {
     searchController.dispose();
     super.dispose();
+  }
+
+  void delayPage() async {
+    Future.delayed(Duration(milliseconds: 750)).then((_) {
+      setState(() {
+        pageIsLoading = false;
+      });
+    });
   }
 
   void getMyUserID() async {
@@ -60,11 +92,38 @@ class SearchPageState extends State<SearchPage> {
     }
   }
 
-  Future<Null> getSuggestions() async {
-    //searchList = [];
-    //filteredList = [];
-    //recommendedItems = [];
+  getUserLocation() async {
+    setState(() {
+      locIsLoading = true;
+    });
+    GeolocationStatus geolocationStatus =
+        await Geolocator().checkGeolocationPermissionStatus();
 
+    if (geolocationStatus != null) {
+      if (geolocationStatus != GeolocationStatus.granted) {
+        setState(() {
+          locIsLoading = false;
+        });
+
+        showUserLocationError();
+      } else {
+        currentLocation = await locateUser();
+
+        if (currentLocation != null) {
+          setState(() {
+            locIsLoading = false;
+          });
+        }
+      }
+    }
+  }
+
+  Future<Position> locateUser() async {
+    return Geolocator()
+        .getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+  }
+
+  Future<Null> getSuggestions() async {
     QuerySnapshot querySnapshot = await Firestore.instance
         .collection('items')
         .orderBy('name', descending: false)
@@ -81,62 +140,7 @@ class SearchPageState extends State<SearchPage> {
           recommendedItems.add(name);
         }
       });
-
-      /*
-      allItems = querySnapshot.documents;
-
-      allItems.forEach((DocumentSnapshot ds) {
-        String name = ds['name'].toLowerCase();
-        String description = ds['description'].toLowerCase();
-
-        suggestionsList.add(name);
-        searchList.addAll(name.split(' '));
-        searchList.addAll(description.split(' '));
-      });
-
-      suggestionsList = suggestionsList.toSet().toList();
-
-      searchList = searchList.toSet().toList();
-
-      for (int i = 0; i < searchList.length; i++) {
-        searchList[i] = searchList[i].replaceAll(RegExp(r"[^\w]"), '');
-      }
-
-      searchList = searchList.toSet().toList();
-      searchList.sort();
-      searchList.remove('');
-      filteredList = searchList;
-      */
-
-      //debugPrint('LIST: $searchList, LENGTH: ${searchList.length}');
-      setState(() {
-        isLoading = false;
-      });
     }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    handleSearch(searchController.text);
-
-    return Scaffold(
-      backgroundColor: coolerWhite,
-      /*
-      floatingActionButton: Container(
-        padding: const EdgeInsets.only(top: 120.0, left: 5.0),
-        child: FloatingActionButton(
-          mini: true,
-          onPressed: () => Navigator.pop(context),
-          child: Icon(Icons.clear),
-          elevation: 1,
-          backgroundColor: Colors.white70,
-          foregroundColor: primaryColor,
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.miniStartTop,
-      */
-      body: isLoading ? Container() : showBody(),
-    );
   }
 
   handleSearch(String searchText) async {
@@ -204,67 +208,145 @@ class SearchPageState extends State<SearchPage> {
     setState(() {});
   }
 
-  Widget showBody() {
-    double h = MediaQuery.of(context).size.height;
-    double w = MediaQuery.of(context).size.width;
+  void resetFilters() {
+    setState(() {
+      typeFilter = 'All';
+      conditionFilter = 'All';
+      minPrice = 0.0;
+      maxPrice = 50.0;
+      rangeFilter = 30.0;
+      sortByFilter = 'Alphabetically';
+    });
+  }
 
-    return Container(
-      height: h,
+  @override
+  Widget build(BuildContext context) {
+    handleSearch(searchController.text);
+
+    return Scaffold(
+      body: pageIsLoading ? Container() : showBody(),
+    );
+  }
+
+  Widget showBody() {
+    return WillPopScope(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          SizedBox(height: 50.0),
+          Container(
+            height: 20,
+          ),
+          searchField(),
+          showSuggestions
+              ? Container(
+                  height: 300,
+                  child: buildSuggestionsList(),
+                )
+              : Container(),
+          Container(height: 10),
           Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: <Widget>[
-              SizedBox(
-                width: 10.0,
-              ),
-              IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: Icon(
-                    Icons.clear,
-                    color: primaryColor,
-                  )),
+              typeSelector(),
+              conditionSelector(),
+            ],
+          ),
+          Container(height: 5),
+          priceSelector(),
+          Row(
+            children: <Widget>[
               Expanded(
-                child: searchField(),
+                child: Padding(
+                  padding: EdgeInsets.only(left: 20),
+                  child: distanceSlider(),
+                ),
+              ),
+              Column(
+                children: <Widget>[
+                  Checkbox(
+                    value: distanceIsInfinite,
+                    onChanged: (value) {
+                      setState(() {
+                        distanceIsInfinite = value;
+                      });
+                    },
+                  ),
+                  Text('None'),
+                ],
+              ),
+              Container(
+                width: 10,
               ),
             ],
           ),
-          searchController.text.isNotEmpty
-              ? Container(
-                  alignment: Alignment.topRight,
-                  child: FlatButton(
-                    onPressed: () {
-                      setState(() {
-                        searchController.clear();
-                        showSuggestions = true;
-                        //FocusScope.of(context).requestFocus(FocusNode());
-                      });
-                    },
-                    child: Text("Reset"),
-                  ),
-                )
-              : Container(),
-          buildLists(),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: sortBy(),
+              ),
+              Padding(
+                padding: EdgeInsets.only(right: 20),
+                child: RaisedButton(
+                  onPressed: resetFilters,
+                  child: Text('Reset'),
+                ),
+              ),
+            ],
+          ),
+          Container(height: 5),
+          buildItemList(),
         ],
       ),
     );
   }
 
   Widget searchField() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: <Widget>[
+        SizedBox(
+          width: 10.0,
+        ),
+        IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: Icon(
+              Icons.arrow_back,
+              color: primaryColor,
+            )),
+        Expanded(
+          child: searchBox(),
+        ),
+        IconButton(
+          onPressed: () {
+            setState(() {
+              searchController.clear();
+              showSuggestions = false;
+              //FocusScope.of(context).requestFocus(FocusNode());
+            });
+          },
+          icon: Icon(
+            Icons.clear,
+            color: primaryColor,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget searchBox() {
     return Container(
       padding: EdgeInsets.only(),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Container(
-            height: 70,
+            height: 50,
             decoration: new BoxDecoration(
               border: Border(left: BorderSide(color: primaryColor, width: 3)),
             ),
             child: Center(
               child: TextField(
-                autofocus: true,
+                autofocus: widget.showSearch,
                 textInputAction: TextInputAction.search,
                 style: TextStyle(fontFamily: 'Quicksand', fontSize: 21),
                 keyboardType: TextInputType.text,
@@ -302,143 +384,6 @@ class SearchPageState extends State<SearchPage> {
     );
   }
 
-  Widget buildLists() {
-    double h = MediaQuery.of(context).size.height;
-
-    return Expanded(
-      child: showSuggestions ? buildSuggestionsList() : buildItemsList(),
-    );
-  }
-
-  Widget buildItemsList() {
-    double h = MediaQuery.of(context).size.height;
-
-    return ListView.builder(
-      shrinkWrap: true,
-      padding: EdgeInsets.all(0),
-      itemCount: prefixSnaps == null ? 0 : prefixSnaps.length,
-      itemBuilder: (context, index) {
-        String name = prefixSnaps[index]['name'].toLowerCase();
-        String description = prefixSnaps[index]['description'].toLowerCase();
-        String searchText = searchController.text.trim().toLowerCase();
-
-        List<String> splitList = List();
-        splitList.addAll(name.split(' '));
-        splitList.addAll(description.split(' '));
-
-        RegExp regExp = RegExp(r'^' + searchText + r'.*$');
-
-        bool show = false;
-        splitList.forEach((String str) {
-          if (regExp.hasMatch(str)) {
-            show = true;
-          }
-        });
-
-        if (name == searchText) {
-          show = true;
-        }
-
-        Widget _searchTile() {
-          return InkWell(
-            onTap: () => navigateToDetail(prefixSnaps[index], context),
-            child: Container(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  Row(
-                    children: <Widget>[
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(5),
-                        child: Container(
-                          height: 80,
-                          width: 80,
-                          child: FittedBox(
-                            fit: BoxFit.cover,
-                            child: CachedNetworkImage(
-                              imageUrl: prefixSnaps[index]['images'][0],
-                              placeholder: (context, url) =>
-                                  new CircularProgressIndicator(),
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(
-                        width: 10.0,
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Text(
-                            '${prefixSnaps[index]['name']}',
-                            style: TextStyle(
-                                fontFamily: 'Quicksand',
-                                fontWeight: FontWeight.bold,
-                                fontSize: h / 45),
-                            textAlign: TextAlign.left,
-                          ),
-                          Row(
-                            children: <Widget>[
-                              StarRating(
-                                  rating:
-                                      prefixSnaps[index]['rating'].toDouble(),
-                                  sz: h / 40),
-                              SizedBox(
-                                width: 5.0,
-                              ),
-                              Text(
-                                '${prefixSnaps[index]['numRatings']} reviews',
-                                style: TextStyle(
-                                    fontFamily: 'Quicksand', fontSize: h / 65),
-                              ),
-                            ],
-                          ),
-                          Text(
-                            '${prefixSnaps[index]['condition']}',
-                            style: TextStyle(
-                                fontFamily: 'Quicksand',
-                                fontStyle: FontStyle.italic,
-                                fontSize: h / 65),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  Column(
-                    children: <Widget>[
-                      Row(
-                        children: <Widget>[
-                          Text('\$${prefixSnaps[index]['price']}',
-                              style: TextStyle(
-                                  fontFamily: 'Quicksand', fontSize: h / 55)),
-                          Text(' /day',
-                              style: TextStyle(
-                                  fontFamily: 'Quicksand', fontSize: h / 75)),
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-
-        return show
-            ? Column(
-                children: <Widget>[
-                  Container(
-                      padding:
-                          EdgeInsets.symmetric(vertical: 0.0, horizontal: 15.0),
-                      child: _searchTile()),
-                  divider(),
-                ],
-              )
-            : Container();
-      },
-    );
-  }
-
   Widget buildSuggestionsList() {
     List builderList =
         searchController.text.isEmpty ? recommendedItems : suggestions;
@@ -471,6 +416,358 @@ class SearchPageState extends State<SearchPage> {
             },
           );
         });
+  }
+
+  Widget typeSelector() {
+    String hint = 'Type: $typeFilter';
+    double padding = 20;
+
+    switch (hint) {
+      case 'Tool':
+        hint = 'Type: Tools';
+        break;
+      case 'Home':
+        hint = 'Type: Household';
+        break;
+    }
+
+    return DropdownButtonHideUnderline(
+      child: DropdownButton<String>(
+          isDense: true,
+          //isExpanded: true,
+          hint: Text(
+            hint,
+            style: TextStyle(fontFamily: font, fontWeight: FontWeight.w500),
+          ),
+          onChanged: (value) {
+            switch (value) {
+              case 'Tools':
+                setState(() => typeFilter = 'Tool');
+                break;
+              case 'Leisure':
+                setState(() => typeFilter = 'Leisure');
+                break;
+              case 'Household':
+                setState(() => typeFilter = 'Home');
+                break;
+              case 'Equipment':
+                setState(() => typeFilter = 'Equipment');
+                break;
+              case 'Miscellaneous':
+                setState(() => typeFilter = 'Other');
+                break;
+              case 'All':
+                setState(() => typeFilter = 'All');
+                break;
+            }
+          },
+          items: [
+            'All',
+            'Tools',
+            'Leisure',
+            'Household',
+            'Equipment',
+            'Miscellaneous',
+          ]
+              .map(
+                (selection) => DropdownMenuItem<String>(
+                      value: selection,
+                      child: Text(
+                        selection,
+                        style: TextStyle(fontFamily: font),
+                      ),
+                    ),
+              )
+              .toList()),
+    );
+  }
+
+  Widget conditionSelector() {
+    String hint = 'Condition: $conditionFilter';
+    double padding = 20;
+
+    return DropdownButtonHideUnderline(
+      child: DropdownButton<String>(
+          isDense: true,
+          //isExpanded: true,
+          // [todo value]
+          hint: Text(
+            hint,
+            style: TextStyle(fontFamily: font, fontWeight: FontWeight.w500),
+          ),
+          onChanged: (value) {
+            setState(() {
+              conditionFilter = value;
+            });
+          },
+          items: [
+            'All',
+            'Lightly Used',
+            'Good',
+            'Fair',
+            'Has Character',
+          ]
+              .map(
+                (selection) => DropdownMenuItem<String>(
+                      value: selection,
+                      child: Text(
+                        selection,
+                        style: TextStyle(fontFamily: font),
+                      ),
+                    ),
+              )
+              .toList()),
+    );
+  }
+
+  Widget priceSelector() {
+    double padding = 20;
+
+    return Padding(
+      padding: EdgeInsets.only(left: padding, right: padding),
+      child: Row(
+        children: <Widget>[
+          Text('\$ ${minPrice.toStringAsFixed(0)}'),
+          Expanded(
+            child: RangeSlider(
+              min: 0.0,
+              max: 100.0,
+              lowerValue: minPrice,
+              upperValue: maxPrice,
+              divisions: 20,
+              showValueIndicator: true,
+              valueIndicatorFormatter: (int index, double value) {
+                String twoDecimals = value.toStringAsFixed(0);
+                return '\$ $twoDecimals';
+              },
+              onChanged: (double newLowerValue, double newUpperValue) {
+                setState(() {
+                  minPrice = newLowerValue;
+                  maxPrice = newUpperValue;
+                });
+              },
+            ),
+          ),
+          Text('\$ ${maxPrice.toStringAsFixed(0)}'),
+        ],
+      ),
+    );
+  }
+
+  Widget distanceSlider() {
+    return Row(
+      children: <Widget>[
+        Text('Within:\n${rangeFilter.toStringAsFixed(0)} mi'),
+        Expanded(
+          child: Slider(
+            min: 0.0,
+            max: 80.0,
+            divisions: 16,
+            onChanged: distanceIsInfinite
+                ? null
+                : (newValue) {
+                    setState(() => rangeFilter = newValue);
+                  },
+            label: '${rangeFilter.toStringAsFixed(0)} mi',
+            value: rangeFilter,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget sortBy() {
+    String hint = 'Sort by: $sortByFilter';
+
+    double padding = 20;
+
+    return Padding(
+      padding: EdgeInsets.only(left: padding, right: padding),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+            isDense: true,
+            isExpanded: true,
+            hint: Text(
+              hint,
+              style: TextStyle(fontFamily: font, fontWeight: FontWeight.w500),
+            ),
+            onChanged: (value) {
+              setState(() {
+                sortByFilter = value;
+              });
+            },
+            items: [
+              'Alphabetically',
+              'Price low to high',
+              'Rating',
+              'Distance',
+            ]
+                .map(
+                  (selection) => DropdownMenuItem<String>(
+                        value: selection,
+                        child: Text(
+                          '$selection',
+                          style: TextStyle(fontFamily: font),
+                        ),
+                      ),
+                )
+                .toList()),
+      ),
+    );
+  }
+
+  Widget buildItemList() {
+    int tileRows = MediaQuery.of(context).size.width > 500 ? 3 : 2;
+
+    if (locIsLoading) {
+      //return Text('Getting location...');
+      return Center(
+        child: CircularProgressIndicator(),
+      );
+    } else {
+      // final value of radius must be kilometers
+      double radius = distanceIsInfinite ? 15000 : rangeFilter;
+      radius *= 1.609;
+      String field = 'location';
+
+      Query query = Firestore.instance.collection('items');
+
+      if (typeFilter != 'All') {
+        query = query.where('type', isEqualTo: typeFilter);
+      }
+
+      if (conditionFilter != 'All') {
+        query = query.where('condition', isEqualTo: conditionFilter);
+      }
+
+      Stream stream;
+
+      if (currentLocation == null) {
+        stream = query.snapshots();
+      } else {
+        GeoFirePoint center = geo.point(
+            latitude: currentLocation.latitude,
+            longitude: currentLocation.longitude);
+
+        stream = geo
+            .collection(collectionRef: query)
+            .within(center: center, radius: radius, field: field);
+      }
+
+      return Expanded(
+        child: StreamBuilder(
+          stream: stream,
+          builder: (BuildContext context, AsyncSnapshot snapshot) {
+            if (snapshot.hasError) {
+              return new Text('${snapshot.error}');
+            }
+            switch (snapshot.connectionState) {
+              case ConnectionState.waiting:
+
+              default:
+                if (snapshot.hasData) {
+                  List<DocumentSnapshot> items = currentLocation == null
+                      ? snapshot.data.documents
+                      : snapshot.data;
+                  List<Widget> displayCards = [];
+
+                  switch (sortByFilter) {
+                    case 'Alphabetically':
+                      items.sort((a, b) => a['name']
+                          .toLowerCase()
+                          .compareTo(b['name'].toLowerCase()));
+                      break;
+                    case 'Price low to high':
+                      items.sort((a, b) => a['price'].compareTo(b['price']));
+                      break;
+                    case 'Rating':
+                      items.sort((a, b) => b['rating'].compareTo(a['rating']));
+                      break;
+                    case 'Distance':
+                      break;
+                  }
+
+                  for (final ds in items) {
+                    double price = ds['price'].toDouble();
+
+                    if ((minPrice <= price && price <= maxPrice) &&
+                        (!isAuthenticated ||
+                            ds['creator'].documentID != myUserID)) {
+                      if (searchController.text.isEmpty) {
+                        displayCards.add(searchTile(ds, context));
+                      } else {
+                        String name = ds['name'].toLowerCase();
+                        String description = ds['description'].toLowerCase();
+                        String searchText =
+                            searchController.text.trim().toLowerCase();
+                        List<String> searchTextList = searchText.split(' ');
+
+                        List<String> itemNameAndDescription = List();
+                        itemNameAndDescription.addAll(name.split(' '));
+                        itemNameAndDescription.addAll(description.split(' '));
+
+                        bool add = false;
+
+                        for (final searchWord in searchTextList) {
+                          RegExp regExp = RegExp(r'^' + searchWord + r'.*$');
+
+                          for (final itemPrefix in itemNameAndDescription) {
+                            if (regExp.hasMatch(itemPrefix)) {
+                              add = true;
+                              break;
+                            }
+                          }
+                        }
+
+                        if (add) {
+                          displayCards.add(searchTile(ds, context));
+                        }
+                      }
+                    }
+                  }
+
+                  return ListView(
+                    shrinkWrap: true,
+                    padding: const EdgeInsets.all(20.0),
+                    children: displayCards,
+                  );
+                } else {
+                  return Container();
+                }
+            }
+          },
+        ),
+      );
+    }
+  }
+
+  Future<bool> showUserLocationError() async {
+    final ThemeData theme = Theme.of(context);
+    final TextStyle dialogTextStyle =
+        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+
+    return await showDialog<bool>(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Error'),
+              content: Text(
+                'Problem with getting your current location',
+                style: dialogTextStyle,
+              ),
+              actions: <Widget>[
+                FlatButton(
+                  child: const Text('Close'),
+                  onPressed: () {
+                    Navigator.of(context).pop(
+                        false); // Pops the confirmation dialog but not the page.
+                  },
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
   }
 
   void goBack() {

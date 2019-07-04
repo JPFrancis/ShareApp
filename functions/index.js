@@ -31,8 +31,8 @@ exports.createUser = functions.auth.user().onCreate(event => {
         custId: 'new',
         pushToken: [],
         description: '',
-        gender: '',
-        phoneNum: '',
+        gender: null,
+        phoneNum: null,
         birthday: null,
     }).then(function () {
         console.log('Created user: ', userID);

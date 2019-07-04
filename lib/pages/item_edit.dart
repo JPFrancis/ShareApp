@@ -55,7 +55,6 @@ class ItemEditState extends State<ItemEdit> {
   TextEditingController nameController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
   TextEditingController priceController = TextEditingController();
-  TextEditingController policyController = TextEditingController();
 
   List<DropdownMenuItem<String>> dropDownItemType;
   List<DropdownMenuItem<String>> dropDownItemCondition;
@@ -78,7 +77,6 @@ class ItemEditState extends State<ItemEdit> {
     nameController.text = itemCopy.name;
     descriptionController.text = itemCopy.description;
     priceController.text = itemCopy.price.toString();
-    policyController.text = itemCopy.policy;
 
     /// new item
     if (itemCopy.id == null) {
@@ -130,7 +128,6 @@ class ItemEditState extends State<ItemEdit> {
     nameController.dispose();
     descriptionController.dispose();
     priceController.dispose();
-    policyController.dispose();
 
     super.dispose();
   }
@@ -227,8 +224,6 @@ class ItemEditState extends State<ItemEdit> {
                     nameController, 'name'),
                 reusableTextEntry("Describe it... (required)", true,
                     descriptionController, 'description'),
-                reusableTextEntry("Cancellation policy (required)", true,
-                    policyController, 'policy'),
                 divider(),
                 reusableCategory("SPECIFICS"),
                 showTypeSelector(),
@@ -286,9 +281,6 @@ class ItemEditState extends State<ItemEdit> {
               break;
             case 'price':
               itemCopy.price = int.parse(controller.text);
-              break;
-            case 'policy':
-              itemCopy.policy = controller.text;
               break;
             default:
           }
@@ -652,7 +644,6 @@ class ItemEditState extends State<ItemEdit> {
     itemCopy.name = (itemCopy.name.trim())[0].toUpperCase() +
         (itemCopy.name.trim()).substring(1);
     itemCopy.description = itemCopy.description.trim();
-    itemCopy.policy = itemCopy.policy.trim();
 
     List<String> searchKeyList = [];
     String name = itemCopy.name.toLowerCase();
@@ -687,7 +678,6 @@ class ItemEditState extends State<ItemEdit> {
         'description': itemCopy.description,
         'type': itemCopy.type,
         'condition': itemCopy.condition,
-        'policy': itemCopy.policy,
         'rating': 0,
         'numRatings': 0,
         'price': itemCopy.price,
