@@ -1775,7 +1775,14 @@ class HomePageState extends State<HomePage> {
   }
 
   Widget profileTabPage() {
-    return isAuthenticated ? profileIntroStream() : Container();
+    return isAuthenticated
+        ? profileIntroStream()
+        : Center(
+            child: RaisedButton(
+              child: Text('Logout'),
+              onPressed: logout,
+            ),
+          );
   }
 
   Widget profileIntroStream() {
@@ -2339,8 +2346,8 @@ class HomePageState extends State<HomePage> {
       Timestamp timestampBirthday = myUserDS['birthday'];
       DateTime birthday;
 
-      if (timestampBirthday!=null){
-    birthday= timestampBirthday.toDate();
+      if (timestampBirthday != null) {
+        birthday = timestampBirthday.toDate();
       }
 
       User userEdit = User.fromMap(myUserDS.data, birthday);
