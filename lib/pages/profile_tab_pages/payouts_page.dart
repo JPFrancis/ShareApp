@@ -3,11 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
-import 'package:shareapp/services/const.dart';
 
 class PayoutsPage extends StatefulWidget {
   static const routeName = '/payoutsPage';
@@ -62,20 +60,25 @@ class PayoutsPageState extends State<PayoutsPage> {
         appBar: PreferredSize(
           preferredSize: Size.fromHeight(90),
           child: AppBar(
-            leading: IconButton(icon: Icon(Icons.close), onPressed: ()=>Navigator.pop(context),),
+            leading: IconButton(
+              icon: Icon(Icons.close),
+              onPressed: () => Navigator.pop(context),
+            ),
             bottom: TabBar(
               indicatorColor: Colors.black,
               tabs: [
                 Tab(child: Text("Payment Methods")),
                 Tab(child: Text("Payout History")),
-              ],),
+              ],
+            ),
           ),
         ),
-        body: TabBarView(children: [
-              Icon(Icons.directions_car),
-              showPayouts(),
-            ],
-          ),
+        body: TabBarView(
+          children: [
+            Icon(Icons.directions_car),
+            showPayouts(),
+          ],
+        ),
       ),
     );
   }
@@ -135,7 +138,6 @@ class PayoutsPageState extends State<PayoutsPage> {
     Navigator.pop(context);
   }
 
-
   Widget buildTransactions(String rentalStatus, person) {
     List status;
     switch (rentalStatus) {
@@ -149,8 +151,13 @@ class PayoutsPageState extends State<PayoutsPage> {
         status = [5];
         break;
     }
-    CollectionReference collectionReference = Firestore.instance.collection('rentals');
-    Stream stream = collectionReference.where(person, isEqualTo: Firestore.instance.collection('users').document(myUserID)) .snapshots();
+    CollectionReference collectionReference =
+        Firestore.instance.collection('rentals');
+    Stream stream = collectionReference
+        .where(person,
+            isEqualTo:
+                Firestore.instance.collection('users').document(myUserID))
+        .snapshots();
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
         stream: stream,
@@ -163,90 +170,101 @@ class PayoutsPageState extends State<PayoutsPage> {
 
             default:
               if (snapshot.hasData) {
-                var updated = snapshot.data.documents.where((d) => status.contains(d['status'])).toList();
+                var updated = snapshot.data.documents
+                    .where((d) => status.contains(d['status']))
+                    .toList();
                 var items = updated.map((rentalDS) {
-                    DocumentReference itemDR = rentalDS['item'];
+                  DocumentReference itemDR = rentalDS['item'];
 
-                    return StreamBuilder<DocumentSnapshot>(
-                      stream: itemDR.snapshots(),
-                      builder: (BuildContext context,
-                          AsyncSnapshot<DocumentSnapshot> snapshot) {
-                        if (snapshot.hasError) {
-                          return new Text('${snapshot.error}');
-                        }
-                        switch (snapshot.connectionState) {
-                          case ConnectionState.waiting:
-                          default:
-                            if (snapshot.hasData) {
-                              DocumentSnapshot ds = snapshot.data;
+                  return StreamBuilder<DocumentSnapshot>(
+                    stream: itemDR.snapshots(),
+                    builder: (BuildContext context,
+                        AsyncSnapshot<DocumentSnapshot> snapshot) {
+                      if (snapshot.hasError) {
+                        return new Text('${snapshot.error}');
+                      }
+                      switch (snapshot.connectionState) {
+                        case ConnectionState.waiting:
+                        default:
+                          if (snapshot.hasData) {
+                            DocumentSnapshot ds = snapshot.data;
 
-                              return StreamBuilder<DocumentSnapshot>(
-                                stream: rentalDS['renter'].snapshots(),
-                                builder: (BuildContext context,
-                                    AsyncSnapshot<DocumentSnapshot> snapshot) {
-                                  if (snapshot.hasError) {
-                                    return new Text('${snapshot.error}');
-                                  }
-                                  switch (snapshot.connectionState) {
-                                    case ConnectionState.waiting:
+                            return StreamBuilder<DocumentSnapshot>(
+                              stream: rentalDS['renter'].snapshots(),
+                              builder: (BuildContext context,
+                                  AsyncSnapshot<DocumentSnapshot> snapshot) {
+                                if (snapshot.hasError) {
+                                  return new Text('${snapshot.error}');
+                                }
+                                switch (snapshot.connectionState) {
+                                  case ConnectionState.waiting:
 
-                                    default:
-                                      if (snapshot.hasData) {
-                                        DocumentSnapshot renterDS = snapshot.data;
-                                        CachedNetworkImage image = CachedNetworkImage(
-                                          key: ValueKey<String>(ds['images'][0]),
-                                          imageUrl: ds['images'][0],
-                                          placeholder: (context, url) =>
-                                              new CircularProgressIndicator(),
-                                          fit: BoxFit.cover,
-                                        );
+                                  default:
+                                    if (snapshot.hasData) {
+                                      DocumentSnapshot renterDS = snapshot.data;
+                                      CachedNetworkImage image =
+                                          CachedNetworkImage(
+                                        key: ValueKey<String>(ds['images'][0]),
+                                        imageUrl: ds['images'][0],
+                                        placeholder: (context, url) =>
+                                            new CircularProgressIndicator(),
+                                        fit: BoxFit.cover,
+                                      );
 
-                                        return Container(
-                                          child: InkWell(
-                                            onTap: () => Navigator.pushNamed(
-                                                context, RentalDetail.routeName,
-                                                arguments: RentalDetailArgs(rentalDS.documentID)),
-                                            child: Container(
-                                              decoration: BoxDecoration(
-                                                boxShadow: <BoxShadow>[
-                                                  CustomBoxShadow(
-                                                      color: Colors.black45,
-                                                      blurRadius: 3.5,
-                                                      blurStyle:
-                                                          BlurStyle.outer),
-                                                ],
-                                              ),
-                                              child: Stack(
-                                                children: <Widget>[
-                                                  SizedBox.expand(child: image),
-                                                  SizedBox.expand(child: Container( color: Colors.black .withOpacity(0.4),)),
-                                                  Center(
-                                                    child: Column(
-                                                      children: <Widget>[
-                                                        Text(ds['name'], style: TextStyle( color: Colors .white)), // Text("Pickup Time: \n" + DateTime.fromMillisecondsSinceEpoch(rentalDS[ 'pickupStart'].millisecondsSinceEpoch).toString(), style: TextStyle(color:Colors.white)),
-                                                      ],
-                                                    ),
-                                                  )
-                                                ],
-                                              ),
+                                      return Container(
+                                        child: InkWell(
+                                          onTap: () => Navigator.pushNamed(
+                                              context, RentalDetail.routeName,
+                                              arguments: RentalDetailArgs(
+                                                  rentalDS.documentID)),
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              boxShadow: <BoxShadow>[
+                                                CustomBoxShadow(
+                                                    color: Colors.black45,
+                                                    blurRadius: 3.5,
+                                                    blurStyle: BlurStyle.outer),
+                                              ],
+                                            ),
+                                            child: Stack(
+                                              children: <Widget>[
+                                                SizedBox.expand(child: image),
+                                                SizedBox.expand(
+                                                    child: Container(
+                                                  color: Colors.black
+                                                      .withOpacity(0.4),
+                                                )),
+                                                Center(
+                                                  child: Column(
+                                                    children: <Widget>[
+                                                      Text(ds['name'],
+                                                          style: TextStyle(
+                                                              color: Colors
+                                                                  .white)),
+                                                      // Text("Pickup Time: \n" + DateTime.fromMillisecondsSinceEpoch(rentalDS[ 'pickupStart'].millisecondsSinceEpoch).toString(), style: TextStyle(color:Colors.white)),
+                                                    ],
+                                                  ),
+                                                )
+                                              ],
                                             ),
                                           ),
-                                        );
-                                        // return Container(width: MediaQuery.of(context).size.width/2, padding: EdgeInsets.only(left: 10.0), child: _tile());
-                                      } else {
-                                        return Container();
-                                      }
-                                  }
-                                },
-                              );
-                            } else {
-                              return Container(
-                                color: Colors.pink,
-                              );
-                            }
-                        }
-                      },
-                    );
+                                        ),
+                                      );
+                                      // return Container(width: MediaQuery.of(context).size.width/2, padding: EdgeInsets.only(left: 10.0), child: _tile());
+                                    } else {
+                                      return Container();
+                                    }
+                                }
+                              },
+                            );
+                          } else {
+                            return Container(
+                              color: Colors.pink,
+                            );
+                          }
+                      }
+                    },
+                  );
                 });
 
                 return GridView.count(
@@ -266,4 +284,3 @@ class PayoutsPageState extends State<PayoutsPage> {
     );
   }
 }
-

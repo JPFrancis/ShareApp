@@ -223,7 +223,7 @@ class SearchPageArgs {
   final String typeFilter;
   final bool showSearch;
 
-  SearchPageArgs(this.typeFilter,this.showSearch);
+  SearchPageArgs(this.typeFilter, this.showSearch);
 }
 
 class AllReviewsArgs {

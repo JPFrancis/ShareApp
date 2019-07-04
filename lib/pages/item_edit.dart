@@ -236,7 +236,10 @@ class ItemEditState extends State<ItemEdit> {
                 reusableCategory("LOCATION"),
                 showItemLocation(),
                 showLocationButtons(),
-                Text("* Your address will only be shown to someone actively renting this item", style: TextStyle(fontFamily: appFont, fontSize: 12.0),),
+                Text(
+                  "* Your address will only be shown to someone actively renting this item",
+                  style: TextStyle(fontFamily: appFont, fontSize: 12.0),
+                ),
                 isEdit ? deleteButton() : Container()
               ]),
           Container(

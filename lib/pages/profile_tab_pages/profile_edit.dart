@@ -4,11 +4,11 @@ import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:shareapp/extras/helpers.dart';
@@ -37,7 +37,8 @@ class ProfileEdit extends StatefulWidget {
 /// We initially assume we are in editing mode
 class ProfileEditState extends State<ProfileEdit> {
   final GlobalKey<FormState> formKey = new GlobalKey<FormState>();
-  final UsNumberTextInputFormatter phoneNumberFormatter = UsNumberTextInputFormatter();
+  final UsNumberTextInputFormatter phoneNumberFormatter =
+      UsNumberTextInputFormatter();
 
   TextEditingController nameController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
@@ -222,7 +223,7 @@ class ProfileEditState extends State<ProfileEdit> {
               autofocus: true,
               controller: phoneNumController,
               maxLength: 14,
-              inputFormatters: <TextInputFormatter> [
+              inputFormatters: <TextInputFormatter>[
                 WhitelistingTextInputFormatter.digitsOnly,
                 phoneNumberFormatter,
               ],
@@ -231,8 +232,7 @@ class ProfileEditState extends State<ProfileEdit> {
                 decimal: false,
               ),
               onSubmitted: (text) {
-                if (phoneNumController.text.length==14)
-                {
+                if (phoneNumController.text.length == 14) {
                   setState(() {
                     userCopy.phoneNum = text;
                   });
@@ -245,7 +245,7 @@ class ProfileEditState extends State<ProfileEdit> {
               FlatButton(
                 child: new Text('SAVE'),
                 onPressed: () {
-                  if (phoneNumController.text.length==14){
+                  if (phoneNumController.text.length == 14) {
                     setState(() {
                       userCopy.phoneNum = phoneNumController.text;
                     });
@@ -296,7 +296,7 @@ class ProfileEditState extends State<ProfileEdit> {
           userCopy.birthday = date;
         });
       },
-      currentTime: userCopy.birthday??DateTime.now(),
+      currentTime: userCopy.birthday ?? DateTime.now(),
       locale: LocaleType.en,
     );
   }

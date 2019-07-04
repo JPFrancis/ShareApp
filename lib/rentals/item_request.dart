@@ -138,7 +138,10 @@ class ItemRequestState extends State<ItemRequest> {
       body: Stack(
         children: <Widget>[
           isLoading
-              ? Container(decoration: new BoxDecoration(color: Colors.white.withOpacity(0.0)),)
+              ? Container(
+                  decoration:
+                      new BoxDecoration(color: Colors.white.withOpacity(0.0)),
+                )
               : showBody(),
           showCircularProgress(),
         ],
@@ -169,31 +172,36 @@ class ItemRequestState extends State<ItemRequest> {
       padding: EdgeInsets.all(0),
       children: <Widget>[
         showItemImage(),
-        SizedBox(height: 10.0,),
+        SizedBox(
+          height: 10.0,
+        ),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10.0),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 5.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 15.0, vertical: 5.0),
             decoration: new BoxDecoration(
-            boxShadow: <BoxShadow>[
-              CustomBoxShadow(
-                color: Colors.black,
-                blurRadius: 2.0,
-                blurStyle: BlurStyle.outer),
-              ],
-            color: Colors.white,
-            borderRadius: new BorderRadius.all(
-              Radius.circular(20.0),
-            )),
+                boxShadow: <BoxShadow>[
+                  CustomBoxShadow(
+                      color: Colors.black,
+                      blurRadius: 2.0,
+                      blurStyle: BlurStyle.outer),
+                ],
+                color: Colors.white,
+                borderRadius: new BorderRadius.all(
+                  Radius.circular(20.0),
+                )),
             child: Container(
               height: MediaQuery.of(context).size.height,
-              child: Column(children: <Widget>[
-                showItemCreator(),
-                divider(),
-                showTimePickers(),
-                divider(),
-                showItemPriceInfo(),
-              ],),
+              child: Column(
+                children: <Widget>[
+                  showItemCreator(),
+                  divider(),
+                  showTimePickers(),
+                  divider(),
+                  showItemPriceInfo(),
+                ],
+              ),
             ),
           ),
         ),
@@ -222,16 +230,17 @@ class ItemRequestState extends State<ItemRequest> {
     List imagesList = itemDS['images'];
     return imagesList.length > 0
         ? Container(
-          decoration: BoxDecoration(
-             borderRadius: new BorderRadius.all(
-              Radius.circular(20.0),
+            decoration: BoxDecoration(
+              borderRadius: new BorderRadius.all(
+                Radius.circular(20.0),
+              ),
+              boxShadow: <BoxShadow>[
+                CustomBoxShadow(
+                    color: Colors.black,
+                    blurRadius: 7.0,
+                    blurStyle: BlurStyle.outer),
+              ],
             ),
-            boxShadow: <BoxShadow>[
-            CustomBoxShadow(
-                color: Colors.black,
-                blurRadius: 7.0,
-                blurStyle: BlurStyle.outer),
-          ],),
             height: widthOfScreen / 1,
             child: _getItemImage(context),
           )
@@ -263,10 +272,10 @@ class ItemRequestState extends State<ItemRequest> {
           Text(
             itemDS['name'],
             style: TextStyle(
-              color: Colors.black,
-              fontFamily: 'Quicksand',
-              fontSize: 25.0,
-              fontWeight: FontWeight.w500),
+                color: Colors.black,
+                fontFamily: 'Quicksand',
+                fontSize: 25.0,
+                fontWeight: FontWeight.w500),
           ),
           Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -301,13 +310,30 @@ class ItemRequestState extends State<ItemRequest> {
       padding: EdgeInsets.symmetric(horizontal: 20.0),
       child: Column(
         children: <Widget>[
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
-            Text('Total', style: TextStyle(fontSize: 15.0, fontFamily: 'Quicksand')),
-            Text('\$${itemDS['price'] * duration}', style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.bold, fontFamily: 'Quicksand')),
-          ],),
-          SizedBox(height: 5.0,),
-          Align(alignment: Alignment.bottomLeft,
-            child: Text('* You will not be charged until the Owner accepts your proposal', style: TextStyle(fontSize: 10.0, fontFamily: 'Quicksand', fontWeight: FontWeight.w100, fontStyle: FontStyle.italic))),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Text('Total',
+                  style: TextStyle(fontSize: 15.0, fontFamily: 'Quicksand')),
+              Text('\$${itemDS['price'] * duration}',
+                  style: TextStyle(
+                      fontSize: 15.0,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Quicksand')),
+            ],
+          ),
+          SizedBox(
+            height: 5.0,
+          ),
+          Align(
+              alignment: Alignment.bottomLeft,
+              child: Text(
+                  '* You will not be charged until the Owner accepts your proposal',
+                  style: TextStyle(
+                      fontSize: 10.0,
+                      fontFamily: 'Quicksand',
+                      fontWeight: FontWeight.w100,
+                      fontStyle: FontStyle.italic))),
         ],
       ),
     );
@@ -664,11 +690,11 @@ class DateTimeItem extends StatelessWidget {
           InkWell(
             onTap: () {
               showDatePicker(
-                context: context,
-                initialDate: DateTime.now(),
-                firstDate: DateTime.now(),
-                lastDate: DateTime.now().add(Duration(days: 300)))
-              .then<void>((DateTime value) {
+                      context: context,
+                      initialDate: DateTime.now(),
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime.now().add(Duration(days: 300)))
+                  .then<void>((DateTime value) {
                 if (value != null) {
                   onChangedDateTime(updateDateTime(value.year, value.month,
                       value.day, windows, window, amPm));

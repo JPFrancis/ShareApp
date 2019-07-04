@@ -416,7 +416,7 @@ class HomePageState extends State<HomePage> {
             ),
       floatingActionButton: showFAB(),
       bottomNavigationBar: SizedBox(
-        height: 90,
+        //height: 90,
         child: BottomNavigationBar(
           backgroundColor: coolerWhite,
           selectedItemColor: primaryColor,
@@ -436,33 +436,38 @@ class HomePageState extends State<HomePage> {
   Widget showFAB() {
     if (isAuthenticated && currentTabIndex == 2) {
       return RaisedButton(
-        elevation: 3,
-        color: primaryColor,
-        textColor: Colors.white,
-        onPressed: () {
-          navigateToEdit(
-            Item(
-              id: null,
-              status: true,
-              creator: Firestore.instance.collection('users').document(myUserID),
-              name: '',
-              description: '',
-              type: null,
-              condition: null,
-              policy: '',
-              price: 0,
-              numImages: 0,
-              images: new List(),
-              location: {'geopoint': null},
-              rental: null,
-            ),
-          );
-        },
-        child: Text("Add Item", style: TextStyle(fontFamily: 'Quicksand', fontWeight: FontWeight.normal)));
-    } else {return null;}
+          elevation: 3,
+          color: Theme.of(context).primaryColor,
+          textColor: Colors.white,
+          onPressed: () {
+            navigateToEdit(
+              Item(
+                id: null,
+                status: true,
+                creator:
+                    Firestore.instance.collection('users').document(myUserID),
+                name: '',
+                description: '',
+                type: null,
+                condition: null,
+                price: 0,
+                numImages: 0,
+                images: new List(),
+                location: {'geopoint': null},
+                rental: null,
+              ),
+            );
+          },
+          child: Text("Add Item",
+              style: TextStyle(
+                  fontFamily: 'Quicksand', fontWeight: FontWeight.normal)));
+    } else {
+      return null;
+    }
   }
 
-  BottomNavigationBarItem bottomNavTile(String label, Icon icon, bool showBadge) {
+  BottomNavigationBarItem bottomNavTile(
+      String label, Icon icon, bool showBadge) {
     return BottomNavigationBarItem(
       icon: Stack(
         children: <Widget>[
@@ -1774,7 +1779,7 @@ class HomePageState extends State<HomePage> {
   }
 
   Widget profileIntroStream() {
-    Widget showPersonalInformation(){
+    Widget showPersonalInformation() {
       double width = MediaQuery.of(context).size.width;
 
       Widget _userImage() {
@@ -1803,7 +1808,7 @@ class HomePageState extends State<HomePage> {
 
         return Center(
           child: InkWell(
-            onTap: () => onImageButtonPressed(ImageSource.gallery),
+            //onTap: () => onImageButtonPressed(ImageSource.gallery),
             child: FutureBuilder<File>(
                 future: selectedImage,
                 builder: (BuildContext context, AsyncSnapshot<File> snapshot) {
@@ -1850,7 +1855,7 @@ class HomePageState extends State<HomePage> {
 
     return Container(
       padding: EdgeInsets.only(left: 10.0, right: 10.0, top: 40.0),
-     /* decoration: new BoxDecoration(
+      /* decoration: new BoxDecoration(
           boxShadow: <BoxShadow>[
             CustomBoxShadow(
                 color: Colors.black,
@@ -1863,9 +1868,15 @@ class HomePageState extends State<HomePage> {
             bottomRight: const Radius.circular(50.0),
           )),*/
       child: StreamBuilder<DocumentSnapshot>(
-        stream: Firestore.instance.collection('users').document(myUserID).snapshots(),
-        builder: (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
-          if (snapshot.hasError) {return new Text('${snapshot.error}');}
+        stream: Firestore.instance
+            .collection('users')
+            .document(myUserID)
+            .snapshots(),
+        builder:
+            (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+          if (snapshot.hasError) {
+            return new Text('${snapshot.error}');
+          }
           switch (snapshot.connectionState) {
             case ConnectionState.waiting:
             default:
