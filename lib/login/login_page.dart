@@ -275,7 +275,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                 alignment: Alignment.center,
                 padding: const EdgeInsets.symmetric(horizontal: 30),
                 child: ClipRRect(
-                  child: Image.asset('assets/request.png'),
+                  child: Image.asset('assets/request.jpg'),
                   borderRadius: BorderRadius.circular(40),
                 ),
               ),
