@@ -42,8 +42,9 @@ class SearchPageState extends State<SearchPage> {
   double rangeFilter;
   String sortByFilter;
 
-  bool distanceIsInfinite = true;
+  bool distanceIsInfinite = false;
   bool pageIsLoading = true;
+  bool filterPressed = false;
   bool locIsLoading = false;
   bool isAuthenticated;
 
@@ -229,56 +230,39 @@ class SearchPageState extends State<SearchPage> {
   }
 
   Widget showBody() {
-    return WillPopScope(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Container(
-            height: 20,
-          ),
-          searchField(),
-          showSuggestions
-              ? Container(
-                  height: 300,
-                  child: buildSuggestionsList(),
-                )
-              : Container(),
-          Container(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: <Widget>[
-              typeSelector(),
-              conditionSelector(),
-            ],
-          ),
+    Widget _filters() {
+      return Column(children: <Widget>[
+        SizedBox(height: 5.0,),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: <Widget>[
+            typeSelector(),
+            conditionSelector(),
+          ],),
           Container(height: 5),
           priceSelector(),
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(left: 20),
-                  child: distanceSlider(),
+          Row(children: <Widget>[
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(left: 20),
+                child: distanceSlider(),
+              ),
+            ),
+            Column(
+              children: <Widget>[
+                Checkbox(
+                  value: distanceIsInfinite,
+                  onChanged: (value) {
+                    setState(() {
+                      distanceIsInfinite = value;
+                    });
+                  },
                 ),
-              ),
-              Column(
-                children: <Widget>[
-                  Checkbox(
-                    value: distanceIsInfinite,
-                    onChanged: (value) {
-                      setState(() {
-                        distanceIsInfinite = value;
-                      });
-                    },
-                  ),
-                  Text('None'),
-                ],
-              ),
-              Container(
-                width: 10,
-              ),
-            ],
-          ),
+                distanceIsInfinite ? Text('On') : Text('Off')
+              ],
+            ),
+            Container(
+              width: 10,
+            ),
+          ],),
           Row(
             children: <Widget>[
               Expanded(
@@ -294,9 +278,20 @@ class SearchPageState extends State<SearchPage> {
             ],
           ),
           Container(height: 5),
-          buildItemList(),
-        ],
-      ),
+      ],);
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        SizedBox(height: 30,),
+        searchField(),
+        showSuggestions
+            ? Container(height: 200, width: MediaQuery.of(context).size.width, child: buildSuggestionsList(),)
+            : Container(),
+          filterPressed ? _filters() : Container(),
+        buildItemList(),
+      ],
     );
   }
 
@@ -304,9 +299,7 @@ class SearchPageState extends State<SearchPage> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
-        SizedBox(
-          width: 10.0,
-        ),
+        SizedBox(width: 10.0,),
         IconButton(
             onPressed: () => Navigator.pop(context),
             icon: Icon(
@@ -316,19 +309,16 @@ class SearchPageState extends State<SearchPage> {
         Expanded(
           child: searchBox(),
         ),
-        IconButton(
-          onPressed: () {
-            setState(() {
+        searchController.text.isEmpty ? Container() 
+        : IconButton(
+            onPressed: () {setState(() {
               searchController.clear();
               showSuggestions = false;
               //FocusScope.of(context).requestFocus(FocusNode());
-            });
-          },
-          icon: Icon(
-            Icons.clear,
-            color: primaryColor,
+            });},
+            icon: Icon(Icons.clear, color: primaryColor,),
           ),
-        ),
+        IconButton(icon: Icon(Icons.filter_list, color: primaryColor), onPressed: (){setState(() {filterPressed = !filterPressed;});},),
       ],
     );
   }
@@ -340,7 +330,7 @@ class SearchPageState extends State<SearchPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Container(
-            height: 50,
+            height: 70,
             decoration: new BoxDecoration(
               border: Border(left: BorderSide(color: primaryColor, width: 3)),
             ),
@@ -385,15 +375,14 @@ class SearchPageState extends State<SearchPage> {
   }
 
   Widget buildSuggestionsList() {
-    List builderList =
-        searchController.text.isEmpty ? recommendedItems : suggestions;
+    List builderList = searchController.text.isEmpty ? recommendedItems : suggestions;
 
     return ListView.builder(
         itemCount: builderList.length,
         itemBuilder: (context, index) {
           return ListTile(
-            title: Text(builderList[index]),
-            trailing: IconButton(
+            title: Text(builderList[index], style: TextStyle(color: Colors.blueGrey, fontFamily: appFont),),
+            /*trailing: IconButton(
               icon: Icon(Icons.keyboard_arrow_up),
               onPressed: () {
                 setState(() {
@@ -405,7 +394,7 @@ class SearchPageState extends State<SearchPage> {
                   handleSearch(searchController.text.substring(0, 1));
                 });
               },
-            ),
+            ),*/
             onTap: () {
               setState(() {
                 searchController.text = builderList[index];
@@ -563,7 +552,7 @@ class SearchPageState extends State<SearchPage> {
             min: 0.0,
             max: 80.0,
             divisions: 16,
-            onChanged: distanceIsInfinite
+            onChanged: !distanceIsInfinite
                 ? null
                 : (newValue) {
                     setState(() => rangeFilter = newValue);
@@ -617,8 +606,6 @@ class SearchPageState extends State<SearchPage> {
   }
 
   Widget buildItemList() {
-    int tileRows = MediaQuery.of(context).size.width > 500 ? 3 : 2;
-
     if (locIsLoading) {
       //return Text('Getting location...');
       return Center(

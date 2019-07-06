@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' as prefix0;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:geolocator/geolocator.dart';
@@ -1026,7 +1027,7 @@ class HomePageState extends State<HomePage> {
       width: MediaQuery.of(context).size.width,
       decoration: new BoxDecoration(
           image: DecorationImage(
-              image: AssetImage('assets/surfer.jpg'), fit: BoxFit.fill),
+              image: AssetImage('assets/paddleboard.jpg'), fit: BoxFit.fill),
           boxShadow: <BoxShadow>[
             CustomBoxShadow(
                 color: Colors.black,
@@ -1039,10 +1040,14 @@ class HomePageState extends State<HomePage> {
               bottomRight: const Radius.circular(40.0))),
       child: Stack(
         children: <Widget>[
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: searchField(),
-          ),
+          Align(alignment: Alignment.bottomCenter, 
+            child: Column(mainAxisSize: MainAxisSize.min, children: <Widget>[
+              Container(
+                padding: EdgeInsets.only(left: 10.0),
+                alignment: Alignment.bottomLeft,
+                child: Text("Make It Happen", style: TextStyle(color: Colors.black, fontFamily: appFont, fontSize: 25.0, fontWeight: FontWeight.w300),)),
+              searchField(),
+          ],),),
         ],
       ),
     );
@@ -1148,12 +1153,7 @@ class HomePageState extends State<HomePage> {
               SizedBox.expand(
                 child: Container(color: Colors.black45),
               ),
-              Center(
-                  child: Text(category,
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontFamily: 'Quicksand',
-                          fontSize: h / 60)))
+              Center(child: Text(category, style: TextStyle(color: Colors.white, fontFamily: 'Quicksand', fontSize: h / 60)))
             ],
           ),
         ),
@@ -1169,7 +1169,7 @@ class HomePageState extends State<HomePage> {
             children: <Widget>[
               InkWell(
                 onTap: () => navToItemFilter('Tools'),
-                child: _categoryTile('Tools', 'assets/hammer.jpg'),
+                child: _categoryTile('Tools', 'assets/tools.jpg'),
               ),
               InkWell(
                 onTap: () => navToItemFilter('Leisure'),
@@ -1177,7 +1177,7 @@ class HomePageState extends State<HomePage> {
               ),
               InkWell(
                 onTap: () => navToItemFilter('Household'),
-                child: _categoryTile('Household', 'assets/vacuum.jpg'),
+                child: _categoryTile('Household', 'assets/iron.jpg'),
               ),
             ],
           ),
@@ -1209,16 +1209,16 @@ class HomePageState extends State<HomePage> {
   Widget myRentalsPage() {
     return Scaffold(
         appBar: AppBar(
-            elevation: 3.0,
-            title: Text("Others' Items That You Are Renting",
-                style: TextStyle(
-                    fontFamily: appFont, fontWeight: FontWeight.w400)),
-            //titleSpacing: 0.0,
-            centerTitle: false,
-            shape: RoundedRectangleBorder(
-                borderRadius: new BorderRadius.only(
-              bottomRight: const Radius.elliptical(150.0, 30),
-            ))),
+          elevation: 3.0,
+          title: Padding(
+            padding: const EdgeInsets.only(left: 0.0),
+            child: Align(alignment: Alignment.centerLeft, child: Text("My Rentals", style: TextStyle(fontFamily: appFont, fontWeight: FontWeight.w400, fontSize: 25))),
+          ),
+          shape: RoundedRectangleBorder(
+              borderRadius: new BorderRadius.only(
+            bottomRight: const Radius.elliptical(40.0, 25),
+            bottomLeft: const Radius.elliptical(40.0, 25),
+          ))),
         body: Column(
           children: <Widget>[
             reusableCategoryWithAll("REQUESTING", () => debugPrint),
@@ -1563,6 +1563,7 @@ class HomePageState extends State<HomePage> {
                                         );
 
                                         return Container(
+                                          width: MediaQuery.of(context).size.width / 2,
                                           padding: EdgeInsets.only(left: 10.0),
                                           child: InkWell(
                                             onTap: () => Navigator.pushNamed(
@@ -1570,10 +1571,7 @@ class HomePageState extends State<HomePage> {
                                                 arguments: RentalDetailArgs(
                                                     rentalDS.documentID)),
                                             child: Container(
-                                              width: MediaQuery.of(context)
-                                                      .size
-                                                      .width /
-                                                  2,
+                                              width: MediaQuery.of(context).size.width / 2,
                                               decoration: BoxDecoration(
                                                 boxShadow: <BoxShadow>[
                                                   CustomBoxShadow(
@@ -1683,15 +1681,34 @@ class HomePageState extends State<HomePage> {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-            elevation: 3.0,
-            title: Text("Your Items That Others Can Rent",
-                style: TextStyle(
-                    fontFamily: appFont, fontWeight: FontWeight.w400)),
-            centerTitle: false,
-            shape: RoundedRectangleBorder(
-                borderRadius: new BorderRadius.only(
-              bottomRight: const Radius.elliptical(150.0, 30),
-            ))),
+          bottom: 
+            PreferredSize(
+              child: Align(alignment: Alignment.bottomLeft,
+                child: TabBar(
+                  isScrollable: true,
+                  tabs: [
+                    Tab(child: Text("All My Items", style: TextStyle(fontFamily: 'Quicksand'),)),
+                    Tab(child: Text("Transactions", style: TextStyle(fontFamily: 'Quicksand'),)),
+                  ],
+                  labelColor: coolerWhite,
+                  unselectedLabelColor: Colors.black54,
+                  indicatorColor: coolerWhite,
+                ),
+              ), preferredSize: Size.fromHeight(45),
+            ), 
+          elevation: 3.0,
+          title: Column(
+            children: <Widget>[
+             Align(alignment: Alignment.bottomLeft, child: Text("My Listings", style: TextStyle(fontFamily: appFont, fontWeight: FontWeight.w400, fontSize: 25))),
+             Align(alignment: Alignment.bottomLeft, child: Text("Your Items That Others Can Rent", style: TextStyle(fontFamily: appFont, fontWeight: FontWeight.w400, fontSize: 15))),
+            ],
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: new BorderRadius.only(
+              bottomRight: const Radius.elliptical(40.0, 25),
+              bottomLeft: const Radius.elliptical(40.0, 25),
+            ))
+        ),
         body: Stack(children: <Widget>[
           Container(
             color: coolerWhite,
@@ -1717,6 +1734,7 @@ class HomePageState extends State<HomePage> {
               ],
             ),
           ),
+          /*
           Align(
             alignment: Alignment.bottomLeft,
             child: Padding(
@@ -1728,27 +1746,10 @@ class HomePageState extends State<HomePage> {
                     borderRadius: new BorderRadius.all(
                       Radius.circular(100.0),
                     )),
-                child: new TabBar(
-                  isScrollable: true,
-                  tabs: [
-                    Tab(
-                        child: Text(
-                      "All My Items",
-                      style: TextStyle(fontFamily: 'Quicksand'),
-                    )),
-                    Tab(
-                        child: Text(
-                      "Transactions",
-                      style: TextStyle(fontFamily: 'Quicksand'),
-                    )),
-                  ],
-                  labelColor: primaryColor,
-                  unselectedLabelColor: Colors.grey,
-                  indicatorColor: Colors.transparent,
-                ),
+                child: new 
               ),
             ),
-          ),
+          ),*/
         ]),
       ),
     );

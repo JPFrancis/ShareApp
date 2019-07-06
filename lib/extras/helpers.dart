@@ -409,6 +409,7 @@ String combineID(String myId, String otherId) {
 
 Widget searchTile(ds, context) {
   double h = MediaQuery.of(context).size.height;
+  double w = MediaQuery.of(context).size.width;
   String milesAway = '';
 
   if (ds.data['distance'] != null) {
@@ -421,6 +422,7 @@ Widget searchTile(ds, context) {
   return InkWell(
     onTap: () => navigateToDetail(ds, context),
     child: Container(
+      width: w,
       padding: EdgeInsets.only(top: 5, bottom: 5),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -436,15 +438,12 @@ Widget searchTile(ds, context) {
                     fit: BoxFit.cover,
                     child: CachedNetworkImage(
                       imageUrl: ds['images'][0],
-                      placeholder: (context, url) =>
-                          new CircularProgressIndicator(),
+                      placeholder: (context, url) => new CircularProgressIndicator(),
                     ),
                   ),
                 ),
               ),
-              SizedBox(
-                width: 10.0,
-              ),
+              SizedBox(width: 10.0,),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
