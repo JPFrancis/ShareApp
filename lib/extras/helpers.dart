@@ -150,33 +150,33 @@ Widget itemCard(DocumentSnapshot ds, context) {
 
   var card = new Container(child: new LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
-    double h = constraints.maxHeight;
-    double w = constraints.maxWidth;
-    return Container(
-      height: h,
-      width: w,
-      decoration: new BoxDecoration(
-        boxShadow: <BoxShadow>[
-          CustomBoxShadow(
-              color: Colors.black45,
-              blurRadius: 4.0,
-              blurStyle: BlurStyle.outer),
-        ],
-      ),
-      child: Stack(
-        children: <Widget>[
-          Container(
-            height: h,
-            width: w,
-            child: FittedBox(
-              fit: BoxFit.cover,
-              child: CachedNetworkImage(
-                imageUrl: ds['images'][0],
-                placeholder: (context, url) => CircularProgressIndicator(),
-              ),
-            ),
+        double h = constraints.maxHeight;
+        double w = constraints.maxWidth;
+        return Container(
+          height: h,
+          width: w,
+          decoration: new BoxDecoration(
+            boxShadow: <BoxShadow>[
+              CustomBoxShadow(
+                  color: Colors.black45,
+                  blurRadius: 4.0,
+                  blurStyle: BlurStyle.outer),
+            ],
           ),
-          /*
+          child: Stack(
+            children: <Widget>[
+              Container(
+                height: h,
+                width: w,
+                child: FittedBox(
+                  fit: BoxFit.cover,
+                  child: CachedNetworkImage(
+                    imageUrl: ds['images'][0],
+                    placeholder: (context, url) => CircularProgressIndicator(),
+                  ),
+                ),
+              ),
+              /*
           Hero(
             tag: "${ds['id']}",
             child: Container(
@@ -189,81 +189,82 @@ Widget itemCard(DocumentSnapshot ds, context) {
             ),
           ),
           */
-          SizedBox.expand(
-            child: Container(
-              color: Colors.black12,
-            ),
-          ),
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Container(
-              height: h / 3.5,
-              width: w,
-              padding: EdgeInsets.symmetric(horizontal: 5.0),
-              decoration: BoxDecoration(
-                boxShadow: <BoxShadow>[
-                  CustomBoxShadow(
-                      color: Colors.black38,
-                      blurRadius: 0.1,
-                      blurStyle: BlurStyle.outer),
-                ],
-                color: Color.fromARGB(220, 255, 255, 255),
+              SizedBox.expand(
+                child: Container(
+                  color: Colors.black12,
+                ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  SizedBox(
-                    height: 5.0,
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Container(
+                  height: h / 3.5,
+                  width: w,
+                  padding: EdgeInsets.symmetric(horizontal: 5.0),
+                  decoration: BoxDecoration(
+                    boxShadow: <BoxShadow>[
+                      CustomBoxShadow(
+                          color: Colors.black38,
+                          blurRadius: 0.1,
+                          blurStyle: BlurStyle.outer),
+                    ],
+                    color: Color.fromARGB(220, 255, 255, 255),
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      Text(ds['name'],
+                      SizedBox(
+                        height: 5.0,
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: <Widget>[
+                          Text(ds['name'],
+                              style: TextStyle(
+                                  fontSize: h / 20,
+                                  fontFamily: 'Quicksand',
+                                  fontWeight: FontWeight.bold)),
+                          Text(
+                            '${ds['type']}'.toUpperCase(),
+                            style: TextStyle(
+                                fontSize: h / 25,
+                                fontFamily: 'Quicksand',
+                                fontWeight: FontWeight.bold),
+                          )
+                        ],
+                      ),
+                      SizedBox(
+                        height: 2.0,
+                      ),
+                      Text(priceAndDistance,
                           style: TextStyle(
-                              fontSize: h / 20,
+                              fontSize: h / 21,
                               fontFamily: 'Quicksand',
-                              fontWeight: FontWeight.bold)),
-                      Text(
-                        '${ds['type']}'.toUpperCase(),
-                        style: TextStyle(
-                            fontSize: h / 25,
-                            fontFamily: 'Quicksand',
-                            fontWeight: FontWeight.bold),
-                      )
+                              fontWeight: FontWeight.w400)),
+                      SizedBox(
+                        height: 2.0,
+                      ),
+                      Row(
+                        children: <Widget>[
+                          StarRating(
+                              rating: ds['rating'].toDouble(), sz: h / 15),
+                          SizedBox(width: 5.0),
+                          Text(
+                            ds['numRatings'].toString(),
+                            style: TextStyle(
+                                fontSize: h / 23,
+                                fontFamily: 'Quicksand',
+                                fontWeight: FontWeight.w400),
+                          )
+                        ],
+                      ),
                     ],
                   ),
-                  SizedBox(
-                    height: 2.0,
-                  ),
-                  Text(priceAndDistance,
-                      style: TextStyle(
-                          fontSize: h / 21,
-                          fontFamily: 'Quicksand',
-                          fontWeight: FontWeight.w400)),
-                  SizedBox(
-                    height: 2.0,
-                  ),
-                  Row(
-                    children: <Widget>[
-                      StarRating(rating: ds['rating'].toDouble(), sz: h / 15),
-                      SizedBox(width: 5.0),
-                      Text(
-                        ds['numRatings'].toString(),
-                        style: TextStyle(
-                            fontSize: h / 23,
-                            fontFamily: 'Quicksand',
-                            fontWeight: FontWeight.w400),
-                      )
-                    ],
-                  ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
-    );
-  }));
+        );
+      }));
 
   return InkWell(
       onTap: () {
@@ -293,17 +294,17 @@ Widget reusableCategoryWithAll(text, action) {
                   fontFamily: 'Quicksand'))),
       Container(
           child: FlatButton(
-        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        child: Text(
-          "View All",
-          style: TextStyle(
-              fontSize: 12.0,
-              fontFamily: 'Quicksand',
-              color: primaryColor,
-              fontWeight: FontWeight.w400),
-        ),
-        onPressed: action,
-      )),
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            child: Text(
+              "View All",
+              style: TextStyle(
+                  fontSize: 12.0,
+                  fontFamily: 'Quicksand',
+                  color: primaryColor,
+                  fontWeight: FontWeight.w400),
+            ),
+            onPressed: action,
+          )),
     ],
   );
 }
@@ -373,26 +374,22 @@ class SlideUpRoute extends PageRouteBuilder {
 
   SlideUpRoute({this.page})
       : super(
-          pageBuilder: (
-            BuildContext context,
-            Animation<double> animation,
-            Animation<double> secondaryAnimation,
-          ) =>
-              page,
-          transitionsBuilder: (
-            BuildContext context,
-            Animation<double> animation,
-            Animation<double> secondaryAnimation,
-            Widget child,
-          ) =>
-              SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0, 1),
-                  end: Offset.zero,
-                ).animate(animation),
-                child: child,
-              ),
-        );
+    pageBuilder: (BuildContext context,
+        Animation<double> animation,
+        Animation<double> secondaryAnimation,) =>
+    page,
+    transitionsBuilder: (BuildContext context,
+        Animation<double> animation,
+        Animation<double> secondaryAnimation,
+        Widget child,) =>
+        SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 1),
+            end: Offset.zero,
+          ).animate(animation),
+          child: child,
+        ),
+  );
 }
 
 String combineID(String myId, String otherId) {
@@ -408,7 +405,10 @@ String combineID(String myId, String otherId) {
 }
 
 Widget searchTile(ds, context) {
-  double h = MediaQuery.of(context).size.height;
+  double h = MediaQuery
+      .of(context)
+      .size
+      .height;
   String milesAway = '';
 
   if (ds.data['distance'] != null) {
@@ -437,7 +437,7 @@ Widget searchTile(ds, context) {
                     child: CachedNetworkImage(
                       imageUrl: ds['images'][0],
                       placeholder: (context, url) =>
-                          new CircularProgressIndicator(),
+                      new CircularProgressIndicator(),
                     ),
                   ),
                 ),
@@ -493,10 +493,10 @@ Widget searchTile(ds, context) {
                 children: <Widget>[
                   Text('\$${ds['price']}',
                       style:
-                          TextStyle(fontFamily: 'Quicksand', fontSize: h / 55)),
+                      TextStyle(fontFamily: 'Quicksand', fontSize: h / 55)),
                   Text(' /day',
                       style:
-                          TextStyle(fontFamily: 'Quicksand', fontSize: h / 75)),
+                      TextStyle(fontFamily: 'Quicksand', fontSize: h / 75)),
                 ],
               ),
             ],
@@ -509,10 +509,8 @@ Widget searchTile(ds, context) {
 
 class UsNumberTextInputFormatter extends TextInputFormatter {
   @override
-  TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue,
+      TextEditingValue newValue,) {
     final int newTextLength = newValue.text.length;
     int selectionIndex = newValue.selection.end;
     int usedSubstringIndex = 0;

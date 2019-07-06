@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
+import 'package:shareapp/rentals/rental_calendar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -32,7 +33,7 @@ class ItemDetail extends StatefulWidget {
 
 class ItemDetailState extends State<ItemDetail> {
   final GlobalKey<RefreshIndicatorState> refreshIndicatorKey =
-      new GlobalKey<RefreshIndicatorState>();
+  new GlobalKey<RefreshIndicatorState>();
 
   GoogleMapController googleMapController;
   String appBarTitle = "Item Details";
@@ -86,9 +87,9 @@ class ItemDetailState extends State<ItemDetail> {
   Future<Null> getSnapshots(bool refreshItemDS) async {
     DocumentSnapshot ds = refreshItemDS
         ? await Firestore.instance
-            .collection('items')
-            .document(itemDS.documentID)
-            .get()
+        .collection('items')
+        .document(itemDS.documentID)
+        .get()
         : itemDS;
 
     if (ds != null) {
@@ -171,8 +172,8 @@ class ItemDetailState extends State<ItemDetail> {
       floatingActionButtonLocation: FloatingActionButtonLocation.miniStartTop,
       bottomNavigationBar: isLoading
           ? Container(
-              height: 0,
-            )
+        height: 0,
+      )
           : bottomDetails(),
     );
   }
@@ -204,7 +205,7 @@ class ItemDetailState extends State<ItemDetail> {
           ),
           Padding(
             padding: const EdgeInsets.only(right: 30.0),
-            child: userIsInRental ? viewRentalButton() : requestButton(),
+            child: checkAvailabilityButton(),
           )
         ],
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -212,24 +213,13 @@ class ItemDetailState extends State<ItemDetail> {
     );
   }
 
-  RaisedButton requestButton() {
-    return RaisedButton(
-        onPressed: itemDS['rental'] != null || !isAuthenticated
-            ? null
-            : () => handleRequestItemPressed(),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5.0)),
-        color: primaryColor,
-        child: Text('Request Item', //Text("Check Availability",
-            style: TextStyle(color: Colors.white, fontFamily: 'Quicksand')));
-  }
-
-  RaisedButton viewRentalButton() {
+  RaisedButton checkAvailabilityButton() {
     return RaisedButton(
         onPressed:
-            itemDS['rental'] == null ? null : () => handleViewRentalPressed(),
+            () => navToRentalCalendar(),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5.0)),
         color: primaryColor,
-        child: Text('View Rental',
+        child: Text('Check Availability',
             style: TextStyle(color: Colors.white, fontFamily: 'Quicksand')));
   }
 
@@ -253,17 +243,17 @@ class ItemDetailState extends State<ItemDetail> {
               Spacer(),
               isOwner && itemDS['rental'] == null
                   ? Container(
-                      padding: const EdgeInsets.only(top: 30.0, right: 5.0),
-                      child: FloatingActionButton(
-                        mini: true,
-                        heroTag: "edit",
-                        onPressed: () => navigateToEdit(),
-                        child: Icon(Icons.edit),
-                        elevation: 0,
-                        backgroundColor: Colors.white54,
-                        foregroundColor: primaryColor,
-                      ),
-                    )
+                padding: const EdgeInsets.only(top: 30.0, right: 5.0),
+                child: FloatingActionButton(
+                  mini: true,
+                  heroTag: "edit",
+                  onPressed: () => navigateToEdit(),
+                  child: Icon(Icons.edit),
+                  elevation: 0,
+                  backgroundColor: Colors.white54,
+                  foregroundColor: primaryColor,
+                ),
+              )
                   : Container(),
             ],
           ),
@@ -296,28 +286,31 @@ class ItemDetailState extends State<ItemDetail> {
       child: isOwner
           ? Container()
           : GestureDetector(
-              onTap: () {
-                Navigator.of(context)
-                    .pushNamed(Chat.routeName, arguments: ChatArgs(creatorDS));
-              },
-              child: Row(
-                children: <Widget>[
-                  Text("Chat",
-                      style: TextStyle(
-                          fontFamily: appFont,
-                          fontSize: 14.0,
-                          fontWeight: FontWeight.w400)),
-                  SizedBox(
-                    width: 5.0,
-                  ),
-                  Icon(Icons.chat_bubble_outline)
-                ],
-              )),
+          onTap: () {
+            Navigator.of(context)
+                .pushNamed(Chat.routeName, arguments: ChatArgs(creatorDS));
+          },
+          child: Row(
+            children: <Widget>[
+              Text("Chat",
+                  style: TextStyle(
+                      fontFamily: appFont,
+                      fontSize: 14.0,
+                      fontWeight: FontWeight.w400)),
+              SizedBox(
+                width: 5.0,
+              ),
+              Icon(Icons.chat_bubble_outline)
+            ],
+          )),
     );
   }
 
   Widget showReviews() {
-    double h = MediaQuery.of(context).size.height;
+    double h = MediaQuery
+        .of(context)
+        .size
+        .height;
     Widget _reviewTile(renter, customerReview) {
       return Container(
         child: Column(
@@ -330,7 +323,7 @@ class ItemDetailState extends State<ItemDetail> {
                     child: CachedNetworkImage(
                       imageUrl: renter['avatar'],
                       placeholder: (context, url) =>
-                          new CircularProgressIndicator(),
+                      new CircularProgressIndicator(),
                     ),
                   ),
                 ),
@@ -407,27 +400,29 @@ class ItemDetailState extends State<ItemDetail> {
         padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 10.0),
         child: SizedBox(
             child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            Text(
-              'Shared by ${creatorDS['name']}',
-              style: TextStyle(
-                  color: Colors.black, fontSize: 15.0, fontFamily: 'Quicksand'),
-              textAlign: TextAlign.left,
-            ),
-            Container(
-              height: 50.0,
-              child: ClipOval(
-                child: CachedNetworkImage(
-                  //key: ValueKey(DateTime.now().millisecondsSinceEpoch),
-                  imageUrl: creatorDS['avatar'],
-                  placeholder: (context, url) =>
-                      new CircularProgressIndicator(),
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                Text(
+                  'Shared by ${creatorDS['name']}',
+                  style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 15.0,
+                      fontFamily: 'Quicksand'),
+                  textAlign: TextAlign.left,
                 ),
-              ),
-            ),
-          ],
-        )),
+                Container(
+                  height: 50.0,
+                  child: ClipOval(
+                    child: CachedNetworkImage(
+                      //key: ValueKey(DateTime.now().millisecondsSinceEpoch),
+                      imageUrl: creatorDS['avatar'],
+                      placeholder: (context, url) =>
+                      new CircularProgressIndicator(),
+                    ),
+                  ),
+                ),
+              ],
+            )),
       ),
     );
   }
@@ -437,43 +432,45 @@ class ItemDetailState extends State<ItemDetail> {
       padding: const EdgeInsets.only(left: 20.0),
       child: SizedBox(
           child: Container(
-        color: Color(0x00000000),
-        child: Text(
-          '${itemDS['name']}',
-          style: TextStyle(
-              color: Colors.black,
-              fontSize: 40.0,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Quicksand'),
-          textAlign: TextAlign.left,
-        ),
-      )),
+            color: Color(0x00000000),
+            child: Text(
+              '${itemDS['name']}',
+              style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 40.0,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Quicksand'),
+              textAlign: TextAlign.left,
+            ),
+          )),
     );
   }
 
   Widget showItemPrice() {
     return SizedBox(
-        //height: 50.0,
+      //height: 50.0,
         child: Container(
-      color: Color(0x00000000),
-      child: Row(
-        children: <Widget>[
-          Text(
-            '\$${itemDS['price']}',
-            style: TextStyle(
-                color: Colors.black,
-                fontSize: 25.0,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Quicksand'),
+          color: Color(0x00000000),
+          child: Row(
+            children: <Widget>[
+              Text(
+                '\$${itemDS['price']}',
+                style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 25.0,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Quicksand'),
+              ),
+              Text(
+                ' / DAY',
+                style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 12.0,
+                    fontFamily: 'Quicksand'),
+              )
+            ],
           ),
-          Text(
-            ' / DAY',
-            style: TextStyle(
-                color: Colors.black, fontSize: 12.0, fontFamily: 'Quicksand'),
-          )
-        ],
-      ),
-    ));
+        ));
   }
 
   Widget showItemDescription() {
@@ -481,14 +478,14 @@ class ItemDetailState extends State<ItemDetail> {
       padding: EdgeInsets.only(top: 20.0, left: 20.0, right: 20.0),
       child: SizedBox(
           child: Container(
-        color: Color(0x00000000),
-        child: Text(
-          '${itemDS['description']}',
-          style: TextStyle(
-              color: Colors.black, fontSize: 15.0, fontFamily: 'Quicksand'),
-          textAlign: TextAlign.left,
-        ),
-      )),
+            color: Color(0x00000000),
+            child: Text(
+              '${itemDS['description']}',
+              style: TextStyle(
+                  color: Colors.black, fontSize: 15.0, fontFamily: 'Quicksand'),
+              textAlign: TextAlign.left,
+            ),
+          )),
     );
   }
 
@@ -497,17 +494,17 @@ class ItemDetailState extends State<ItemDetail> {
       padding: EdgeInsets.only(left: 20.0, top: 20.0),
       child: SizedBox(
           child: Container(
-        color: Color(0x00000000),
-        child: Text(
-          '${itemDS['type']}'.toUpperCase(),
-          style: TextStyle(
-              color: Colors.black54,
-              fontSize: 12.0,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Quicksand'),
-          textAlign: TextAlign.left,
-        ),
-      )),
+            color: Color(0x00000000),
+            child: Text(
+              '${itemDS['type']}'.toUpperCase(),
+              style: TextStyle(
+                  color: Colors.black54,
+                  fontSize: 12.0,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Quicksand'),
+              textAlign: TextAlign.left,
+            ),
+          )),
     );
   }
 
@@ -516,31 +513,31 @@ class ItemDetailState extends State<ItemDetail> {
       padding: EdgeInsets.only(left: 20.0, top: 5.0),
       child: SizedBox(
           child: Container(
-        color: Color(0x00000000),
-        child: Row(
-          children: <Widget>[
-            Text(
-              'Condition: ',
-              style: TextStyle(
-                  color: Colors.black54,
-                  fontSize: 13.0,
-                  fontStyle: FontStyle.italic,
-                  fontFamily: 'Quicksand'),
-              textAlign: TextAlign.left,
+            color: Color(0x00000000),
+            child: Row(
+              children: <Widget>[
+                Text(
+                  'Condition: ',
+                  style: TextStyle(
+                      color: Colors.black54,
+                      fontSize: 13.0,
+                      fontStyle: FontStyle.italic,
+                      fontFamily: 'Quicksand'),
+                  textAlign: TextAlign.left,
+                ),
+                Text(
+                  '${itemDS['condition']}',
+                  style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 14.0,
+                      fontStyle: FontStyle.italic,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Quicksand'),
+                  textAlign: TextAlign.left,
+                ),
+              ],
             ),
-            Text(
-              '${itemDS['condition']}',
-              style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 14.0,
-                  fontStyle: FontStyle.italic,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Quicksand'),
-              textAlign: TextAlign.left,
-            ),
-          ],
-        ),
-      )),
+          )),
     );
   }
 
@@ -561,18 +558,24 @@ class ItemDetailState extends State<ItemDetail> {
   }
 
   Widget showItemImages() {
-    double w = MediaQuery.of(context).size.width;
+    double w = MediaQuery
+        .of(context)
+        .size
+        .width;
     List imagesList = itemDS['images'];
     return imagesList.length > 0
         ? Hero(
-            tag: "${itemDS['id']}",
-            child: Container(
-                height: w, width: w, child: getImagesListView(context)))
+        tag: "${itemDS['id']}",
+        child: Container(
+            height: w, width: w, child: getImagesListView(context)))
         : Text('No images yet\n');
   }
 
   Widget showItemLocation() {
-    double widthOfScreen = MediaQuery.of(context).size.width;
+    double widthOfScreen = MediaQuery
+        .of(context)
+        .size
+        .width;
     GeoPoint gp = itemDS['location']['geopoint'];
     double lat = gp.latitude;
     double long = gp.longitude;
@@ -608,11 +611,11 @@ class ItemDetailState extends State<ItemDetail> {
         */
         gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>[
           Factory<OneSequenceGestureRecognizer>(
-            () =>
+                () =>
 
-                /// to enable dragging, use EagerGestureRecognizer()
-                /// to disable dragging, use ScaleGestureRecognizer()
-                EagerGestureRecognizer(),
+            /// to enable dragging, use EagerGestureRecognizer()
+            /// to disable dragging, use ScaleGestureRecognizer()
+            EagerGestureRecognizer(),
             //ScaleGestureRecognizer(),
           ),
         ].toSet(),
@@ -671,7 +674,10 @@ class ItemDetailState extends State<ItemDetail> {
   }
 
   getImagesListView(BuildContext context) {
-    double w = MediaQuery.of(context).size.width;
+    double w = MediaQuery
+        .of(context)
+        .size
+        .width;
     List imagesList = itemDS['images'];
     return ListView.builder(
       shrinkWrap: true,
@@ -707,7 +713,8 @@ class ItemDetailState extends State<ItemDetail> {
     Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (BuildContext context) => AllReviews(
+          builder: (BuildContext context) =>
+              AllReviews(
                 itemDS: itemDS,
               ),
         ));
@@ -730,30 +737,14 @@ class ItemDetailState extends State<ItemDetail> {
     }
   }
 
-  void handleRequestItemPressed() async {
+  void navToRentalCalendar() async {
     getSnapshots(true).then(
-      (_) {
-        itemDS['rental'] != null
-            ? showRequestErrorDialog()
-            : Navigator.pushNamed(
-                context,
-                ItemRequest.routeName,
-                arguments: ItemRequestArgs(
-                  itemDS.documentID,
-                ),
-              );
-      },
-    );
-  }
-
-  void handleViewRentalPressed() async {
-    getSnapshots(true).then(
-      (_) {
+          (_) {
         Navigator.pushNamed(
           context,
-          RentalDetail.routeName,
-          arguments: RentalDetailArgs(
-            rentalDS.documentID,
+          RentalCalendar.routeName,
+          arguments: RentalCalendarArgs(
+            itemDS,
           ),
         );
       },
@@ -763,31 +754,31 @@ class ItemDetailState extends State<ItemDetail> {
   Future<bool> showRequestErrorDialog() async {
     final ThemeData theme = Theme.of(context);
     final TextStyle dialogTextStyle =
-        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+    theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
 
     String message = 'Someone has already requested this item!';
 
     return await showDialog<bool>(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text('Error'),
-              content: Text(
-                message,
-                style: dialogTextStyle,
-              ),
-              actions: <Widget>[
-                FlatButton(
-                  child: const Text('Ok'),
-                  onPressed: () {
-                    Navigator.of(context).pop(
-                        false); // Pops the confirmation dialog but not the page.
-                  },
-                ),
-              ],
-            );
-          },
-        ) ??
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Error'),
+          content: Text(
+            message,
+            style: dialogTextStyle,
+          ),
+          actions: <Widget>[
+            FlatButton(
+              child: const Text('Ok'),
+              onPressed: () {
+                Navigator.of(context).pop(
+                    false); // Pops the confirmation dialog but not the page.
+              },
+            ),
+          ],
+        );
+      },
+    ) ??
         false;
   }
 
