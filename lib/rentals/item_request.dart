@@ -23,8 +23,9 @@ enum DismissDialogAction {
 class ItemRequest extends StatefulWidget {
   static const routeName = '/requestItem';
   final String itemID;
+  final DateTime startDate;
 
-  ItemRequest({Key key, this.itemID}) : super(key: key);
+  ItemRequest({Key key, this.itemID, this.startDate}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
@@ -74,12 +75,74 @@ class ItemRequestState extends State<ItemRequest> {
     getSnapshots();
   }
 
+  void check() async {
+    DocumentReference itemDR =
+        Firestore.instance.collection('items').document(itemDS.documentID);
+
+    DateTime pickupTimeCopy = stripHourMin(pickupTime);
+
+    var prev = await Firestore.instance
+        .collection('rentals')
+        .where('item', isEqualTo: itemDR)        
+        .where('pickupStart',isLessThanOrEqualTo: pickupTimeCopy)
+        .endBefore([{'rentalEnd':pickupTimeCopy}])
+        .orderBy('pickupStart', descending: true)
+        //.startAfter([{'pickupStart': pickupTimeCopy}])
+    //.endBefore([{'rentalEnd': pickupTimeCopy}])
+        //.where('rentalEnd', isLessThanOrEqualTo: pickupTimeCopy)
+
+        .limit(1)
+        .getDocuments();
+
+    var after = await Firestore.instance
+        .collection('rentals')
+        .where('item', isEqualTo: itemDR)
+        .where('pickupStart', isGreaterThanOrEqualTo: pickupTimeCopy)
+        .orderBy('pickupStart', descending: false)
+        .limit(1)
+        .getDocuments();
+
+    DocumentSnapshot prevSnap =
+        prev.documents.isNotEmpty ? prev.documents[0] : null;
+    DocumentSnapshot afterSnap =
+        after.documents.isNotEmpty ? after.documents[0] : null;
+
+    bool startIsValid = true;
+    bool endIsValid = true;
+
+    debugPrint('dateTimeCopy: ${pickupTimeCopy}');
+
+    if (prevSnap != null) {
+      DateTime prevDateTime = prevSnap['rentalEnd'].toDate();
+      prevDateTime = stripHourMin(prevDateTime);
+      debugPrint('prevDateTime: ${prevDateTime}');
+      if (pickupTimeCopy.isBefore(prevDateTime)) {
+        startIsValid = false;
+      }
+    }
+
+    if (afterSnap != null) {
+      DateTime afterDateTime = afterSnap['pickupStart'].toDate();
+      afterDateTime = stripHourMin(afterDateTime);
+      debugPrint('afterDateTime: ${afterDateTime}');
+      if (pickupTimeCopy.isAfter(afterDateTime)) {
+        endIsValid = false;
+      }
+    }
+
+    debugPrint('${startIsValid && endIsValid ? 'VALID' : 'INVALID'}');
+  }
+
+  DateTime stripHourMin(DateTime other) {
+    return DateTime(other.year, other.month, other.day);
+  }
+
   void initPickerData() {
     List pickerData = JsonDecoder().convert(PickerData);
     windows = pickerData[0];
     duration = 1;
 
-    pickupTime = DateTime.now();
+    pickupTime = widget.startDate;
 
     pickupTime = DateTime(
         pickupTime.year, pickupTime.month, pickupTime.day, 5, 0, 0, 0, 0);
@@ -152,9 +215,8 @@ class ItemRequestState extends State<ItemRequest> {
           height: 60.0,
           padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
           child: RaisedButton(
-            splashColor: Colors.red,
             elevation: 3.0,
-            onPressed: () => validateSend(sendItem),
+            onPressed: check, //() => validateSend(sendItem),
             color: Colors.white,
             child: Text(
               "Request",

@@ -159,21 +159,29 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    isIos = Theme.of(context).platform == TargetPlatform.iOS;
-    double h = MediaQuery.of(context).size.height;
-    double w = MediaQuery.of(context).size.width;
+    isIos = Theme .of(context) .platform == TargetPlatform.iOS;
+    double h = MediaQuery .of(context) .size .height;
+    double w = MediaQuery .of(context) .size .width;
 
     _loginPage() {
       return Material(
         color: primaryColor,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: <Widget>[
-            // SizedBox(height: h/24,),
-            FadeTransition(opacity: logoAnimation, child: _showLogo(false)),
-            // SizedBox(height: 20.0,),
-            FadeTransition(opacity: contentAnimation, child: showBody()),
-          ],
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [primaryColor, Colors.black],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              // SizedBox(height: h/24,),
+              FadeTransition(opacity: logoAnimation, child: _showLogo(false)),
+              // SizedBox(height: 20.0,),
+              FadeTransition(opacity: contentAnimation, child: showBody()),
+            ],
+          ),
         ),
       );
     }
@@ -181,9 +189,8 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     _getStartedPage() {
       return Container(
           decoration: BoxDecoration(
-            color: Colors.purple,
             gradient: LinearGradient(
-                colors: [primaryColor, Colors.black87],
+                colors: [primaryColor, Colors.black],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight),
           ),
@@ -408,7 +415,10 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   }
 
   Widget _showLogo(bordered) {
-    double w = MediaQuery.of(context).size.width;
+    double w = MediaQuery
+        .of(context)
+        .size
+        .width;
 
     return Column(
       children: <Widget>[
@@ -433,7 +443,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       arguments: HomePageArgs(
         null,
         null,
-        () => Navigator.of(context).pop(),
+            () => Navigator.of(context).pop(),
       ),
     );
   }
@@ -452,7 +462,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
           autofocus: false,
           decoration: new InputDecoration(
               hintStyle:
-                  TextStyle(color: Colors.white54, fontFamily: 'Quicksand'),
+              TextStyle(color: Colors.white54, fontFamily: 'Quicksand'),
               hintText: 'Email',
               border: InputBorder.none,
               icon: new Icon(
@@ -482,13 +492,13 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
               hintText: 'Password',
               border: InputBorder.none,
               hintStyle:
-                  TextStyle(color: Colors.white54, fontFamily: 'Quicksand'),
+              TextStyle(color: Colors.white54, fontFamily: 'Quicksand'),
               icon: new Icon(
                 Icons.lock,
                 color: Colors.white,
               )),
           validator: (value) =>
-              value.isEmpty ? 'Password can\'t be empty' : null,
+          value.isEmpty ? 'Password can\'t be empty' : null,
           onSaved: (value) => password = value,
         ),
       ),
@@ -499,19 +509,19 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     return new FlatButton(
       child: formMode == FormMode.LOGIN
           ? new Text('Create an account',
-              style: new TextStyle(
-                  fontSize: 18.0,
-                  fontWeight: FontWeight.w300,
-                  color: Colors.white,
-                  fontFamily: 'Quicksand'))
+          style: new TextStyle(
+              fontSize: 18.0,
+              fontWeight: FontWeight.w300,
+              color: Colors.white,
+              fontFamily: 'Quicksand'))
           : new Text('Have an account? Sign in',
-              style: new TextStyle(
-                  fontSize: 18.0,
-                  fontWeight: FontWeight.w300,
-                  color: Colors.white,
-                  fontFamily: 'Quicksand')),
+          style: new TextStyle(
+              fontSize: 18.0,
+              fontWeight: FontWeight.w300,
+              color: Colors.white,
+              fontFamily: 'Quicksand')),
       onPressed:
-          formMode == FormMode.LOGIN ? _changeFormToSignUp : _changeFormToLogin,
+      formMode == FormMode.LOGIN ? _changeFormToSignUp : _changeFormToLogin,
     );
   }
 
@@ -531,7 +541,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     return new RaisedButton(
         child: Text("Login with Facebook"),
         onPressed: null // () => initFacebookLogin(),
-        );
+    );
   }
 
   Widget ecSignIn() {
@@ -590,15 +600,15 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
         color: Colors.white,
         child: formMode == FormMode.LOGIN
             ? new Text('Login',
-                style: new TextStyle(
-                    fontSize: 20.0,
-                    color: Colors.black,
-                    fontFamily: 'Quicksand'))
+            style: new TextStyle(
+                fontSize: 20.0,
+                color: Colors.black,
+                fontFamily: 'Quicksand'))
             : new Text('Create account',
-                style: new TextStyle(
-                    fontSize: 20.0,
-                    color: Colors.black,
-                    fontFamily: 'Quicksand')),
+            style: new TextStyle(
+                fontSize: 20.0,
+                color: Colors.black,
+                fontFamily: 'Quicksand')),
         onPressed: _validateAndSubmit,
       ),
     );

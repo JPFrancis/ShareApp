@@ -1452,13 +1452,6 @@ class RentalDetailState extends State<RentalDetail> {
           'timestamp': DateTime.now().millisecondsSinceEpoch,
         });
       }
-
-      if (status == 5) {
-        Firestore.instance
-            .collection('items')
-            .document(rentalDS['item'].documentID)
-            .updateData({'rental': null});
-      }
     });
   }
 

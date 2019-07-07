@@ -22,7 +22,10 @@ class PayoutsPageState extends State<PayoutsPage> {
   String appBarTitle = 'Payments and payouts';
   double padding = 5.0;
   String myUserID;
+  DocumentSnapshot creditCardDS;
+
   bool isLoading = true;
+  bool hasCreditCard = false;
 
   @override
   void initState() {
@@ -45,11 +48,33 @@ class PayoutsPageState extends State<PayoutsPage> {
       myUserID = user.uid;
 
       if (myUserID != null) {
+        getCreditCardInfo();
+      }
+    });
+  }
+
+  void getCreditCardInfo() async {
+    var ref = await Firestore.instance
+        .collection('users')
+        .document(myUserID)
+        .collection('sources')
+        .limit(1)
+        .getDocuments();
+
+    if (ref != null) {
+      List<DocumentSnapshot> snaps = ref.documents;
+
+      creditCardDS = snaps.isNotEmpty ? snaps[0] : null;
+      if (creditCardDS != null) {
+        hasCreditCard = true;
+      }
+
+      if (snaps != null) {
         setState(() {
           isLoading = false;
         });
       }
-    });
+    }
   }
 
   @override
@@ -75,10 +100,30 @@ class PayoutsPageState extends State<PayoutsPage> {
         ),
         body: TabBarView(
           children: [
-            Icon(Icons.directions_car),
+            //Icon(Icons.directions_car),
+            hasCreditCard ? showCreditCardInfo() : Text('No card yet'),
             showPayouts(),
           ],
         ),
+      ),
+    );
+  }
+
+  // demo
+  Widget showCreditCardInfo() {
+    Map creditCard = creditCardDS['card'];
+
+    return Padding(
+      padding: EdgeInsets.all(10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text('Brand: ${creditCard['brand']}'),
+          // creditCardDS['card'] also works
+          Text('Last 4: ${creditCardDS['card']['last4']}'),
+          Text('Expiration month: ${creditCard['exp_month']}'),
+          Text('Expiration year: ${creditCard['exp_year']}'),
+        ],
       ),
     );
   }

@@ -72,9 +72,9 @@ class AllReviewsState extends State<AllReviews> {
         stream: Firestore.instance
             .collection('rentals')
             .where('item',
-                isEqualTo: Firestore.instance
-                    .collection('items')
-                    .document(widget.itemDS.documentID))
+            isEqualTo: Firestore.instance
+                .collection('items')
+                .document(widget.itemDS.documentID))
             .orderBy('review', descending: false)
             .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
@@ -108,7 +108,7 @@ class AllReviewsState extends State<AllReviews> {
                                   style: TextStyle(fontWeight: FontWeight.bold),
                                 ),
                                 subtitle:
-                                    Text('Written by: ${reviewerDS['name']}'),
+                                Text('Written by: ${reviewerDS['name']}'),
                               );
                             } else {
                               return Container();

@@ -14,8 +14,14 @@ import 'package:shareapp/rentals/item_request.dart';
 import 'package:shareapp/rentals/new_pickup.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/auth.dart';
+import 'package:shareapp/rentals/rental_calendar.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
-void main() => runApp(MyApp());
+//void main() => runApp(MyApp());
+
+void main() {
+  initializeDateFormatting().then((_) => runApp(MyApp()));
+}
 
 class MyApp extends StatelessWidget {
   @override
@@ -83,6 +89,7 @@ class MyApp extends StatelessWidget {
                 builder: (context) {
                   return ItemRequest(
                     itemID: args.itemID,
+                    startDate: args.startDate,
                   );
                 },
                 fullscreenDialog: true,
@@ -168,6 +175,19 @@ class MyApp extends StatelessWidget {
                 },
               );
             }
+
+          case RentalCalendar.routeName:
+            {
+              final RentalCalendarArgs args = settings.arguments;
+
+              return MaterialPageRoute(
+                builder: (context) {
+                  return RentalCalendar(
+                    itemDS: args.itemDS,
+                  );
+                },
+              );
+            }
         }
       },
     );
@@ -196,8 +216,9 @@ class ItemEditArgs {
 
 class ItemRequestArgs {
   final String itemID;
+  final DateTime startDate;
 
-  ItemRequestArgs(this.itemID);
+  ItemRequestArgs(this.itemID, this.startDate);
 }
 
 class RentalDetailArgs {
@@ -236,4 +257,10 @@ class ProfilePageArgs {
   final DocumentSnapshot userDS;
 
   ProfilePageArgs(this.userDS);
+}
+
+class RentalCalendarArgs {
+  final DocumentSnapshot itemDS;
+
+  RentalCalendarArgs(this.itemDS);
 }

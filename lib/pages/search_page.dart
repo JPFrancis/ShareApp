@@ -28,7 +28,7 @@ class SearchPageState extends State<SearchPage> {
   Position currentLocation;
 
   TextEditingController searchController = TextEditingController();
-  bool showSuggestions = false;
+  bool showSuggestions;
   List<String> recommendedItems = [];
   List<DocumentSnapshot> prefixSnaps = [];
   List<String> prefixList = [];
@@ -37,9 +37,7 @@ class SearchPageState extends State<SearchPage> {
   String myUserID;
   String typeFilter;
   String conditionFilter;
-  double minPrice;
-  double maxPrice;
-  double rangeFilter;
+  double distanceFilter;
   String sortByFilter;
 
   bool distanceIsInfinite = false;
@@ -55,11 +53,10 @@ class SearchPageState extends State<SearchPage> {
     // TODO: implement initState
     super.initState();
 
+    showSuggestions = widget.showSearch ? true : false;
     typeFilter = widget.typeFilter;
     conditionFilter = 'All';
-    minPrice = 0.0;
-    maxPrice = 50.0;
-    rangeFilter = 30.0;
+    distanceFilter = 5.0;
     sortByFilter = 'Alphabetically';
 
     getMyUserID();
@@ -98,7 +95,7 @@ class SearchPageState extends State<SearchPage> {
       locIsLoading = true;
     });
     GeolocationStatus geolocationStatus =
-        await Geolocator().checkGeolocationPermissionStatus();
+    await Geolocator().checkGeolocationPermissionStatus();
 
     if (geolocationStatus != null) {
       if (geolocationStatus != GeolocationStatus.granted) {
@@ -164,7 +161,7 @@ class SearchPageState extends State<SearchPage> {
       QuerySnapshot docs = await Firestore.instance
           .collection('items')
           .where('searchKey',
-              arrayContains: searchText.substring(0, 1).toLowerCase())
+          arrayContains: searchText.substring(0, 1).toLowerCase())
           .getDocuments();
 
       if (docs != null) {
@@ -213,9 +210,7 @@ class SearchPageState extends State<SearchPage> {
     setState(() {
       typeFilter = 'All';
       conditionFilter = 'All';
-      minPrice = 0.0;
-      maxPrice = 50.0;
-      rangeFilter = 30.0;
+      distanceFilter = 30.0;
       sortByFilter = 'Alphabetically';
     });
   }
@@ -238,7 +233,6 @@ class SearchPageState extends State<SearchPage> {
             conditionSelector(),
           ],),
           Container(height: 5),
-          priceSelector(),
           Row(children: <Widget>[
             Expanded(
               child: Padding(
@@ -459,14 +453,15 @@ class SearchPageState extends State<SearchPage> {
             'Miscellaneous',
           ]
               .map(
-                (selection) => DropdownMenuItem<String>(
-                      value: selection,
-                      child: Text(
-                        selection,
-                        style: TextStyle(fontFamily: font),
-                      ),
-                    ),
-              )
+                (selection) =>
+                DropdownMenuItem<String>(
+                  value: selection,
+                  child: Text(
+                    selection,
+                    style: TextStyle(fontFamily: font),
+                  ),
+                ),
+          )
               .toList()),
     );
   }
@@ -497,68 +492,35 @@ class SearchPageState extends State<SearchPage> {
             'Has Character',
           ]
               .map(
-                (selection) => DropdownMenuItem<String>(
-                      value: selection,
-                      child: Text(
-                        selection,
-                        style: TextStyle(fontFamily: font),
-                      ),
-                    ),
-              )
+                (selection) =>
+                DropdownMenuItem<String>(
+                  value: selection,
+                  child: Text(
+                    selection,
+                    style: TextStyle(fontFamily: font),
+                  ),
+                ),
+          )
               .toList()),
-    );
-  }
-
-  Widget priceSelector() {
-    double padding = 20;
-
-    return Padding(
-      padding: EdgeInsets.only(left: padding, right: padding),
-      child: Row(
-        children: <Widget>[
-          Text('\$ ${minPrice.toStringAsFixed(0)}'),
-          Expanded(
-            child: RangeSlider(
-              min: 0.0,
-              max: 100.0,
-              lowerValue: minPrice,
-              upperValue: maxPrice,
-              divisions: 20,
-              showValueIndicator: true,
-              valueIndicatorFormatter: (int index, double value) {
-                String twoDecimals = value.toStringAsFixed(0);
-                return '\$ $twoDecimals';
-              },
-              onChanged: (double newLowerValue, double newUpperValue) {
-                setState(() {
-                  minPrice = newLowerValue;
-                  maxPrice = newUpperValue;
-                });
-              },
-            ),
-          ),
-          Text('\$ ${maxPrice.toStringAsFixed(0)}'),
-        ],
-      ),
     );
   }
 
   Widget distanceSlider() {
     return Row(
       children: <Widget>[
-        Text('Within:\n${rangeFilter.toStringAsFixed(0)} mi'),
+        Text('Within:\n${distanceFilter.toStringAsFixed(1)} mi'),
         Expanded(
           child: Slider(
             min: 0.0,
-            max: 80.0,
-            divisions: 16,
+            max: 10.0,
+            divisions: 20,
             onChanged: !distanceIsInfinite
                 ? null
                 : (newValue) {
-                    setState(() => rangeFilter = newValue);
-                  },
-            label: '${rangeFilter.toStringAsFixed(0)} mi',
-            value: rangeFilter,
+              setState(() => distanceFilter = newValue);
+            },
+            label: '${distanceFilter.toStringAsFixed(1)} mi',
+            value: distanceFilter,
           ),
         ),
       ],
@@ -592,20 +554,26 @@ class SearchPageState extends State<SearchPage> {
               'Distance',
             ]
                 .map(
-                  (selection) => DropdownMenuItem<String>(
-                        value: selection,
-                        child: Text(
-                          '$selection',
-                          style: TextStyle(fontFamily: font),
-                        ),
-                      ),
-                )
+                  (selection) =>
+                  DropdownMenuItem<String>(
+                    value: selection,
+                    child: Text(
+                      '$selection',
+                      style: TextStyle(fontFamily: font),
+                    ),
+                  ),
+            )
                 .toList()),
       ),
     );
   }
 
   Widget buildItemList() {
+    int tileRows = MediaQuery
+        .of(context)
+        .size
+        .width > 500 ? 3 : 2;
+
     if (locIsLoading) {
       //return Text('Getting location...');
       return Center(
@@ -613,7 +581,7 @@ class SearchPageState extends State<SearchPage> {
       );
     } else {
       // final value of radius must be kilometers
-      double radius = distanceIsInfinite ? 15000 : rangeFilter;
+      double radius = distanceIsInfinite ? 15000 : distanceFilter;
       radius *= 1.609;
       String field = 'location';
 
@@ -660,9 +628,10 @@ class SearchPageState extends State<SearchPage> {
 
                   switch (sortByFilter) {
                     case 'Alphabetically':
-                      items.sort((a, b) => a['name']
-                          .toLowerCase()
-                          .compareTo(b['name'].toLowerCase()));
+                      items.sort((a, b) =>
+                          a['name']
+                              .toLowerCase()
+                              .compareTo(b['name'].toLowerCase()));
                       break;
                     case 'Price low to high':
                       items.sort((a, b) => a['price'].compareTo(b['price']));
@@ -677,16 +646,15 @@ class SearchPageState extends State<SearchPage> {
                   for (final ds in items) {
                     double price = ds['price'].toDouble();
 
-                    if ((minPrice <= price && price <= maxPrice) &&
-                        (!isAuthenticated ||
-                            ds['creator'].documentID != myUserID)) {
+                    if (!isAuthenticated ||
+                        ds['creator'].documentID != myUserID) {
                       if (searchController.text.isEmpty) {
                         displayCards.add(searchTile(ds, context));
                       } else {
                         String name = ds['name'].toLowerCase();
                         String description = ds['description'].toLowerCase();
                         String searchText =
-                            searchController.text.trim().toLowerCase();
+                        searchController.text.trim().toLowerCase();
                         List<String> searchTextList = searchText.split(' ');
 
                         List<String> itemNameAndDescription = List();
@@ -731,29 +699,29 @@ class SearchPageState extends State<SearchPage> {
   Future<bool> showUserLocationError() async {
     final ThemeData theme = Theme.of(context);
     final TextStyle dialogTextStyle =
-        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+    theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
 
     return await showDialog<bool>(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text('Error'),
-              content: Text(
-                'Problem with getting your current location',
-                style: dialogTextStyle,
-              ),
-              actions: <Widget>[
-                FlatButton(
-                  child: const Text('Close'),
-                  onPressed: () {
-                    Navigator.of(context).pop(
-                        false); // Pops the confirmation dialog but not the page.
-                  },
-                ),
-              ],
-            );
-          },
-        ) ??
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Error'),
+          content: Text(
+            'Problem with getting your current location',
+            style: dialogTextStyle,
+          ),
+          actions: <Widget>[
+            FlatButton(
+              child: const Text('Close'),
+              onPressed: () {
+                Navigator.of(context).pop(
+                    false); // Pops the confirmation dialog but not the page.
+              },
+            ),
+          ],
+        );
+      },
+    ) ??
         false;
   }
 
