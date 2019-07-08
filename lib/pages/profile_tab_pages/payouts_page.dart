@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
+import 'package:shareapp/services/const.dart';
 
 class PayoutsPage extends StatefulWidget {
   static const routeName = '/payoutsPage';
@@ -101,31 +102,95 @@ class PayoutsPageState extends State<PayoutsPage> {
         body: TabBarView(
           children: [
             //Icon(Icons.directions_car),
-            hasCreditCard ? showCreditCardInfo() : Text('No card yet'),
+            hasCreditCard ? showCreditCards() : Text('No card yet'),
             showPayouts(),
           ],
         ),
       ),
     );
   }
-
   // demo
-  Widget showCreditCardInfo() {
+  Widget showCreditCards() {
     Map creditCard = creditCardDS['card'];
+    double w = MediaQuery.of(context).size.width;
 
-    return Padding(
-      padding: EdgeInsets.all(10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text('Brand: ${creditCard['brand']}'),
-          // creditCardDS['card'] also works
-          Text('Last 4: ${creditCardDS['card']['last4']}'),
-          Text('Expiration month: ${creditCard['exp_month']}'),
-          Text('Expiration year: ${creditCard['exp_year']}'),
-        ],
-      ),
-    );
+    Widget _card(brand){
+      var colors = brand == "visa" 
+      ? [Colors.black, Colors.indigo[800], Colors.blue, Colors.black,] 
+      : [Colors.black, Colors.red[800], Colors.yellow[800], Colors.black,];
+
+      return Container(
+        padding: EdgeInsets.symmetric(horizontal: 10.0),
+        child: Container(
+          height: w/1.65,
+          decoration: BoxDecoration(
+            boxShadow: <BoxShadow>[
+                  CustomBoxShadow(
+                      color: Colors.black,
+                      blurRadius: 5.0,
+                      blurStyle: BlurStyle.outer),
+                ],
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: colors),
+            borderRadius: BorderRadius.circular(15),
+          ),
+          child: Column(children: <Widget>[
+            Align(alignment: Alignment.topRight,
+              child: Padding(padding: const EdgeInsets.only(right: 30.0, top: 10.0),
+                child: brand == "visa" 
+                ? Image.asset('assets/visa.png', height: 75.0, color: Colors.white,) 
+                : Image.asset('assets/mastercard.png', width: 75.0,) 
+              ),
+            ),
+            SizedBox(height: 30.0,),
+            Row(children: <Widget>[
+              SizedBox(width: 30.0,),
+              Icon(Icons.brightness_1, color: Colors.white70, size: 8.5,),
+              SizedBox(width: 7.0,),
+              Icon(Icons.brightness_1, color: Colors.white70, size: 8.5,),
+              SizedBox(width: 7.0,),
+              Icon(Icons.brightness_1, color: Colors.white70, size: 8.5,),
+              SizedBox(width: 7.0,),
+              Icon(Icons.brightness_1, color: Colors.white70, size: 8.5,),
+              SizedBox(width: 18.0,),
+              Icon(Icons.brightness_1, color: Colors.white70, size: 8.5,),
+              SizedBox(width: 7.0,),
+              Icon(Icons.brightness_1, color: Colors.white70, size: 8.5,),
+              SizedBox(width: 7.0,),
+              Icon(Icons.brightness_1, color: Colors.white70, size: 8.5,),
+              SizedBox(width: 7.0,),
+              Icon(Icons.brightness_1, color: Colors.white70, size: 8.5,),
+              SizedBox(width: 18.0,),
+              Icon(Icons.brightness_1, color: Colors.white70, size: 8.5,),
+              SizedBox(width: 7.0,),
+              Icon(Icons.brightness_1, color: Colors.white70, size: 8.5,),
+              SizedBox(width: 7.0,),
+              Icon(Icons.brightness_1, color: Colors.white70, size: 8.5,),
+              SizedBox(width: 7.0,),
+              Icon(Icons.brightness_1, color: Colors.white70, size: 8.5,),
+              SizedBox(width: 18.0,),
+              Text('${creditCardDS['card']['last4']}', style: TextStyle(color: Colors.white, fontFamily: appFont, fontSize: 17.0, fontWeight: FontWeight.w400, letterSpacing: 2.0),),
+            ],),
+            SizedBox(height: 60.0,),
+            Align(alignment: Alignment.bottomRight,
+              child: Padding(padding: const EdgeInsets.symmetric(horizontal: 30.0),
+                child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
+                  Text('${creditCardDS['card']['name']}', style: TextStyle(color: Colors.white, fontFamily: appFont, fontSize: 14.0, fontWeight: FontWeight.w400, letterSpacing: 2.0),),
+                  Text('${creditCard['exp_month']} / ${creditCard['exp_year']}', style: TextStyle(color: Colors.white, fontFamily: appFont, fontSize: 14.0, fontWeight: FontWeight.w400, letterSpacing: 2.0),),
+                ],),
+              ),
+            ),
+          ],) 
+        )
+      );
+    }
+
+    return Column(children: <Widget>[
+      SizedBox(height: 10.0,),
+      _card("${[creditCard['brand']]}"),
+    ],);
   }
 
   Widget showPayouts() {

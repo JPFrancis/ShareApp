@@ -297,7 +297,7 @@ class SearchPageState extends State<SearchPage> {
         IconButton(
             onPressed: () => Navigator.pop(context),
             icon: Icon(
-              Icons.arrow_back,
+              Icons.close,
               color: primaryColor,
             )),
         Expanded(

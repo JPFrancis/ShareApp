@@ -1068,12 +1068,12 @@ class HomePageState extends State<HomePage> {
         children: <Widget>[
           Align(alignment: Alignment.bottomCenter, 
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisSize: MainAxisSize.min,
                children: <Widget>[
               Container(
-                padding: EdgeInsets.only(left: 10.0, top: 40),
-                alignment: Alignment.topLeft,
-                child: Text("Make It Happen", style: TextStyle(color: Colors.black, fontFamily: appFont, fontSize: 25.0, fontWeight: FontWeight.w300),)),
+                padding: EdgeInsets.only(left: 50.0),
+                alignment: Alignment.bottomLeft,
+                child: Text("Make It Happen", style: TextStyle(color: Colors.black, fontFamily: appFont, fontSize: 20.0, fontWeight: FontWeight.w300),)),
               searchField(),
           ],),),
         ],
