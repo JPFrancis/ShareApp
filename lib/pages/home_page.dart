@@ -130,7 +130,7 @@ class HomePageState extends State<HomePage> {
     bottomNavBarTiles = <BottomNavigationBarItem>[
       bottomNavTile('Search', Icon(Icons.search), false),
       bottomNavTile('Rentals', Icon(Icons.shopping_cart), false),
-      bottomNavTile('My Listings', Icon(Icons.style), true),
+      bottomNavTile('Listings', Icon(Icons.style), true),
       bottomNavTile('Messages', Icon(Icons.forum), false),
       bottomNavTile('Profile', Icon(Icons.account_circle), false),
     ];
@@ -472,8 +472,7 @@ class HomePageState extends State<HomePage> {
     }
   }
 
-  BottomNavigationBarItem bottomNavTile(String label, Icon icon,
-      bool showBadge) {
+  BottomNavigationBarItem bottomNavTile(String label, Icon icon, bool showBadge) {
     return BottomNavigationBarItem(
       icon: Stack(
         children: <Widget>[
@@ -540,13 +539,10 @@ class HomePageState extends State<HomePage> {
               }
             },
           )
-              : Container(
-            width: 0,
-            height: 0,
-          ),
+              : Container(height: 0, width: 0,),
         ],
       ),
-      title: Text(label),
+      title: Center(child: Text(label, style: TextStyle(fontFamily: appFont, fontSize: 13.0))),
     );
   }
 
@@ -1071,9 +1067,9 @@ class HomePageState extends State<HomePage> {
               mainAxisSize: MainAxisSize.min,
                children: <Widget>[
               Container(
-                padding: EdgeInsets.only(left: 50.0),
+                padding: EdgeInsets.only(left: 80.0),
                 alignment: Alignment.bottomLeft,
-                child: Text("Make It Happen", style: TextStyle(color: Colors.black, fontFamily: appFont, fontSize: 20.0, fontWeight: FontWeight.w300),)),
+                child: Text("make it happen", style: TextStyle(color: Colors.black, fontFamily: appFont, fontSize: 20.0, fontWeight: FontWeight.w300),)),
               searchField(),
           ],),),
         ],
