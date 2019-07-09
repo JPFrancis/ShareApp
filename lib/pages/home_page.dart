@@ -1036,7 +1036,7 @@ class HomePageState extends State<HomePage> {
       width: MediaQuery.of(context).size.width,
       decoration: new BoxDecoration(
           image: DecorationImage(
-              image: AssetImage('assets/surfer.jpg'), fit: BoxFit.fill),
+              image: AssetImage('assets/paddleboard.jpg'), fit: BoxFit.fill),
           boxShadow: <BoxShadow>[
             CustomBoxShadow(
                 color: Colors.black,
@@ -1051,7 +1051,23 @@ class HomePageState extends State<HomePage> {
         children: <Widget>[
           Align(
             alignment: Alignment.bottomCenter,
-            child: searchField(),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                Container(
+                    padding: EdgeInsets.only(left: 10.0, top: 40),
+                    alignment: Alignment.topLeft,
+                    child: Text(
+                      "Make It Happen",
+                      style: TextStyle(
+                          color: Colors.black,
+                          fontFamily: appFont,
+                          fontSize: 25.0,
+                          fontWeight: FontWeight.w300),
+                    )),
+                searchField(),
+              ],
+            ),
           ),
         ],
       ),
@@ -1179,7 +1195,7 @@ class HomePageState extends State<HomePage> {
             children: <Widget>[
               InkWell(
                 onTap: () => navToItemFilter('Tools'),
-                child: _categoryTile('Tools', 'assets/hammer.jpg'),
+                child: _categoryTile('Tools', 'assets/tools.jpg'),
               ),
               InkWell(
                 onTap: () => navToItemFilter('Leisure'),
@@ -1187,7 +1203,7 @@ class HomePageState extends State<HomePage> {
               ),
               InkWell(
                 onTap: () => navToItemFilter('Household'),
-                child: _categoryTile('Household', 'assets/vacuum.jpg'),
+                child: _categoryTile('Household', 'assets/iron.jpg'),
               ),
             ],
           ),
@@ -1199,7 +1215,7 @@ class HomePageState extends State<HomePage> {
             children: <Widget>[
               InkWell(
                 onTap: () => navToItemFilter('Equipment'),
-                child: _categoryTile('Equipment', 'assets/lawnmower.jpg'),
+                child: _categoryTile('Equipment', 'assets/tent.jpg'),
               ),
               InkWell(
                 onTap: () => navToItemFilter('Miscellaneous'),
@@ -1220,14 +1236,20 @@ class HomePageState extends State<HomePage> {
     return Scaffold(
         appBar: AppBar(
             elevation: 3.0,
-            title: Text("Others' Items That You Are Renting",
-                style: TextStyle(
-                    fontFamily: appFont, fontWeight: FontWeight.w400)),
-            //titleSpacing: 0.0,
-            centerTitle: false,
+            title: Padding(
+              padding: const EdgeInsets.only(left: 0.0),
+              child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text("My Rentals",
+                      style: TextStyle(
+                          fontFamily: appFont,
+                          fontWeight: FontWeight.w400,
+                          fontSize: 25))),
+            ),
             shape: RoundedRectangleBorder(
                 borderRadius: new BorderRadius.only(
-              bottomRight: const Radius.elliptical(150.0, 30),
+              bottomRight: const Radius.elliptical(40.0, 25),
+              bottomLeft: const Radius.elliptical(40.0, 25),
             ))),
         body: Column(
           children: <Widget>[
@@ -1581,6 +1603,10 @@ class HomePageState extends State<HomePage> {
                                         );
 
                                         return Container(
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width /
+                                              2,
                                           padding: EdgeInsets.only(left: 10.0),
                                           child: InkWell(
                                             onTap: () => Navigator.pushNamed(
@@ -1701,14 +1727,53 @@ class HomePageState extends State<HomePage> {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
+            bottom: PreferredSize(
+              child: Align(
+                alignment: Alignment.bottomLeft,
+                child: TabBar(
+                  isScrollable: true,
+                  tabs: [
+                    Tab(
+                        child: Text(
+                      "All My Items",
+                      style: TextStyle(fontFamily: 'Quicksand'),
+                    )),
+                    Tab(
+                        child: Text(
+                      "Transactions",
+                      style: TextStyle(fontFamily: 'Quicksand'),
+                    )),
+                  ],
+                  labelColor: coolerWhite,
+                  unselectedLabelColor: Colors.black54,
+                  indicatorColor: coolerWhite,
+                ),
+              ),
+              preferredSize: Size.fromHeight(45),
+            ),
             elevation: 3.0,
-            title: Text("Your Items That Others Can Rent",
-                style: TextStyle(
-                    fontFamily: appFont, fontWeight: FontWeight.w400)),
-            centerTitle: false,
+            title: Column(
+              children: <Widget>[
+                Align(
+                    alignment: Alignment.bottomLeft,
+                    child: Text("My Listings",
+                        style: TextStyle(
+                            fontFamily: appFont,
+                            fontWeight: FontWeight.w400,
+                            fontSize: 25))),
+                Align(
+                    alignment: Alignment.bottomLeft,
+                    child: Text("Your Items That Others Can Rent",
+                        style: TextStyle(
+                            fontFamily: appFont,
+                            fontWeight: FontWeight.w400,
+                            fontSize: 15))),
+              ],
+            ),
             shape: RoundedRectangleBorder(
                 borderRadius: new BorderRadius.only(
-              bottomRight: const Radius.elliptical(150.0, 30),
+              bottomRight: const Radius.elliptical(40.0, 25),
+              bottomLeft: const Radius.elliptical(40.0, 25),
             ))),
         body: Stack(children: <Widget>[
           Container(
@@ -1735,6 +1800,7 @@ class HomePageState extends State<HomePage> {
               ],
             ),
           ),
+          /*
           Align(
             alignment: Alignment.bottomLeft,
             child: Padding(
@@ -1746,6 +1812,7 @@ class HomePageState extends State<HomePage> {
                     borderRadius: new BorderRadius.all(
                       Radius.circular(100.0),
                     )),
+<<<<<<< HEAD
                 child: new TabBar(
                   isScrollable: true,
                   tabs: [
@@ -1764,9 +1831,12 @@ class HomePageState extends State<HomePage> {
                   unselectedLabelColor: Colors.grey,
                   indicatorColor: Colors.transparent,
                 ),
+=======
+                child: new 
+>>>>>>> 707e04d663dc7c8e83823a7d8002b505d85104bb
               ),
             ),
-          ),
+          ),*/
         ]),
       ),
     );

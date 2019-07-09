@@ -166,14 +166,22 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     _loginPage() {
       return Material(
         color: primaryColor,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: <Widget>[
-            // SizedBox(height: h/24,),
-            FadeTransition(opacity: logoAnimation, child: _showLogo(false)),
-            // SizedBox(height: 20.0,),
-            FadeTransition(opacity: contentAnimation, child: showBody()),
-          ],
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+                colors: [primaryColor, Colors.black],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              // SizedBox(height: h/24,),
+              FadeTransition(opacity: logoAnimation, child: _showLogo(false)),
+              // SizedBox(height: 20.0,),
+              FadeTransition(opacity: contentAnimation, child: showBody()),
+            ],
+          ),
         ),
       );
     }
@@ -181,9 +189,8 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     _getStartedPage() {
       return Container(
           decoration: BoxDecoration(
-            color: Colors.purple,
             gradient: LinearGradient(
-                colors: [primaryColor, Colors.black87],
+                colors: [primaryColor, Colors.black],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight),
           ),
