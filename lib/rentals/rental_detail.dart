@@ -1439,10 +1439,12 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   void updateStatus(int status) async {
+    bool requesting = status == 2 ? false : rentalDS['requesting'];
+
     Firestore.instance
         .collection('rentals')
         .document(rentalDS.documentID)
-        .updateData({'status': status}).then((_) {
+        .updateData({'status': status, 'requesting': requesting}).then((_) {
       if (status == 2) {
         Firestore.instance.collection('notifications').add({
           'title': '$myName accepted your pickup window',

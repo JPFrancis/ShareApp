@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_range_slider/flutter_range_slider.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shareapp/extras/helpers.dart';
@@ -94,7 +93,7 @@ class SearchPageState extends State<SearchPage> {
       locIsLoading = true;
     });
     GeolocationStatus geolocationStatus =
-    await Geolocator().checkGeolocationPermissionStatus();
+        await Geolocator().checkGeolocationPermissionStatus();
 
     if (geolocationStatus != null) {
       if (geolocationStatus != GeolocationStatus.granted) {
@@ -160,7 +159,7 @@ class SearchPageState extends State<SearchPage> {
       QuerySnapshot docs = await Firestore.instance
           .collection('items')
           .where('searchKey',
-          arrayContains: searchText.substring(0, 1).toLowerCase())
+              arrayContains: searchText.substring(0, 1).toLowerCase())
           .getDocuments();
 
       if (docs != null) {
@@ -234,9 +233,9 @@ class SearchPageState extends State<SearchPage> {
           searchField(),
           showSuggestions
               ? Container(
-            height: 300,
-            child: buildSuggestionsList(),
-          )
+                  height: 300,
+                  child: buildSuggestionsList(),
+                )
               : Container(),
           Container(height: 10),
           Row(
@@ -379,7 +378,7 @@ class SearchPageState extends State<SearchPage> {
 
   Widget buildSuggestionsList() {
     List builderList =
-    searchController.text.isEmpty ? recommendedItems : suggestions;
+        searchController.text.isEmpty ? recommendedItems : suggestions;
 
     return ListView.builder(
         itemCount: builderList.length,
@@ -463,15 +462,14 @@ class SearchPageState extends State<SearchPage> {
             'Miscellaneous',
           ]
               .map(
-                (selection) =>
-                DropdownMenuItem<String>(
-                  value: selection,
-                  child: Text(
-                    selection,
-                    style: TextStyle(fontFamily: font),
-                  ),
-                ),
-          )
+                (selection) => DropdownMenuItem<String>(
+                      value: selection,
+                      child: Text(
+                        selection,
+                        style: TextStyle(fontFamily: font),
+                      ),
+                    ),
+              )
               .toList()),
     );
   }
@@ -502,15 +500,14 @@ class SearchPageState extends State<SearchPage> {
             'Has Character',
           ]
               .map(
-                (selection) =>
-                DropdownMenuItem<String>(
-                  value: selection,
-                  child: Text(
-                    selection,
-                    style: TextStyle(fontFamily: font),
-                  ),
-                ),
-          )
+                (selection) => DropdownMenuItem<String>(
+                      value: selection,
+                      child: Text(
+                        selection,
+                        style: TextStyle(fontFamily: font),
+                      ),
+                    ),
+              )
               .toList()),
     );
   }
@@ -527,8 +524,8 @@ class SearchPageState extends State<SearchPage> {
             onChanged: distanceIsInfinite
                 ? null
                 : (newValue) {
-              setState(() => distanceFilter = newValue);
-            },
+                    setState(() => distanceFilter = newValue);
+                  },
             label: '${distanceFilter.toStringAsFixed(1)} mi',
             value: distanceFilter,
           ),
@@ -564,25 +561,21 @@ class SearchPageState extends State<SearchPage> {
               'Distance',
             ]
                 .map(
-                  (selection) =>
-                  DropdownMenuItem<String>(
-                    value: selection,
-                    child: Text(
-                      '$selection',
-                      style: TextStyle(fontFamily: font),
-                    ),
-                  ),
-            )
+                  (selection) => DropdownMenuItem<String>(
+                        value: selection,
+                        child: Text(
+                          '$selection',
+                          style: TextStyle(fontFamily: font),
+                        ),
+                      ),
+                )
                 .toList()),
       ),
     );
   }
 
   Widget buildItemList() {
-    int tileRows = MediaQuery
-        .of(context)
-        .size
-        .width > 500 ? 3 : 2;
+    int tileRows = MediaQuery.of(context).size.width > 500 ? 3 : 2;
 
     if (locIsLoading) {
       //return Text('Getting location...');
@@ -595,7 +588,9 @@ class SearchPageState extends State<SearchPage> {
       radius *= 1.609;
       String field = 'location';
 
-      Query query = Firestore.instance.collection('items');
+      Query query = Firestore.instance
+          .collection('items')
+          .where('isVisible', isEqualTo: true);
 
       if (typeFilter != 'All') {
         query = query.where('type', isEqualTo: typeFilter);
@@ -638,10 +633,9 @@ class SearchPageState extends State<SearchPage> {
 
                   switch (sortByFilter) {
                     case 'Alphabetically':
-                      items.sort((a, b) =>
-                          a['name']
-                              .toLowerCase()
-                              .compareTo(b['name'].toLowerCase()));
+                      items.sort((a, b) => a['name']
+                          .toLowerCase()
+                          .compareTo(b['name'].toLowerCase()));
                       break;
                     case 'Price low to high':
                       items.sort((a, b) => a['price'].compareTo(b['price']));
@@ -664,7 +658,7 @@ class SearchPageState extends State<SearchPage> {
                         String name = ds['name'].toLowerCase();
                         String description = ds['description'].toLowerCase();
                         String searchText =
-                        searchController.text.trim().toLowerCase();
+                            searchController.text.trim().toLowerCase();
                         List<String> searchTextList = searchText.split(' ');
 
                         List<String> itemNameAndDescription = List();
@@ -709,29 +703,29 @@ class SearchPageState extends State<SearchPage> {
   Future<bool> showUserLocationError() async {
     final ThemeData theme = Theme.of(context);
     final TextStyle dialogTextStyle =
-    theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
 
     return await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Error'),
-          content: Text(
-            'Problem with getting your current location',
-            style: dialogTextStyle,
-          ),
-          actions: <Widget>[
-            FlatButton(
-              child: const Text('Close'),
-              onPressed: () {
-                Navigator.of(context).pop(
-                    false); // Pops the confirmation dialog but not the page.
-              },
-            ),
-          ],
-        );
-      },
-    ) ??
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Error'),
+              content: Text(
+                'Problem with getting your current location',
+                style: dialogTextStyle,
+              ),
+              actions: <Widget>[
+                FlatButton(
+                  child: const Text('Close'),
+                  onPressed: () {
+                    Navigator.of(context).pop(
+                        false); // Pops the confirmation dialog but not the page.
+                  },
+                ),
+              ],
+            );
+          },
+        ) ??
         false;
   }
 

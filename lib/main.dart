@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:shareapp/login/root_page.dart';
 import 'package:shareapp/models/item.dart';
 import 'package:shareapp/pages/all_reviews.dart';
@@ -12,10 +13,9 @@ import 'package:shareapp/pages/search_page.dart';
 import 'package:shareapp/rentals/chat.dart';
 import 'package:shareapp/rentals/item_request.dart';
 import 'package:shareapp/rentals/new_pickup.dart';
+import 'package:shareapp/rentals/rental_calendar.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/auth.dart';
-import 'package:shareapp/rentals/rental_calendar.dart';
-import 'package:intl/date_symbol_data_local.dart';
 
 //void main() => runApp(MyApp());
 

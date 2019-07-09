@@ -1,5 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/rentals/item_request.dart';
 import 'package:shareapp/services/const.dart';
@@ -27,12 +30,15 @@ class RentalCalendarState extends State<RentalCalendar>
   List selectedEvents;
   AnimationController controller;
   bool isLoading = true;
+  bool isAuthenticated;
 
   @override
   void initState() {
     super.initState();
     itemDS = widget.itemDS;
     events = {};
+
+    checkAuthentication();
 
     DateTime now = DateTime.now();
     DateTime first = DateTime(now.year, now.month, 1);
@@ -50,15 +56,24 @@ class RentalCalendarState extends State<RentalCalendar>
     controller.forward();
   }
 
+  void checkAuthentication() async {
+    FirebaseUser user = await FirebaseAuth.instance.currentUser();
+
+    if (user != null) {
+      isAuthenticated = true;
+    } else {
+      isAuthenticated = false;
+    }
+  }
+
   Future<dynamic> getItemAvailability(
       DateTime first, DateTime last, bool refresh) async {
     if (refresh) {
       setState(() {
         isLoading = true;
+        events = {};
       });
     }
-
-    events = {};
 
     DateTime lowerDateBound = first.subtract(Duration(days: 5));
     DateTime upperDateBound = last.add(Duration(hours: 23));
@@ -299,7 +314,7 @@ class RentalCalendarState extends State<RentalCalendar>
 
   Widget requestItemButton() {
     return RaisedButton(
-      onPressed: handleRequestItemPressed,
+      onPressed: isAuthenticated ? handleRequestItemPressed : null,
       child: Text('Request Item'),
     );
   }

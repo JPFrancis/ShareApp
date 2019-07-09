@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_picker/flutter_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/services/picker_data.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -146,6 +147,86 @@ class NewPickupState extends State<NewPickup> {
         }
       }
     }
+  }
+
+  Future<int> checkItemVisibility() async {
+    DocumentReference itemDR =
+        Firestore.instance.collection('items').document(itemDS.documentID);
+
+    var itemSnap = await itemDR.get();
+
+    if (!itemSnap.exists) {
+      return 5;
+    }
+
+    if (itemSnap != null) {
+      bool isVisible = itemSnap['isVisible'];
+
+      if (!isVisible) {
+        return 6;
+      }
+    }
+
+    return 0;
+  }
+
+  Future<bool> validateRental() async {
+    DocumentReference itemDR =
+        Firestore.instance.collection('items').document(itemDS.documentID);
+
+    DateTime pickupTimeCopy = stripHourMin(pickupTime);
+
+    // get the rental that starts immediately before the current request
+    var rentalBeforeCurrent = await Firestore.instance
+        .collection('rentals')
+        .where('item', isEqualTo: itemDR)
+        .where('pickupStart', isLessThanOrEqualTo: pickupTimeCopy)
+        .orderBy('pickupStart', descending: false)
+        .limit(1)
+        .getDocuments();
+
+    // get the document, if it exists
+    DocumentSnapshot prevSnap = rentalBeforeCurrent.documents.isNotEmpty
+        ? rentalBeforeCurrent.documents[0]
+        : null;
+
+    if (prevSnap != null) {
+      DateTime prevDateTime = prevSnap['rentalEnd'].toDate();
+      prevDateTime = stripHourMin(prevDateTime).add(Duration(minutes: 15));
+
+      if (pickupTimeCopy.isBefore(prevDateTime)) {
+        return false;
+      }
+    }
+
+    // at this point, prevSnap does not exist or
+    // prev snap was valid so check the 'after' snap
+
+    // get the rental that starts immediately after the current request pickup
+    var rentalAfterCurrent = await Firestore.instance
+        .collection('rentals')
+        .where('item', isEqualTo: itemDR)
+        .where('pickupStart', isGreaterThanOrEqualTo: pickupTimeCopy)
+        .orderBy('pickupStart', descending: false)
+        .limit(1)
+        .getDocuments();
+
+    DocumentSnapshot afterSnap = rentalAfterCurrent.documents.isNotEmpty
+        ? rentalAfterCurrent.documents[0]
+        : null;
+
+    if (afterSnap != null) {
+      DateTime afterDateTime = afterSnap['pickupStart'].toDate();
+      afterDateTime =
+          stripHourMin(afterDateTime).subtract(Duration(minutes: 15));
+      pickupTimeCopy = pickupTimeCopy.add(Duration(days: duration));
+
+      if (pickupTimeCopy.isAfter(afterDateTime)) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   @override
@@ -392,7 +473,14 @@ class NewPickupState extends State<NewPickup> {
                   child: const Text('Send'),
                   onPressed: () {
                     Navigator.of(context).pop(false);
-                    validateSend(sendNewTime);
+
+                    checkItemVisibility().then((int value) {
+                      if (value == 0) {
+                        validateSend(sendNewTime);
+                      } else {
+                        showRequestErrorDialog(value);
+                      }
+                    });
                     // Pops the confirmation dialog but not the page.
                   },
                 ),
@@ -403,13 +491,19 @@ class NewPickupState extends State<NewPickup> {
         false;
   }
 
-  void validateSend(action) {
+  void validateSend(action) async {
     if (!validate(window, amPm)) {
       showRequestErrorDialog(1);
     } else if (DateTime.now().add(Duration(hours: 1)).isAfter(pickupTime)) {
       showRequestErrorDialog(2);
     } else {
-      action();
+      bool timeIsValid = await validateRental();
+
+      if (timeIsValid) {
+        action();
+      } else {
+        showRequestErrorDialog(3);
+      }
     }
   }
 
@@ -425,6 +519,10 @@ class NewPickupState extends State<NewPickup> {
         break;
       case 2:
         message = 'Pickup window must start at least one hour from now';
+        break;
+      case 3:
+        message = 'Your rental request time interferes with another rental! Try'
+            ' selecting a different pickup day or changing the rental duration';
         break;
     }
 
