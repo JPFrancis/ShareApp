@@ -39,11 +39,15 @@ class ItemRequestState extends State<ItemRequest> {
 
   bool isUploading = false;
   bool isLoading;
+
   String myUserID;
   String photoURL;
+  String myName;
+  String groupChatId;
+  List<String> combinedID;
 
   DocumentSnapshot itemDS;
-  DocumentSnapshot creatorDS;
+  DocumentSnapshot itemOwnerDS;
   Future<File> selectedImage;
   File imageFile;
   String message;
@@ -75,26 +79,61 @@ class ItemRequestState extends State<ItemRequest> {
     getSnapshots();
   }
 
-  void check() async {
+  Future<int> checkItemVisibility() async {
+    DocumentReference itemDR =
+        Firestore.instance.collection('items').document(itemDS.documentID);
+
+    var itemSnap = await itemDR.get();
+
+    if (!itemSnap.exists) {
+      return 5;
+    }
+
+    if (itemSnap != null) {
+      bool isVisible = itemSnap['isVisible'];
+
+      if (!isVisible) {
+        return 6;
+      }
+    }
+
+    return 0;
+  }
+
+  Future<bool> validateRental() async {
     DocumentReference itemDR =
         Firestore.instance.collection('items').document(itemDS.documentID);
 
     DateTime pickupTimeCopy = stripHourMin(pickupTime);
 
-    var prev = await Firestore.instance
+    // get the rental that starts immediately before the current request
+    var rentalBeforeCurrent = await Firestore.instance
         .collection('rentals')
-        .where('item', isEqualTo: itemDR)        
-        .where('pickupStart',isLessThanOrEqualTo: pickupTimeCopy)
-        .endBefore([{'rentalEnd':pickupTimeCopy}])
-        .orderBy('pickupStart', descending: true)
-        //.startAfter([{'pickupStart': pickupTimeCopy}])
-    //.endBefore([{'rentalEnd': pickupTimeCopy}])
-        //.where('rentalEnd', isLessThanOrEqualTo: pickupTimeCopy)
-
+        .where('item', isEqualTo: itemDR)
+        .where('pickupStart', isLessThanOrEqualTo: pickupTimeCopy)
+        .orderBy('pickupStart', descending: false)
         .limit(1)
         .getDocuments();
 
-    var after = await Firestore.instance
+    // get the document, if it exists
+    DocumentSnapshot prevSnap = rentalBeforeCurrent.documents.isNotEmpty
+        ? rentalBeforeCurrent.documents[0]
+        : null;
+
+    if (prevSnap != null) {
+      DateTime prevDateTime = prevSnap['rentalEnd'].toDate();
+      prevDateTime = stripHourMin(prevDateTime).add(Duration(minutes: 15));
+
+      if (pickupTimeCopy.isBefore(prevDateTime)) {
+        return false;
+      }
+    }
+
+    // at this point, prevSnap does not exist or
+    // prev snap was valid so check the 'after' snap
+
+    // get the rental that starts immediately after the current request pickup
+    var rentalAfterCurrent = await Firestore.instance
         .collection('rentals')
         .where('item', isEqualTo: itemDR)
         .where('pickupStart', isGreaterThanOrEqualTo: pickupTimeCopy)
@@ -102,39 +141,22 @@ class ItemRequestState extends State<ItemRequest> {
         .limit(1)
         .getDocuments();
 
-    DocumentSnapshot prevSnap =
-        prev.documents.isNotEmpty ? prev.documents[0] : null;
-    DocumentSnapshot afterSnap =
-        after.documents.isNotEmpty ? after.documents[0] : null;
-
-    bool startIsValid = true;
-    bool endIsValid = true;
-
-    debugPrint('dateTimeCopy: ${pickupTimeCopy}');
-
-    if (prevSnap != null) {
-      DateTime prevDateTime = prevSnap['rentalEnd'].toDate();
-      prevDateTime = stripHourMin(prevDateTime);
-      debugPrint('prevDateTime: ${prevDateTime}');
-      if (pickupTimeCopy.isBefore(prevDateTime)) {
-        startIsValid = false;
-      }
-    }
+    DocumentSnapshot afterSnap = rentalAfterCurrent.documents.isNotEmpty
+        ? rentalAfterCurrent.documents[0]
+        : null;
 
     if (afterSnap != null) {
       DateTime afterDateTime = afterSnap['pickupStart'].toDate();
-      afterDateTime = stripHourMin(afterDateTime);
-      debugPrint('afterDateTime: ${afterDateTime}');
+      afterDateTime =
+          stripHourMin(afterDateTime).subtract(Duration(minutes: 15));
+      pickupTimeCopy = pickupTimeCopy.add(Duration(days: duration));
+
       if (pickupTimeCopy.isAfter(afterDateTime)) {
-        endIsValid = false;
+        return false;
       }
     }
 
-    debugPrint('${startIsValid && endIsValid ? 'VALID' : 'INVALID'}');
-  }
-
-  DateTime stripHourMin(DateTime other) {
-    return DateTime(other.year, other.month, other.day);
+    return true;
   }
 
   void initPickerData() {
@@ -154,6 +176,7 @@ class ItemRequestState extends State<ItemRequest> {
   void getMyUserID() async {
     prefs = await SharedPreferences.getInstance();
     myUserID = prefs.getString('userID') ?? '';
+    myName = prefs.getString('name') ?? '';
   }
 
   Future<Null> getSnapshots() async {
@@ -172,13 +195,23 @@ class ItemRequestState extends State<ItemRequest> {
       ds = await Firestore.instance.collection('users').document(str).get();
 
       if (ds != null) {
-        creatorDS = ds;
+        itemOwnerDS = ds;
       }
 
-      if (prefs != null && itemDS != null && creatorDS != null) {
-        setState(() {
-          isLoading = false;
-        });
+      if (prefs != null && itemDS != null && itemOwnerDS != null) {
+        if (myUserID.hashCode <= itemOwnerDS.documentID.hashCode) {
+          groupChatId = '$myUserID-${itemOwnerDS.documentID}';
+          combinedID = [myUserID, itemOwnerDS.documentID];
+        } else {
+          groupChatId = '${itemOwnerDS.documentID}-$myUserID';
+          combinedID = [itemOwnerDS.documentID, myUserID];
+        }
+
+        if (groupChatId != null && combinedID != null) {
+          setState(() {
+            isLoading = false;
+          });
+        }
       }
     }
   }
@@ -216,10 +249,10 @@ class ItemRequestState extends State<ItemRequest> {
           padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
           child: RaisedButton(
             elevation: 3.0,
-            onPressed: check, //() => validateSend(sendItem),
+            onPressed: () => validateSend(sendItem),
             color: Colors.white,
             child: Text(
-              "Request",
+              'Request',
               style: TextStyle(color: primaryColor, fontFamily: 'Quicksand'),
             ),
           ),
@@ -346,14 +379,14 @@ class ItemRequestState extends State<ItemRequest> {
                 height: 50.0,
                 child: ClipOval(
                   child: CachedNetworkImage(
-                    imageUrl: creatorDS['avatar'],
+                    imageUrl: itemOwnerDS['avatar'],
                     placeholder: (context, url) =>
                         new CircularProgressIndicator(),
                   ),
                 ),
               ),
               Text(
-                '${creatorDS['name']}',
+                '${itemOwnerDS['name']}',
                 style: TextStyle(
                     color: Colors.black,
                     fontSize: 15.0,
@@ -489,26 +522,29 @@ class ItemRequestState extends State<ItemRequest> {
     DocumentReference rentalDR =
         await Firestore.instance.collection("rentals").add({
       'status': 0,
+      'requesting': true,
       'item': Firestore.instance.collection('items').document(widget.itemID),
       'itemName': itemDS['name'],
-      'owner':
-          Firestore.instance.collection('users').document(creatorDS.documentID),
+      'owner': Firestore.instance
+          .collection('users')
+          .document(itemOwnerDS.documentID),
       'renter': Firestore.instance.collection('users').document(myUserID),
       'pickupStart': pickupTime,
       'pickupEnd': pickupTime.add(Duration(hours: 1)),
       'rentalEnd': pickupTime.add(Duration(days: duration, hours: 1)),
-      'created': DateTime.now().millisecondsSinceEpoch,
+      'created': DateTime.now(),
       'duration': duration,
       'note': note,
       'users': [
-        Firestore.instance.collection('users').document(creatorDS.documentID),
+        Firestore.instance.collection('users').document(itemOwnerDS.documentID),
         Firestore.instance.collection('users').document(myUserID),
       ],
       'renterCC': null,
       'ownerCC': null,
       'review': null,
       'initialPushNotif': {
-        'pushToken': creatorDS['pushToken'],
+        'nameFrom': myName,
+        'pushToken': itemOwnerDS['pushToken'],
         'itemName': itemDS['name'],
       },
     });
@@ -516,39 +552,49 @@ class ItemRequestState extends State<ItemRequest> {
     if (rentalDR != null) {
       rentalID = rentalDR.documentID;
 
-      await new Future.delayed(Duration(milliseconds: delay));
+      DocumentSnapshot ds = await Firestore.instance
+          .collection('messages')
+          .document(groupChatId)
+          .get();
 
-      Future itemRental = Firestore.instance
-          .collection('items')
-          .document(widget.itemID)
-          .updateData({
-        'rental': Firestore.instance.collection('rentals').document(rentalID)
-      });
+      if (ds != null) {
+        if (!ds.exists) {
+          var documentReference =
+              Firestore.instance.collection('messages').document(groupChatId);
 
-      if (itemRental != null) {
-        await new Future.delayed(Duration(milliseconds: delay));
+          Firestore.instance.runTransaction((transaction) async {
+            await transaction.set(
+              documentReference,
+              {
+                'users': combinedID,
+              },
+            );
+          });
+        }
 
-        // create chat and send the default request message
-        var dr = Firestore.instance
-            .collection('rentals')
-            .document(rentalID)
-            .collection('chat')
+        var messageReference = Firestore.instance
+            .collection('messages')
+            .document(groupChatId)
+            .collection('messages')
             .document(DateTime.now().millisecondsSinceEpoch.toString());
 
-        Future chat = Firestore.instance.runTransaction((transaction) async {
+        Firestore.instance.runTransaction((transaction) async {
           await transaction.set(
-            dr,
+            messageReference,
             {
               'idFrom': myUserID,
-              'idTo': creatorDS.documentID,
+              'idTo': itemOwnerDS.documentID,
               'timestamp': DateTime.now().millisecondsSinceEpoch,
               'content': message,
               'type': 0,
+              'pushToken': itemOwnerDS['pushToken'],
+              'nameFrom': myName,
+              'rental': rentalDR,
             },
           );
         });
 
-        if (chat != null) {
+        if (messageReference != null) {
           await new Future.delayed(Duration(milliseconds: delay));
 
           rentalDR.get().then((ds) {
@@ -574,7 +620,7 @@ class ItemRequestState extends State<ItemRequest> {
 
     String range = parseWindow(windows, window, amPm);
 
-    message = 'Hello ${creatorDS['name']}, '
+    message = 'Hello ${itemOwnerDS['name']}, '
         'I am requesting to rent your ${itemDS['name']} '
         'for ${duration > 1 ? '$duration days' : '$duration day'}. '
         'I would like to pick up this item '
@@ -603,11 +649,14 @@ class ItemRequestState extends State<ItemRequest> {
                   onPressed: () {
                     Navigator.of(context).pop(false);
 
-                    getSnapshots().then(
-                      (_) {
+                    checkItemVisibility().then((int value) {
+                      if (value == 0) {
                         validateSend(navToItemRental);
-                      },
-                    );
+                      } else {
+                        showRequestErrorDialog(value);
+                      }
+                    });
+
                     // Pops the confirmation dialog but not the page.
                   },
                 ),
@@ -618,15 +667,19 @@ class ItemRequestState extends State<ItemRequest> {
         false;
   }
 
-  void validateSend(action) {
-    if (itemDS['rental'] != null) {
-      showRequestErrorDialog(1);
-    } else if (!validate(window, amPm)) {
+  void validateSend(action) async {
+    if (!validate(window, amPm)) {
       showRequestErrorDialog(2);
     } else if (DateTime.now().add(Duration(hours: 1)).isAfter(pickupTime)) {
       showRequestErrorDialog(3);
     } else {
-      action();
+      bool timeIsValid = await validateRental();
+
+      if (timeIsValid) {
+        action();
+      } else {
+        showRequestErrorDialog(4);
+      }
     }
   }
 
@@ -645,6 +698,16 @@ class ItemRequestState extends State<ItemRequest> {
         break;
       case 3:
         message = 'Pickup window must start at least one hour from now';
+        break;
+      case 4:
+        message = 'Your rental request time interferes with another rental! Try'
+            ' selecting a different pickup day or changing the rental duration';
+        break;
+      case 5:
+        message = 'Item no longer exists';
+        break;
+      case 6:
+        message = 'The item owner has disabled renting on this item';
         break;
     }
 
@@ -753,8 +816,8 @@ class DateTimeItem extends StatelessWidget {
             onTap: () {
               showDatePicker(
                       context: context,
-                      initialDate: DateTime.now(),
-                      firstDate: DateTime.now(),
+                      initialDate: stripHourMin(dateTime),
+                      firstDate: stripHourMin(DateTime.now()),
                       lastDate: DateTime.now().add(Duration(days: 300)))
                   .then<void>((DateTime value) {
                 if (value != null) {

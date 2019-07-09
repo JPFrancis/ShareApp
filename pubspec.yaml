@@ -49,7 +49,7 @@ dependencies:
   google_sign_in:
   flutter_facebook_login:
   cloud_firestore:
-
+  dotted_border:
   path: any
 
   flutter:

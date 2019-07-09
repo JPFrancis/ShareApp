@@ -30,10 +30,6 @@ class Chat extends StatefulWidget {
 class ChatState extends State<Chat> {
   DocumentSnapshot chatDS;
 
-  //DocumentSnapshot otherUserDS;
-  //User otherUserDS;
-
-  //DocumentSnapshot myUserDS;
   SharedPreferences prefs;
   DocumentSnapshot otherUser;
   List<String> combinedID;
