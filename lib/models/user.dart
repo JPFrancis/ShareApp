@@ -1,3 +1,11 @@
+/*
+  Address fields:
+  street
+  city
+  state
+  zip
+ */
+
 class User {
   String avatar;
   String name;
@@ -6,6 +14,7 @@ class User {
   String email;
   String phoneNum;
   DateTime birthday;
+  Map address;
 
   User({
     this.avatar,
@@ -15,6 +24,7 @@ class User {
     this.email,
     this.phoneNum,
     this.birthday,
+    this.address,
   });
 
   User.fromMap(Map<String, dynamic> data, DateTime birthdayAsDateTime)
@@ -26,6 +36,7 @@ class User {
           email: data['email'],
           phoneNum: data['phoneNum'],
           birthday: birthdayAsDateTime,
+          address: data['address'],
         );
 
   User.copy(User other)
@@ -37,6 +48,7 @@ class User {
           email: other.email,
           phoneNum: other.phoneNum,
           birthday: other.birthday,
+          address: other.address,
         );
 
   bool compare(User other) {
@@ -46,7 +58,8 @@ class User {
         this.gender == other.gender &&
         this.email == other.email &&
         this.phoneNum == other.phoneNum &&
-        this.birthday == other.birthday;
+        this.birthday == other.birthday &&
+        this.address == other.address;
   }
 
   User fromUser(User other) {
@@ -58,6 +71,7 @@ class User {
       email: other.email,
       phoneNum: other.phoneNum,
       birthday: other.birthday,
+      address: other.address,
     );
   }
 }

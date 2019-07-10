@@ -34,6 +34,7 @@ exports.createUser = functions.auth.user().onCreate(event => {
         gender: null,
         phoneNum: null,
         birthday: null,
+        address: null,
     }).then(function () {
         console.log('Created user: ', userID);
         return 'Created user $userID';
@@ -107,7 +108,7 @@ exports.chatNotification = functions.firestore.document('messages/{groupChatId}/
                     "type": "chat",
                     "idFrom": msgData.idFrom,
                     "idTo": msgData.idTo,
-                    "nameFrom": msgData.nameFrom, 
+                    "nameFrom": msgData.nameFrom,
                     "message": msgData.content,
                     "groupChatId": context.params.groupChatId,
                     "click_action": "FLUTTER_NOTIFICATION_CLICK",
@@ -232,6 +233,14 @@ exports.createCharge = functions.firestore.document('users/{userId}/charges/{cha
         const amount = chargeSnap.data().amount;
         const currency = chargeSnap.data().currency;
         const description = chargeSnap.data().description;
+
+        /*
+        application_fee_amount: 123,
+        transfer_data: {
+            amount: 877,
+            destination: "{{CONNECTED_STRIPE_ACCOUNT_ID}}",
+            },
+        */
 
         const charge = { amount, currency, customer, description };
         const idempotentKey = context.params.chargeId;

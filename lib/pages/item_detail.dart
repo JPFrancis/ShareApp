@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -567,18 +569,38 @@ class ItemDetailState extends State<ItemDetail> {
 
   Widget showItemLocation() {
     double widthOfScreen = MediaQuery.of(context).size.width;
+
+    var rng = new Random();
+
+    bool addLat = rng.nextBool();
+    bool addLng = rng.nextBool();
+    double latOffset = rng.nextDouble() / 50;
+    double lngOffset = rng.nextDouble() / 50;
+
     GeoPoint gp = itemDS['location']['geopoint'];
     double lat = gp.latitude;
-    double long = gp.longitude;
+    double lng = gp.longitude;
+
+    if (addLat) {
+      lat += latOffset;
+    } else {
+      lat -= latOffset;
+    }
+
+    if (addLng) {
+      lng += lngOffset;
+    } else {
+      lng -= lngOffset;
+    }
 
     Widget showMap() {
       return GoogleMap(
         mapType: MapType.normal,
         rotateGesturesEnabled: false,
         initialCameraPosition: CameraPosition(
-          target: LatLng(lat, long),
-          //zoom: 11.5,
-          zoom: 10,
+          target: LatLng(lat, lng),
+          zoom: 12,
+          //zoom: 10,
         ),
         onMapCreated: (GoogleMapController controller) {
           googleMapController = controller;
@@ -614,7 +636,7 @@ class ItemDetailState extends State<ItemDetail> {
     }
 
     Widget showCircle() {
-      double size = 100;
+      double size = 125;
 
       return Center(
         child: Opacity(

@@ -23,21 +23,28 @@ class RentalCalendar extends StatefulWidget {
 class RentalCalendarState extends State<RentalCalendar>
     with TickerProviderStateMixin {
   DocumentSnapshot itemDS;
+  String myUserID;
+
   DateTime selectedDay;
   DateTime visibleDay;
   Map<DateTime, List> events;
   Map<DateTime, List> visibleEvents;
   List selectedEvents;
+
   AnimationController controller;
+
   bool isLoading = true;
   bool isAuthenticated;
+  bool isOwner;
 
   @override
   void initState() {
     super.initState();
     itemDS = widget.itemDS;
     events = {};
+    visibleEvents = {};
 
+    getMyUserID();
     checkAuthentication();
 
     DateTime now = DateTime.now();
@@ -54,6 +61,18 @@ class RentalCalendarState extends State<RentalCalendar>
     );
 
     controller.forward();
+  }
+
+  void getMyUserID() async {
+    var user = await FirebaseAuth.instance.currentUser();
+
+    if (user != null) {
+      myUserID = user.uid;
+
+      DocumentReference ownerRef = itemDS['creator'];
+
+      isOwner = myUserID == ownerRef.documentID ? true : false;
+    }
   }
 
   void checkAuthentication() async {
@@ -89,23 +108,25 @@ class RentalCalendarState extends State<RentalCalendar>
 
     List<DocumentSnapshot> rentalSnaps = rentalQuerySnaps.documents;
 
-    rentalSnaps.forEach((rentalDS) {
-      DateTime pickupStartRaw = rentalDS['pickupStart'].toDate();
-      DateTime pickupStart = DateTime(
-          pickupStartRaw.year, pickupStartRaw.month, pickupStartRaw.day);
-      int duration = rentalDS['duration'];
+    if (rentalSnaps.isNotEmpty) {
+      rentalSnaps.forEach((rentalDS) {
+        DateTime pickupStartRaw = rentalDS['pickupStart'].toDate();
+        DateTime pickupStart = DateTime(
+            pickupStartRaw.year, pickupStartRaw.month, pickupStartRaw.day);
+        int duration = rentalDS['duration'];
 
-      for (int i = 0; i <= duration; i++) {
-        DateTime dateTime = pickupStart.add(Duration(days: i));
+        for (int i = 0; i <= duration; i++) {
+          DateTime dateTime = pickupStart.add(Duration(days: i));
 
-        events.addAll({
-          dateTime: ['unavailable']
-        });
-      }
+          events.addAll({
+            dateTime: ['unavailable']
+          });
+        }
 
-      selectedEvents = events[selectedDay] ?? [];
-      visibleEvents = events;
-    });
+        selectedEvents = events[selectedDay] ?? [];
+        visibleEvents = events;
+      });
+    }
 
     if (refresh && events != null) {
       setState(() {
@@ -126,6 +147,7 @@ class RentalCalendarState extends State<RentalCalendar>
     getItemAvailability(first, last, false).then((_) {
       setState(() {
         visibleDay = first;
+
         visibleEvents = Map.fromEntries(
           events.entries.where(
             (entry) =>
@@ -314,7 +336,7 @@ class RentalCalendarState extends State<RentalCalendar>
 
   Widget requestItemButton() {
     return RaisedButton(
-      onPressed: isAuthenticated ? handleRequestItemPressed : null,
+      onPressed: isAuthenticated && !isOwner ? handleRequestItemPressed : null,
       child: Text('Request Item'),
     );
   }

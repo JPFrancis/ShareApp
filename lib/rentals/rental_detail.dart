@@ -211,6 +211,21 @@ class RentalDetailState extends State<RentalDetail> {
             if (snapshot.hasData) {
               rentalDS = snapshot.data;
 
+              DateTime now = DateTime.now();
+              //DateTime now = DateTime(2019, 7, 16, 6,30);
+              DateTime pickupStart = rentalDS['pickupStart'].toDate();
+              DateTime pickupEnd = rentalDS['pickupEnd'].toDate();
+              DateTime rentalEnd = rentalDS['rentalEnd'].toDate();
+              DateTime created = rentalDS['created'].toDate();
+
+              if (now.isAfter(pickupStart) && now.isBefore(pickupEnd)) {
+                updateStatus(3);
+              }
+
+              if (now.isAfter(rentalEnd)) {
+                updateStatus(4);
+              }
+
               return ListView(
                 padding: EdgeInsets.all(0),
                 children: <Widget>[
@@ -229,7 +244,7 @@ class RentalDetailState extends State<RentalDetail> {
                   showRequestButtons(),
                   showCreditCardButton(),
                   showPaymentInfo(),
-                  showReceiveItemButton(),
+                  //showReceiveItemButton(),
                   showReturnedItemButton(),
                   showReview(),
                   //paymentButtonTEST(),
@@ -365,7 +380,7 @@ class RentalDetailState extends State<RentalDetail> {
     String start = DateFormat('h:mm a on d MMM yyyy')
         .format(rentalDS['pickupStart'].toDate());
     String end = DateFormat('h:mm a on d MMM yyyy')
-        .format(rentalDS['pickupEnd'].toDate());
+        .format(rentalDS['rentalEnd'].toDate());
     int durationDays = rentalDS['duration'];
     double price = itemDS['price'].toDouble() * durationDays.toDouble();
     String duration =
@@ -1321,12 +1336,15 @@ class RentalDetailState extends State<RentalDetail> {
               color: Colors.green,
               textColor: Colors.white,
               child: Text(
-                'Simulate end of rental',
+                'I have the item! (charge)',
                 //addButton + " Images",
                 textScaleFactor: 1.25,
               ),
               onPressed: () {
-                updateStatus(4);
+                PaymentService().chargeRental(
+                    1.0,
+                    '${renterDS['name']} paying ${ownerDS['name']} '
+                    'for renting ${rentalDS['itemName']}');
               },
             ),
           )

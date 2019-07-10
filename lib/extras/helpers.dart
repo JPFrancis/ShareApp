@@ -550,3 +550,14 @@ class UsNumberTextInputFormatter extends TextInputFormatter {
 DateTime stripHourMin(DateTime other) {
   return DateTime(other.year, other.month, other.day);
 }
+
+class UpperCaseTextFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    return TextEditingValue(
+      text: newValue.text?.toUpperCase(),
+      selection: newValue.selection,
+    );
+  }
+}

@@ -19,7 +19,6 @@ import 'package:shareapp/models/item.dart';
 import 'package:shareapp/models/user.dart';
 import 'package:shareapp/pages/item_detail.dart';
 import 'package:shareapp/pages/item_edit.dart';
-import 'package:shareapp/pages/profile_tab_pages/feedback_page.dart';
 import 'package:shareapp/pages/profile_tab_pages/help_page.dart';
 import 'package:shareapp/pages/profile_tab_pages/payouts_page.dart';
 import 'package:shareapp/pages/profile_tab_pages/profile_edit.dart';
@@ -30,6 +29,7 @@ import 'package:shareapp/services/auth.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:url_launcher/url_launcher.dart';
 
 class HomePage extends StatefulWidget {
   static const routeName = '/homePage';
@@ -79,7 +79,7 @@ class HomePageState extends State<HomePage> {
 
   Geoflutterfire geo = Geoflutterfire();
   Position currentLocation;
-  double searchRange = 25.0; // in miles
+  double searchRange = 10.0; // in miles
 
   EdgeInsets edgeInset;
   double padding;
@@ -2040,10 +2040,10 @@ class HomePageState extends State<HomePage> {
                           reusableFlatButton(
                               "Notifications", Icons.notifications, null),
                           reusableCategory("SUPPORT"),
-                          reusableFlatButton(
-                              "Get help", Icons.help_outline, navToHelpPage),
+                          reusableFlatButton("Get help", Icons.help_outline,
+                              () => navToSendEmail('Help')),
                           reusableFlatButton("Give us feedback", Icons.feedback,
-                              navToFeedbackPage),
+                              () => navToSendEmail('Feedback')),
                           reusableFlatButton("Log out", null, logout),
                           //getProfileDetails()
                         ],
@@ -2536,20 +2536,28 @@ class HomePageState extends State<HomePage> {
         ));
   }
 
-  void navToFeedbackPage() {
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (BuildContext context) => FeedbackPage(),
-        ));
-  }
+  // help=1, feedback=2
+  void navToSendEmail(String type) async {
+    String email = 'jay@shareapp.app';
+    String subject = '';
+    String body = '';
 
-  void navToHelpPage() {
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (BuildContext context) => HelpPage(),
-        ));
+    switch (type) {
+      case 'Help':
+        subject = '[Help] ';
+        break;
+      case 'Feedback':
+        subject = '[Feedback] ';
+        break;
+    }
+
+    String url = 'mailto:$email?subject=$subject&body=$body';
+
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not launch $url';
+    }
   }
 
   void logout() async {

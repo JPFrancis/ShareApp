@@ -14,7 +14,7 @@ int status
 1) owner has proposed time - burden of accept is on renter
 2) accepted - the owner has accepted the request. the renter will be notified, 
   and both parties will be instructed to exchange the item
-3) active - the actual renting is taking place. The renter has the item now. 
+3) active - the actual renting is taking place including pickup window
   Phase 3 is entered once pickup window is confirmed
 4) returned - the renting has finished, and the item has been returned to the 
   owner. the renter will write a review. Entered when duration ends

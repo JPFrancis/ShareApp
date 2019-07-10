@@ -9,6 +9,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:shareapp/extras/helpers.dart';
@@ -39,10 +40,15 @@ class ProfileEditState extends State<ProfileEdit> {
   final GlobalKey<FormState> formKey = new GlobalKey<FormState>();
   final UsNumberTextInputFormatter phoneNumberFormatter =
       UsNumberTextInputFormatter();
+  final UpperCaseTextFormatter stateFormatter = UpperCaseTextFormatter();
 
   TextEditingController nameController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
   TextEditingController phoneNumController = TextEditingController();
+  TextEditingController streetAddressController = TextEditingController();
+  TextEditingController cityAddressController = TextEditingController();
+  TextEditingController stateAddressController = TextEditingController();
+  TextEditingController zipAddressController = TextEditingController();
 
   DateTime selectedDate = DateTime.now();
 
@@ -70,7 +76,16 @@ class ProfileEditState extends State<ProfileEdit> {
     nameController.text = userCopy.name;
     descriptionController.text = userCopy.description;
     phoneNumController.text = userCopy.phoneNum ?? '';
-    //userCopy.birthday=u
+
+    if (userCopy.address != null) {
+      Map address = userCopy.address;
+      streetAddressController.text = address['street'];
+      cityAddressController.text = address['city'];
+      stateAddressController.text = address['state'];
+      zipAddressController.text = address['zip'];
+    } else {
+      userCopy.address = {};
+    }
   }
 
   @override
@@ -150,6 +165,7 @@ class ProfileEditState extends State<ProfileEdit> {
                     birthDatePicker(),
                     emailEntry(),
                     phoneEntry(),
+                    addressEntry(),
                   ]
                       .map((Widget child) => Container(
                             padding: EdgeInsets.symmetric(
@@ -244,6 +260,12 @@ class ProfileEditState extends State<ProfileEdit> {
             ),
             actions: <Widget>[
               FlatButton(
+                child: new Text('CANCEL'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+              FlatButton(
                 child: new Text('SAVE'),
                 onPressed: () {
                   if (phoneNumController.text.length == 14) {
@@ -254,7 +276,141 @@ class ProfileEditState extends State<ProfileEdit> {
                     Navigator.of(context).pop();
                   }
                 },
-              )
+              ),
+            ],
+          );
+        });
+  }
+
+  Widget addressEntry() {
+    Map userAddress = userCopy.address;
+    String address = 'Tap to enter';
+
+    if (userAddress.isNotEmpty) {
+      String street = userAddress['street'];
+      String city = userAddress['city'];
+      String state = userAddress['state'];
+      String zip = userAddress['zip'];
+
+      address = '$street\n$city, $state\n$zip';
+    }
+
+    return InkWell(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: <Widget>[
+            Text("Address",
+                style:
+                    TextStyle(fontFamily: font, fontWeight: FontWeight.w500)),
+            Text(
+              address,
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                fontFamily: font,
+              ),
+            )
+          ],
+        ),
+        onTap: () => showAddressEditor(context));
+  }
+
+  showAddressEditor(BuildContext context) async {
+    return showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text('Enter Address'),
+            content: Container(
+              height: 170,
+              child: Column(
+                children: <Widget>[
+                  TextField(
+                    autofocus: true,
+                    decoration: InputDecoration(
+                      hintText: 'Street',
+                    ),
+                    controller: streetAddressController,
+                  ),
+                  TextField(
+                    autofocus: true,
+                    decoration: InputDecoration(
+                      hintText: 'City',
+                    ),
+                    controller: cityAddressController,
+                  ),
+                  Row(
+                    children: <Widget>[
+                      Flexible(
+                        flex: 1,
+                        child: TextField(
+                          autofocus: true,
+                          decoration: InputDecoration(
+                            hintText: 'State',
+                          ),
+                          controller: stateAddressController,
+                          maxLength: 2,
+                          inputFormatters: <TextInputFormatter>[
+                            stateFormatter,
+                          ],
+                        ),
+                      ),
+                      Container(
+                        width: 20,
+                      ),
+                      Flexible(
+                        flex: 2,
+                        child: TextField(
+                          autofocus: true,
+                          decoration: InputDecoration(
+                            hintText: 'Zip',
+                          ),
+                          controller: zipAddressController,
+                          maxLength: 5,
+                          keyboardType: TextInputType.numberWithOptions(
+                            signed: false,
+                            decimal: false,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            actions: <Widget>[
+              FlatButton(
+                child: new Text('CANCEL'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+              FlatButton(
+                child: new Text('SAVE'),
+                onPressed: () {
+                  if (streetAddressController.text.isEmpty) {
+                    Fluttertoast.showToast(msg: 'Street name can\'t be empty');
+                  } else if (cityAddressController.text.isEmpty) {
+                    Fluttertoast.showToast(msg: 'City can\'t be empty');
+                  } else if (stateAddressController.text.length != 2) {
+                    Fluttertoast.showToast(msg: 'Please enter valid state');
+                  } else if (zipAddressController.text.length != 5) {
+                    Fluttertoast.showToast(msg: 'Please enter valid zip code');
+                  } else {
+                    setState(() {
+                      userCopy.address['street'] =
+                          streetAddressController.text.trim();
+                      userCopy.address['city'] =
+                          cityAddressController.text.trim();
+                      userCopy.address['state'] =
+                          stateAddressController.text.trim();
+                      userCopy.address['zip'] =
+                          zipAddressController.text.trim();
+                    });
+
+                    Navigator.of(context).pop();
+                  }
+                },
+              ),
             ],
           );
         });
@@ -453,6 +609,10 @@ class ProfileEditState extends State<ProfileEdit> {
     String name = nameController.text.trim();
     String description = descriptionController.text.trim();
 
+    if (userCopy.address.isEmpty) {
+      userCopy.address = null;
+    }
+
     if (imageFile != null) {
       String result = await saveImage();
 
@@ -467,6 +627,7 @@ class ProfileEditState extends State<ProfileEdit> {
         'gender': userCopy.gender,
         'birthday': userCopy.birthday,
         'phoneNum': userCopy.phoneNum,
+        'address': userCopy.address,
       });
 
       setState(() {
@@ -479,6 +640,7 @@ class ProfileEditState extends State<ProfileEdit> {
         'gender': userCopy.gender,
         'birthday': userCopy.birthday,
         'phoneNum': userCopy.phoneNum,
+        'address': userCopy.address,
       });
     }
 
