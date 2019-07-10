@@ -129,7 +129,7 @@ class HomePageState extends State<HomePage> {
     bottomNavBarTiles = <BottomNavigationBarItem>[
       bottomNavTile('Search', Icon(Icons.search), false),
       bottomNavTile('Rentals', Icon(Icons.shopping_cart), false),
-      bottomNavTile('My Listings', Icon(Icons.style), true),
+      bottomNavTile('Listings', Icon(Icons.style), true),
       bottomNavTile('Messages', Icon(Icons.forum), false),
       bottomNavTile('Profile', Icon(Icons.account_circle), false),
     ];
@@ -474,79 +474,77 @@ class HomePageState extends State<HomePage> {
     }
   }
 
-  BottomNavigationBarItem bottomNavTile(
-      String label, Icon icon, bool showBadge) {
+  BottomNavigationBarItem bottomNavTile(String label, Icon icon, bool showBadge) {
     return BottomNavigationBarItem(
       icon: Stack(
         children: <Widget>[
           icon,
           showBadge
               ? StreamBuilder<QuerySnapshot>(
-                  stream: Firestore.instance
-                      .collection('rentals')
-                      .where('owner',
-                          isEqualTo: Firestore.instance
-                              .collection('users')
-                              .document(myUserID))
-                      .where('status', isEqualTo: 0)
-                      .snapshots(),
-                  builder: (BuildContext context,
-                      AsyncSnapshot<QuerySnapshot> snapshot) {
-                    if (snapshot.hasError) {
-                      return new Text('${snapshot.error}');
-                    }
-                    switch (snapshot.connectionState) {
-                      case ConnectionState.waiting:
+            stream: Firestore.instance
+                .collection('rentals')
+                .where('owner',
+                isEqualTo: Firestore.instance
+                    .collection('users')
+                    .document(myUserID))
+                .where('status', isEqualTo: 0)
+                .snapshots(),
+            builder: (BuildContext context,
+                AsyncSnapshot<QuerySnapshot> snapshot) {
+              if (snapshot.hasError) {
+                return new Text('${snapshot.error}');
+              }
+              switch (snapshot.connectionState) {
+                case ConnectionState.waiting:
 
-                      default:
-                        if (snapshot.hasData) {
-                          var updated = snapshot.data.documents.toList().length;
+                default:
+                  if (snapshot.hasData) {
+                    var updated = snapshot.data.documents
+                        .toList()
+                        .length;
 
-                          return updated == 0
-                              ? Container(
-                                  height: 0,
-                                  width: 0,
-                                )
-                              : Positioned(
-                                  top: 0,
-                                  right: 0,
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.red[600],
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    constraints: BoxConstraints(
-                                      minWidth: 13,
-                                      minHeight: 13,
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        '$updated',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 11,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                        } else {
-                          return Container(
-                            height: 0,
-                            width: 0,
-                          );
-                        }
-                    }
-                  },
-                )
-              : Container(
-                  width: 0,
-                  height: 0,
-                ),
+                    return updated == 0
+                        ? Container(
+                      height: 0,
+                      width: 0,
+                    )
+                        : Positioned(
+                      top: 0,
+                      right: 0,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.red[600],
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        constraints: BoxConstraints(
+                          minWidth: 13,
+                          minHeight: 13,
+                        ),
+                        child: Center(
+                          child: Text(
+                            '$updated',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                    );
+                  } else {
+                    return Container(
+                      height: 0,
+                      width: 0,
+                    );
+                  }
+              }
+            },
+          )
+              : Container(height: 0, width: 0,),
         ],
       ),
-      title: Text(label),
+      title: Center(child: Text(label, style: TextStyle(fontFamily: appFont, fontSize: 13.0))),
     );
   }
 
@@ -1052,23 +1050,14 @@ class HomePageState extends State<HomePage> {
           Align(
             alignment: Alignment.bottomCenter,
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                Container(
-                    padding: EdgeInsets.only(left: 10.0, top: 40),
-                    alignment: Alignment.topLeft,
-                    child: Text(
-                      "Make It Happen",
-                      style: TextStyle(
-                          color: Colors.black,
-                          fontFamily: appFont,
-                          fontSize: 25.0,
-                          fontWeight: FontWeight.w300),
-                    )),
-                searchField(),
-              ],
-            ),
-          ),
+              mainAxisSize: MainAxisSize.min,
+               children: <Widget>[
+              Container(
+                padding: EdgeInsets.only(left: 80.0),
+                alignment: Alignment.bottomLeft,
+                child: Text("make it happen", style: TextStyle(color: Colors.black, fontFamily: appFont, fontSize: 20.0, fontWeight: FontWeight.w300),)),
+              searchField(),
+          ],),),
         ],
       ),
     );
