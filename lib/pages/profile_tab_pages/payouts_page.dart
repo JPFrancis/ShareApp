@@ -1,31 +1,18 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/const.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
-import 'package:intl/intl.dart';
-import 'package:shareapp/extras/helpers.dart';
-import 'package:shareapp/main.dart';
-import 'package:shareapp/rentals/chat.dart';
-import 'package:shareapp/rentals/new_pickup.dart';
-import 'package:shareapp/services/const.dart';
 import 'package:shareapp/services/payment_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:smooth_star_rating/smooth_star_rating.dart';
 import 'package:stripe_payment/stripe_payment.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 enum CardTapAction {
   setDefault,
@@ -48,7 +35,7 @@ class PayoutsPageState extends State<PayoutsPage> {
   double padding = 5.0;
   String myUserID;
   String defaultSource = '';
-  String stripeCustId='';
+  String stripeCustId = '';
 
   bool isLoading = true;
   bool stripeInit = false;
@@ -127,6 +114,8 @@ class PayoutsPageState extends State<PayoutsPage> {
 
         StripeSource.addSource().then((token) {
           PaymentService().addCard(token);
+          Fluttertoast.showToast(
+              msg: 'Adding card...', toastLength: Toast.LENGTH_LONG);
         });
       },
       child: Container(
@@ -634,7 +623,7 @@ class PayoutsPageState extends State<PayoutsPage> {
     dynamic resp = await callable.call(<String, dynamic>{
       'userId': myUserID,
       'customerId': stripeCustId,
-      'newSourceId':sourceDS['id'],
+      'newSourceId': sourceDS['id'],
     });
   }
 
@@ -658,7 +647,7 @@ class PayoutsPageState extends State<PayoutsPage> {
     switch (actionEnum) {
       case CardTapAction.setDefault:
         dialogText = 'Set card as default payment?';
-        action = ()=>setCardAsDefault(sourceDS);
+        action = () => setCardAsDefault(sourceDS);
         break;
       case CardTapAction.delete:
         dialogText = 'Delete card?';

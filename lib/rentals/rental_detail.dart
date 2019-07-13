@@ -177,23 +177,23 @@ class RentalDetailState extends State<RentalDetail> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 1),
       child: GestureDetector(
-        onTap: () {
-          Navigator.of(context)
-              .pushNamed(Chat.routeName, arguments: ChatArgs(otherUserDS));
-        },
-        child: Row(
-          children: <Widget>[
-            Text("Chat",
-                style: TextStyle(
-                    fontFamily: appFont,
-                    fontSize: 14.0,
-                    fontWeight: FontWeight.w400)),
-            SizedBox(
-              width: 5.0,
-            ),
-            Icon(Icons.chat_bubble_outline)
-          ],
-      )),
+          onTap: () {
+            Navigator.of(context)
+                .pushNamed(Chat.routeName, arguments: ChatArgs(otherUserDS));
+          },
+          child: Row(
+            children: <Widget>[
+              Text("Chat",
+                  style: TextStyle(
+                      fontFamily: appFont,
+                      fontSize: 14.0,
+                      fontWeight: FontWeight.w400)),
+              SizedBox(
+                width: 5.0,
+              ),
+              Icon(Icons.chat_bubble_outline)
+            ],
+          )),
     );
   }
 
@@ -240,7 +240,9 @@ class RentalDetailState extends State<RentalDetail> {
                 children: <Widget>[
                   showItemImage(),
                   showItemCreator(),
-                  SizedBox(height: 10.0,),
+                  SizedBox(
+                    height: 10.0,
+                  ),
                   Container(
                       padding: EdgeInsets.symmetric(
                           horizontal: MediaQuery.of(context).size.width / 25),
