@@ -3,12 +3,34 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/const.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:intl/intl.dart';
+import 'package:shareapp/extras/helpers.dart';
+import 'package:shareapp/main.dart';
+import 'package:shareapp/rentals/chat.dart';
+import 'package:shareapp/rentals/new_pickup.dart';
+import 'package:shareapp/services/const.dart';
+import 'package:shareapp/services/payment_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:smooth_star_rating/smooth_star_rating.dart';
+import 'package:stripe_payment/stripe_payment.dart';
+
+enum CardTapAction {
+  setDefault,
+  delete,
+}
 
 class PayoutsPage extends StatefulWidget {
   static const routeName = '/payoutsPage';
@@ -25,10 +47,11 @@ class PayoutsPageState extends State<PayoutsPage> {
   String appBarTitle = 'Payments and payouts';
   double padding = 5.0;
   String myUserID;
-  DocumentSnapshot creditCardDS;
+  String defaultSource = '';
+  String stripeCustId='';
 
   bool isLoading = true;
-  bool hasCreditCard = false;
+  bool stripeInit = false;
 
   @override
   void initState() {
@@ -49,35 +72,8 @@ class PayoutsPageState extends State<PayoutsPage> {
   void getMyUserID() async {
     FirebaseAuth.instance.currentUser().then((user) {
       myUserID = user.uid;
-
-      if (myUserID != null) {
-        getCreditCardInfo();
-      }
+      delayPage();
     });
-  }
-
-  void getCreditCardInfo() async {
-    var ref = await Firestore.instance
-        .collection('users')
-        .document(myUserID)
-        .collection('sources')
-        .limit(1)
-        .getDocuments();
-
-    if (ref != null) {
-      List<DocumentSnapshot> snaps = ref.documents;
-
-      creditCardDS = snaps.isNotEmpty ? snaps[0] : null;
-      if (creditCardDS != null) {
-        hasCreditCard = true;
-      }
-
-      if (snaps != null) {
-        setState(() {
-          isLoading = false;
-        });
-      }
-    }
   }
 
   @override
@@ -104,129 +100,329 @@ class PayoutsPageState extends State<PayoutsPage> {
         ),
         body: TabBarView(
           children: [
-            //Icon(Icons.directions_car),
-            hasCreditCard ? showCreditCards() : Text('No card yet'),
+            showCreditCards(),
             showPayouts(),
           ],
         ),
       ),
     );
   }
-  // demo
-  Widget showCreditCards() {
-    Map creditCard = creditCardDS['card'];
+
+  Widget addCard() {
     double w = MediaQuery.of(context).size.width;
 
-    Widget _card(brand){
-      var colors;
+    return InkWell(
+      onTap: () {
+        if (!stripeInit) {
+          Firestore.instance
+              .collection('keys')
+              .document('stripe_pk')
+              .get()
+              .then((DocumentSnapshot ds) {
+            StripeSource.setPublishableKey(ds['key']);
+          });
 
-      switch (brand) {
-        case "visa":
-          colors = [Colors.black, Colors.indigo[800], Colors.blue, Colors.black,];
-          break;
-        case "mastercard":
-          colors = [Colors.black, Colors.red[800], Colors.yellow[800], Colors.black,];
-          break;
-        default:
-      }
-          
+          stripeInit = true;
+        }
 
-      if (brand == "empty") {
-        return Container(
+        StripeSource.addSource().then((token) {
+          PaymentService().addCard(token);
+        });
+      },
+      child: Container(
           padding: EdgeInsets.symmetric(horizontal: 15.0),
           child: DottedBorder(
             borderType: BorderType.RRect,
             radius: Radius.circular(15),
             dashPattern: [8, 6],
             child: Container(
-              height: w/1.75,
+              height: w / 1.75,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(15),
-                color: coolerWhite
+                  borderRadius: BorderRadius.circular(15), color: coolerWhite),
+              child: Center(
+                child: Icon(
+                  Icons.add,
+                  color: Colors.grey[400],
+                  size: 50,
+                ),
               ),
-              child: Center(child: Icon(Icons.add, color: Colors.grey[400], size: 50,),),
             ),
-          )
-        );
-      }
+          )),
+    );
+  }
 
-      return Container(
-        padding: EdgeInsets.symmetric(horizontal: 10.0),
-        child: Container(
-          height: w/1.65,
-          decoration: BoxDecoration(
-            boxShadow: <BoxShadow>[
+  Widget buildCard(DocumentSnapshot creditCardDS) {
+    double w = MediaQuery.of(context).size.width;
+    Map creditCard = creditCardDS['card'];
+    String brand = creditCard['brand'];
+    String fingerprint = creditCard['fingerprint'];
+    bool isDefault = defaultSource == creditCardDS['id'] ? true : false;
+
+    var colors;
+    var imageAsset;
+
+    switch (brand.toUpperCase()) {
+      case 'VISA':
+        colors = [
+          Colors.black,
+          Colors.indigo[800],
+          Colors.blue,
+          Colors.black,
+        ];
+        imageAsset = Image.asset(
+          'assets/visa.png',
+          height: 75.0,
+          color: Colors.white,
+        );
+        break;
+      case 'MASTERCARD':
+        colors = [
+          Colors.black,
+          Colors.red[800],
+          Colors.yellow[800],
+          Colors.black,
+        ];
+        imageAsset = Image.asset(
+          'assets/mastercard.png',
+          width: 75.0,
+        );
+        break;
+      default:
+        colors = [
+          Colors.black,
+          Colors.black,
+          Colors.black,
+          Colors.black,
+        ];
+        break;
+    }
+
+    return InkWell(
+      onTap: () => handleCardTap(CardTapAction.setDefault, creditCardDS),
+      onLongPress: () => handleCardTap(CardTapAction.delete, creditCardDS),
+      child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 10.0),
+          child: Container(
+              height: w / 1.65,
+              decoration: BoxDecoration(
+                boxShadow: <BoxShadow>[
                   CustomBoxShadow(
                       color: Colors.black,
                       blurRadius: 5.0,
                       blurStyle: BlurStyle.outer),
                 ],
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: colors),
-            borderRadius: BorderRadius.circular(15),
-          ),
-          child: Column(children: <Widget>[
-              Align(alignment: Alignment.topRight,
-                child: Padding(padding: const EdgeInsets.only(right: 30.0, top: 10.0),
-                  child: brand == "visa" 
-                  ? Image.asset('assets/visa.png', height: 75.0, color: Colors.white,) 
-                  : Image.asset('assets/mastercard.png', width: 75.0,) 
-                ),
+                gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: colors),
+                borderRadius: BorderRadius.circular(15),
               ),
-              SizedBox(height: 30.0,),
-              Row(children: <Widget>[
-                SizedBox(width: 30.0,),
-                Icon(Icons.brightness_1, color: Colors.white70, size: 8.5,),
-                SizedBox(width: 7.0,),
-                Icon(Icons.brightness_1, color: Colors.white70, size: 8.5,),
-                SizedBox(width: 7.0,),
-                Icon(Icons.brightness_1, color: Colors.white70, size: 8.5,),
-                SizedBox(width: 7.0,),
-                Icon(Icons.brightness_1, color: Colors.white70, size: 8.5,),
-                SizedBox(width: 18.0,),
-                Icon(Icons.brightness_1, color: Colors.white70, size: 8.5,),
-                SizedBox(width: 7.0,),
-                Icon(Icons.brightness_1, color: Colors.white70, size: 8.5,),
-                SizedBox(width: 7.0,),
-                Icon(Icons.brightness_1, color: Colors.white70, size: 8.5,),
-                SizedBox(width: 7.0,),
-                Icon(Icons.brightness_1, color: Colors.white70, size: 8.5,),
-                SizedBox(width: 18.0,),
-                Icon(Icons.brightness_1, color: Colors.white70, size: 8.5,),
-                SizedBox(width: 7.0,),
-                Icon(Icons.brightness_1, color: Colors.white70, size: 8.5,),
-                SizedBox(width: 7.0,),
-                Icon(Icons.brightness_1, color: Colors.white70, size: 8.5,),
-                SizedBox(width: 7.0,),
-                Icon(Icons.brightness_1, color: Colors.white70, size: 8.5,),
-                SizedBox(width: 18.0,),
-                Text('${creditCardDS['card']['last4']}', style: TextStyle(color: Colors.white, fontFamily: appFont, fontSize: 17.0, fontWeight: FontWeight.w400, letterSpacing: 2.0),),
-              ],),
-              SizedBox(height: 60.0,),
-              Align(alignment: Alignment.bottomRight,
-                child: Padding(padding: const EdgeInsets.symmetric(horizontal: 30.0),
-                  child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
-                    Text('${creditCardDS['card']['name']}', style: TextStyle(color: Colors.white, fontFamily: appFont, fontSize: 14.0, fontWeight: FontWeight.w400, letterSpacing: 2.0),),
-                    Text('${creditCard['exp_month']} / ${creditCard['exp_year']}', style: TextStyle(color: Colors.white, fontFamily: appFont, fontSize: 14.0, fontWeight: FontWeight.w400, letterSpacing: 2.0),),
-                  ],),
-                ),
-              ),
-            ],) 
-        )
-      );
-    }
+              child: Column(
+                children: <Widget>[
+                  Align(
+                    alignment: Alignment.topRight,
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 30.0, top: 10.0),
+                      child: imageAsset ?? null,
+                    ),
+                  ),
+                  SizedBox(height: 30.0),
+                  Row(
+                    children: <Widget>[
+                      SizedBox(width: 30.0),
+                      Icon(
+                        Icons.brightness_1,
+                        color: Colors.white70,
+                        size: 8.5,
+                      ),
+                      SizedBox(width: 7.0),
+                      Icon(
+                        Icons.brightness_1,
+                        color: Colors.white70,
+                        size: 8.5,
+                      ),
+                      SizedBox(width: 7.0),
+                      Icon(
+                        Icons.brightness_1,
+                        color: Colors.white70,
+                        size: 8.5,
+                      ),
+                      SizedBox(width: 7.0),
+                      Icon(
+                        Icons.brightness_1,
+                        color: Colors.white70,
+                        size: 8.5,
+                      ),
+                      SizedBox(width: 18.0),
+                      Icon(
+                        Icons.brightness_1,
+                        color: Colors.white70,
+                        size: 8.5,
+                      ),
+                      SizedBox(width: 7.0),
+                      Icon(
+                        Icons.brightness_1,
+                        color: Colors.white70,
+                        size: 8.5,
+                      ),
+                      SizedBox(width: 7.0),
+                      Icon(
+                        Icons.brightness_1,
+                        color: Colors.white70,
+                        size: 8.5,
+                      ),
+                      SizedBox(width: 7.0),
+                      Icon(
+                        Icons.brightness_1,
+                        color: Colors.white70,
+                        size: 8.5,
+                      ),
+                      SizedBox(width: 18.0),
+                      Icon(
+                        Icons.brightness_1,
+                        color: Colors.white70,
+                        size: 8.5,
+                      ),
+                      SizedBox(
+                        width: 7.0,
+                      ),
+                      Icon(
+                        Icons.brightness_1,
+                        color: Colors.white70,
+                        size: 8.5,
+                      ),
+                      SizedBox(width: 7.0),
+                      Icon(
+                        Icons.brightness_1,
+                        color: Colors.white70,
+                        size: 8.5,
+                      ),
+                      SizedBox(width: 7.0),
+                      Icon(
+                        Icons.brightness_1,
+                        color: Colors.white70,
+                        size: 8.5,
+                      ),
+                      SizedBox(width: 18.0),
+                      Text(
+                        '${creditCardDS['card']['last4']}',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontFamily: appFont,
+                            fontSize: 17.0,
+                            fontWeight: FontWeight.w400,
+                            letterSpacing: 2.0),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 60.0),
+                  Align(
+                    alignment: Alignment.bottomRight,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 30.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: <Widget>[
+                          Text(
+                            '${creditCard['name']}',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontFamily: appFont,
+                                fontSize: 14.0,
+                                fontWeight: FontWeight.w400,
+                                letterSpacing: 2.0),
+                          ),
+                          isDefault
+                              ? Text(
+                                  'DEFAULT',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.green,
+                                    fontSize: 19,
+                                  ),
+                                )
+                              : Container(),
+                          Text(
+                            '${creditCard['exp_month']} / ${creditCard['exp_year']}',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontFamily: appFont,
+                                fontSize: 14.0,
+                                fontWeight: FontWeight.w400,
+                                letterSpacing: 2.0),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ))),
+    );
+  }
 
-    return ListView(
-      shrinkWrap: true,
-      children: <Widget>[
-        SizedBox(height: 10.0,),
-        _card("visa"),
-        SizedBox(height: 20.0,),
-        _card("empty"),
-      //_card("mastercard"),
-    ],);
+  Widget showCreditCards() {
+    double w = MediaQuery.of(context).size.width;
+
+    return StreamBuilder(
+      stream:
+          Firestore.instance.collection('users').document(myUserID).snapshots(),
+      builder:
+          (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+        switch (snapshot.connectionState) {
+          case ConnectionState.waiting:
+          default:
+            DocumentSnapshot ds = snapshot.data;
+
+            if (ds != null && ds.exists) {
+              defaultSource = ds['defaultSource'];
+              stripeCustId = ds['custId'];
+            }
+
+            return StreamBuilder(
+              stream: Firestore.instance
+                  .collection('users')
+                  .document(myUserID)
+                  .collection('sources')
+                  .snapshots(),
+              builder: (BuildContext context,
+                  AsyncSnapshot<QuerySnapshot> snapshot) {
+                if (snapshot.hasError) {
+                  return new Text('${snapshot.error}');
+                }
+
+                switch (snapshot.connectionState) {
+                  case ConnectionState.waiting:
+                    return Container();
+                  default:
+                    List documents = snapshot.data.documents;
+
+                    return ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: documents.length + 1,
+                      itemBuilder: (context, index) {
+                        if (index == documents.length) {
+                          return Column(
+                            children: <Widget>[
+                              Container(height: 10),
+                              addCard(),
+                            ],
+                          );
+                        } else {
+                          return Column(
+                            children: <Widget>[
+                              Container(height: 10),
+                              buildCard(documents[index])
+                            ],
+                          );
+                        }
+                      },
+                    );
+                }
+              },
+            );
+        }
+      },
+    );
   }
 
   Widget showPayouts() {
@@ -428,5 +624,77 @@ class PayoutsPageState extends State<PayoutsPage> {
         },
       ),
     );
+  }
+
+  void setCardAsDefault(sourceDS) async {
+    final HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
+      functionName: 'setDefaultSource',
+    );
+
+    dynamic resp = await callable.call(<String, dynamic>{
+      'userId': myUserID,
+      'customerId': stripeCustId,
+      'newSourceId':sourceDS['id'],
+    });
+  }
+
+  void deleteCard(sourceDS) async {
+    await Firestore.instance
+        .collection('users')
+        .document(myUserID)
+        .collection('sources')
+        .document(sourceDS['card']['fingerprint'])
+        .delete();
+  }
+
+  Future<bool> handleCardTap(actionEnum, sourceDS) async {
+    final ThemeData theme = Theme.of(context);
+    final TextStyle dialogTextStyle =
+        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+    String dialogText = '';
+    String dialogConfirmText = 'Confirm';
+    var action;
+
+    switch (actionEnum) {
+      case CardTapAction.setDefault:
+        dialogText = 'Set card as default payment?';
+        action = ()=>setCardAsDefault(sourceDS);
+        break;
+      case CardTapAction.delete:
+        dialogText = 'Delete card?';
+        dialogConfirmText = 'Delete';
+        action = () => deleteCard(sourceDS);
+        break;
+      default:
+        return false;
+    }
+
+    return await showDialog<bool>(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              content: Text(
+                dialogText,
+                style: dialogTextStyle,
+              ),
+              actions: <Widget>[
+                FlatButton(
+                  child: const Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(context).pop(false); // Pop dialog
+                  },
+                ),
+                FlatButton(
+                  child: Text(dialogConfirmText),
+                  onPressed: () {
+                    Navigator.of(context).pop(false); // Pop dialog
+                    action();
+                  },
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
   }
 }

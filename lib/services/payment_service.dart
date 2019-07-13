@@ -8,9 +8,10 @@ class PaymentService {
           .collection('users')
           .document(user.uid)
           .collection('tokens')
-          .add({'tokenId': token}).then((val) {
-        //print('saved');
-      });
+          .add({
+        'tokenId': token,
+        'timestamp': DateTime.now(),
+      }).then((val) {});
     });
   }
 

@@ -1,4 +1,7 @@
 import 'dart:math';
+import 'dart:async';
+import 'dart:typed_data';
+import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -36,7 +39,9 @@ class ItemDetailState extends State<ItemDetail> {
       new GlobalKey<RefreshIndicatorState>();
 
   GoogleMapController googleMapController;
-  String appBarTitle = "Item Details";
+  Marker itemLocationMarker;
+  double latOffset;
+  double longOffset;
 
   String url;
   double padding = 5.0;
@@ -118,6 +123,31 @@ class ItemDetailState extends State<ItemDetail> {
           rentalDS = ds;
         }
       }
+
+      var rng = new Random();
+
+      bool addLat = rng.nextBool();
+      bool addLong = rng.nextBool();
+      double latRandom = rng.nextDouble() / 50;
+      double longRandom = rng.nextDouble() / 50;
+
+      GeoPoint gp = itemDS['location']['geopoint'];
+      latOffset = gp.latitude;
+      longOffset = gp.longitude;
+
+      if (addLat) {
+        latOffset += latRandom;
+      } else {
+        latOffset -= latRandom;
+      }
+
+      if (addLong) {
+        longOffset += longRandom;
+      } else {
+        longOffset -= longRandom;
+      }
+
+      setMarker();
 
       /*
       QuerySnapshot querySnapshot = await Firestore.instance
@@ -567,61 +597,41 @@ class ItemDetailState extends State<ItemDetail> {
         : Text('No images yet\n');
   }
 
+  void setMarker() async {
+    final MarkerId markerId = MarkerId('marker');
+    BitmapDescriptor markerIcon = await _getAssetIcon(context);
+
+    itemLocationMarker = Marker(
+      markerId: MarkerId("marker"),
+      icon: markerIcon,
+      position: LatLng(
+        latOffset,
+        longOffset,
+      ),
+      anchor: Offset(0.5, 0.5),
+    );
+  }
+
   Widget showItemLocation() {
     double widthOfScreen = MediaQuery.of(context).size.width;
-
-    var rng = new Random();
-
-    bool addLat = rng.nextBool();
-    bool addLng = rng.nextBool();
-    double latOffset = rng.nextDouble() / 50;
-    double lngOffset = rng.nextDouble() / 50;
-
-    GeoPoint gp = itemDS['location']['geopoint'];
-    double lat = gp.latitude;
-    double lng = gp.longitude;
-
-    if (addLat) {
-      lat += latOffset;
-    } else {
-      lat -= latOffset;
-    }
-
-    if (addLng) {
-      lng += lngOffset;
-    } else {
-      lng -= lngOffset;
-    }
 
     Widget showMap() {
       return GoogleMap(
         mapType: MapType.normal,
         rotateGesturesEnabled: false,
         initialCameraPosition: CameraPosition(
-          target: LatLng(lat, lng),
-          zoom: 12,
+          target: LatLng(latOffset, longOffset),
+          zoom: 11,
           //zoom: 10,
         ),
         onMapCreated: (GoogleMapController controller) {
           googleMapController = controller;
         },
-        /*
         markers: Set<Marker>.of(
           <Marker>[
-            Marker(
-              markerId: MarkerId("test_marker_id"),
-              position: LatLng(
-                lat,
-                long,
-              ),
-              infoWindow: InfoWindow(
-                title: 'Item Location',
-                snippet: '${lat}, ${long}',
-              ),
-            )
+            itemLocationMarker,
           ],
         ),
-        */
         gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>[
           Factory<OneSequenceGestureRecognizer>(
             () =>
@@ -676,7 +686,7 @@ class ItemDetailState extends State<ItemDetail> {
               child: Stack(
                 children: <Widget>[
                   showMap(),
-                  showCircle(),
+                  //showCircle(),
                 ],
               ),
             ),
@@ -684,6 +694,24 @@ class ItemDetailState extends State<ItemDetail> {
         ],
       ),
     );
+  }
+
+  Future<BitmapDescriptor> _getAssetIcon(BuildContext context) async {
+    final Completer<BitmapDescriptor> bitmapIcon =
+        Completer<BitmapDescriptor>();
+    final ImageConfiguration config = createLocalImageConfiguration(context);
+
+    const AssetImage('assets/circle1.png')
+        .resolve(config)
+        .addListener((ImageInfo image, bool sync) async {
+      final ByteData bytes =
+          await image.image.toByteData(format: ImageByteFormat.png);
+      final BitmapDescriptor bitmap =
+          BitmapDescriptor.fromBytes(bytes.buffer.asUint8List());
+      bitmapIcon.complete(bitmap);
+    });
+
+    return await bitmapIcon.future;
   }
 
   Widget showItemVisibilityModifier() {
