@@ -85,12 +85,16 @@ class PayoutsPageState extends State<PayoutsPage> {
             ),
           ),
         ),
-        body: TabBarView(
-          children: [
-            showCreditCards(),
-            showPayouts(),
-          ],
-        ),
+        body: isLoading
+            ? Center(
+                child: CircularProgressIndicator(),
+              )
+            : TabBarView(
+                children: [
+                  showCreditCards(),
+                  showPayouts(),
+                ],
+              ),
       ),
     );
   }
@@ -116,6 +120,15 @@ class PayoutsPageState extends State<PayoutsPage> {
           PaymentService().addCard(token);
           Fluttertoast.showToast(
               msg: 'Adding card...', toastLength: Toast.LENGTH_LONG);
+          setState(() {
+            isLoading = true;
+          });
+
+          Future.delayed(Duration(seconds: 3)).then((_) {
+            setState(() {
+              isLoading = false;
+            });
+          });
         });
       },
       child: Container(
@@ -616,24 +629,58 @@ class PayoutsPageState extends State<PayoutsPage> {
   }
 
   void setCardAsDefault(sourceDS) async {
+    setState(() {
+      isLoading = true;
+    });
     final HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
       functionName: 'setDefaultSource',
     );
 
-    dynamic resp = await callable.call(<String, dynamic>{
+    callable.call(<String, dynamic>{
       'userId': myUserID,
       'customerId': stripeCustId,
       'newSourceId': sourceDS['id'],
+    }).then((resp) {
+      String responseMessage = resp.data;
+
+      setState(() {
+        isLoading = false;
+      });
+
+      Fluttertoast.showToast(msg: responseMessage);
     });
   }
 
   void deleteCard(sourceDS) async {
-    await Firestore.instance
+    setState(() {
+      isLoading = true;
+    });
+
+    final HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
+      functionName: 'deleteStripeSource',
+    );
+
+    Firestore.instance
         .collection('users')
         .document(myUserID)
         .collection('sources')
         .document(sourceDS['card']['fingerprint'])
-        .delete();
+        .delete()
+        .then((_) {
+      callable.call(<String, dynamic>{
+        'userId': myUserID,
+        'customerId': stripeCustId,
+        'source': sourceDS['id'],
+      }).then((resp) {
+        String responseMessage = resp.data;
+
+        setState(() {
+          isLoading = false;
+        });
+
+        Fluttertoast.showToast(msg: responseMessage);
+      });
+    });
   }
 
   Future<bool> handleCardTap(actionEnum, sourceDS) async {

@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-
+import 'package:shareapp/pages/profile_tab_pages/payouts_page.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -196,21 +196,21 @@ class ItemRequestState extends State<ItemRequest> {
 
       if (ds != null) {
         itemOwnerDS = ds;
-      }
 
-      if (prefs != null && itemDS != null && itemOwnerDS != null) {
-        if (myUserID.hashCode <= itemOwnerDS.documentID.hashCode) {
-          groupChatId = '$myUserID-${itemOwnerDS.documentID}';
-          combinedID = [myUserID, itemOwnerDS.documentID];
-        } else {
-          groupChatId = '${itemOwnerDS.documentID}-$myUserID';
-          combinedID = [itemOwnerDS.documentID, myUserID];
-        }
+        if (prefs != null && itemDS != null && itemOwnerDS != null) {
+          if (myUserID.hashCode <= itemOwnerDS.documentID.hashCode) {
+            groupChatId = '$myUserID-${itemOwnerDS.documentID}';
+            combinedID = [myUserID, itemOwnerDS.documentID];
+          } else {
+            groupChatId = '${itemOwnerDS.documentID}-$myUserID';
+            combinedID = [itemOwnerDS.documentID, myUserID];
+          }
 
-        if (groupChatId != null && combinedID != null) {
-          setState(() {
-            isLoading = false;
-          });
+          if (groupChatId != null && combinedID != null) {
+            setState(() {
+              isLoading = false;
+            });
+          }
         }
       }
     }
@@ -263,7 +263,7 @@ class ItemRequestState extends State<ItemRequest> {
 
   Widget showBody() {
     return ListView(
-      physics: NeverScrollableScrollPhysics(),
+      //physics: NeverScrollableScrollPhysics(),
       padding: EdgeInsets.all(0),
       children: <Widget>[
         showItemImage(),
@@ -294,6 +294,8 @@ class ItemRequestState extends State<ItemRequest> {
                   divider(),
                   showTimePickers(),
                   divider(),
+                  showPaymentMethod(),
+                  Container(height: 20),
                   showItemPriceInfo(),
                 ],
               ),
@@ -396,6 +398,102 @@ class ItemRequestState extends State<ItemRequest> {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget showPaymentMethod() {
+    return InkWell(
+      onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (BuildContext context) => PayoutsPage(),
+          )),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 20.0),
+        child: Column(
+          children: <Widget>[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                Text('Payment method',
+                    style: TextStyle(fontSize: 15.0, fontFamily: 'Quicksand')),
+                StreamBuilder(
+                  stream: Firestore.instance
+                      .collection('users')
+                      .document(myUserID)
+                      .snapshots(),
+                  builder: (context, AsyncSnapshot snapshot) {
+                    switch (snapshot.connectionState) {
+                      case (ConnectionState.waiting):
+                      default:
+                        if (snapshot.hasData) {
+                          DocumentSnapshot myUserDS = snapshot.data;
+                          String defaultSource = myUserDS['defaultSource'];
+
+                          if (defaultSource == null) {
+                            return Text(
+                              'Click to add',
+                              style: TextStyle(
+                                fontSize: 15.0,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Quicksand',
+                              ),
+                            );
+                          } else {
+                            return StreamBuilder(
+                              stream: myUserDS.reference
+                                  .collection('sources')
+                                  .where('id',
+                                      isEqualTo: myUserDS['defaultSource'])
+                                  .limit(1)
+                                  .snapshots(),
+                              builder: (context, AsyncSnapshot snapshot) {
+                                switch (snapshot.connectionState) {
+                                  case (ConnectionState.waiting):
+                                  default:
+                                    if (snapshot.hasData &&
+                                        snapshot.data.documents.length > 0) {
+                                      DocumentSnapshot sourceDS =
+                                          snapshot.data.documents[0];
+
+                                      String brand = sourceDS['card']['brand'];
+                                      String last4 = sourceDS['card']['last4'];
+
+                                      return Text(
+                                        '$brand $last4',
+                                        style: TextStyle(
+                                          fontSize: 15.0,
+                                          fontWeight: FontWeight.bold,
+                                          fontFamily: 'Quicksand',
+                                        ),
+                                      );
+                                    } else {
+                                      return Container();
+                                    }
+                                }
+                              },
+                            );
+                          }
+                        } else {
+                          return Container();
+                        }
+                    }
+                  },
+                ),
+              ],
+            ),
+            Container(height: 5,),
+            Align(
+                alignment: Alignment.bottomLeft,
+                child: Text('Click to edit',
+                    style: TextStyle(
+                        fontSize: 10.0,
+                        fontFamily: 'Quicksand',
+                        fontWeight: FontWeight.w100,
+                        fontStyle: FontStyle.italic))),
+          ],
+        ),
       ),
     );
   }

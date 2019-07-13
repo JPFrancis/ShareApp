@@ -252,7 +252,6 @@ exports.addStripeSource = functions.firestore.document('users/{userId}/tokens/{t
                 });
         }
 
-
         /*
         const customerSource = customer.sources.data[0];
         
@@ -263,38 +262,36 @@ exports.addStripeSource = functions.firestore.document('users/{userId}/tokens/{t
         */
     })
 
-// delete stripe source
-exports.deleteStripeSource = functions.firestore.document('users/{userId}/sources/{sourceId}')
-    .onWrite(async (tokenSnap, context) => {
-        var data = tokenSnap.before.data();
+// delete credit card
+exports.deleteStripeSource = functions.https.onCall(async (data, context) => {
+    var customerId = data.customerId;
+    var source = data.source;
+    var userId = data.userId;
 
-        if (data === null) {
-            return null
-        }
+    await stripe.customers.deleteSource(
+        customerId,
+        source,
+    );
 
-        var customerId = data.customer;
-        var source = data.id;
-        var last4 = data.card.last4;
+    var updatedCustomer = await stripe.customers.retrieve(
+        customerId,
+    );
 
-        console.log(`Deleting card ending in ${last4}`);
+    var newDefaultSource = updatedCustomer.default_source;
+    console.log(`New default source: ${newDefaultSource}`);
 
-        stripe.customers.deleteSource(
-            customerId,
-            source,
-        );
+    var resp = await firestore.collection('users').doc(userId).update({
+        defaultSource: newDefaultSource,
+    });
 
-        var updatedCustomer = await stripe.customers.retrieve(
-            customerId,
-        );
+    if (resp === null) {
+        return 'Error';
+    } else {
+        return 'Card successfully deleted';
+    }
+});
 
-        var newDefaultSource = updatedCustomer.default_source;
-        console.log(`New default source: ${newDefaultSource}`);
-
-        firestore.collection('users').doc(context.params.userId).update({
-            defaultSource: newDefaultSource,
-        });
-    })
-
+// set card as default
 exports.setDefaultSource = functions.https.onCall(async (data, context) => {
     var userId = data.userId;
     var customerId = data.customerId;
@@ -304,9 +301,15 @@ exports.setDefaultSource = functions.https.onCall(async (data, context) => {
         default_source: newSourceId
     });
 
-    await firestore.collection('users').doc(userId).update({
+    var resp = await firestore.collection('users').doc(userId).update({
         defaultSource: updatedCustomer.default_source,
     });
+
+    if (resp === null) {
+        return 'Error';
+    } else {
+        return 'Updated default payment method';
+    }
 });
 
 /*

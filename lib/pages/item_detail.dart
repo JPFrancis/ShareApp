@@ -2,7 +2,38 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui';
+import 'dart:async';
+import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:geoflutterfire/geoflutterfire.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
+import 'package:shareapp/extras/helpers.dart';
+import 'package:shareapp/extras/quote_icons.dart';
+import 'package:shareapp/main.dart';
+import 'package:shareapp/models/item.dart';
+import 'package:shareapp/models/user.dart';
+import 'package:shareapp/pages/item_detail.dart';
+import 'package:shareapp/pages/item_edit.dart';
+import 'package:shareapp/pages/profile_tab_pages/help_page.dart';
+import 'package:shareapp/pages/profile_tab_pages/payouts_page.dart';
+import 'package:shareapp/pages/profile_tab_pages/profile_edit.dart';
+import 'package:shareapp/pages/search_page.dart';
+import 'package:shareapp/rentals/chat.dart';
+import 'package:shareapp/rentals/rental_detail.dart';
+import 'package:shareapp/services/auth.dart';
+import 'package:shareapp/services/const.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:timeago/timeago.dart' as timeago;
+import 'package:url_launcher/url_launcher.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -42,6 +73,9 @@ class ItemDetailState extends State<ItemDetail> {
   Marker itemLocationMarker;
   double latOffset;
   double longOffset;
+  GeoPoint itemLocationGeoPoint;
+  Position currentLocation;
+  String milesAway = 'No location data';
 
   String url;
   double padding = 5.0;
@@ -90,6 +124,37 @@ class ItemDetailState extends State<ItemDetail> {
     }
   }
 
+  getUserLocation() async {
+    GeolocationStatus geolocationStatus =
+        await Geolocator().checkGeolocationPermissionStatus();
+
+    if (geolocationStatus != null) {
+      if (geolocationStatus == GeolocationStatus.granted) {
+        currentLocation = await locateUser();
+
+        if (currentLocation != null) {
+          double distanceInMeters = await Geolocator().distanceBetween(
+            currentLocation.latitude,
+            currentLocation.longitude,
+            itemLocationGeoPoint.latitude,
+            itemLocationGeoPoint.longitude,
+          );
+
+          double distanceInMiles = distanceInMeters/1609.344;
+          milesAway='${distanceInMiles.toStringAsFixed(1)} miles away';
+          setState(() {
+            
+          });
+        }
+      }
+    }
+  }
+
+  Future<Position> locateUser() async {
+    return Geolocator()
+        .getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+  }
+
   Future<Null> getSnapshots(bool refreshItemDS) async {
     DocumentSnapshot ds = refreshItemDS
         ? await Firestore.instance
@@ -131,9 +196,9 @@ class ItemDetailState extends State<ItemDetail> {
       double latRandom = rng.nextDouble() / 50;
       double longRandom = rng.nextDouble() / 50;
 
-      GeoPoint gp = itemDS['location']['geopoint'];
-      latOffset = gp.latitude;
-      longOffset = gp.longitude;
+      itemLocationGeoPoint = itemDS['location']['geopoint'];
+      latOffset = itemLocationGeoPoint.latitude;
+      longOffset = itemLocationGeoPoint.longitude;
 
       if (addLat) {
         latOffset += latRandom;
@@ -148,6 +213,7 @@ class ItemDetailState extends State<ItemDetail> {
       }
 
       setMarker();
+      getUserLocation();
 
       /*
       QuerySnapshot querySnapshot = await Firestore.instance
@@ -307,6 +373,7 @@ class ItemDetailState extends State<ItemDetail> {
         showItemCondition(),
         showItemCreator(),
         showItemDescription(),
+        showMilesAway(),
         divider(),
         showItemLocation(),
         divider(),
@@ -500,6 +567,22 @@ class ItemDetailState extends State<ItemDetail> {
         ],
       ),
     ));
+  }
+
+  Widget showMilesAway() {
+    return Padding(
+      padding: EdgeInsets.only(top: 20.0, left: 20.0, right: 20.0),
+      child: SizedBox(
+          child: Container(
+        color: Color(0x00000000),
+        child: Text(
+          milesAway,
+          style: TextStyle(
+              color: Colors.black, fontSize: 15.0, fontFamily: 'Quicksand'),
+          textAlign: TextAlign.left,
+        ),
+      )),
+    );
   }
 
   Widget showItemDescription() {
