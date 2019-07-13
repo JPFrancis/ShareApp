@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:shareapp/pages/profile_tab_pages/payouts_page.dart';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +9,7 @@ import 'package:flutter_picker/flutter_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
+import 'package:shareapp/pages/profile_tab_pages/payouts_page.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:shareapp/services/picker_data.dart';
@@ -483,7 +484,9 @@ class ItemRequestState extends State<ItemRequest> {
                 ),
               ],
             ),
-            Container(height: 5,),
+            Container(
+              height: 5,
+            ),
             Align(
                 alignment: Alignment.bottomLeft,
                 child: Text('Click to edit',

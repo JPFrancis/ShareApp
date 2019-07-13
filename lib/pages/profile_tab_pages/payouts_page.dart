@@ -6,13 +6,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:shareapp/services/payment_service.dart';
 import 'package:stripe_payment/stripe_payment.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 
 enum CardTapAction {
   setDefault,

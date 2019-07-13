@@ -2,38 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui';
-import 'dart:async';
-import 'dart:io';
 
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:geoflutterfire/geoflutterfire.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart';
-import 'package:shareapp/extras/helpers.dart';
-import 'package:shareapp/extras/quote_icons.dart';
-import 'package:shareapp/main.dart';
-import 'package:shareapp/models/item.dart';
-import 'package:shareapp/models/user.dart';
-import 'package:shareapp/pages/item_detail.dart';
-import 'package:shareapp/pages/item_edit.dart';
-import 'package:shareapp/pages/profile_tab_pages/help_page.dart';
-import 'package:shareapp/pages/profile_tab_pages/payouts_page.dart';
-import 'package:shareapp/pages/profile_tab_pages/profile_edit.dart';
-import 'package:shareapp/pages/search_page.dart';
-import 'package:shareapp/rentals/chat.dart';
-import 'package:shareapp/rentals/rental_detail.dart';
-import 'package:shareapp/services/auth.dart';
-import 'package:shareapp/services/const.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:timeago/timeago.dart' as timeago;
-import 'package:url_launcher/url_launcher.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -41,6 +10,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
@@ -75,7 +45,7 @@ class ItemDetailState extends State<ItemDetail> {
   double longOffset;
   GeoPoint itemLocationGeoPoint;
   Position currentLocation;
-  String milesAway = 'No location data';
+  String milesAway = 'Getting location...';
 
   String url;
   double padding = 5.0;
@@ -140,12 +110,13 @@ class ItemDetailState extends State<ItemDetail> {
             itemLocationGeoPoint.longitude,
           );
 
-          double distanceInMiles = distanceInMeters/1609.344;
-          milesAway='${distanceInMiles.toStringAsFixed(1)} miles away';
-          setState(() {
-            
-          });
+          double distanceInMiles = distanceInMeters / 1609.344;
+          milesAway = '${distanceInMiles.toStringAsFixed(1)} miles away';
+          setState(() {});
         }
+      } else {
+        milesAway = 'No location data';
+        setState(() {});
       }
     }
   }
