@@ -29,6 +29,7 @@ exports.createUser = functions.auth.user().onCreate(event => {
         lastActive: Date.now(),
         creationDate: creationDate,
         custId: 'new',
+        defaultSource: null,
         pushToken: [],
         description: '',
         gender: null,
@@ -37,7 +38,7 @@ exports.createUser = functions.auth.user().onCreate(event => {
         address: null,
     }).then(function () {
         console.log('Created user: ', userID);
-        return 'Created user $userID';
+        return `Created user ${userID}`;
     }).catch(error => {
         console.error('Error when creating user! ', error);
     });
@@ -208,23 +209,120 @@ exports.addStripeSource = functions.firestore.document('users/{userId}/tokens/{t
         if (customerId === 'new') {
             customer = await stripe.customers.create({
                 email: customerEmail,
-                source: token
+                source: token,
             });
+
+            const customerSource = customer.sources.data[0];
+            const customerSourceId = customerSource.id;
 
             firestore.collection('users').doc(context.params.userId).update({
-                custId: customer.id
+                custId: customer.id,
+                defaultSource: customerSourceId,
             });
+
+            firestore.collection('users').doc(context.params.userId).collection('sources').
+                doc(customerSource.card.fingerprint).set(customerSource, {
+                    merge: true
+                });
+
         } else {
             customer = await stripe.customers.retrieve(customerId);
+
+            var newSource = await stripe.customers.createSource(
+                customerId,
+                {
+                    source: token,
+                },
+            );
+
+            var updatedCustomer = await stripe.customers.retrieve(
+                customerId,
+            );
+
+            var newDefaultSource = updatedCustomer.default_source;
+            console.log(`New default source: ${newDefaultSource}`);
+
+            await firestore.collection('users').doc(context.params.userId).update({
+                defaultSource: newDefaultSource,
+            });
+
+            await firestore.collection('users').doc(context.params.userId).collection('sources').
+                doc(newSource.card.fingerprint).set(newSource, {
+                    merge: true
+                });
         }
 
+        /*
         const customerSource = customer.sources.data[0];
-
+        
         return firestore.collection('users').doc(context.params.userId).collection('sources').
             doc(customerSource.card.fingerprint).set(customerSource, {
                 merge: true
             });
+        */
     })
+
+// delete credit card
+exports.deleteStripeSource = functions.https.onCall(async (data, context) => {
+    var customerId = data.customerId;
+    var source = data.source;
+    var userId = data.userId;
+
+    await stripe.customers.deleteSource(
+        customerId,
+        source,
+    );
+
+    var updatedCustomer = await stripe.customers.retrieve(
+        customerId,
+    );
+
+    var newDefaultSource = updatedCustomer.default_source;
+    console.log(`New default source: ${newDefaultSource}`);
+
+    var resp = await firestore.collection('users').doc(userId).update({
+        defaultSource: newDefaultSource,
+    });
+
+    if (resp === null) {
+        return 'Error';
+    } else {
+        return 'Card successfully deleted';
+    }
+});
+
+// set card as default
+exports.setDefaultSource = functions.https.onCall(async (data, context) => {
+    var userId = data.userId;
+    var customerId = data.customerId;
+    var newSourceId = data.newSourceId;
+
+    var updatedCustomer = await stripe.customers.update(customerId, {
+        default_source: newSourceId
+    });
+
+    var resp = await firestore.collection('users').doc(userId).update({
+        defaultSource: updatedCustomer.default_source,
+    });
+
+    if (resp === null) {
+        return 'Error';
+    } else {
+        return 'Updated default payment method';
+    }
+});
+
+/*
+exports.setDefaultSource = (userId, customerId, newSourceId) => {
+    var updatedCustomer = await stripe.customers.update(customerId, {
+        default_source: newSourceId
+    });
+
+    await firestore.collection('users').doc(userId).update({
+        defaultSource: updatedCustomer.default_source,
+    });
+};
+*/
 
 exports.createCharge = functions.firestore.document('users/{userId}/charges/{chargeId}').onCreate(async (chargeSnap, context) => {
     try {

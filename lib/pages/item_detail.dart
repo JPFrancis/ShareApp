@@ -1,4 +1,7 @@
+import 'dart:async';
 import 'dart:math';
+import 'dart:typed_data';
+import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -7,6 +10,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
@@ -36,7 +40,12 @@ class ItemDetailState extends State<ItemDetail> {
       new GlobalKey<RefreshIndicatorState>();
 
   GoogleMapController googleMapController;
-  String appBarTitle = "Item Details";
+  Marker itemLocationMarker;
+  double latOffset;
+  double longOffset;
+  GeoPoint itemLocationGeoPoint;
+  Position currentLocation;
+  String milesAway = 'Getting location...';
 
   String url;
   double padding = 5.0;
@@ -85,6 +94,38 @@ class ItemDetailState extends State<ItemDetail> {
     }
   }
 
+  getUserLocation() async {
+    GeolocationStatus geolocationStatus =
+        await Geolocator().checkGeolocationPermissionStatus();
+
+    if (geolocationStatus != null) {
+      if (geolocationStatus == GeolocationStatus.granted) {
+        currentLocation = await locateUser();
+
+        if (currentLocation != null) {
+          double distanceInMeters = await Geolocator().distanceBetween(
+            currentLocation.latitude,
+            currentLocation.longitude,
+            itemLocationGeoPoint.latitude,
+            itemLocationGeoPoint.longitude,
+          );
+
+          double distanceInMiles = distanceInMeters / 1609.344;
+          milesAway = '${distanceInMiles.toStringAsFixed(1)} miles away';
+          setState(() {});
+        }
+      } else {
+        milesAway = 'No location data';
+        setState(() {});
+      }
+    }
+  }
+
+  Future<Position> locateUser() async {
+    return Geolocator()
+        .getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+  }
+
   Future<Null> getSnapshots(bool refreshItemDS) async {
     DocumentSnapshot ds = refreshItemDS
         ? await Firestore.instance
@@ -118,6 +159,32 @@ class ItemDetailState extends State<ItemDetail> {
           rentalDS = ds;
         }
       }
+
+      var rng = new Random();
+
+      bool addLat = rng.nextBool();
+      bool addLong = rng.nextBool();
+      double latRandom = rng.nextDouble() / 50;
+      double longRandom = rng.nextDouble() / 50;
+
+      itemLocationGeoPoint = itemDS['location']['geopoint'];
+      latOffset = itemLocationGeoPoint.latitude;
+      longOffset = itemLocationGeoPoint.longitude;
+
+      if (addLat) {
+        latOffset += latRandom;
+      } else {
+        latOffset -= latRandom;
+      }
+
+      if (addLong) {
+        longOffset += longRandom;
+      } else {
+        longOffset -= longRandom;
+      }
+
+      setMarker();
+      getUserLocation();
 
       /*
       QuerySnapshot querySnapshot = await Firestore.instance
@@ -263,20 +330,12 @@ class ItemDetailState extends State<ItemDetail> {
             ],
           ),
         ]),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            showItemType(),
-            Padding(
-              padding: const EdgeInsets.only(right: 15.0, top: 20),
-              child: isAuthenticated ? chatButton() : Container(),
-            ),
-          ],
-        ),
+        showItemType(),
         showItemName(),
         showItemCondition(),
         showItemCreator(),
         showItemDescription(),
+        showMilesAway(),
         divider(),
         showItemLocation(),
         divider(),
@@ -288,7 +347,11 @@ class ItemDetailState extends State<ItemDetail> {
 
   Widget chatButton() {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 1),
+       decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: primaryColor)
+      ),
+      padding: EdgeInsets.symmetric(horizontal: 15, vertical: 5),
       child: isOwner
           ? Container()
           : GestureDetector(
@@ -297,16 +360,9 @@ class ItemDetailState extends State<ItemDetail> {
                     .pushNamed(Chat.routeName, arguments: ChatArgs(creatorDS));
               },
               child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
-                  Text("Chat",
-                      style: TextStyle(
-                          fontFamily: appFont,
-                          fontSize: 14.0,
-                          fontWeight: FontWeight.w400)),
-                  SizedBox(
-                    width: 5.0,
-                  ),
-                  Icon(Icons.chat_bubble_outline)
+                  Text("Chat", style: TextStyle(color: primaryColor, fontFamily: appFont, fontSize: 14.0, fontWeight: FontWeight.w400)),
                 ],
               )),
     );
@@ -397,34 +453,45 @@ class ItemDetailState extends State<ItemDetail> {
   }
 
   Widget showItemCreator() {
-    return InkWell(
-      onTap: navToItemCreatorProfile,
-      child: Padding(
-        padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 10.0),
-        child: SizedBox(
+    return Column(
+      children: <Widget>[
+        InkWell(
+          onTap: navToItemCreatorProfile,
+          child: Padding(
+            padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 10.0),
             child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            Text(
-              'Shared by ${creatorDS['name']}',
-              style: TextStyle(
-                  color: Colors.black, fontSize: 15.0, fontFamily: 'Quicksand'),
-              textAlign: TextAlign.left,
-            ),
-            Container(
-              height: 50.0,
-              child: ClipOval(
-                child: CachedNetworkImage(
-                  //key: ValueKey(DateTime.now().millisecondsSinceEpoch),
-                  imageUrl: creatorDS['avatar'],
-                  placeholder: (context, url) =>
-                      new CircularProgressIndicator(),
+              mainAxisSize: MainAxisSize.max,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                Text(
+                  'Shared by ${creatorDS['name']}',
+                  style: TextStyle(
+                      color: Colors.black, fontSize: 15.0, fontFamily: 'Quicksand'),
+                  textAlign: TextAlign.left,
                 ),
-              ),
+                Container(
+                  height: 50.0,
+                  child: ClipOval(
+                    child: CachedNetworkImage(
+                      //key: ValueKey(DateTime.now().millisecondsSinceEpoch),
+                      imageUrl: creatorDS['avatar'],
+                      placeholder: (context, url) =>
+                          new CircularProgressIndicator(),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        )),
-      ),
+          ),
+        ),
+        Align(
+          alignment: Alignment.bottomRight,
+          child: Padding(
+            padding: const EdgeInsets.only(right: 15, top: 7),
+            child: isAuthenticated ? chatButton() : Container(),
+          ),
+        ),
+      ],
     );
   }
 
@@ -470,6 +537,22 @@ class ItemDetailState extends State<ItemDetail> {
         ],
       ),
     ));
+  }
+
+  Widget showMilesAway() {
+    return Padding(
+      padding: EdgeInsets.only(top: 20.0, left: 20.0, right: 20.0),
+      child: SizedBox(
+          child: Container(
+        color: Color(0x00000000),
+        child: Text(
+          milesAway,
+          style: TextStyle(
+              color: Colors.black, fontSize: 15.0, fontFamily: 'Quicksand'),
+          textAlign: TextAlign.left,
+        ),
+      )),
+    );
   }
 
   Widget showItemDescription() {
@@ -567,61 +650,42 @@ class ItemDetailState extends State<ItemDetail> {
         : Text('No images yet\n');
   }
 
+  void setMarker() async {
+    final MarkerId markerId = MarkerId('marker');
+   // BitmapDescriptor markerIcon = await _getAssetIcon(context);
+    BitmapDescriptor markerIcon = null;
+
+    itemLocationMarker = Marker(
+      markerId: MarkerId("marker"),
+      icon: markerIcon,
+      position: LatLng(
+        latOffset,
+        longOffset,
+      ),
+      anchor: Offset(0.5, 0.5),
+    );
+  }
+
   Widget showItemLocation() {
     double widthOfScreen = MediaQuery.of(context).size.width;
-
-    var rng = new Random();
-
-    bool addLat = rng.nextBool();
-    bool addLng = rng.nextBool();
-    double latOffset = rng.nextDouble() / 50;
-    double lngOffset = rng.nextDouble() / 50;
-
-    GeoPoint gp = itemDS['location']['geopoint'];
-    double lat = gp.latitude;
-    double lng = gp.longitude;
-
-    if (addLat) {
-      lat += latOffset;
-    } else {
-      lat -= latOffset;
-    }
-
-    if (addLng) {
-      lng += lngOffset;
-    } else {
-      lng -= lngOffset;
-    }
 
     Widget showMap() {
       return GoogleMap(
         mapType: MapType.normal,
         rotateGesturesEnabled: false,
         initialCameraPosition: CameraPosition(
-          target: LatLng(lat, lng),
-          zoom: 12,
+          target: LatLng(latOffset, longOffset),
+          zoom: 11,
           //zoom: 10,
         ),
         onMapCreated: (GoogleMapController controller) {
           googleMapController = controller;
         },
-        /*
         markers: Set<Marker>.of(
           <Marker>[
-            Marker(
-              markerId: MarkerId("test_marker_id"),
-              position: LatLng(
-                lat,
-                long,
-              ),
-              infoWindow: InfoWindow(
-                title: 'Item Location',
-                snippet: '${lat}, ${long}',
-              ),
-            )
+            itemLocationMarker,
           ],
         ),
-        */
         gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>[
           Factory<OneSequenceGestureRecognizer>(
             () =>
@@ -676,7 +740,7 @@ class ItemDetailState extends State<ItemDetail> {
               child: Stack(
                 children: <Widget>[
                   showMap(),
-                  showCircle(),
+                  //showCircle(),
                 ],
               ),
             ),
@@ -685,6 +749,22 @@ class ItemDetailState extends State<ItemDetail> {
       ),
     );
   }
+
+/*
+  Future<BitmapDescriptor> _getAssetIcon(BuildContext context) async {
+    final Completer<BitmapDescriptor> bitmapIcon =
+        Completer<BitmapDescriptor>();
+    final ImageConfiguration config = createLocalImageConfiguration(context);
+
+    const AssetImage('assets/circle1.png').resolve(config)
+      .addListener((ImageInfo image, bool sync) async {
+        final ByteData bytes = await image.image.toByteData(format: ImageByteFormat.png);
+        final BitmapDescriptor bitmap = BitmapDescriptor.fromBytes(bytes.buffer.asUint8List());
+        bitmapIcon.complete(bitmap);
+      });
+
+    return await bitmapIcon.future;
+  }*/
 
   Widget showItemVisibilityModifier() {
     return Padding(
