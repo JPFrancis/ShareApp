@@ -45,6 +45,10 @@ class SearchPageState extends State<SearchPage> {
   bool locIsLoading = false;
   bool isAuthenticated;
 
+
+  bool no_items = false;
+
+
   String font = 'Quicksand';
 
   @override
@@ -299,6 +303,11 @@ class SearchPageState extends State<SearchPage> {
             : Container(),
         filterPressed ? _filters() : Container(),
         buildItemList(),
+        no_items ? Center(child: Container(
+                    padding: EdgeInsets.only(left: 10.0, right: 10.0, bottom: 100.0),
+                    child: Text("Sorry! There no results with your current filters. Try changing something!", style: TextStyle(fontFamily: appFont),)))
+                   :
+        Container(),
       ],
     );
   }
@@ -599,8 +608,6 @@ class SearchPageState extends State<SearchPage> {
   }
 
   Widget buildItemList() {
-    int tileRows = MediaQuery.of(context).size.width > 500 ? 3 : 2;
-
     if (locIsLoading) {
       //return Text('Getting location...');
       return Center(
@@ -657,9 +664,7 @@ class SearchPageState extends State<SearchPage> {
 
                   switch (sortByFilter) {
                     case 'Alphabetically':
-                      items.sort((a, b) => a['name']
-                          .toLowerCase()
-                          .compareTo(b['name'].toLowerCase()));
+                      items.sort((a, b) => a['name'].toLowerCase().compareTo(b['name'].toLowerCase()));
                       break;
                     case 'Price low to high':
                       items.sort((a, b) => a['price'].compareTo(b['price']));
@@ -704,18 +709,22 @@ class SearchPageState extends State<SearchPage> {
 
                         if (add) {
                           displayCards.add(searchTile(ds, context));
+                         setState(() {
+                            no_items = true;
+                          }); 
                         }
                       }
                     }
                   }
-
+                
                   return ListView(
                     shrinkWrap: true,
                     padding: const EdgeInsets.all(20.0),
                     children: displayCards,
                   );
-                } else {
-                  return Container();
+                }
+                 else {
+                  return Container(color: Colors.pink,);
                 }
             }
           },

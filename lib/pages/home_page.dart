@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' as prefix0;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:geolocator/geolocator.dart';
@@ -1240,9 +1241,9 @@ class HomePageState extends State<HomePage> {
               bottomRight: const Radius.elliptical(40.0, 25),
               bottomLeft: const Radius.elliptical(40.0, 25),
             ))),
-        body: Column(
-          children: <Widget>[
-            reusableCategoryWithAll("REQUESTING", () => debugPrint),
+        body: ListView(shrinkWrap: true, children: <Widget>[
+            reusableCategory("REQUESTING"),
+            SizedBox(height: 10.0,),
             buildRequests("renter"),
             reusableCategoryWithAll("UPCOMING", () => debugPrint),
             buildTransactions("upcoming", "renter"),
@@ -1532,7 +1533,8 @@ class HomePageState extends State<HomePage> {
         .where('status', isLessThanOrEqualTo: 5)
         .where('status', isGreaterThanOrEqualTo: 2)
         .snapshots();
-    return Expanded(
+    return Container(
+      height: 150.0,
       child: StreamBuilder<QuerySnapshot>(
         stream: stream,
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
@@ -1769,23 +1771,19 @@ class HomePageState extends State<HomePage> {
             color: coolerWhite,
             child: TabBarView(
               children: [
-                Column(
-                  children: <Widget>[
-                    buildListingsList(),
-                  ],
-                ),
-                Column(
-                  children: <Widget>[
-                    reusableCategoryWithAll("REQUESTS", () => debugPrint),
-                    buildRequests("owner"),
-                    reusableCategoryWithAll("UPCOMING", () => debugPrint),
-                    buildTransactions('upcoming', "owner"),
-                    reusableCategoryWithAll("CURRENT", () => debugPrint),
-                    buildTransactions('current', "owner"),
-                    reusableCategoryWithAll("PAST", () => debugPrint),
-                    buildTransactions('past', "owner"),
-                  ],
-                ),
+                Column(children: <Widget>[
+                  buildListingsList(),
+                ],),
+                ListView(shrinkWrap: true, children: <Widget>[
+                  reusableCategoryWithAll("REQUESTS", () => debugPrint),
+                  buildRequests("owner"),
+                  reusableCategoryWithAll("UPCOMING", () => debugPrint),
+                  buildTransactions('upcoming', "owner"),
+                  reusableCategoryWithAll("CURRENT", () => debugPrint),
+                  buildTransactions('current', "owner"),
+                  reusableCategoryWithAll("PAST", () => debugPrint),
+                  buildTransactions('past', "owner"),
+                ],),
               ],
             ),
           ),
@@ -1801,28 +1799,7 @@ class HomePageState extends State<HomePage> {
                     borderRadius: new BorderRadius.all(
                       Radius.circular(100.0),
                     )),
-<<<<<<< HEAD
-                child: new TabBar(
-                  isScrollable: true,
-                  tabs: [
-                    Tab(
-                        child: Text(
-                      "All My Items",
-                      style: TextStyle(fontFamily: 'Quicksand'),
-                    )),
-                    Tab(
-                        child: Text(
-                      "Transactions",
-                      style: TextStyle(fontFamily: 'Quicksand'),
-                    )),
-                  ],
-                  labelColor: primaryColor,
-                  unselectedLabelColor: Colors.grey,
-                  indicatorColor: Colors.transparent,
-                ),
-=======
                 child: new 
->>>>>>> 707e04d663dc7c8e83823a7d8002b505d85104bb
               ),
             ),
           ),*/

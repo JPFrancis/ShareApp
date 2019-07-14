@@ -239,7 +239,8 @@ class RentalDetailState extends State<RentalDetail> {
                 padding: EdgeInsets.all(0),
                 children: <Widget>[
                   showItemImage(),
-                  showItemCreator(),
+                  isRenter ? showItemCreator() : Container(),
+                  isRenter ? Container() :  showRequester(), 
                   SizedBox(height: 10.0,),
                   Container(
                       padding: EdgeInsets.symmetric(
@@ -341,6 +342,47 @@ class RentalDetailState extends State<RentalDetail> {
     );
   }
 
+  Widget showRequester() {
+    return Padding(
+      padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 10.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(rentalDS['itemName'], style: TextStyle(fontFamily: 'Quicksand', fontSize: 25.0, fontWeight: FontWeight.bold),),
+          Divider(),
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
+            Text("Renter: ", style: TextStyle(fontFamily: 'Quicksand', fontSize: 20.0, fontStyle: FontStyle.italic),),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                Container(
+                  height: 50.0,
+                  child: ClipOval(
+                    child: CachedNetworkImage(
+                      imageUrl: renterDS['avatar'],
+                      placeholder: (context, url) =>
+                          new CircularProgressIndicator(),
+                    ),
+                  ),
+                ),
+                Text(
+                  '${renterDS['name']}',
+                  style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 15.0,
+                      fontFamily: 'Quicksand'),
+                  textAlign: TextAlign.left,
+                ),
+                chatButton(),
+              ],
+            ),
+          ],),
+          Divider(),
+        ],
+      ),
+    );
+  }
+
   Widget showItemName() {
     String itemOwner = 'Item owner: ${ownerDS['name']}';
     String itemRenter = 'Item renter: ${renterDS['name']}';
@@ -357,28 +399,6 @@ class RentalDetailState extends State<RentalDetail> {
           fontSize: 20,
         ),
       ),
-    );
-  }
-
-  Widget showItemOwner() {
-    return Row(
-      children: <Widget>[
-        Text(
-          'Item owner:\n${ownerDS['name']}',
-          style: TextStyle(color: Colors.black, fontSize: 20.0),
-          textAlign: TextAlign.left,
-        ),
-        Expanded(
-          child: Container(
-            height: 50,
-            child: CachedNetworkImage(
-              //key: ValueKey(DateTime.now().millisecondsSinceEpoch),
-              imageUrl: ownerDS['avatar'],
-              placeholder: (context, url) => new CircularProgressIndicator(),
-            ),
-          ),
-        ),
-      ],
     );
   }
 
@@ -409,8 +429,7 @@ class RentalDetailState extends State<RentalDetail> {
                     style: TextStyle(fontFamily: appFont, color: Colors.white),
                   ),
                   Divider(),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: <Widget>[
                       Text(
                         "Pickup Time:",
@@ -459,7 +478,7 @@ class RentalDetailState extends State<RentalDetail> {
             : Column(
                 children: <Widget>[
                   Text(
-                    "${ownerDS['name']} has proposed a pickup!",
+                    "${renterDS['name']} has proposed a pickup!",
                     style: TextStyle(fontFamily: appFont, color: Colors.white),
                   ),
                   Text(
