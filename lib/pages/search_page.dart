@@ -709,11 +709,15 @@ class SearchPageState extends State<SearchPage> {
                     }
                   }
 
-                  return ListView(
-                    shrinkWrap: true,
-                    padding: const EdgeInsets.all(20.0),
-                    children: displayCards,
-                  );
+                  return displayCards.isNotEmpty
+                      ? ListView(
+                          shrinkWrap: true,
+                          padding: const EdgeInsets.all(20.0),
+                          children: displayCards,
+                        )
+                      : Center(
+                          child: Text('No results'),
+                        );
                 } else {
                   return Container();
                 }
