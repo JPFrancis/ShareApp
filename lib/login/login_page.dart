@@ -173,15 +173,24 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter),
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: <Widget>[
-              // SizedBox(height: h/24,),
-              FadeTransition(opacity: logoAnimation, child: _showLogo(false)),
-              // SizedBox(height: 20.0,),
-              FadeTransition(opacity: contentAnimation, child: showBody()),
-            ],
-          ),
+          child: Stack(children: <Widget>[
+            Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                FadeTransition(opacity: logoAnimation, child: _showLogo(false)),
+                FadeTransition(opacity: contentAnimation, child: showBody()),
+            ],),
+            Padding(
+              padding: const EdgeInsets.only(top: 60.0, right: 25.0),
+              child: Align(alignment: Alignment.topRight, 
+                child: OutlineButton(
+                  borderSide: BorderSide(color: Colors.pink),
+                  onPressed: null,
+                  child: Text('Sign In', style: new TextStyle(fontSize: 18.0, fontWeight: FontWeight.w400, fontStyle: FontStyle.italic,
+                  color: Colors.white, fontFamily: 'Quicksand')),
+                ),),
+            ),
+          ],),
         ),
       );
     }
@@ -202,7 +211,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                 animation: textController,
                 builder: (BuildContext context, Widget child) {
                   return FractionalTranslation(
-                      child: Text("Get Started ⟹",
+                      child: Text("Swipe To Get Started ⟹",
                           textAlign: TextAlign.center,
                           style: TextStyle(
                               color: Colors.white,
@@ -210,14 +219,6 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                               fontSize: h / 40)),
                       translation: textAnimation.value);
                 },
-                /*
-                child: FractionalTranslation(
-                    child: Text("Swipe To Get Started ⟹",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontFamily: appFont,
-                            fontSize: h / 40)), translation: textAnimation.value), */
               ),
             ],
           ));
@@ -238,8 +239,11 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
             ),
           ),
           Column(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            mainAxisSize: MainAxisSize.min,
             children: <Widget>[
+              SizedBox(height: 40.0,),
+              Text("Search anything you need", style: TextStyle(fontSize: h / 45, fontFamily: appFont, color: Colors.white),),
+              SizedBox(height: 10.0,),
               Container(
                 alignment: Alignment.center,
                 height: h / 1.2,
@@ -249,11 +253,6 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                   borderRadius: BorderRadius.circular(40),
                 ),
               ),
-              Text(
-                "Search anything you need",
-                style: TextStyle(
-                    fontSize: h / 45, fontFamily: appFont, color: Colors.white),
-              )
             ],
           )
         ],
@@ -275,8 +274,11 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
             ),
           ),
           Column(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            mainAxisSize: MainAxisSize.min,
             children: <Widget>[
+              SizedBox(height: 40.0,),
+              Text("Request an item at your convenience", style: TextStyle(fontSize: h / 45, fontFamily: appFont, color: Colors.white),),
+              SizedBox(height: 10.0,),
               Container(
                 height: h / 1.2,
                 alignment: Alignment.center,
@@ -286,11 +288,6 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                   borderRadius: BorderRadius.circular(40),
                 ),
               ),
-              Text(
-                "Request an item at your convenience",
-                style: TextStyle(
-                    fontSize: h / 45, fontFamily: appFont, color: Colors.white),
-              )
             ],
           )
         ],
@@ -350,9 +347,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                         fontFamily: 'Quicksand')),
                 onPressed: null),
           ),
-          SizedBox(
-            height: 10.0,
-          ),
+          SizedBox(height: 10.0,),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0),
             child: FlatButton(
@@ -365,6 +360,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
               onPressed: navToAnonHomePage,
             ),
           ),
+          SizedBox(height: 20.0,),
           googleLogin(),
           ecSignIn(),
           /*
@@ -526,8 +522,19 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     return Container(
       height: 60.0,
       child: new FlatButton(
-        child: ClipOval(
-          child: Image.asset('assets/google.jpg'),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Text('Sign in with   ',
+                    style: new TextStyle(
+                        fontSize: 13.0,
+                        fontWeight: FontWeight.w300,
+                        color: Colors.white,
+                        fontFamily: 'Quicksand')),
+            ClipOval(
+              child: Image.asset('assets/google.jpg'),
+            ),
+          ],
         ),
         onPressed: () => initGoogleLogin(),
       ),

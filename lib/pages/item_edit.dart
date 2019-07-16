@@ -237,7 +237,7 @@ class ItemEditState extends State<ItemEdit> {
                 showItemLocation(),
                 showLocationButtons(),
                 Text(
-                  "* Your address will only be shown to someone actively renting this item",
+                  "* Your address will not be visible to any user other than you",
                   style: TextStyle(fontFamily: appFont, fontSize: 12.0),
                 ),
                 isEdit ? deleteButton() : Container()

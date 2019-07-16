@@ -42,6 +42,7 @@ class RentalDetailState extends State<RentalDetail> {
   String url;
   String rentalCC;
   bool isLoading = true;
+  bool rentalExists = true;
   bool isRenter;
   bool stripeInit;
 
@@ -99,6 +100,15 @@ class RentalDetailState extends State<RentalDetail> {
         .document(widget.rentalID)
         .get();
 
+    if (!ds.exists) {
+      setState(() {
+        rentalExists = false;
+        isLoading = false;
+      });
+
+      return;
+    }
+
     if (ds != null) {
       rentalDS = ds;
 
@@ -154,11 +164,7 @@ class RentalDetailState extends State<RentalDetail> {
 
     return Scaffold(
       backgroundColor: coolerWhite,
-      body: isLoading
-          ? Container(
-              child: Center(child: CircularProgressIndicator()),
-            )
-          : showBody(),
+      body: showBody(),
       floatingActionButton: Container(
         padding: const EdgeInsets.only(top: 120.0, left: 5.0),
         child: FloatingActionButton(
@@ -207,6 +213,35 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   Widget showBody() {
+    if (rentalExists) {
+      return isLoading
+          ? Container(
+              child: Center(child: CircularProgressIndicator()),
+            )
+          : buildRentalDetails();
+    } else {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+            Text(
+              'This rental no longer exists!',
+              style: TextStyle(
+                fontSize: 20,
+              ),
+            ),
+            RaisedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Go back'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  Widget buildRentalDetails() {
     return StreamBuilder<DocumentSnapshot>(
       stream: rentalDS.reference.snapshots(),
       builder:

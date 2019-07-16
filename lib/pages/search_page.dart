@@ -716,6 +716,7 @@ class SearchPageState extends State<SearchPage> {
                       }
                     }
                   }
+<<<<<<< HEAD
                 
                   return ListView(
                     shrinkWrap: true,
@@ -725,6 +726,20 @@ class SearchPageState extends State<SearchPage> {
                 }
                  else {
                   return Container(color: Colors.pink,);
+=======
+
+                  return displayCards.isNotEmpty
+                      ? ListView(
+                          shrinkWrap: true,
+                          padding: const EdgeInsets.all(20.0),
+                          children: displayCards,
+                        )
+                      : Center(
+                          child: Text('No results'),
+                        );
+                } else {
+                  return Container();
+>>>>>>> 638fc349b0e5bc1b30f9d3c6635a1a4cacec9384
                 }
             }
           },

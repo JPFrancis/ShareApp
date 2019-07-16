@@ -745,6 +745,13 @@ class ItemDetailState extends State<ItemDetail> {
               ),
             ),
           ),
+          Align(
+            alignment: Alignment.bottomLeft,
+            child: Padding(
+              padding: EdgeInsets.only(top: 5.0),
+              child: Text('* Exact pickup location to be agreed upon', style: TextStyle(fontSize: 12.5, fontStyle: FontStyle.italic, color: Colors.grey, fontFamily: 'Quicksand')),
+            ),
+          ),
         ],
       ),
     );
