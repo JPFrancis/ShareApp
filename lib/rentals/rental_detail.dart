@@ -181,28 +181,24 @@ class RentalDetailState extends State<RentalDetail> {
 
   Widget chatButton() {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 1),
+       decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: primaryColor)
+      ),
+      padding: EdgeInsets.symmetric(horizontal: 15, vertical: 5),
       child: GestureDetector(
-          onTap: () {
-            Navigator.of(context)
-                .pushNamed(Chat.routeName, arguments: ChatArgs(otherUserDS));
-          },
-          child: Row(
-            children: <Widget>[
-              Text("Chat",
-                  style: TextStyle(
-                      fontFamily: appFont,
-                      fontSize: 14.0,
-                      fontWeight: FontWeight.w400)),
-              SizedBox(
-                width: 5.0,
-              ),
-              Icon(Icons.chat_bubble_outline)
-            ],
-          )),
+              onTap: () {
+                Navigator.of(context)
+                    .pushNamed(Chat.routeName, arguments: ChatArgs(otherUserDS));
+              },
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Text("Chat", style: TextStyle(color: primaryColor, fontFamily: appFont, fontSize: 14.0, fontWeight: FontWeight.w400)),
+                ],
+              )),
     );
   }
-
   Future<DocumentSnapshot> getRentalFromFirestore() async {
     DocumentSnapshot ds = await Firestore.instance
         .collection('rentals')
@@ -277,13 +273,14 @@ class RentalDetailState extends State<RentalDetail> {
                   isRenter ? showItemCreator() : Container(),
                   isRenter ? Container() :  showRequester(), 
                   SizedBox(height: 10.0,),
+                  showRequestButtons(),
+                  SizedBox(height: 15.0,),
                   Container(
                       padding: EdgeInsets.symmetric(
                           horizontal: MediaQuery.of(context).size.width / 25),
                       height: MediaQuery.of(context).size.height / 4,
                       child: showItemRequestStatus()),
                   divider(),
-                  showRequestButtons(),
                   showCreditCardButton(),
                   showPaymentInfo(),
                   //showReceiveItemButton(),
@@ -1143,6 +1140,7 @@ class RentalDetailState extends State<RentalDetail> {
     return (isRenter && rentalDS['status'] == 1) ||
             (!isRenter && rentalDS['status'] == 0)
         ? Container(
+          padding: EdgeInsets.symmetric(horizontal: 10.0),
             child: Column(
               children: <Widget>[
                 Row(
@@ -1167,6 +1165,7 @@ class RentalDetailState extends State<RentalDetail> {
                     ),
                   ],
                 ),
+                /*
                 Container(
                   padding: EdgeInsets.only(top: 15),
                   child: Text(
@@ -1176,7 +1175,7 @@ class RentalDetailState extends State<RentalDetail> {
                       fontSize: 20,
                     ),
                   ),
-                ),
+                ),*/
               ],
             ),
           )
@@ -1186,17 +1185,14 @@ class RentalDetailState extends State<RentalDetail> {
   Widget reusableButton(String text, Color color, action) {
     return ButtonTheme(
       height: 60,
-      child: RaisedButton(
+      child: OutlineButton(
+        highlightElevation: 2.0,
+        borderSide: BorderSide(color: color, style: BorderStyle.solid),
         shape: new RoundedRectangleBorder(
             borderRadius: new BorderRadius.circular(5.0)),
         color: color,
-        textColor: Colors.white,
-        child: Text(
-          text,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 16,
-          ),
+        textColor: color,
+        child: Text(text, textAlign: TextAlign.center, style: TextStyle(fontSize: 16, fontFamily: appFont),
         ),
         onPressed: () {
           action();

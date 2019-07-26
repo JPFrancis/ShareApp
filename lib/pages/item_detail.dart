@@ -335,7 +335,6 @@ class ItemDetailState extends State<ItemDetail> {
         showItemCondition(),
         showItemCreator(),
         showItemDescription(),
-        showMilesAway(),
         divider(),
         showItemLocation(),
         divider(),
@@ -539,22 +538,6 @@ class ItemDetailState extends State<ItemDetail> {
     ));
   }
 
-  Widget showMilesAway() {
-    return Padding(
-      padding: EdgeInsets.only(top: 20.0, left: 20.0, right: 20.0),
-      child: SizedBox(
-          child: Container(
-        color: Color(0x00000000),
-        child: Text(
-          milesAway,
-          style: TextStyle(
-              color: Colors.black, fontSize: 15.0, fontFamily: 'Quicksand'),
-          textAlign: TextAlign.left,
-        ),
-      )),
-    );
-  }
-
   Widget showItemDescription() {
     return Padding(
       padding: EdgeInsets.only(top: 20.0, left: 20.0, right: 20.0),
@@ -721,18 +704,20 @@ class ItemDetailState extends State<ItemDetail> {
       padding: const EdgeInsets.only(left: 20.0, right: 20.0),
       child: Column(
         children: <Widget>[
-          Align(
+          Container(
             alignment: Alignment.centerLeft,
-            child: Padding(
-              padding: EdgeInsets.only(bottom: 12.0),
-              child: Text('The Location',
-                  style: TextStyle(
-                      fontSize: 15.0,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                      fontFamily: 'Quicksand')),
-            ),
+            padding: EdgeInsets.only(bottom: 5.0),
+            child: Text('The Location',
+                style: TextStyle(
+                    fontSize: 15.0,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                    fontFamily: 'Quicksand')),
           ),
+          Container(
+            padding: EdgeInsets.only(bottom: 10.0),
+            alignment: Alignment.centerLeft,
+            child: Text(milesAway, style: TextStyle(color: Colors.black, fontSize: 15.0, fontFamily: 'Quicksand'))),
           Center(
             child: SizedBox(
               width: widthOfScreen,

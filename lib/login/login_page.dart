@@ -181,11 +181,11 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                 FadeTransition(opacity: contentAnimation, child: showBody()),
             ],),
             Padding(
-              padding: const EdgeInsets.only(top: 60.0, right: 25.0),
+              padding: const EdgeInsets.only(top: 60.0, right: 20.0),
               child: Align(alignment: Alignment.topRight, 
                 child: OutlineButton(
-                  borderSide: BorderSide(color: Colors.pink),
-                  onPressed: null,
+                  borderSide: BorderSide(color: primaryColor),
+                  onPressed: ()=>debugPrint("eee"),
                   child: Text('Sign In', style: new TextStyle(fontSize: 18.0, fontWeight: FontWeight.w400, fontStyle: FontStyle.italic,
                   color: Colors.white, fontFamily: 'Quicksand')),
                 ),),
@@ -224,6 +224,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
           ));
     }
 
+
     _info1() {
       return Stack(
         children: <Widget>[
@@ -239,15 +240,12 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
             ),
           ),
           Column(
-            mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              SizedBox(height: 40.0,),
+              SizedBox(height: 60.0,),
               Text("Search anything you need", style: TextStyle(fontSize: h / 45, fontFamily: appFont, color: Colors.white),),
-              SizedBox(height: 10.0,),
               Container(
                 alignment: Alignment.center,
-                height: h / 1.2,
-                padding: const EdgeInsets.symmetric(horizontal: 30),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20.0),
                 child: ClipRRect(
                   child: Image.asset('assets/search.png'),
                   borderRadius: BorderRadius.circular(40),
@@ -274,19 +272,82 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
             ),
           ),
           Column(
-            mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              SizedBox(height: 40.0,),
+              SizedBox(height: 60.0,),
               Text("Request an item at your convenience", style: TextStyle(fontSize: h / 45, fontFamily: appFont, color: Colors.white),),
-              SizedBox(height: 10.0,),
               Container(
-                height: h / 1.2,
                 alignment: Alignment.center,
-                padding: const EdgeInsets.symmetric(horizontal: 30),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20.0),
                 child: ClipRRect(
-                  child: Image.asset('assets/request.jpg'),
+                  child: Image.asset('assets/request.png'),
                   borderRadius: BorderRadius.circular(40),
                 ),
+              ),
+            ],
+          )
+        ],
+      );
+    }
+
+    _info3() {
+      return Stack(
+        children: <Widget>[
+          Container(
+            height: h,
+            width: w,
+            decoration: BoxDecoration(
+              color: Colors.purple,
+              gradient: LinearGradient(
+                  colors: [primaryColor, Colors.black],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight),
+            ),
+          ),
+          Column(
+            children: <Widget>[
+              SizedBox(height: 60.0,),
+              Text("Rent out your hardly used items", style: TextStyle(fontSize: h / 45, fontFamily: appFont, color: Colors.white),),
+              Container(
+                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20.0),
+                /*
+                child: ClipRRect(
+                  child: Image.asset('assets/request.png'),
+                  borderRadius: BorderRadius.circular(40),
+                ),*/
+              ),
+            ],
+          )
+        ],
+      );
+    }
+
+    _info4() {
+      return Stack(
+        children: <Widget>[
+          Container(
+            height: h,
+            width: w,
+            decoration: BoxDecoration(
+              color: Colors.purple,
+              gradient: LinearGradient(
+                  colors: [primaryColor, Colors.black],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight),
+            ),
+          ),
+          Column(
+            children: <Widget>[
+              SizedBox(height: 60.0,),
+              Text("Upload your item for everyone to see", style: TextStyle(fontSize: h / 45, fontFamily: appFont, color: Colors.white),),
+              Container(
+                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20.0),
+                /*
+                child: ClipRRect(
+                  child: Image.asset('assets/request.png'),
+                  borderRadius: BorderRadius.circular(40),
+                ),*/
               ),
             ],
           )
@@ -298,6 +359,8 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       Material(child: _getStartedPage()),
       Material(child: _info1()),
       Material(child: _info2()),
+      Material(child: _info3()),
+      Material(child: _info4()),
       Material(child: _loginPage()),
     ];
 
@@ -311,8 +374,8 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
             }),
         Positioned(
           bottom: 30,
-          left: w / 3,
-          right: w / 3,
+          left: w / 5,
+          right: w / 5,
           child: new DotsIndicator(
             controller: pageController,
             itemCount: pages.length,

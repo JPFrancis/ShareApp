@@ -59,7 +59,7 @@ class SearchPageState extends State<SearchPage> {
     showSuggestions = widget.showSearch ? true : false;
     typeFilter = widget.typeFilter;
     conditionFilter = 'All';
-    distanceFilter = 5.0;
+    distanceFilter = 20.0;
     sortByFilter = 'Distance';
 
     getMyUserID();
@@ -213,7 +213,7 @@ class SearchPageState extends State<SearchPage> {
     setState(() {
       typeFilter = 'All';
       conditionFilter = 'All';
-      distanceFilter = 30.0;
+      distanceFilter = 20.0;
       sortByFilter = 'Alphabetically';
     });
   }
@@ -303,11 +303,12 @@ class SearchPageState extends State<SearchPage> {
             : Container(),
         filterPressed ? _filters() : Container(),
         buildItemList(),
+        /*
         no_items ? Center(child: Container(
                     padding: EdgeInsets.only(left: 10.0, right: 10.0, bottom: 100.0),
                     child: Text("Sorry! There no results with your current filters. Try changing something!", style: TextStyle(fontFamily: appFont),)))
                    :
-        Container(),
+        Container(),*/
       ],
     );
   }
@@ -552,7 +553,7 @@ class SearchPageState extends State<SearchPage> {
         Expanded(
           child: Slider(
             min: 0.0,
-            max: 10.0,
+            max: 50.0,
             divisions: 20,
             onChanged: distanceIsInfinite
                 ? null
@@ -709,37 +710,30 @@ class SearchPageState extends State<SearchPage> {
 
                         if (add) {
                           displayCards.add(searchTile(ds, context));
-                         setState(() {
-                            no_items = true;
-                          }); 
                         }
                       }
                     }
+
                   }
-<<<<<<< HEAD
-                
-                  return ListView(
+                return displayCards.isNotEmpty 
+                ? ListView(
                     shrinkWrap: true,
                     padding: const EdgeInsets.all(20.0),
                     children: displayCards,
-                  );
+                  ) 
+                : Center(child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Icon(Icons.sync, color: primaryColor, size: 25,),
+                    SizedBox(height: 10.0,),
+                    Container(
+                        padding: EdgeInsets.only(left: 30.0, right: 30.0, bottom: 200.0),
+                        child: Text("Sorry! There are no results with your current filters.\nTry changing something!", style: TextStyle(fontFamily: appFont, fontSize: 15.0, color: primaryColor, fontWeight: FontWeight.w200), textAlign: TextAlign.center,)),
+                  ],
+                ));
                 }
                  else {
-                  return Container(color: Colors.pink,);
-=======
-
-                  return displayCards.isNotEmpty
-                      ? ListView(
-                          shrinkWrap: true,
-                          padding: const EdgeInsets.all(20.0),
-                          children: displayCards,
-                        )
-                      : Center(
-                          child: Text('No results'),
-                        );
-                } else {
                   return Container();
->>>>>>> 638fc349b0e5bc1b30f9d3c6635a1a4cacec9384
                 }
             }
           },

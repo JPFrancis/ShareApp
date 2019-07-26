@@ -2050,15 +2050,15 @@ class HomePageState extends State<HomePage> {
                     Align(
                       alignment: Alignment.topRight,
                       child: OutlineButton(
-                          color: Colors.white,
-                          textColor: primaryColor,
-                          onPressed: () {
-                            navToProfileEdit();
-                          },
-                          child: Text("Edit Profile",
-                              style: TextStyle(
-                                  fontFamily: 'Quicksand',
-                                  fontWeight: FontWeight.normal))),
+                        color: Colors.white,
+                        textColor: primaryColor,
+                        onPressed: () {
+                          navToProfileEdit();
+                        },
+                        child: Text("Edit Profile",
+                            style: TextStyle(
+                                fontFamily: 'Quicksand',
+                                fontWeight: FontWeight.normal))),
                     ),
                   ],
                 );
