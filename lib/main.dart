@@ -10,12 +10,14 @@ import 'package:shareapp/pages/item_detail.dart';
 import 'package:shareapp/pages/item_edit.dart';
 import 'package:shareapp/pages/profile_page.dart';
 import 'package:shareapp/pages/search_page.dart';
+import 'package:shareapp/pages/transactions_page.dart';
 import 'package:shareapp/rentals/chat.dart';
 import 'package:shareapp/rentals/item_request.dart';
 import 'package:shareapp/rentals/new_pickup.dart';
 import 'package:shareapp/rentals/rental_calendar.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/auth.dart';
+import 'package:shareapp/services/const.dart';
 
 //void main() => runApp(MyApp());
 
@@ -188,6 +190,19 @@ class MyApp extends StatelessWidget {
                 },
               );
             }
+          case TransactionsPage.routeName:
+            {
+              final TransactionsPageArgs args = settings.arguments;
+
+              return MaterialPageRoute(
+                builder: (context) {
+                  return TransactionsPage(
+                    filter: args.filter,
+                    person: args.person,
+                  );
+                },
+              );
+            }
         }
       },
     );
@@ -263,4 +278,11 @@ class RentalCalendarArgs {
   final DocumentSnapshot itemDS;
 
   RentalCalendarArgs(this.itemDS);
+}
+
+class TransactionsPageArgs {
+  final RentalPhase filter;
+  final String person;
+
+  TransactionsPageArgs(this.filter, this.person);
 }

@@ -23,6 +23,7 @@ import 'package:shareapp/pages/profile_tab_pages/help_page.dart';
 import 'package:shareapp/pages/profile_tab_pages/payouts_page.dart';
 import 'package:shareapp/pages/profile_tab_pages/profile_edit.dart';
 import 'package:shareapp/pages/search_page.dart';
+import 'package:shareapp/pages/transactions_page.dart';
 import 'package:shareapp/rentals/chat.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/auth.dart';
@@ -65,7 +66,7 @@ class HomePageState extends State<HomePage> {
   int currentTabIndex;
   int badge;
 
-  bool pageIsLoading = false;
+  bool pageIsLoading = true;
   bool locIsLoading = false;
   bool isAuthenticated;
 
@@ -134,9 +135,83 @@ class HomePageState extends State<HomePage> {
       bottomNavTile('Profile', Icon(Icons.account_circle), false),
     ];
 
-    scheduleNotifications();
+    if (isAuthenticated) {
+      scheduleNotifications();
+      updateRentals();
+    }
 
     getUserLocation();
+  }
+
+  void updateRentals() async {
+    CollectionReference rentalsCollection =
+        Firestore.instance.collection('rentals');
+
+    // Check for expired rentals
+    var rentalQuerySnaps = await rentalsCollection
+        .where('users',
+            arrayContains:
+                Firestore.instance.collection('users').document(myUserID))
+        .where('requesting', isEqualTo: true)
+        .where('lastUpdateTime',
+            isLessThan: DateTime.now().subtract(Duration(days: 1)))
+        .getDocuments();
+    List<DocumentSnapshot> rentalSnaps = rentalQuerySnaps.documents;
+
+    if (rentalSnaps != null && rentalSnaps.length > 0) {
+      for (int i = 0; i < rentalSnaps.length; i++) {
+        DocumentSnapshot rentalDS = rentalSnaps[i];
+
+        // Delete expired rental
+        await rentalsCollection.document(rentalDS.documentID).delete();
+      }
+    }
+
+    // Update status of rentals that are accepted but haven't begun
+    rentalQuerySnaps = await rentalsCollection
+        .where('users',
+            arrayContains:
+                Firestore.instance.collection('users').document(myUserID))
+        .where('status', isEqualTo: 2)
+        .where('pickupStart', isLessThanOrEqualTo: DateTime.now())
+        .getDocuments();
+    rentalSnaps = rentalQuerySnaps.documents;
+
+    if (rentalSnaps != null && rentalSnaps.length > 0) {
+      for (int i = 0; i < rentalSnaps.length; i++) {
+        DocumentSnapshot rentalDS = rentalSnaps[i];
+
+        // Update rental status to active
+        await rentalsCollection
+            .document(rentalDS.documentID)
+            .updateData({'status': 3});
+      }
+    }
+
+    // Update status of rentals that are completed
+    rentalQuerySnaps = await rentalsCollection
+        .where('users',
+            arrayContains:
+                Firestore.instance.collection('users').document(myUserID))
+        .where('status', isEqualTo: 3)
+        .where('rentalEnd', isLessThanOrEqualTo: DateTime.now())
+        .getDocuments();
+    rentalSnaps = rentalQuerySnaps.documents;
+
+    if (rentalSnaps != null && rentalSnaps.length > 0) {
+      for (int i = 0; i < rentalSnaps.length; i++) {
+        DocumentSnapshot rentalDS = rentalSnaps[i];
+
+        // Update status of rental to 'past'
+        await rentalsCollection
+            .document(rentalDS.documentID)
+            .updateData({'status': 4});
+      }
+    }
+
+    setState(() {
+      pageIsLoading = false;
+    });
   }
 
   void scheduleNotifications() async {
@@ -440,27 +515,68 @@ class HomePageState extends State<HomePage> {
           ? Center(
               child: CircularProgressIndicator(),
             )
-          : IndexedStack(
-              index: currentTabIndex,
-              children: bottomTabPages,
-            ),
+          : showBody(),
       floatingActionButton: showFAB(),
-      bottomNavigationBar: SizedBox(
-        //height: 90,
-        child: BottomNavigationBar(
-          backgroundColor: coolerWhite,
-          selectedItemColor: primaryColor,
-          items: bottomNavBarTiles,
-          currentIndex: currentTabIndex,
-          type: BottomNavigationBarType.fixed,
-          onTap: (int index) {
-            setState(() {
-              currentTabIndex = index;
-            });
-          },
-        ),
-      ),
+      bottomNavigationBar: pageIsLoading
+          ? Container()
+          : SizedBox(
+              //height: 90,
+              child: BottomNavigationBar(
+                backgroundColor: coolerWhite,
+                selectedItemColor: primaryColor,
+                items: bottomNavBarTiles,
+                currentIndex: currentTabIndex,
+                type: BottomNavigationBarType.fixed,
+                onTap: (int index) {
+                  setState(() {
+                    currentTabIndex = index;
+                  });
+                },
+              ),
+            ),
     );
+  }
+
+  Widget showBody() {
+    /*
+    if (myUserDS != null && myUserDS.exists && !myUserDS['acceptedTOS']) {
+      showTermsOfService();
+    }
+    */
+
+    return IndexedStack(
+      index: currentTabIndex,
+      children: bottomTabPages,
+    );
+  }
+
+  Future<bool> showTermsOfService() async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Terms of service'),
+              content: Text(
+                'Terms of service, private policy etc.',
+              ),
+              actions: <Widget>[
+                FlatButton(
+                  child: const Text('Accept'),
+                  onPressed: () async {
+                    await Firestore.instance
+                        .collection('users')
+                        .document(myUserID)
+                        .updateData({'acceptedTOS': true});
+
+                    Navigator.of(context).pop(false);
+                    // Pops the confirmation dialog but not the page.
+                  },
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
   }
 
   Widget showFAB() {
@@ -473,7 +589,7 @@ class HomePageState extends State<HomePage> {
             navigateToEdit(
               Item(
                 id: null,
-                status: true,
+                isVisible: true,
                 creator:
                     Firestore.instance.collection('users').document(myUserID),
                 name: '',
@@ -484,7 +600,6 @@ class HomePageState extends State<HomePage> {
                 numImages: 0,
                 images: new List(),
                 location: {'geopoint': null},
-                rental: null,
               ),
             );
           },
@@ -1277,16 +1392,25 @@ class HomePageState extends State<HomePage> {
             ))),
         body: Column(
           children: <Widget>[
-            reusableCategoryWithAll("REQUESTING", () => debugPrint),
+            reusableCategoryWithAll("REQUESTING",
+                () => navToTransactionsPage(RentalPhase.requesting, 'renter')),
             buildRequests("renter"),
-            reusableCategoryWithAll("UPCOMING", () => debugPrint),
-            buildTransactions("upcoming", "renter"),
-            reusableCategoryWithAll("CURRENT", () => debugPrint),
-            buildTransactions("current", "renter"),
-            reusableCategoryWithAll("PAST", () => debugPrint),
-            buildTransactions("past", "renter"),
+            reusableCategoryWithAll("UPCOMING",
+                () => navToTransactionsPage(RentalPhase.upcoming, 'renter')),
+            buildTransactions(RentalPhase.upcoming, "renter"),
+            reusableCategoryWithAll("CURRENT",
+                () => navToTransactionsPage(RentalPhase.current, 'renter')),
+            buildTransactions(RentalPhase.current, "renter"),
+            reusableCategoryWithAll("PAST",
+                () => navToTransactionsPage(RentalPhase.past, 'renter')),
+            buildTransactions(RentalPhase.past, "renter"),
           ],
         ));
+  }
+
+  void navToTransactionsPage(RentalPhase filter, String person) {
+    Navigator.pushNamed(context, TransactionsPage.routeName,
+        arguments: TransactionsPageArgs(filter, person));
   }
 
   Widget buildListingsList() {
@@ -1545,28 +1669,36 @@ class HomePageState extends State<HomePage> {
     );
   }
 
-  Widget buildTransactions(String rentalStatus, person) {
-    List status;
+  Widget buildTransactions(RentalPhase rentalStatus, person) {
+    Query query = Firestore.instance.collection('rentals').where(person,
+        isEqualTo: Firestore.instance.collection('users').document(myUserID));
+
     switch (rentalStatus) {
-      case 'upcoming':
-        status = [2];
+      case RentalPhase.requesting:
         break;
-      case 'current':
-        status = [3, 4];
+      case RentalPhase.upcoming:
+        query = query
+            .where('status', isEqualTo: 2)
+            .where('pickupStart', isGreaterThan: DateTime.now())
+            .orderBy('pickupStart', descending: false)
+            .limit(3);
         break;
-      case 'past':
-        status = [5];
+      case RentalPhase.current:
+        query = query
+            .where('status', isEqualTo: 3)
+            .where('rentalEnd', isGreaterThan: DateTime.now())
+            .limit(3);
+        break;
+      case RentalPhase.past:
+        query = query
+            .where('rentalEnd', isLessThan: DateTime.now())
+            .orderBy('rentalEnd', descending: true)
+            .limit(3);
         break;
     }
-    CollectionReference collectionReference =
-        Firestore.instance.collection('rentals');
-    Stream stream = collectionReference
-        .where(person,
-            isEqualTo:
-                Firestore.instance.collection('users').document(myUserID))
-        .where('status', isLessThanOrEqualTo: 5)
-        .where('status', isGreaterThanOrEqualTo: 2)
-        .snapshots();
+
+    Stream stream = query.snapshots();
+
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
         stream: stream,
@@ -1579,9 +1711,8 @@ class HomePageState extends State<HomePage> {
 
             default:
               if (snapshot.hasData) {
-                var updated = snapshot.data.documents
-                    .where((d) => status.contains(d['status']))
-                    .toList();
+                var updated = snapshot.data.documents;
+
                 return ListView.builder(
                   scrollDirection: Axis.horizontal,
                   itemCount: updated.length,
@@ -1811,14 +1942,26 @@ class HomePageState extends State<HomePage> {
                 ),
                 Column(
                   children: <Widget>[
-                    reusableCategoryWithAll("REQUESTS", () => debugPrint),
+                    reusableCategoryWithAll(
+                        "REQUESTS",
+                        () => navToTransactionsPage(
+                            RentalPhase.requesting, 'owner')),
                     buildRequests("owner"),
-                    reusableCategoryWithAll("UPCOMING", () => debugPrint),
-                    buildTransactions('upcoming', "owner"),
-                    reusableCategoryWithAll("CURRENT", () => debugPrint),
-                    buildTransactions('current', "owner"),
-                    reusableCategoryWithAll("PAST", () => debugPrint),
-                    buildTransactions('past', "owner"),
+                    reusableCategoryWithAll(
+                        "UPCOMING",
+                        () => navToTransactionsPage(
+                            RentalPhase.requesting, 'owner')),
+                    buildTransactions(RentalPhase.upcoming, "owner"),
+                    reusableCategoryWithAll(
+                        "CURRENT",
+                        () => navToTransactionsPage(
+                            RentalPhase.requesting, 'owner')),
+                    buildTransactions(RentalPhase.current, "owner"),
+                    reusableCategoryWithAll(
+                        "PAST",
+                        () => navToTransactionsPage(
+                            RentalPhase.requesting, 'owner')),
+                    buildTransactions(RentalPhase.past, "owner"),
                   ],
                 ),
               ],

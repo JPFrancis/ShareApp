@@ -24,7 +24,7 @@ false = inactive
 
 class Item {
   String id; // doc id for firestore
-  bool status;
+  bool isVisible;
   DocumentReference creator; // user ID of user who created the item
   String name;
   String description;
@@ -37,11 +37,10 @@ class Item {
   int numImages;
   List images;
   Map<dynamic, dynamic> location;
-  DocumentReference rental;
 
   Item({
     this.id,
-    this.status,
+    this.isVisible,
     this.creator,
     this.name,
     this.description,
@@ -53,13 +52,12 @@ class Item {
     this.numImages,
     this.images,
     this.location,
-    this.rental,
   });
 
   Item.fromMap(Map<String, dynamic> data)
       : this(
           id: data['id'],
-          status: data['status'],
+          isVisible: data['status'],
           creator: data['creator'],
           name: data['name'],
           description: data['description'],
@@ -71,13 +69,12 @@ class Item {
           numImages: data['numImages'],
           images: data['images'],
           location: data['location'],
-          rental: data['rental'],
         );
 
   Item.copy(Item other)
       : this(
           id: other.id,
-          status: other.status,
+          isVisible: other.isVisible,
           creator: other.creator,
           name: other.name,
           description: other.description,
@@ -89,7 +86,6 @@ class Item {
           numImages: other.numImages,
           images: other.images.toList(),
           location: other.location,
-          rental: other.rental,
         );
 
   bool compare(Item other) {
@@ -104,7 +100,7 @@ class Item {
   Item fromItem(Item other) {
     return new Item(
       id: other.id,
-      status: other.status,
+      isVisible: other.isVisible,
       creator: other.creator,
       name: other.name,
       description: other.description,
@@ -116,7 +112,6 @@ class Item {
       numImages: other.numImages,
       images: other.images.toList(),
       location: other.location,
-      rental: other.rental,
     );
   }
 }

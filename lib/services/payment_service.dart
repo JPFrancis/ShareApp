@@ -15,21 +15,31 @@ class PaymentService {
     });
   }
 
-  chargeRental(price, description) {
+  chargeRental(
+      String rentalId,
+      int rentalDuration,
+      Timestamp rentalStart,
+      Timestamp rentalEnd,
+      String idFrom,
+      String idTo,
+      double amount,
+      String description) {
     // Stripe charges in cents. so $3.00 = 300 cents
-    var processedPrice = price * 100;
+    var processedPrice = amount * 100;
 
-    FirebaseAuth.instance.currentUser().then((user) {
-      Firestore.instance
-          .collection('users')
-          .document(user.uid)
-          .collection('charges')
-          .add({
-        'currency': 'usd',
-        'amount': processedPrice,
-        'description': description,
-        'chargeTimestamp': DateTime.now().millisecondsSinceEpoch,
-      });
+    Firestore.instance.collection('charges').add({
+      'currency': 'usd',
+      'amount': processedPrice,
+      'description': description,
+      'timestamp': DateTime.now(),
+      'rental': Firestore.instance.collection('rentals').document(rentalId),
+      'rentalData': {
+        'idFrom': idFrom,
+        'idTo': idTo,
+        'duration': rentalDuration,
+        'rentalStart': rentalStart,
+        'rentalEnd': rentalEnd,
+      },
     });
   }
 }
