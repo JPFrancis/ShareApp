@@ -68,6 +68,7 @@ class HomePageState extends State<HomePage> {
 
   bool pageIsLoading = true;
   bool locIsLoading = false;
+  bool showTOS;
   bool isAuthenticated;
 
   TextEditingController searchController = TextEditingController();
@@ -517,8 +518,9 @@ class HomePageState extends State<HomePage> {
             )
           : showBody(),
       floatingActionButton: showFAB(),
-      bottomNavigationBar: pageIsLoading
-          ? Container()
+      bottomNavigationBar: pageIsLoading ||
+              (myUserDS != null && myUserDS.exists && !myUserDS['acceptedTOS'])
+          ? Container(height: 0)
           : SizedBox(
               //height: 90,
               child: BottomNavigationBar(
@@ -538,45 +540,47 @@ class HomePageState extends State<HomePage> {
   }
 
   Widget showBody() {
-    /*
     if (myUserDS != null && myUserDS.exists && !myUserDS['acceptedTOS']) {
-      showTermsOfService();
-    }
-    */
-
-    return IndexedStack(
-      index: currentTabIndex,
-      children: bottomTabPages,
-    );
-  }
-
-  Future<bool> showTermsOfService() async {
-    return await showDialog<bool>(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text('Terms of service'),
-              content: Text(
-                'Terms of service, private policy etc.',
+      setState(() {
+        currentTabIndex = 0;
+      });
+      return Container(
+        padding: EdgeInsets.all(15),
+        child: Column(
+          children: <Widget>[
+            Expanded(
+              child: ListView(
+                children: <Widget>[Text('private policy here')],
               ),
-              actions: <Widget>[
-                FlatButton(
-                  child: const Text('Accept'),
+            ),
+            Row(
+              children: <Widget>[
+                RaisedButton(
                   onPressed: () async {
                     await Firestore.instance
                         .collection('users')
                         .document(myUserID)
                         .updateData({'acceptedTOS': true});
 
-                    Navigator.of(context).pop(false);
-                    // Pops the confirmation dialog but not the page.
+                    myUserDS = await Firestore.instance
+                        .collection('users')
+                        .document(myUserID)
+                        .get();
+                    setState(() {});
                   },
+                  child: Text('Accept'),
                 ),
               ],
-            );
-          },
-        ) ??
-        false;
+            ),
+          ],
+        ),
+      );
+    }
+
+    return IndexedStack(
+      index: currentTabIndex,
+      children: bottomTabPages,
+    );
   }
 
   Widget showFAB() {
@@ -585,24 +589,22 @@ class HomePageState extends State<HomePage> {
           elevation: 3,
           color: Theme.of(context).primaryColor,
           textColor: Colors.white,
-          onPressed: () {
-            navigateToEdit(
-              Item(
-                id: null,
-                isVisible: true,
-                creator:
-                    Firestore.instance.collection('users').document(myUserID),
-                name: '',
-                description: '',
-                type: null,
-                condition: null,
-                price: 0,
-                numImages: 0,
-                images: new List(),
-                location: {'geopoint': null},
+          onPressed: () => navigateToEdit(
+                Item(
+                  id: null,
+                  isVisible: true,
+                  creator:
+                      Firestore.instance.collection('users').document(myUserID),
+                  name: '',
+                  description: '',
+                  type: null,
+                  condition: null,
+                  price: 0,
+                  numImages: 0,
+                  images: new List(),
+                  location: {'geopoint': null},
+                ),
               ),
-            );
-          },
           child: Text("Add Item",
               style: TextStyle(
                   fontFamily: 'Quicksand', fontWeight: FontWeight.normal)));
@@ -1999,7 +2001,7 @@ class HomePageState extends State<HomePage> {
                   indicatorColor: Colors.transparent,
                 ),
 =======
-                child: new 
+                child: new
 >>>>>>> 707e04d663dc7c8e83823a7d8002b505d85104bb
               ),
             ),
@@ -2555,6 +2557,10 @@ class HomePageState extends State<HomePage> {
   }
 
   void navigateToEdit(Item newItem) async {
+    if (!isAuthenticated || !myUserDS['acceptedTOS']) {
+      return;
+    }
+
     Navigator.pushNamed(
       context,
       ItemEdit.routeName,
