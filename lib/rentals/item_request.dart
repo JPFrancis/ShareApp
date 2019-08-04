@@ -643,6 +643,7 @@ class ItemRequestState extends State<ItemRequest> {
       'renterCC': null,
       'ownerCC': null,
       'review': null,
+      'submittedReview': false,
       'initialPushNotif': {
         'nameFrom': myName,
         'pushToken': itemOwnerDS['pushToken'],

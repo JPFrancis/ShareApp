@@ -768,7 +768,7 @@ class ItemDetailState extends State<ItemDetail> {
         children: <Widget>[
           Expanded(
             child: Text('Going on vacation? Uncheck the switch to prevent '
-                'otheres from renting this item'),
+                'others from renting this item'),
           ),
           Switch(
             value: isVisible,

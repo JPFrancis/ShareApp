@@ -431,8 +431,9 @@ class PayoutsPageState extends State<PayoutsPage> {
   Widget showPayouts() {
     return Column(
       children: <Widget>[
-        buildTransactions("past", "renter"),
-        buildTransactions("past", "owner"),
+        buildChargesList(),
+        //buildTransactions("past", "renter"),
+        //buildTransactions("past", "owner"),
       ],
     );
   }
@@ -441,9 +442,9 @@ class PayoutsPageState extends State<PayoutsPage> {
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
         stream: Firestore.instance
-            .collection('users')
-            .document(myUserID)
             .collection('charges')
+            .where('status',isEqualTo: 'succeeded')
+            .orderBy('timestamp',descending: true)
             .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
@@ -462,9 +463,11 @@ class PayoutsPageState extends State<PayoutsPage> {
                     itemCount: docs.length,
                     itemBuilder: (context, index) {
                       DocumentSnapshot ds = docs[index];
+                      double amount = ds['amount'] / 100;
+
                       return ListTile(
                         title: Text(
-                          '${ds['amount']}',
+                          '\$${amount.toStringAsFixed(0)}',
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                         subtitle: Text('${ds['description']}'),
@@ -477,10 +480,6 @@ class PayoutsPageState extends State<PayoutsPage> {
         },
       ),
     );
-  }
-
-  void goToLastScreen() {
-    Navigator.pop(context);
   }
 
   Widget buildTransactions(String rentalStatus, person) {
