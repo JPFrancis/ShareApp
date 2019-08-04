@@ -407,6 +407,7 @@ class PayoutsPageState extends State<PayoutsPage> {
                             children: <Widget>[
                               Container(height: 10),
                               addCard(),
+                              Container(height: 10),
                             ],
                           );
                         } else {

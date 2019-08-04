@@ -676,7 +676,7 @@ class ItemEditState extends State<ItemEdit> {
       final DocumentReference documentReference =
           await Firestore.instance.collection("items").add({
         'id': null,
-        'status': itemCopy.status,
+        'status': itemCopy.isVisible,
         'creator': itemCopy.creator,
         'name': itemCopy.name,
         'description': itemCopy.description,
@@ -687,7 +687,6 @@ class ItemEditState extends State<ItemEdit> {
         'price': itemCopy.price,
         'numImages': totalImagesCount,
         'location': myLocation.data,
-        'rental': itemCopy.rental,
         'searchKey': searchKeyList,
         'isVisible': true,
       });

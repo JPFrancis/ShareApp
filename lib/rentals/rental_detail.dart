@@ -13,7 +13,6 @@ import 'package:shareapp/services/const.dart';
 import 'package:shareapp/services/payment_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smooth_star_rating/smooth_star_rating.dart';
-import 'package:stripe_payment/stripe_payment.dart';
 
 enum Status {
   requested,
@@ -249,6 +248,10 @@ class RentalDetailState extends State<RentalDetail> {
           case ConnectionState.waiting:
           default:
             if (snapshot.hasData) {
+              if (!snapshot.data.exists) {
+                return Container();
+              }
+
               rentalDS = snapshot.data;
 
               DateTime now = DateTime.now();
@@ -258,7 +261,7 @@ class RentalDetailState extends State<RentalDetail> {
               DateTime rentalEnd = rentalDS['rentalEnd'].toDate();
               DateTime created = rentalDS['created'].toDate();
 
-              if (now.isAfter(pickupStart) && now.isBefore(pickupEnd)) {
+              if (now.isAfter(pickupStart) && now.isBefore(rentalEnd)) {
                 updateStatus(3);
               }
 
@@ -281,10 +284,9 @@ class RentalDetailState extends State<RentalDetail> {
                       height: MediaQuery.of(context).size.height / 4,
                       child: showItemRequestStatus()),
                   divider(),
-                  showCreditCardButton(),
-                  showPaymentInfo(),
+                  showRequestButtons(),
                   //showReceiveItemButton(),
-                  showReturnedItemButton(),
+                  //showReturnedItemButton(),
                   showReview(),
                   //paymentButtonTEST(),
                 ],
@@ -318,18 +320,6 @@ class RentalDetailState extends State<RentalDetail> {
             child: _getItemImage(context),
           )
         : Text('No images yet\n');
-  }
-
-  Widget paymentButtonTEST() {
-    return RaisedButton(
-      onPressed: () {
-        PaymentService().chargeRental(
-            1.0,
-            '${renterDS['name']} paying ${ownerDS['name']} '
-            'for renting ${rentalDS['itemName']}');
-      },
-      child: Text('Charge'),
-    );
   }
 
   Widget showItemCreator() {
@@ -446,6 +436,11 @@ class RentalDetailState extends State<RentalDetail> {
         '${durationDays > 1 ? '$durationDays days' : '$durationDays day'}';
 
     Widget info;
+    bool submittedReview = rentalDS['submittedReview'];
+
+    if (submittedReview) {
+      itemStatus = 5;
+    }
 
     switch (itemStatus) {
       case 0: //requested, renter has sent request
@@ -1129,11 +1124,34 @@ class RentalDetailState extends State<RentalDetail> {
                 blurStyle: BlurStyle.outer),
           ],
         ),
-        child: Container(
-            padding: EdgeInsets.all(10),
-            child:
-                info) //Text(statusMessage, style: TextStyle(fontSize: 18, color: Colors.white, fontFamily: appFont)),
+        child: Container(padding: EdgeInsets.all(10), child: info)
+        //Text(statusMessage, style: TextStyle(fontSize: 18, color: Colors.white, fontFamily: appFont)),
         );
+  }
+
+  void handleAcceptedRental() async {
+    await Future.delayed(Duration(milliseconds: 500));
+
+    Firestore.instance.collection('notifications').add({
+      'title': '$myName accepted your pickup window',
+      'body': 'Item: ${itemDS['name']}',
+      'pushToken': otherUserDS['pushToken'],
+      'rentalID': rentalDS.documentID,
+      'timestamp': DateTime.now().millisecondsSinceEpoch,
+    }).then((_) {
+      double chargeAmount = 1.0;
+
+      PaymentService().chargeRental(
+          rentalDS.documentID,
+          rentalDS['duration'],
+          rentalDS['pickupStart'],
+          rentalDS['rentalEnd'],
+          renterDS.documentID,
+          ownerDS.documentID,
+          chargeAmount,
+          '${renterDS['name']} paying ${ownerDS['name']} '
+          'for renting ${rentalDS['itemName']}');
+    });
   }
 
   Widget showRequestButtons() {
@@ -1148,6 +1166,7 @@ class RentalDetailState extends State<RentalDetail> {
                     Expanded(
                       child: reusableButton('Accept', Colors.green, () {
                         updateStatus(2);
+                        handleAcceptedRental();
                       }),
                     ),
                     Container(
@@ -1222,168 +1241,6 @@ class RentalDetailState extends State<RentalDetail> {
         : Container();
   }
 
-  Widget showCreditCardButton() {
-    return rentalDS['status'] == 2
-        ? Container(
-            child: RaisedButton(
-              shape: new RoundedRectangleBorder(
-                  borderRadius: new BorderRadius.circular(5.0)),
-              color: Colors.green,
-              textColor: Colors.white,
-              child: Text(
-                'Confirm payment method',
-                textScaleFactor: 1.25,
-              ),
-              onPressed: () {
-                if (!stripeInit) {
-                  Firestore.instance
-                      .collection('keys')
-                      .document('stripe_pk')
-                      .get()
-                      .then((DocumentSnapshot ds) {
-                    StripeSource.setPublishableKey(ds['key']);
-                  });
-
-                  stripeInit = true;
-                }
-
-                showDialog<String>(
-                  context: context,
-                  builder: (BuildContext context) => AlertDialog(
-                        title: const Text('Credit Card'),
-                        content: Container(
-                          height: 175,
-                          child: StreamBuilder<QuerySnapshot>(
-                            stream: Firestore.instance
-                                .collection('users')
-                                .document(myUserId)
-                                .collection('sources')
-                                .limit(1)
-                                .snapshots(),
-                            builder: (BuildContext context,
-                                AsyncSnapshot<QuerySnapshot> snapshot) {
-                              if (snapshot.hasError) {
-                                return new Text('${snapshot.error}');
-                              }
-                              switch (snapshot.connectionState) {
-                                case ConnectionState.waiting:
-                                  return Container();
-                                default:
-                                  List documents = snapshot.data.documents;
-                                  bool hasCard = documents.length > 0;
-
-                                  return Column(
-                                    children: <Widget>[
-                                      RaisedButton(
-                                        shape: new RoundedRectangleBorder(
-                                            borderRadius:
-                                                new BorderRadius.circular(5.0)),
-                                        color: Colors.green,
-                                        textColor: Colors.white,
-                                        child: Text(
-                                          'Add card',
-                                          textAlign: TextAlign.center,
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                          ),
-                                        ),
-                                        onPressed: hasCard
-                                            ? null
-                                            : () {
-                                                StripeSource.addSource()
-                                                    .then((token) {
-                                                  PaymentService()
-                                                      .addCard(token);
-                                                });
-                                              },
-                                      ),
-                                      Text('Or use card on file'),
-                                      hasCard
-                                          ? ListTile(
-                                              leading: Icon(Icons.credit_card),
-                                              title: Text(
-                                                documents[0]['card']['last4']
-                                                    .toString(),
-                                                style: TextStyle(
-                                                    fontWeight:
-                                                        FontWeight.bold),
-                                              ),
-                                              subtitle: Text(documents[0]
-                                                      ['card']['brand']
-                                                  .toString()),
-                                              onTap: () {
-                                                Firestore.instance
-                                                    .collection('rentals')
-                                                    .document(
-                                                        rentalDS.documentID)
-                                                    .updateData({
-                                                  '$rentalCC': documents[0]
-                                                          ['card']['last4']
-                                                      .toString()
-                                                });
-                                                Navigator.pop(context);
-                                              },
-                                            )
-                                          : Text('No cards yet'),
-                                    ],
-                                  );
-                              }
-                            },
-                          ),
-                        ),
-                      ),
-                ).then<String>((returnVal) {
-                  if (returnVal != null) {
-                    Scaffold.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('You clicked: $returnVal'),
-                        action: SnackBarAction(label: 'OK', onPressed: () {}),
-                      ),
-                    );
-                  }
-                });
-              },
-            ),
-
-            /*
-            RaisedButton(
-
-              shape: new RoundedRectangleBorder(
-                  borderRadius: new BorderRadius.circular(5.0)),
-              color: Colors.green,
-              textColor: Colors.white,
-              child: Text(
-                'Add payment method',
-                //addButton + " Images",
-                textScaleFactor: 1.25,
-              ),
-              onPressed: () {
-                navToCreditCard();
-                //updateStatus(3);
-              },
-            ),
-    */
-          )
-        : Container();
-  }
-
-  Widget showPaymentInfo() {
-    String confirmedCC = rentalDS['$rentalCC'];
-    String displayText = confirmedCC == null
-        ? 'Payment not confirmed yet'
-        : 'Payment confirmed: card ending in $confirmedCC';
-
-    return rentalDS['status'] == 2
-        ? Container(
-            padding: EdgeInsets.all(5),
-            child: Text(
-              '${displayText}',
-              style: TextStyle(fontSize: 20),
-            ),
-          )
-        : Container();
-  }
-
   Widget showReturnedItemButton() {
     return rentalDS['status'] == 3
         ? Container(
@@ -1397,35 +1254,70 @@ class RentalDetailState extends State<RentalDetail> {
                 //addButton + " Images",
                 textScaleFactor: 1.25,
               ),
-              onPressed: () {
-                PaymentService().chargeRental(
-                    1.0,
-                    '${renterDS['name']} paying ${ownerDS['name']} '
-                    'for renting ${rentalDS['itemName']}');
-              },
+              onPressed: () {},
             ),
           )
         : Container();
   }
 
   Widget showReview() {
-    return isRenter && rentalDS['status'] == 4
-        ? Container(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                starRating('How was the communication?', 1),
-                starRating('How was the quality of the item?', 2),
-                starRating('How was your overal experience?', 3),
-                showWriteReviewTextBox(),
-                Align(
-                  alignment: AlignmentDirectional(0, 0),
-                  child: showSubmitReviewButton(),
-                ),
-              ],
-            ),
-          )
-        : Container();
+    if (isRenter && rentalDS['status'] == 4) {
+      if (rentalDS['submittedReview']) {
+        return showCompletedReview();
+      } else {
+        return Container(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              starRating('How was the communication?', 1),
+              starRating('How was the quality of the item?', 2),
+              starRating('How was your overal experience?', 3),
+              showWriteReviewTextBox(),
+              Align(
+                alignment: AlignmentDirectional(0, 0),
+                child: showSubmitReviewButton(),
+              ),
+            ],
+          ),
+        );
+      }
+    } else if (!isRenter && rentalDS['status'] == 4) {
+      if (rentalDS['submittedReview']) {
+        return showCompletedReview();
+      } else {
+        return Container(
+          child: Text('Waiting for renter to write review'),
+        );
+      }
+    } else {
+      return Container();
+    }
+  }
+
+  Widget showCompletedReview() {
+    Map review = rentalDS['review'];
+
+    if (review == null) {
+      return Container();
+    }
+
+    var communication = review['communication'];
+    var itemQuality = review['itemQuality'];
+    var overall = review['overall'];
+    var reviewNote = review['reviewNote'];
+
+    return Container(
+      child: Column(
+        children: <Widget>[
+          Text(
+            'Communication: $communication\n'
+            'Item quality: $itemQuality\n'
+            'Overall experience: $overall\n'
+            'Review note: $reviewNote',
+          ),
+        ],
+      ),
+    );
   }
 
   double getRating(int indicator) {
@@ -1507,7 +1399,6 @@ class RentalDetailState extends State<RentalDetail> {
         textScaleFactor: 1.25,
       ),
       onPressed: () {
-        updateStatus(5);
         submitReview();
       },
     );
@@ -1515,20 +1406,16 @@ class RentalDetailState extends State<RentalDetail> {
 
   void updateStatus(int status) async {
     bool requesting = status == 2 ? false : rentalDS['requesting'];
+    var lastUpdateTime =
+        status == 2 ? DateTime.now() : rentalDS['lastUpdateTime'];
 
     Firestore.instance
         .collection('rentals')
         .document(rentalDS.documentID)
-        .updateData({'status': status, 'requesting': requesting}).then((_) {
-      if (status == 2) {
-        Firestore.instance.collection('notifications').add({
-          'title': '$myName accepted your pickup window',
-          'body': 'Item: ${itemDS['name']}',
-          'pushToken': otherUserDS['pushToken'],
-          'rentalID': rentalDS.documentID,
-          'timestamp': DateTime.now().millisecondsSinceEpoch,
-        });
-      }
+        .updateData({
+      'status': status,
+      'requesting': requesting,
+      'lastUpdateTime': lastUpdateTime,
     });
   }
 
@@ -1541,24 +1428,40 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   void submitReview() async {
+    double avg =
+        (communicationRating + itemQualityRating + overallExpRating) / 3;
+
     var review = {
       'communication': communicationRating,
       'itemQuality': itemQualityRating,
       'overall': overallExpRating,
+      'average': avg,
       'reviewNote': reviewController.text
     };
 
-    Firestore.instance
+    await Firestore.instance
         .collection('rentals')
         .document(rentalDS.documentID)
-        .updateData({'review': review}).then((_) {
-      Firestore.instance.collection('notifications').add({
-        'title': '$myName left you a review',
-        'body': '',
-        'pushToken': otherUserDS['pushToken'],
-        'rentalID': rentalDS.documentID,
-        'timestamp': DateTime.now().millisecondsSinceEpoch,
-      });
+        .updateData({
+      'lastUpdateTime': DateTime.now(),
+      'review': review,
+      'submittedReview': true,
+    });
+
+    await Firestore.instance
+        .collection('items')
+        .document(itemDS.documentID)
+        .updateData({
+      'numRatings': FieldValue.increment(1),
+      'rating': FieldValue.increment(avg),
+    });
+
+    await Firestore.instance.collection('notifications').add({
+      'title': '$myName left you a review',
+      'body': '',
+      'pushToken': otherUserDS['pushToken'],
+      'rentalID': rentalDS.documentID,
+      'timestamp': DateTime.now().millisecondsSinceEpoch,
     });
 
     /// UPDATE USER RATINGS

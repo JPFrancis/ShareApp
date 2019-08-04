@@ -671,7 +671,9 @@ class SearchPageState extends State<SearchPage> {
                       items.sort((a, b) => a['price'].compareTo(b['price']));
                       break;
                     case 'Rating':
-                      items.sort((a, b) => b['rating'].compareTo(a['rating']));
+                      items.sort((a, b) =>
+                          (b['rating'].toDouble() / b['numRatings']).compareTo(
+                              (a['rating'].toDouble() / a['numRatings'])));
                       break;
                     case 'Distance':
                       break;

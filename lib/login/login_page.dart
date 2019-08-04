@@ -34,6 +34,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   FormMode formMode = FormMode.LOGIN;
   bool isIos;
   bool isLoading;
+  bool showSignUp = false;
 
   // for animation
   AnimationController logoController;
@@ -57,7 +58,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   }
 
   // Check if form is valid before perform login or signup
-  bool _validateAndSave() {
+  bool validateAndSave() {
     final form = formKey.currentState;
     if (form.validate()) {
       form.save();
@@ -67,20 +68,18 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   }
 
   // Perform login or signup
-  void _validateAndSubmit() async {
+  void validateAndSubmit() async {
     setState(() {
       errorMessage = "";
       isLoading = true;
     });
-    if (_validateAndSave()) {
+    if (validateAndSave()) {
       String userId = "";
       try {
         if (formMode == FormMode.LOGIN) {
           userId = await widget.auth.signIn(email, password);
-          print('Signed in: $userId');
         } else {
           userId = await widget.auth.createUser(email, password);
-          print('Signed up user: $userId');
           widget.onSignIn();
         }
         setState(() {
@@ -173,24 +172,54 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter),
           ),
-          child: Stack(children: <Widget>[
-            Column(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: <Widget>[
-                FadeTransition(opacity: logoAnimation, child: _showLogo(false)),
-                FadeTransition(opacity: contentAnimation, child: showBody()),
-            ],),
-            Padding(
-              padding: const EdgeInsets.only(top: 60.0, right: 20.0),
-              child: Align(alignment: Alignment.topRight, 
-                child: OutlineButton(
-                  borderSide: BorderSide(color: primaryColor),
-                  onPressed: ()=>debugPrint("eee"),
-                  child: Text('Sign In', style: new TextStyle(fontSize: 18.0, fontWeight: FontWeight.w400, fontStyle: FontStyle.italic,
-                  color: Colors.white, fontFamily: 'Quicksand')),
-                ),),
-            ),
-          ],),
+          child: showSignUp
+              ? Form(
+                  key: formKey,
+                  child: Container(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: <Widget>[
+                        Container(height: 70),
+                        Padding(
+                          padding: EdgeInsets.only(left: 40),
+                          child: showEmailInput(),
+                        ),
+                        SizedBox(height: 15.0),
+                        Padding(
+                          padding: EdgeInsets.only(left: 40),
+                          child: showPasswordInput(),
+                        ),
+                        SizedBox(
+                          height: 30.0,
+                        ),
+                        showPrimaryButton(),
+                        showSecondaryButton(),
+                        Container(height: 40),
+                        IconButton(
+                          onPressed: () {
+                            setState(() {
+                              showSignUp = !showSignUp;
+                            });
+                          },
+                          icon: Icon(Icons.arrow_back),
+                          color: Colors.white,
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: <Widget>[
+                    // SizedBox(height: h/24,),
+                    FadeTransition(
+                        opacity: logoAnimation, child: _showLogo(false)),
+                    // SizedBox(height: 20.0,),
+                    FadeTransition(
+                        opacity: contentAnimation, child: showBody()),
+                  ],
+                ),
         ),
       );
     }
@@ -203,9 +232,8 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight),
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: <Widget>[
+          child: Stack(children: <Widget>[
+            Center(child: Column(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: <Widget>[
               FadeTransition(opacity: logoAnimation, child: _showLogo(false)),
               AnimatedBuilder(
                 animation: textController,
@@ -220,10 +248,16 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                       translation: textAnimation.value);
                 },
               ),
-            ],
-          ));
+            ]),),
+            Container(
+              padding: EdgeInsets.only(right: 10.0, top: 40.0),
+              alignment: Alignment.topRight,
+              child: RaisedButton(color: Colors.transparent,
+                  onPressed: () => pageController.animateToPage(5, duration: const Duration(milliseconds: 1000), curve: Curves.fastOutSlowIn),
+                  child: Text('Skip to login page', style: TextStyle(fontFamily: appFont, color: Colors.white, fontWeight: FontWeight.w200),)),
+            ),
+          ]));
     }
-
 
     _info1() {
       return Stack(
@@ -245,7 +279,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
               Text("Search anything you need", style: TextStyle(fontSize: h / 45, fontFamily: appFont, color: Colors.white),),
               Container(
                 alignment: Alignment.center,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20.0),
+                padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 20.0),
                 child: ClipRRect(
                   child: Image.asset('assets/search.png'),
                   borderRadius: BorderRadius.circular(40),
@@ -262,7 +296,6 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
         children: <Widget>[
           Container(
             height: h,
-            width: w,
             decoration: BoxDecoration(
               color: Colors.purple,
               gradient: LinearGradient(
@@ -277,7 +310,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
               Text("Request an item at your convenience", style: TextStyle(fontSize: h / 45, fontFamily: appFont, color: Colors.white),),
               Container(
                 alignment: Alignment.center,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20.0),
+                padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 20.0),
                 child: ClipRRect(
                   child: Image.asset('assets/request.png'),
                   borderRadius: BorderRadius.circular(40),
@@ -393,7 +426,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   }
 
   Widget showBody() {
-    return new Form(
+    return Form(
       key: formKey,
       child: new ListView(
         padding: EdgeInsets.all(0),
@@ -402,15 +435,19 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0),
             child: FlatButton(
-                child: Text('Sign Up',
+                child: Text('Sign Up/Login',
                     style: new TextStyle(
                         fontSize: 18.0,
                         fontWeight: FontWeight.w300,
                         color: Colors.white,
                         fontFamily: 'Quicksand')),
-                onPressed: null),
+                onPressed: () {
+                  setState(() {
+                    showSignUp = !showSignUp;
+                  });
+                }),
           ),
-          SizedBox(height: 10.0,),
+          SizedBox(height: 10.0),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0),
             child: FlatButton(
@@ -426,31 +463,6 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
           SizedBox(height: 20.0,),
           googleLogin(),
           ecSignIn(),
-          /*
-        Padding(
-          padding: const EdgeInsets.only(left: 40.0),
-          child: Column(
-            children: <Widget>[
-              showEmailInput(),
-              SizedBox(height: 10.0,),
-              showPasswordInput(),
-            ],
-          ),
-        ),
-        SizedBox(height: 30.0,),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-          child: showPrimaryButton(),
-        ),
-        showSecondaryButton(),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            googleLogin(),
-            otherUserSignin(),
-          ],
-        ),
-        showErrorMessage(),*/
         ],
       ),
     );
@@ -506,7 +518,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
 
   Widget showEmailInput() {
     return Container(
-      height: 70,
+      height: 60,
       padding: EdgeInsets.only(left: 10.0),
       decoration: new BoxDecoration(
         border: Border(left: BorderSide(color: Colors.white, width: 3)),
@@ -514,6 +526,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       child: Center(
         child: new TextFormField(
           maxLines: 1,
+          style: TextStyle(color: Colors.white),
           keyboardType: TextInputType.emailAddress,
           autofocus: false,
           decoration: new InputDecoration(
@@ -534,7 +547,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
 
   Widget showPasswordInput() {
     return Container(
-      height: 70,
+      height: 60,
       padding: const EdgeInsets.only(left: 10),
       decoration: new BoxDecoration(
         border: Border(left: BorderSide(color: Colors.white, width: 3)),
@@ -544,6 +557,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
           maxLines: 1,
           obscureText: true,
           autofocus: false,
+          style: TextStyle(color: Colors.white),
           decoration: new InputDecoration(
               hintText: 'Password',
               border: InputBorder.none,
@@ -676,7 +690,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                     fontSize: 20.0,
                     color: Colors.black,
                     fontFamily: 'Quicksand')),
-        onPressed: _validateAndSubmit,
+        onPressed: validateAndSubmit,
       ),
     );
   }

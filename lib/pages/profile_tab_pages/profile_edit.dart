@@ -506,7 +506,7 @@ class ProfileEditState extends State<ProfileEdit> {
           style: TextStyle(fontFamily: font, fontSize: width / 20),
           decoration: InputDecoration(
             border: InputBorder.none,
-            hintText: "Description",
+            hintText: "Where ya from? What do ya do for fun?",
           ),
         ),
         Align(

@@ -38,6 +38,7 @@ class NewPickupState extends State<NewPickup> {
   bool isLoading;
   String myUserID;
   String myName;
+  String groupChatId;
 
   DocumentSnapshot rentalDS;
   DocumentSnapshot itemDS;
@@ -139,6 +140,12 @@ class NewPickupState extends State<NewPickup> {
         if (ds != null) {
           otherUserDS = ds;
 
+          if (myUserID.hashCode <= otherUserDS.documentID.hashCode) {
+            groupChatId = '$myUserID-${otherUserDS.documentID}';
+          } else {
+            groupChatId = '${otherUserDS.documentID}-$myUserID';
+          }
+
           if (prefs != null && itemDS != null && otherUserDS != null) {
             setState(() {
               isLoading = false;
@@ -194,7 +201,8 @@ class NewPickupState extends State<NewPickup> {
       DateTime prevDateTime = prevSnap['rentalEnd'].toDate();
       prevDateTime = stripHourMin(prevDateTime).add(Duration(minutes: 15));
 
-      if (pickupTimeCopy.isBefore(prevDateTime)) {
+      if (prevSnap.documentID != rentalDS.documentID &&
+          pickupTimeCopy.isBefore(prevDateTime)) {
         return false;
       }
     }
@@ -221,7 +229,8 @@ class NewPickupState extends State<NewPickup> {
           stripHourMin(afterDateTime).subtract(Duration(minutes: 15));
       pickupTimeCopy = pickupTimeCopy.add(Duration(days: duration));
 
-      if (pickupTimeCopy.isAfter(afterDateTime)) {
+      if (afterSnap.documentID != rentalDS.documentID &&
+          pickupTimeCopy.isAfter(afterDateTime)) {
         return false;
       }
     }
@@ -424,6 +433,7 @@ class NewPickupState extends State<NewPickup> {
       'pickupEnd': pickupTime.add(Duration(hours: 1)),
       'rentalEnd': pickupTime.add(Duration(days: duration, hours: 1)),
       'duration': duration,
+      'lastUpdateTime': DateTime.now(),
       'note': note,
     }).then((_) {
       Future.delayed(Duration(seconds: 1)).then((_) {
@@ -434,7 +444,29 @@ class NewPickupState extends State<NewPickup> {
           'rentalID': widget.rentalID,
           'timestamp': DateTime.now().millisecondsSinceEpoch,
         }).then((_) {
-          Navigator.of(context).pop();
+          var messageReference = Firestore.instance
+              .collection('messages')
+              .document(groupChatId)
+              .collection('messages')
+              .document(DateTime.now().millisecondsSinceEpoch.toString());
+
+          Firestore.instance.runTransaction((transaction) async {
+            await transaction.set(
+              messageReference,
+              {
+                'idFrom': myUserID,
+                'idTo': otherUserDS.documentID,
+                'timestamp': DateTime.now().millisecondsSinceEpoch,
+                'content': message,
+                'type': 0,
+                'pushToken': otherUserDS['pushToken'],
+                'nameFrom': myName,
+                'rental': rentalDS.reference,
+              },
+            );
+          }).then((_) {
+            Navigator.of(context).pop();
+          });
         });
       });
     });
@@ -447,10 +479,9 @@ class NewPickupState extends State<NewPickup> {
 
     String range = parseWindow(windows, window, amPm);
 
-    message = 'Window: $range\n'
+    message = 'New pickup proposal\nPickup window: $range\n'
         'Date: ${DateFormat('EEE, MMM d yyyy').format(pickupTime)}\n'
-        'Duration: ${duration > 1 ? '$duration days' : '$duration day'}\n\n'
-        'Pickup note: ${note.length > 0 ? '\n\nAdditional Note:\n$note' : ''}';
+        'Duration: ${duration > 1 ? '$duration days' : '$duration day'}';
 
     return await showDialog<bool>(
           context: context,

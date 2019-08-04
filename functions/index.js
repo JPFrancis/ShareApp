@@ -18,7 +18,14 @@ exports.createUser = functions.auth.user().onCreate(event => {
 
     const userID = event.uid;
     const email = event.email;
-    const photoURL = event.photoURL.replace('s96-c', 's960-c') || 'https://firebasestorage.googleapis.com/v0/b/shareapp-rrd.appspot.com/o/profile_pics%2Fnew_user.png?alt=media&token=60762aec-fa4f-42cd-9d4b-656bd92aeb6d';
+    var photoURL = event.photoURL;
+
+    if (photoURL === null) {
+        photoURL = 'https://firebasestorage.googleapis.com/v0/b/shareapp-rrd.appspot.com/o/profile_pics%2Fnew_user.png?alt=media&token=60762aec-fa4f-42cd-9d4b-656bd92aeb6d';
+    } else {
+        photoURL = photoURL.replace('s96-c', 's960-c');
+    }
+
     const name = event.displayName || 'new user';
     const creationDate = Date.now();
 
@@ -36,6 +43,8 @@ exports.createUser = functions.auth.user().onCreate(event => {
         phoneNum: null,
         birthday: null,
         address: null,
+        verified: false,
+        acceptedTOS: false,
     }).then(function () {
         console.log('Created user: ', userID);
         return `Created user ${userID}`;
@@ -324,33 +333,34 @@ exports.setDefaultSource = (userId, customerId, newSourceId) => {
 };
 */
 
-exports.createCharge = functions.firestore.document('users/{userId}/charges/{chargeId}').onCreate(async (chargeSnap, context) => {
-    try {
-        const userSnap = await firestore.collection('users').doc(context.params.userId).get();
-        const customer = userSnap.data().custId;
-        const amount = chargeSnap.data().amount;
-        const currency = chargeSnap.data().currency;
-        const description = chargeSnap.data().description;
+exports.createCharge = functions.firestore.document('charges/{chargeId}')
+    .onCreate(async (chargeSnap, context) => {
+        try {
+            const idFrom = chargeSnap.data().rentalData['idFrom'];
+            const userSnap = await firestore.collection('users').doc(idFrom).get();
+            const customer = userSnap.data().custId;
+            const amount = chargeSnap.data().amount;
+            const currency = chargeSnap.data().currency;
+            const description = chargeSnap.data().description;
 
-        /*
-        application_fee_amount: 123,
-        transfer_data: {
-            amount: 877,
-            destination: "{{CONNECTED_STRIPE_ACCOUNT_ID}}",
-            },
-        */
+            /*
+            application_fee_amount: 123,
+            transfer_data: {
+                amount: 877,
+                destination: "{{CONNECTED_STRIPE_ACCOUNT_ID}}",
+                },
+            */
 
-        const charge = { amount, currency, customer, description };
-        const idempotentKey = context.params.chargeId;
+            const charge = { amount, currency, customer, description };
+            const idempotentKey = context.params.chargeId;
 
-        const response = await stripe.charges.create(charge, { idempotency_key: idempotentKey });
-        return chargeSnap.ref.set(response, { merge: true });
+            const response = await stripe.charges.create(charge, { idempotency_key: idempotentKey });
+            return chargeSnap.ref.set(response, { merge: true });
 
-    } catch (error) {
-        await chargeSnap.ref.set({ error: error.message }, { merge: true });
-    }
-
-});
+        } catch (error) {
+            await chargeSnap.ref.set({ error: error.message }, { merge: true });
+        }
+    });
 
 /*
 exports.addItem = functions.https.onCall((data, context) => {

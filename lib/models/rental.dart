@@ -10,23 +10,16 @@ int status
  */
 
 /*
-0) renter has proposed time - burden of accept is on owner
+0) renter has proposed time - burden of accept is on owner.
+  Entered when renter proposes new time
 1) owner has proposed time - burden of accept is on renter
-2) accepted - the owner has accepted the request. the renter will be notified, 
-  and both parties will be instructed to exchange the item
-3) active - the actual renting is taking place including pickup window
-  Phase 3 is entered once pickup window is confirmed
-4) returned - the renting has finished, and the item has been returned to the 
-  owner. the renter will write a review. Entered when duration ends
-5) completed - when the whole transaction has been completed. the item will be 
-  moved into 'completed' phase when the renter has finished the review and the 
-  owner has inspected the item for damage, missing parts etc (so the owner has 
-  to confirm that the item was returned in good shape). rentals marked 
-  'completed' will be stored in an archive
-6) abandoned - the request was never accepted, either the user cancelled the
-  request or the owner declined the request. not sure if we want to store
-  abandoned rentals
- */
+  Entered when owner proposes new time
+2) accepted - when the rental request is agreed upon, can be done by either
+  renter or owner
+3) active - the actual renting is taking place including pickup window.
+  Occurs when rental pickup start is after current time.
+4) Rental is finished. Starts when current time hits rentalEnd
+*/
 
 class Rental {
   int status; // true if item is still in request mode, false otherwise

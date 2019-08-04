@@ -142,6 +142,10 @@ class DotsIndicator extends AnimatedWidget {
 Widget itemCard(DocumentSnapshot ds, context) {
   String priceAndDistance = "\$${ds['price']} per day";
   double distance = ds.data['distance'];
+  double rating = ds['rating'].toDouble();
+  double numRatings = ds['numRatings'].toDouble();
+
+  double itemRating = numRatings == 0 ? 0 : rating / numRatings;
 
   if (distance != null) {
     distance /= 1.609;
@@ -245,7 +249,7 @@ Widget itemCard(DocumentSnapshot ds, context) {
                   ),
                   Row(
                     children: <Widget>[
-                      StarRating(rating: ds['rating'].toDouble(), sz: h / 15),
+                      StarRating(rating: itemRating, sz: h / 15),
                       SizedBox(width: 5.0),
                       Text(
                         ds['numRatings'].toString(),
@@ -409,10 +413,11 @@ String combineID(String myId, String otherId) {
 
 Widget searchTile(ds, context) {
   double h = MediaQuery.of(context).size.height;
-
   double w = MediaQuery.of(context).size.width;
-
   String milesAway = '';
+  double rating = ds['rating'].toDouble();
+  double numRatings = ds['numRatings'].toDouble();
+  double itemRating = numRatings == 0 ? 0 : rating / numRatings;
 
   if (ds.data['distance'] != null) {
     double distance = ds.data['distance'];
@@ -462,7 +467,7 @@ Widget searchTile(ds, context) {
                   ),
                   Row(
                     children: <Widget>[
-                      StarRating(rating: ds['rating'].toDouble(), sz: h / 40),
+                      StarRating(rating: itemRating, sz: h / 40),
                       SizedBox(
                         width: 5.0,
                       ),

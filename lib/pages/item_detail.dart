@@ -56,8 +56,7 @@ class ItemDetailState extends State<ItemDetail> {
   SharedPreferences prefs;
   String myUserID;
   String itemCreator;
-  List<DocumentSnapshot> recentReviews;
-  List<DocumentSnapshot> recentReviewsUsers = List();
+  Map<Map, DocumentSnapshot> recentReviews = {}; // review : writer of review
 
   bool isAuthenticated;
   bool isLoading = true;
@@ -186,37 +185,33 @@ class ItemDetailState extends State<ItemDetail> {
       setMarker();
       getUserLocation();
 
-      /*
       QuerySnapshot querySnapshot = await Firestore.instance
           .collection('rentals')
           .where('item',
               isEqualTo: Firestore.instance
                   .collection('items')
                   .document(itemDS.documentID))
-          .orderBy('review', descending: false)
+          .where('submittedReview', isEqualTo: true)
+          .orderBy('lastUpdateTime', descending: true)
           .limit(3)
           .getDocuments();
-      recentReviews = querySnapshot.documents;
+      List rentalSnapshots = querySnapshot.documents;
 
-      if (recentReviews != null) {
-        for (int i = 0; i < recentReviews.length; i++) {
-          DocumentReference renterDR = recentReviews[i]['renter'];
+      if (rentalSnapshots != null && rentalSnapshots.length > 0) {
+        for (int i = 0; i < rentalSnapshots.length; i++) {
+          DocumentSnapshot rentalDS = rentalSnapshots[i];
+          DocumentReference renterDR = rentalDS['renter'];
+          DocumentSnapshot reviewerDS = await renterDR.get();
 
-          DocumentSnapshot userDS = await renterDR.get();
-          if (userDS != null) {
-            recentReviewsUsers.add(userDS);
+          if (reviewerDS != null) {
+            recentReviews[rentalDS['review']] = reviewerDS;
           }
         }
+      }
 
-        if (itemDS != null &&
-            creatorDS != null &&
-            recentReviews != null &&
-            recentReviewsUsers != null) {
-          delayPage();
-        }
-      }*/
-
-      delayPage();
+      if (itemDS != null && creatorDS != null) {
+        delayPage();
+      }
     }
   }
 
@@ -339,7 +334,7 @@ class ItemDetailState extends State<ItemDetail> {
         showItemLocation(),
         divider(),
         isOwner ? showItemVisibilityModifier() : Container(),
-        //recentReviews.length >= 3 ? showReviews() : Container(),
+        showReviews(),
       ],
     );
   }
@@ -368,8 +363,11 @@ class ItemDetailState extends State<ItemDetail> {
   }
 
   Widget showReviews() {
-    double h = MediaQuery.of(context).size.height;
-    Widget _reviewTile(renter, customerReview) {
+    if (recentReviews.isEmpty) {
+      return Container();
+    }
+
+    Widget reviewTile(DocumentSnapshot renter, Map customerReview) {
       return Container(
         child: Column(
           children: <Widget>[
@@ -390,18 +388,31 @@ class ItemDetailState extends State<ItemDetail> {
                   renter['name'],
                   style: TextStyle(
                       fontFamily: 'Quicksand', fontWeight: FontWeight.bold),
-                )
+                ),
+                Container(width: 5),
+                StarRating(rating: customerReview['average'].toDouble()),
               ],
             ),
             Container(
                 padding: EdgeInsets.only(left: 45.0),
                 alignment: Alignment.centerLeft,
-                child: Text(customerReview,
+                child: Text(customerReview['reviewNote'],
                     style: TextStyle(fontFamily: 'Quicksand'))),
           ],
         ),
       );
     }
+
+    double h = MediaQuery.of(context).size.height;
+    List<Widget> reviews = [];
+
+    recentReviews.forEach((k, v) {
+      reviews.add(reviewTile(v, k));
+    });
+
+    double rating = itemDS['rating'].toDouble();
+    double numRatings = itemDS['numRatings'].toDouble();
+    double itemRating = numRatings == 0 ? 0 : rating / numRatings;
 
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 20.0),
@@ -410,27 +421,19 @@ class ItemDetailState extends State<ItemDetail> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
-              Text('Reviews',
+              Text('Recent reviews',
                   style: TextStyle(
                       fontSize: 15.0,
                       fontWeight: FontWeight.bold,
                       color: Colors.black87,
                       fontFamily: 'Quicksand')),
-              StarRating(rating: itemDS['rating'].toDouble(), sz: h / 30),
+              StarRating(rating: itemRating, sz: h / 30),
             ],
           ),
           SizedBox(
             height: 10.0,
           ),
-          _reviewTile(
-              recentReviewsUsers[0], recentReviews[0]['review']['reviewNote']),
-          divider(),
-          _reviewTile(
-              recentReviewsUsers[1], recentReviews[1]['review']['reviewNote']),
-          divider(),
-          _reviewTile(
-              recentReviewsUsers[2], recentReviews[2]['review']['reviewNote']),
-          divider(),
+          Column(children: reviews),
           Align(
               alignment: Alignment.bottomRight,
               child: InkWell(
