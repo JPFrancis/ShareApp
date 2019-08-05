@@ -8,6 +8,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
@@ -51,7 +52,6 @@ class HomePageState extends State<HomePage> {
   final GlobalKey<RefreshIndicatorState> refreshIndicatorKey =
       GlobalKey<RefreshIndicatorState>();
   final FirebaseMessaging firebaseMessaging = FirebaseMessaging();
-  StreamSubscription<QuerySnapshot> subscription;
   String deviceToken;
 
   SharedPreferences prefs;
@@ -139,9 +139,29 @@ class HomePageState extends State<HomePage> {
     if (isAuthenticated) {
       scheduleNotifications();
       updateRentals();
+    } else {
+      setState(() {
+        pageIsLoading = false;
+      });
     }
 
     getUserLocation();
+    updateAll();
+  }
+
+  void updateAll() async {
+    CollectionReference collectionReference =
+        Firestore.instance.collection('users');
+    var docs = await collectionReference.getDocuments();
+
+    if (docs != null) {
+      docs.documents.forEach((ds) {
+        collectionReference.document(ds.documentID).updateData({
+          'totalRating': 0,
+          'numRatings': 0,
+        });
+      });
+    }
   }
 
   void updateRentals() async {
@@ -432,6 +452,17 @@ class HomePageState extends State<HomePage> {
 
     if (prefs != null) {
       await prefs.setString('userID', myUserID);
+
+      var stream =
+          Firestore.instance.collection('users').document(myUserID).snapshots();
+
+      stream.listen((ds) {
+        myUserDS = ds;
+      }, onDone: () {
+        print("Done");
+      }, onError: (error) {
+        print("Error");
+      });
     }
   }
 
@@ -508,8 +539,6 @@ class HomePageState extends State<HomePage> {
       profileTabPage(),
     ];
 
-    //updateLastActive();
-
     return Scaffold(
       backgroundColor: coolerWhite,
       body: pageIsLoading
@@ -540,41 +569,42 @@ class HomePageState extends State<HomePage> {
   }
 
   Widget showBody() {
-    if (myUserDS != null && myUserDS.exists && !myUserDS['acceptedTOS']) {
-      setState(() {
-        currentTabIndex = 0;
-      });
-      return Container(
-        padding: EdgeInsets.all(15),
-        child: Column(
-          children: <Widget>[
-            Expanded(
-              child: ListView(
-                children: <Widget>[Text('private policy here')],
-              ),
-            ),
-            Row(
+    if (isAuthenticated) {
+      if (myUserDS != null && myUserDS.exists) {
+        if (!myUserDS['acceptedTOS']) {
+          return Container(
+            padding: EdgeInsets.all(15),
+            child: Column(
               children: <Widget>[
-                RaisedButton(
-                  onPressed: () async {
-                    await Firestore.instance
-                        .collection('users')
-                        .document(myUserID)
-                        .updateData({'acceptedTOS': true});
+                Expanded(
+                  child: ListView(
+                    children: <Widget>[Text('private policy here')],
+                  ),
+                ),
+                Row(
+                  children: <Widget>[
+                    RaisedButton(
+                      onPressed: () async {
+                        await Firestore.instance
+                            .collection('users')
+                            .document(myUserID)
+                            .updateData({'acceptedTOS': true});
 
-                    myUserDS = await Firestore.instance
-                        .collection('users')
-                        .document(myUserID)
-                        .get();
-                    setState(() {});
-                  },
-                  child: Text('Accept'),
+                        myUserDS = await Firestore.instance
+                            .collection('users')
+                            .document(myUserID)
+                            .get();
+                        setState(() {});
+                      },
+                      child: Text('Accept'),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
-      );
+          );
+        }
+      }
     }
 
     return IndexedStack(
@@ -589,22 +619,60 @@ class HomePageState extends State<HomePage> {
           elevation: 3,
           color: Theme.of(context).primaryColor,
           textColor: Colors.white,
-          onPressed: () => navigateToEdit(
-                Item(
-                  id: null,
-                  isVisible: true,
-                  creator:
-                      Firestore.instance.collection('users').document(myUserID),
-                  name: '',
-                  description: '',
-                  type: null,
-                  condition: null,
-                  price: 0,
-                  numImages: 0,
-                  images: new List(),
-                  location: {'geopoint': null},
-                ),
-              ),
+          onPressed: () {
+            if (myUserDS != null && myUserDS.exists) {
+              if (myUserDS['address'] == null ||
+                  myUserDS['birthday'] == null ||
+                  myUserDS['gender'] == null ||
+                  myUserDS['phoneNum'] == null) {
+                showDialog<bool>(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text('Error'),
+                      content: Text(
+                        'You must complete your profile before adding an item',
+                      ),
+                      actions: <Widget>[
+                        FlatButton(
+                          child: const Text('Cancel'),
+                          onPressed: () {
+                            Navigator.of(context).pop(
+                                false); // Pops the confirmation dialog but not the page.
+                          },
+                        ),
+                        FlatButton(
+                          child: const Text('Edit profile'),
+                          onPressed: () {
+                            Navigator.of(context).pop(false);
+                            navToProfileEdit();
+                          },
+                        ),
+                      ],
+                    );
+                  },
+                );
+              } else {
+                navigateToEdit(
+                  Item(
+                    id: null,
+                    isVisible: true,
+                    creator: Firestore.instance
+                        .collection('users')
+                        .document(myUserID),
+                    name: '',
+                    description: '',
+                    type: null,
+                    condition: null,
+                    price: 0,
+                    numImages: 0,
+                    images: new List(),
+                    location: {'geopoint': null},
+                  ),
+                );
+              }
+            }
+          },
           child: Text("Add Item",
               style: TextStyle(
                   fontFamily: 'Quicksand', fontWeight: FontWeight.normal)));
@@ -627,7 +695,7 @@ class HomePageState extends State<HomePage> {
                           isEqualTo: Firestore.instance
                               .collection('users')
                               .document(myUserID))
-                      .where('status', isEqualTo: 0)
+                      .where('requesting', isEqualTo: true)
                       .snapshots(),
                   builder: (BuildContext context,
                       AsyncSnapshot<QuerySnapshot> snapshot) {
@@ -1374,6 +1442,17 @@ class HomePageState extends State<HomePage> {
   }
 
   Widget myRentalsPage() {
+    if (!isAuthenticated) {
+      return Center(
+        child: Text(
+          'Sign in to start renting',
+          style: TextStyle(
+            fontSize: 20,
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
         appBar: AppBar(
             elevation: 3.0,
@@ -1475,6 +1554,11 @@ class HomePageState extends State<HomePage> {
           default:
             if (snapshot.hasData) {
               var updated = snapshot.data.documents.toList();
+
+              if (updated.length == 0) {
+                return Text('Nothing to show');
+              }
+
               return ListView.builder(
                 padding: EdgeInsets.symmetric(horizontal: 10.0),
                 shrinkWrap: true,
@@ -1715,6 +1799,10 @@ class HomePageState extends State<HomePage> {
               if (snapshot.hasData) {
                 var updated = snapshot.data.documents;
 
+                if (updated.length == 0) {
+                  return Text('Nothing to show');
+                }
+
                 return ListView.builder(
                   scrollDirection: Axis.horizontal,
                   itemCount: updated.length,
@@ -1879,7 +1967,19 @@ class HomePageState extends State<HomePage> {
   }
 
   Widget myListingsPage() {
+    if (!isAuthenticated) {
+      return Center(
+        child: Text(
+          'Sign in to list items',
+          style: TextStyle(
+            fontSize: 20,
+          ),
+        ),
+      );
+    }
+
     double h = MediaQuery.of(context).size.height;
+
     return DefaultTabController(
       length: 2,
       child: Scaffold(
@@ -1896,10 +1996,79 @@ class HomePageState extends State<HomePage> {
                       style: TextStyle(fontFamily: 'Quicksand'),
                     )),
                     Tab(
-                        child: Text(
-                      "Transactions",
-                      style: TextStyle(fontFamily: 'Quicksand'),
-                    )),
+                      child: Stack(
+                        children: <Widget>[
+                          Row(
+                            children: <Widget>[
+                              Container(width: 9),
+                              Text(
+                                "Transactions",
+                                style: TextStyle(fontFamily: 'Quicksand'),
+                              ),
+                              Container(width: 9),
+                            ],
+                          ),
+                          StreamBuilder(
+                            stream: Firestore.instance
+                                .collection('rentals')
+                                .where('owner',
+                                    isEqualTo: Firestore.instance
+                                        .collection('users')
+                                        .document(myUserID))
+                                .where('requesting', isEqualTo: true)
+                                .snapshots(),
+                            builder: (BuildContext context,
+                                AsyncSnapshot<QuerySnapshot> snapshot) {
+                              if (snapshot.hasError) {
+                                return Container();
+                              }
+                              switch (snapshot.connectionState) {
+                                case (ConnectionState.waiting):
+                                default:
+                                  if (snapshot.hasData) {
+                                    int transactionsCount = 0;
+                                    var docs = snapshot.data.documents;
+
+                                    if (docs.length > 0) {
+                                      transactionsCount = docs.length;
+                                    }
+
+                                    return transactionsCount > 0
+                                        ? Positioned(
+                                            top: 6,
+                                            right: 0,
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                color: Colors.red[600],
+                                                borderRadius:
+                                                    BorderRadius.circular(6),
+                                              ),
+                                              constraints: BoxConstraints(
+                                                minWidth: 15,
+                                                minHeight: 15,
+                                              ),
+                                              child: Center(
+                                                child: Text(
+                                                  '${transactionsCount}',
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 12,
+                                                  ),
+                                                  textAlign: TextAlign.center,
+                                                ),
+                                              ),
+                                            ),
+                                          )
+                                        : Container();
+                                  } else {
+                                    return Container();
+                                  }
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                   labelColor: coolerWhite,
                   unselectedLabelColor: Colors.black54,
@@ -2012,6 +2181,17 @@ class HomePageState extends State<HomePage> {
   }
 
   Widget messagesTabPage() {
+    if (!isAuthenticated) {
+      return Center(
+        child: Text(
+          'Sign in to view messages',
+          style: TextStyle(
+            fontSize: 20,
+          ),
+        ),
+      );
+    }
+
     double h = MediaQuery.of(context).size.height;
     return Container(
       padding: EdgeInsets.only(top: h / 15),
@@ -2187,7 +2367,6 @@ class HomePageState extends State<HomePage> {
                 if (ds.exists) {
                   name = ds['name'];
                   prefs.setString('name', name);
-                  myUserDS = ds;
                 } else {
                   name = 'ERROR';
                   prefs.setString('name', name);
@@ -2789,6 +2968,15 @@ Widget template() {
       }
     },
   );
+}
+
+void showToast(String msg) {
+  Fluttertoast.showToast(
+      msg: msg,
+      toastLength: Toast.LENGTH_LONG,
+      gravity: ToastGravity.BOTTOM,
+      timeInSecForIos: 1,
+      fontSize: 16.0);
 }
 
 // to show all items created by you

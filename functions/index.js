@@ -45,6 +45,8 @@ exports.createUser = functions.auth.user().onCreate(event => {
         address: null,
         verified: false,
         acceptedTOS: false,
+        totalRating: 0,
+        numRatings: 0,
     }).then(function () {
         console.log('Created user: ', userID);
         return `Created user ${userID}`;

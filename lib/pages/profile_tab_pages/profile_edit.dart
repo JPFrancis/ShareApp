@@ -125,7 +125,11 @@ class ProfileEditState extends State<ProfileEdit> {
         ],
       ),
       floatingActionButton: RaisedButton(
-        child: Text("SAVE"),
+        child: Text(
+          "SAVE",
+          style: TextStyle(color: Colors.white),
+        ),
+        color: Color(0xff007f6e),
         onPressed: () {
           saveProfile();
         },

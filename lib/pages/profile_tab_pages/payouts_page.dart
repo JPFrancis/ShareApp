@@ -36,6 +36,7 @@ class PayoutsPageState extends State<PayoutsPage> {
   String myUserID;
   String defaultSource = '';
   String stripeCustId = '';
+  int numCards = 0;
 
   bool isLoading = true;
   bool stripeInit = false;
@@ -137,6 +138,7 @@ class PayoutsPageState extends State<PayoutsPage> {
             borderType: BorderType.RRect,
             radius: Radius.circular(15),
             dashPattern: [8, 6],
+            color: Color(0xff007f6e),
             child: Container(
               height: w / 1.75,
               decoration: BoxDecoration(
@@ -144,7 +146,7 @@ class PayoutsPageState extends State<PayoutsPage> {
               child: Center(
                 child: Icon(
                   Icons.add,
-                  color: Colors.grey[400],
+                  color: Color(0xff007f6e),
                   size: 50,
                 ),
               ),
@@ -397,6 +399,7 @@ class PayoutsPageState extends State<PayoutsPage> {
                     return Container();
                   default:
                     List documents = snapshot.data.documents;
+                    numCards = documents.length;
 
                     return ListView.builder(
                       shrinkWrap: true,
@@ -443,8 +446,8 @@ class PayoutsPageState extends State<PayoutsPage> {
       child: StreamBuilder<QuerySnapshot>(
         stream: Firestore.instance
             .collection('charges')
-            .where('status',isEqualTo: 'succeeded')
-            .orderBy('timestamp',descending: true)
+            .where('status', isEqualTo: 'succeeded')
+            .orderBy('timestamp', descending: true)
             .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
@@ -651,10 +654,46 @@ class PayoutsPageState extends State<PayoutsPage> {
     });
   }
 
-  void deleteCard(sourceDS) async {
+  Future<Null> deleteCard(sourceDS) async {
     setState(() {
       isLoading = true;
     });
+
+    if (numCards <= 1) {
+      var requestingRentals = await Firestore.instance
+          .collection('rentals')
+          .where('users',
+              arrayContains:
+                  Firestore.instance.collection('users').document(myUserID))
+          .where('status', isLessThan: 2)
+          .limit(1)
+          .getDocuments();
+
+      if (requestingRentals != null && requestingRentals.documents.length > 0) {
+        setState(() {
+          isLoading = false;
+        });
+        return await showDialog<bool>(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  content: Text(
+                    'You can\'t delete a card if you have rentals with status \"requesting\"',
+                  ),
+                  actions: <Widget>[
+                    FlatButton(
+                      child: const Text('CLOSE'),
+                      onPressed: () {
+                        Navigator.of(context).pop(false); // Pop dialog
+                      },
+                    ),
+                  ],
+                );
+              },
+            ) ??
+            false;
+      }
+    }
 
     final HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
       functionName: 'deleteStripeSource',

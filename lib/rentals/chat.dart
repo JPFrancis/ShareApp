@@ -467,54 +467,57 @@ class ChatState extends State<Chat> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: WillPopScope(
-        child: isLoading
-            ? Container()
-            : Stack(
-                children: <Widget>[
-                  Column(
-                    children: <Widget>[
-                      SizedBox(
-                        height: 30.0,
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: <Widget>[
-                          FlatButton(
-                            child: BackButton(),
-                            onPressed: () => Navigator.pop(context),
-                          ),
-                          Align(
-                            alignment: Alignment.bottomCenter,
-                            child: Text(
-                              '${otherUser['name']}',
-                              style: TextStyle(
-                                  fontSize: 20.0, fontFamily: 'Quicksand'),
+      body: myUserID != otherUser.documentID
+          ? WillPopScope(
+              child: isLoading
+                  ? Container()
+                  : Stack(
+                      children: <Widget>[
+                        Column(
+                          children: <Widget>[
+                            SizedBox(
+                              height: 30.0,
                             ),
-                          ),
-                          FlatButton(
-                            child: Icon(Icons.more_horiz),
-                            onPressed: null,
-                          )
-                        ],
-                      ),
-                      Divider(
-                        color: Colors.black45,
-                      ),
-                      // List of messages
-                      buildListMessage(),
-                      Divider(),
-                      // Input content
-                      buildInput(),
-                    ],
-                  ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: <Widget>[
+                                FlatButton(
+                                  child: BackButton(),
+                                  onPressed: () => Navigator.pop(context),
+                                ),
+                                Align(
+                                  alignment: Alignment.bottomCenter,
+                                  child: Text(
+                                    '${otherUser['name']}',
+                                    style: TextStyle(
+                                        fontSize: 20.0,
+                                        fontFamily: 'Quicksand'),
+                                  ),
+                                ),
+                                FlatButton(
+                                  child: Icon(Icons.more_horiz),
+                                  onPressed: null,
+                                )
+                              ],
+                            ),
+                            Divider(
+                              color: Colors.black45,
+                            ),
+                            // List of messages
+                            buildListMessage(),
+                            Divider(),
+                            // Input content
+                            buildInput(),
+                          ],
+                        ),
 
-                  // Loading
-                  buildLoading()
-                ],
-              ),
-        onWillPop: onBackPress,
-      ),
+                        // Loading
+                        buildLoading()
+                      ],
+                    ),
+              onWillPop: onBackPress,
+            )
+          : Container(),
     );
   }
 

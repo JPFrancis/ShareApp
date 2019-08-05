@@ -44,6 +44,7 @@ class SearchPageState extends State<SearchPage> {
   bool filterPressed = false;
   bool locIsLoading = false;
   bool isAuthenticated;
+  bool showSearch;
 
   String font = 'Quicksand';
 
@@ -52,7 +53,8 @@ class SearchPageState extends State<SearchPage> {
     // TODO: implement initState
     super.initState();
 
-    showSuggestions = widget.showSearch ? true : false;
+    showSearch = widget.showSearch;
+    showSuggestions = showSearch ? true : false;
     typeFilter = widget.typeFilter;
     conditionFilter = 'All';
     distanceFilter = 5.0;
@@ -359,7 +361,7 @@ class SearchPageState extends State<SearchPage> {
             ),
             child: Center(
               child: TextField(
-                autofocus: widget.showSearch,
+                autofocus: showSearch,
                 textInputAction: TextInputAction.search,
                 style: TextStyle(fontFamily: 'Quicksand', fontSize: 21),
                 keyboardType: TextInputType.text,
@@ -367,6 +369,7 @@ class SearchPageState extends State<SearchPage> {
                 onTap: () {
                   setState(() {
                     showSuggestions = true;
+                    filterPressed = false;
                   });
                 },
                 onSubmitted: (value) {
@@ -600,6 +603,10 @@ class SearchPageState extends State<SearchPage> {
 
   Widget buildItemList() {
     int tileRows = MediaQuery.of(context).size.width > 500 ? 3 : 2;
+
+    if (showSuggestions) {
+      return Container();
+    }
 
     if (locIsLoading) {
       //return Text('Getting location...');
