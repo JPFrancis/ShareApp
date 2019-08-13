@@ -12,7 +12,7 @@ class RootPage extends StatefulWidget {
   final BaseAuth auth;
 
   @override
-  State<StatefulWidget> createState() => new _RootPageState();
+  State<StatefulWidget> createState() => new RootPageState();
 }
 
 enum AuthStatus {
@@ -20,7 +20,7 @@ enum AuthStatus {
   signedIn,
 }
 
-class _RootPageState extends State<RootPage> {
+class RootPageState extends State<RootPage> {
   final FirebaseMessaging firebaseMessaging = FirebaseMessaging();
   AuthStatus authStatus = AuthStatus.notSignedIn;
   bool isLoading = true;

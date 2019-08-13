@@ -68,7 +68,7 @@ class HomePageState extends State<HomePage> {
 
   bool pageIsLoading = true;
   bool locIsLoading = false;
-  bool showTOS;
+  bool showTOS = true;
   bool isAuthenticated;
 
   TextEditingController searchController = TextEditingController();
@@ -118,6 +118,7 @@ class HomePageState extends State<HomePage> {
 
     if (widget.firebaseUser == null) {
       isAuthenticated = false;
+      showTOS = false;
     } else {
       isAuthenticated = true;
       myUserID = widget.firebaseUser.uid;
@@ -125,8 +126,6 @@ class HomePageState extends State<HomePage> {
       updateLastActiveAndPushToken();
       configureFCM();
     }
-
-    //getAllItems();
 
     bottomNavBarTiles = <BottomNavigationBarItem>[
       bottomNavTile('Search', Icon(Icons.search), false),
@@ -146,22 +145,6 @@ class HomePageState extends State<HomePage> {
     }
 
     getUserLocation();
-    updateAll();
-  }
-
-  void updateAll() async {
-    CollectionReference collectionReference =
-        Firestore.instance.collection('users');
-    var docs = await collectionReference.getDocuments();
-
-    if (docs != null) {
-      docs.documents.forEach((ds) {
-        collectionReference.document(ds.documentID).updateData({
-          'totalRating': 0,
-          'numRatings': 0,
-        });
-      });
-    }
   }
 
   void updateRentals() async {
@@ -457,7 +440,20 @@ class HomePageState extends State<HomePage> {
           Firestore.instance.collection('users').document(myUserID).snapshots();
 
       stream.listen((ds) {
-        myUserDS = ds;
+        if (ds != null && ds.exists) {
+          myUserDS = ds;
+          var acceptedTOS = myUserDS['acceptedTOS'];
+
+          if (acceptedTOS != null && acceptedTOS is bool) {
+            if (acceptedTOS) {
+              showTOS = false;
+            } else {
+              showTOS = true;
+            }
+          }
+
+          setState(() {});
+        }
       }, onDone: () {
         print("Done");
       }, onError: (error) {
@@ -539,72 +535,75 @@ class HomePageState extends State<HomePage> {
       profileTabPage(),
     ];
 
-    return Scaffold(
-      backgroundColor: coolerWhite,
-      body: pageIsLoading
-          ? Center(
-              child: CircularProgressIndicator(),
-            )
-          : showBody(),
-      floatingActionButton: showFAB(),
-      bottomNavigationBar: pageIsLoading ||
-              (myUserDS != null && myUserDS.exists && !myUserDS['acceptedTOS'])
-          ? Container(height: 0)
-          : SizedBox(
-              //height: 90,
-              child: BottomNavigationBar(
-                backgroundColor: coolerWhite,
-                selectedItemColor: primaryColor,
-                items: bottomNavBarTiles,
-                currentIndex: currentTabIndex,
-                type: BottomNavigationBarType.fixed,
-                onTap: (int index) {
-                  setState(() {
-                    currentTabIndex = index;
-                  });
-                },
-              ),
+    return pageIsLoading
+        ? Scaffold(body: Center(child: CircularProgressIndicator()))
+        : Scaffold(
+            backgroundColor: coolerWhite,
+            body: showBody(),
+            floatingActionButton: showFAB(),
+            bottomNavigationBar: bottomNavBar(),
+          );
+  }
+
+  Widget bottomNavBar() {
+    return showTOS
+        ? SizedBox(height: 0)
+        : SizedBox(
+            //height: 90,
+            child: BottomNavigationBar(
+              backgroundColor: coolerWhite,
+              selectedItemColor: primaryColor,
+              items: bottomNavBarTiles,
+              currentIndex: currentTabIndex,
+              type: BottomNavigationBarType.fixed,
+              onTap: (int index) {
+                setState(() {
+                  currentTabIndex = index;
+                });
+              },
             ),
+          );
+  }
+
+  Widget showTermsOfService() {
+    return Container(
+      padding: EdgeInsets.all(15),
+      child: Column(
+        children: <Widget>[
+          Expanded(
+            child: ListView(
+              children: <Widget>[Text('private policy here')],
+            ),
+          ),
+          Row(
+            children: <Widget>[
+              RaisedButton(
+                onPressed: () async {
+                  await Firestore.instance
+                      .collection('users')
+                      .document(myUserID)
+                      .updateData({'acceptedTOS': true});
+
+                  showTOS = false;
+                  myUserDS = await Firestore.instance
+                      .collection('users')
+                      .document(myUserID)
+                      .get();
+
+                  setState(() {});
+                },
+                child: Text('Accept'),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
   Widget showBody() {
-    if (isAuthenticated) {
-      if (myUserDS != null && myUserDS.exists) {
-        if (!myUserDS['acceptedTOS']) {
-          return Container(
-            padding: EdgeInsets.all(15),
-            child: Column(
-              children: <Widget>[
-                Expanded(
-                  child: ListView(
-                    children: <Widget>[Text('private policy here')],
-                  ),
-                ),
-                Row(
-                  children: <Widget>[
-                    RaisedButton(
-                      onPressed: () async {
-                        await Firestore.instance
-                            .collection('users')
-                            .document(myUserID)
-                            .updateData({'acceptedTOS': true});
-
-                        myUserDS = await Firestore.instance
-                            .collection('users')
-                            .document(myUserID)
-                            .get();
-                        setState(() {});
-                      },
-                      child: Text('Accept'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
-        }
-      }
+    if (isAuthenticated && showTOS) {
+      return showTermsOfService();
     }
 
     return IndexedStack(
@@ -2233,7 +2232,7 @@ class HomePageState extends State<HomePage> {
           });
         }
 
-        Widget __showCurrentProfilePic() {
+        Widget _showCurrentProfilePic() {
           double height = MediaQuery.of(context).size.height;
           double width = MediaQuery.of(context).size.width;
           return Container(
@@ -2266,7 +2265,7 @@ class HomePageState extends State<HomePage> {
                       textAlign: TextAlign.center,
                     );
                   } else {
-                    return __showCurrentProfilePic();
+                    return _showCurrentProfilePic();
                   }
                 }),
           ),
@@ -2400,15 +2399,18 @@ class HomePageState extends State<HomePage> {
                     Align(
                       alignment: Alignment.topRight,
                       child: OutlineButton(
-                          color: Colors.white,
-                          textColor: primaryColor,
-                          onPressed: () {
-                            navToProfileEdit();
-                          },
-                          child: Text("Edit Profile",
-                              style: TextStyle(
-                                  fontFamily: 'Quicksand',
-                                  fontWeight: FontWeight.normal))),
+                        color: Colors.white,
+                        textColor: primaryColor,
+                        onPressed: () {
+                          navToProfileEdit();
+                        },
+                        child: Text(
+                          "Edit Profile",
+                          style: TextStyle(
+                              fontFamily: 'Quicksand',
+                              fontWeight: FontWeight.normal),
+                        ),
+                      ),
                     ),
                   ],
                 );
@@ -2915,7 +2917,7 @@ class HomePageState extends State<HomePage> {
   void logout() async {
     try {
       if (isAuthenticated) {
-        prefs.remove('userID');
+        await prefs.remove('userID');
 
         Firestore.instance.collection('users').document(myUserID).updateData({
           'pushToken': FieldValue.arrayRemove([deviceToken]),

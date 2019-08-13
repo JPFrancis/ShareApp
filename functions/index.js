@@ -78,6 +78,26 @@ exports.deleteUser = functions.auth.user().onDelete(event => {
     });
 });
 
+// delete profile pic and user account from authentication when user document is deleted
+exports.deleteUserAccount = functions.firestore
+    .document('users/{userID}')
+    .onDelete((snap, context) => {
+        const userID = snap.id;
+        const filePath = `profile_pics/${userID}`;
+        const file = bucket.file(filePath);
+
+        file.delete().then(() => {
+            console.log(`Successfully deleted avatar with user id: ${userID} at path ${filePath}`);
+            return 'Delete avatar success';
+        }).catch(err => {
+            console.error(`Failed to remove images, error: ${err}`);
+        });
+
+        return admin.auth().deleteUser(snap.id)
+            .then(() => console.log('Deleted user with ID:' + snap.id))
+            .catch((error) => console.error('There was an error while deleting user:', error));
+    });
+
 // delete images from item in firebase storage when item document deleted
 exports.deleteItemImages = functions.firestore.document('items/{itemId}')
     .onDelete(async (snap, context) => {
