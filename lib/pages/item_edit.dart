@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -38,6 +39,7 @@ class ItemEdit extends StatefulWidget {
 /// We initially assume we are in editing mode
 class ItemEditState extends State<ItemEdit> {
   final GlobalKey<FormState> formKey = new GlobalKey<FormState>();
+  FirebaseUser currentUser;
 
   String appBarText = "Edit"; // Either 'Edit' or 'Add'. Prepended to " Item"
   String addButton = "Edit"; // 'Edit' if edit, 'Add' if adding
@@ -102,6 +104,7 @@ class ItemEditState extends State<ItemEdit> {
       'Equipment',
       'Other',
     ];
+
     dropDownItemType = itemType
         .map((String value) => DropdownMenuItem<String>(
             value: value,
@@ -114,6 +117,7 @@ class ItemEditState extends State<ItemEdit> {
       'Fair',
       'Has Character',
     ];
+
     dropDownItemCondition = itemCondition
         .map((String value) => DropdownMenuItem<String>(
             value: value,
@@ -138,6 +142,10 @@ class ItemEditState extends State<ItemEdit> {
         isLoading = false;
       });
     } else {
+      FirebaseAuth.instance.currentUser().then((user) {
+        currentUser = user;
+      });
+
       GeolocationStatus geolocationStatus =
           await Geolocator().checkGeolocationPermissionStatus();
 
@@ -689,6 +697,10 @@ class ItemEditState extends State<ItemEdit> {
         'location': myLocation.data,
         'searchKey': searchKeyList,
         'isVisible': true,
+        'owner': {
+          'name': currentUser.displayName,
+          'avatar': currentUser.photoUrl,
+        },
       });
 /*
       CloudFunctions.instance.getHttpsCallable(

@@ -56,6 +56,7 @@ class ProfileEditState extends State<ProfileEdit> {
   File imageFile;
   String photoURL;
   String myUserID;
+  FirebaseUser user;
   bool isLoading = true;
 
   String font = 'Quicksand';
@@ -71,7 +72,7 @@ class ProfileEditState extends State<ProfileEdit> {
     // TODO: implement initState
     super.initState();
 
-    setUserID();
+    getUserID();
     userCopy = User.copy(widget.userEdit);
     nameController.text = userCopy.name;
     descriptionController.text = userCopy.description;
@@ -96,8 +97,9 @@ class ProfileEditState extends State<ProfileEdit> {
     super.dispose();
   }
 
-  void setUserID() async {
+  void getUserID() async {
     FirebaseAuth.instance.currentUser().then((user) {
+      this.user = user;
       myUserID = user.uid;
 
       if (myUserID != null) {
@@ -612,16 +614,19 @@ class ProfileEditState extends State<ProfileEdit> {
 
     String name = nameController.text.trim();
     String description = descriptionController.text.trim();
+    String avatarURL;
+    bool updateAvatar = false;
 
     if (userCopy.address.isEmpty) {
       userCopy.address = null;
     }
 
     if (imageFile != null) {
-      String result = await saveImage();
+      updateAvatar = true;
+      avatarURL = await saveImage();
 
-      if (result != null) {
-        userCopy.avatar = result;
+      if (avatarURL != null) {
+        userCopy.avatar = avatarURL;
       }
 
       Firestore.instance.collection('users').document(myUserID).updateData({
@@ -647,6 +652,16 @@ class ProfileEditState extends State<ProfileEdit> {
         'address': userCopy.address,
       });
     }
+
+    UserUpdateInfo userUpdateInfo = UserUpdateInfo();
+    userUpdateInfo.displayName = name;
+
+    if (updateAvatar) {
+      userUpdateInfo.photoUrl = avatarURL;
+    }
+
+    await user.updateProfile(userUpdateInfo);
+    await user.reload();
 
     Navigator.of(context).pop(userCopy);
   }

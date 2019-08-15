@@ -46,11 +46,10 @@ class RentalDetailState extends State<RentalDetail> {
   bool stripeInit;
 
   DocumentSnapshot rentalDS;
-  DocumentSnapshot itemDS;
-  DocumentSnapshot ownerDS;
-  DocumentSnapshot renterDS;
-  DocumentSnapshot userDS;
-  DocumentSnapshot otherUserDS;
+  String itemId;
+  String ownerId;
+  String renterId;
+  String otherUserId;
 
   TextStyle textStyle;
   double padding = 5.0;
@@ -111,49 +110,18 @@ class RentalDetailState extends State<RentalDetail> {
     if (ds != null) {
       rentalDS = ds;
 
-      dr = rentalDS['owner'];
+      DocumentReference itemRef = rentalDS['item'];
+      DocumentReference ownerRef = rentalDS['owner'];
+      DocumentReference renterRef = rentalDS['renter'];
 
-      ds = await Firestore.instance
-          .collection('users')
-          .document(dr.documentID)
-          .get();
+      itemId = itemRef.documentID;
+      ownerId = ownerRef.documentID;
+      renterId = renterRef.documentID;
 
-      if (ds != null) {
-        ownerDS = ds;
+      isRenter = myUserId == renterId ? true : false;
+      otherUserId = isRenter ? ownerId : renterId;
 
-        dr = rentalDS['item'];
-
-        ds = await Firestore.instance
-            .collection('items')
-            .document(dr.documentID)
-            .get();
-
-        if (ds != null) {
-          itemDS = ds;
-
-          dr = rentalDS['renter'];
-
-          ds = await Firestore.instance
-              .collection('users')
-              .document(dr.documentID)
-              .get();
-
-          if (ds != null) {
-            renterDS = ds;
-
-            if (prefs != null &&
-                ownerDS != null &&
-                renterDS != null &&
-                itemDS != null) {
-              isRenter = myUserId == renterDS.documentID ? true : false;
-              otherUserDS = isRenter ? ownerDS : renterDS;
-              rentalCC = isRenter ? 'renterCC' : 'ownerCC';
-              userDS = isRenter ? renterDS : ownerDS;
-              delayPage();
-            }
-          }
-        }
-      }
+      delayPage();
     }
   }
 
@@ -184,7 +152,7 @@ class RentalDetailState extends State<RentalDetail> {
       child: GestureDetector(
           onTap: () {
             Navigator.of(context)
-                .pushNamed(Chat.routeName, arguments: ChatArgs(otherUserDS));
+                .pushNamed(Chat.routeName, arguments: ChatArgs(otherUserId));
           },
           child: Row(
             children: <Widget>[
@@ -304,20 +272,20 @@ class RentalDetailState extends State<RentalDetail> {
 
   Widget showItemImage() {
     double widthOfScreen = MediaQuery.of(context).size.width;
-    var images = itemDS['images'];
+    String imageUrl = rentalDS['itemAvatar'];
     _getItemImage(BuildContext context) {
       return new Container(
         child: FittedBox(
           fit: BoxFit.cover,
           child: CachedNetworkImage(
-            imageUrl: images[0],
+            imageUrl: imageUrl,
             placeholder: (context, url) => new CircularProgressIndicator(),
           ),
         ),
       );
     }
 
-    return images.length > 0
+    return imageUrl != null
         ? Container(
             height: widthOfScreen / 1,
             child: _getItemImage(context),
@@ -345,14 +313,14 @@ class RentalDetailState extends State<RentalDetail> {
                 height: 50.0,
                 child: ClipOval(
                   child: CachedNetworkImage(
-                    imageUrl: ownerDS['avatar'],
+                    imageUrl: rentalDS['ownerData']['avatar'],
                     placeholder: (context, url) =>
                         new CircularProgressIndicator(),
                   ),
                 ),
               ),
               Text(
-                '${ownerDS['name']}',
+                '${rentalDS['ownerData']['name']}',
                 style: TextStyle(
                     color: Colors.black,
                     fontSize: 15.0,
@@ -368,8 +336,8 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   Widget showItemName() {
-    String itemOwner = 'Item owner: ${ownerDS['name']}';
-    String itemRenter = 'Item renter: ${renterDS['name']}';
+    String itemOwner = 'Item owner: ${rentalDS['ownerData']['name']}';
+    String itemRenter = 'Item renter: ${rentalDS['renterData']['name']}';
     String you = ' (You)';
 
     isRenter ? itemRenter += you : itemOwner += you;
@@ -390,7 +358,7 @@ class RentalDetailState extends State<RentalDetail> {
     return Row(
       children: <Widget>[
         Text(
-          'Item owner:\n${ownerDS['name']}',
+          'Item owner:\n${rentalDS['ownerData']['name']}',
           style: TextStyle(color: Colors.black, fontSize: 20.0),
           textAlign: TextAlign.left,
         ),
@@ -399,7 +367,7 @@ class RentalDetailState extends State<RentalDetail> {
             height: 50,
             child: CachedNetworkImage(
               //key: ValueKey(DateTime.now().millisecondsSinceEpoch),
-              imageUrl: ownerDS['avatar'],
+              imageUrl: rentalDS['ownerData']['avatar'],
               placeholder: (context, url) => new CircularProgressIndicator(),
             ),
           ),
@@ -415,7 +383,7 @@ class RentalDetailState extends State<RentalDetail> {
     String end = DateFormat('h:mm a on d MMM yyyy')
         .format(rentalDS['rentalEnd'].toDate());
     int durationDays = rentalDS['duration'];
-    double price = itemDS['price'].toDouble() * durationDays.toDouble();
+    double price = rentalDS['price'].toDouble() * durationDays.toDouble();
     String duration =
         '${durationDays > 1 ? '$durationDays days' : '$durationDays day'}';
 
@@ -432,7 +400,7 @@ class RentalDetailState extends State<RentalDetail> {
             ? Column(
                 children: <Widget>[
                   Text(
-                    "Waiting for response from ${ownerDS['name']}",
+                    "Waiting for response from ${rentalDS['ownerData']['name']}",
                     style: TextStyle(fontFamily: appFont, color: Colors.white),
                   ),
                   Text(
@@ -490,7 +458,7 @@ class RentalDetailState extends State<RentalDetail> {
             : Column(
                 children: <Widget>[
                   Text(
-                    "${ownerDS['name']} has proposed a pickup!",
+                    "${rentalDS['ownerData']['name']} has proposed a pickup!",
                     style: TextStyle(fontFamily: appFont, color: Colors.white),
                   ),
                   Text(
@@ -552,7 +520,7 @@ class RentalDetailState extends State<RentalDetail> {
             ? Column(
                 children: <Widget>[
                   Text(
-                    "${ownerDS['name']} has proposed a new pickup!",
+                    "${rentalDS['ownerData']['name']} has proposed a new pickup!",
                     style: TextStyle(fontFamily: appFont, color: Colors.white),
                   ),
                   Text(
@@ -610,7 +578,7 @@ class RentalDetailState extends State<RentalDetail> {
             : Column(
                 children: <Widget>[
                   Text(
-                    "Waiting from response from ${renterDS['name']}",
+                    "Waiting from response from ${rentalDS['renterData']['name']}",
                     style: TextStyle(fontFamily: appFont, color: Colors.white),
                   ),
                   Text(
@@ -672,7 +640,7 @@ class RentalDetailState extends State<RentalDetail> {
             ? Column(
                 children: <Widget>[
                   Text(
-                    "${ownerDS['name']} has accepted your request! Make sure to pick it up on time!",
+                    "${rentalDS['ownerData']['name']} has accepted your request! Make sure to pick it up on time!",
                     style: TextStyle(fontFamily: appFont, color: Colors.white),
                   ),
                   Text(
@@ -730,7 +698,7 @@ class RentalDetailState extends State<RentalDetail> {
             : Column(
                 children: <Widget>[
                   Text(
-                    "You have accepted ${renterDS['name']}'s request! Be prepared for their pickup!",
+                    "You have accepted ${rentalDS['renterData']['name']}'s request! Be prepared for their pickup!",
                     style: TextStyle(fontFamily: appFont, color: Colors.white),
                   ),
                   Text(
@@ -850,7 +818,7 @@ class RentalDetailState extends State<RentalDetail> {
             : Column(
                 children: <Widget>[
                   Text(
-                    "${renterDS['name']} has your item!",
+                    "${rentalDS['renterData']['name']} has your item!",
                     style: TextStyle(fontFamily: appFont, color: Colors.white),
                   ),
                   Text(
@@ -1115,11 +1083,16 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   void handleAcceptedRental() async {
+    DocumentSnapshot otherUserDS = await Firestore.instance
+        .collection('users')
+        .document(otherUserId)
+        .get();
+
     await Future.delayed(Duration(milliseconds: 500));
 
     Firestore.instance.collection('notifications').add({
       'title': '$myName accepted your pickup window',
-      'body': 'Item: ${itemDS['name']}',
+      'body': 'Item: ${rentalDS['itemName']}',
       'pushToken': otherUserDS['pushToken'],
       'rentalID': rentalDS.documentID,
       'timestamp': DateTime.now().millisecondsSinceEpoch,
@@ -1131,10 +1104,10 @@ class RentalDetailState extends State<RentalDetail> {
           rentalDS['duration'],
           rentalDS['pickupStart'],
           rentalDS['rentalEnd'],
-          renterDS.documentID,
-          ownerDS.documentID,
+          renterId,
+          ownerId,
           chargeAmount,
-          '${renterDS['name']} paying ${ownerDS['name']} '
+          '${rentalDS['renterData']['name']} paying ${rentalDS['ownerData']['name']} '
           'for renting ${rentalDS['itemName']}');
     });
   }
@@ -1437,21 +1410,20 @@ class RentalDetailState extends State<RentalDetail> {
       'submittedReview': true,
     });
 
-    await Firestore.instance
-        .collection('items')
-        .document(itemDS.documentID)
-        .updateData({
+    await Firestore.instance.collection('items').document(itemId).updateData({
       'numRatings': FieldValue.increment(1),
       'rating': FieldValue.increment(avg),
     });
 
-    await Firestore.instance
-        .collection('users')
-        .document(ownerDS.documentID)
-        .updateData({
+    await Firestore.instance.collection('users').document(ownerId).updateData({
       'numRatings': FieldValue.increment(1),
       'rating': FieldValue.increment(avg),
     });
+
+    DocumentSnapshot otherUserDS = await Firestore.instance
+        .collection('users')
+        .document(otherUserId)
+        .get();
 
     await Firestore.instance.collection('notifications').add({
       'title': '$myName left you a review',

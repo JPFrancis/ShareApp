@@ -55,6 +55,7 @@ class HomePageState extends State<HomePage> {
   String deviceToken;
 
   SharedPreferences prefs;
+  FirebaseUser currentUser;
   DocumentSnapshot myUserDS;
   String myUserID;
   List<Item> itemList;
@@ -116,15 +117,15 @@ class HomePageState extends State<HomePage> {
     edgeInset = EdgeInsets.only(
         left: padding, right: padding, bottom: padding, top: 30);
 
-    if (widget.firebaseUser == null) {
+    currentUser = widget.firebaseUser;
+
+    if (currentUser == null) {
       isAuthenticated = false;
       showTOS = false;
     } else {
       isAuthenticated = true;
-      myUserID = widget.firebaseUser.uid;
+      myUserID = currentUser.uid;
       setPrefs();
-      updateLastActiveAndPushToken();
-      configureFCM();
     }
 
     bottomNavBarTiles = <BottomNavigationBarItem>[
@@ -363,6 +364,7 @@ class HomePageState extends State<HomePage> {
             rentalID,
           ),
         );
+
         break;
 
       case 'chat':
@@ -375,10 +377,11 @@ class HomePageState extends State<HomePage> {
           await Navigator.of(context).pushNamed(
             Chat.routeName,
             arguments: ChatArgs(
-              otherUserDS,
+              otherUserDS.documentID,
             ),
           );
         }
+
         break;
     }
   }
@@ -439,7 +442,7 @@ class HomePageState extends State<HomePage> {
       var stream =
           Firestore.instance.collection('users').document(myUserID).snapshots();
 
-      stream.listen((ds) {
+      stream.listen((ds) async {
         if (ds != null && ds.exists) {
           myUserDS = ds;
           var acceptedTOS = myUserDS['acceptedTOS'];
@@ -452,6 +455,12 @@ class HomePageState extends State<HomePage> {
             }
           }
 
+          UserUpdateInfo userUpdateInfo = UserUpdateInfo();
+          userUpdateInfo.displayName = myUserDS['name'];
+          userUpdateInfo.photoUrl = myUserDS['avatar'];
+          await currentUser.updateProfile(userUpdateInfo);
+          await currentUser.reload();
+
           setState(() {});
         }
       }, onDone: () {
@@ -459,6 +468,8 @@ class HomePageState extends State<HomePage> {
       }, onError: (error) {
         print("Error");
       });
+
+      updateLastActiveAndPushToken();
     }
   }
 
@@ -487,6 +498,8 @@ class HomePageState extends State<HomePage> {
         'lastActive': DateTime.now().millisecondsSinceEpoch,
         'pushToken': FieldValue.arrayUnion([token]),
       });
+
+      configureFCM();
     });
   }
 
@@ -1807,152 +1820,82 @@ class HomePageState extends State<HomePage> {
                   itemCount: updated.length,
                   itemBuilder: (context, index) {
                     DocumentSnapshot rentalDS = updated[index];
-                    DocumentReference itemDR = rentalDS['item'];
+                    String itemName = rentalDS['itemName'];
+                    String itemAvatar = rentalDS['itemAvatar'];
 
-                    return StreamBuilder<DocumentSnapshot>(
-                      stream: itemDR.snapshots(),
-                      builder: (BuildContext context,
-                          AsyncSnapshot<DocumentSnapshot> snapshot) {
-                        if (snapshot.hasError) {
-                          return new Text('${snapshot.error}');
-                        }
-                        switch (snapshot.connectionState) {
-                          case ConnectionState.waiting:
-                          default:
-                            if (snapshot.hasData) {
-                              DocumentSnapshot ds = snapshot.data;
+                    CachedNetworkImage image = CachedNetworkImage(
+                      key: ValueKey<String>(itemAvatar),
+                      imageUrl: itemAvatar,
+                      placeholder: (context, url) =>
+                          new CircularProgressIndicator(),
+                      fit: BoxFit.cover,
+                    );
 
-                              return StreamBuilder<DocumentSnapshot>(
-                                stream: rentalDS['renter'].snapshots(),
-                                builder: (BuildContext context,
-                                    AsyncSnapshot<DocumentSnapshot> snapshot) {
-                                  if (snapshot.hasError) {
-                                    return new Text('${snapshot.error}');
-                                  }
-                                  switch (snapshot.connectionState) {
-                                    case ConnectionState.waiting:
-
-                                    default:
-                                      if (snapshot.hasData) {
-                                        DocumentSnapshot renterDS =
-                                            snapshot.data;
-                                        CachedNetworkImage image =
-                                            CachedNetworkImage(
-                                          key:
-                                              ValueKey<String>(ds['images'][0]),
-                                          imageUrl: ds['images'][0],
-                                          placeholder: (context, url) =>
-                                              new CircularProgressIndicator(),
-                                          fit: BoxFit.cover,
-                                        );
-
-                                        return Container(
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width /
-                                              2,
-                                          padding: EdgeInsets.only(left: 10.0),
-                                          child: InkWell(
-                                            onTap: () => Navigator.pushNamed(
-                                                context, RentalDetail.routeName,
-                                                arguments: RentalDetailArgs(
-                                                    rentalDS.documentID)),
-                                            child: Container(
-                                              width: MediaQuery.of(context)
-                                                      .size
-                                                      .width /
-                                                  2,
-                                              decoration: BoxDecoration(
-                                                boxShadow: <BoxShadow>[
-                                                  CustomBoxShadow(
-                                                      color: Colors.black45,
-                                                      blurRadius: 3.5,
-                                                      blurStyle:
-                                                          BlurStyle.outer),
-                                                ],
-                                              ),
-                                              child: Stack(
-                                                children: <Widget>[
-                                                  SizedBox.expand(child: image),
-                                                  SizedBox.expand(
-                                                      child: Container(
-                                                    color: Colors.black
-                                                        .withOpacity(0.4),
-                                                  )),
-                                                  Center(
-                                                    child: Column(
-                                                      children: <Widget>[
-                                                        Text(ds['name'],
-                                                            style: TextStyle(
-                                                                color: Colors
-                                                                    .white)),
-                                                        // Text("Pickup Time: \n" + DateTime.fromMillisecondsSinceEpoch(rentalDS[ 'pickupStart'].millisecondsSinceEpoch).toString(), style: TextStyle(color:Colors.white)),
-                                                        StreamBuilder(
-                                                            stream:
-                                                                Stream.periodic(
-                                                                    Duration(
-                                                                        seconds:
-                                                                            1),
-                                                                    (i) => i),
-                                                            builder: (BuildContext
-                                                                    context,
-                                                                AsyncSnapshot<
-                                                                        int>
-                                                                    snapshot) {
-                                                              DateFormat
-                                                                  format =
-                                                                  DateFormat(
-                                                                      "hh 'hours,' mm 'minutes until pickup'");
-                                                              int now = DateTime
-                                                                      .now()
-                                                                  .millisecondsSinceEpoch;
-                                                              int pickupTime = rentalDS[
-                                                                      'pickupStart']
-                                                                  .millisecondsSinceEpoch;
-                                                              Duration
-                                                                  remaining =
-                                                                  Duration(
-                                                                      milliseconds:
-                                                                          (pickupTime -
-                                                                              now));
-                                                              var dateString;
-                                                              remaining.inDays ==
-                                                                      0
-                                                                  ? dateString =
-                                                                      '${format.format(DateTime.fromMillisecondsSinceEpoch(remaining.inMilliseconds))}'
-                                                                  : dateString =
-                                                                      '${remaining.inDays} days, ${format.format(DateTime.fromMillisecondsSinceEpoch(remaining.inMilliseconds))}';
-                                                              return Container(
-                                                                child: Text(
-                                                                  dateString,
-                                                                  style: TextStyle(
-                                                                      color: Colors
-                                                                          .white),
-                                                                ),
-                                                              );
-                                                            })
-                                                      ],
-                                                    ),
-                                                  )
-                                                ],
-                                              ),
+                    return Container(
+                      width: MediaQuery.of(context).size.width / 2,
+                      padding: EdgeInsets.only(left: 10.0),
+                      child: InkWell(
+                        onTap: () => Navigator.pushNamed(
+                            context, RentalDetail.routeName,
+                            arguments: RentalDetailArgs(rentalDS.documentID)),
+                        child: Container(
+                          width: MediaQuery.of(context).size.width / 2,
+                          decoration: BoxDecoration(
+                            boxShadow: <BoxShadow>[
+                              CustomBoxShadow(
+                                  color: Colors.black45,
+                                  blurRadius: 3.5,
+                                  blurStyle: BlurStyle.outer),
+                            ],
+                          ),
+                          child: Stack(
+                            children: <Widget>[
+                              SizedBox.expand(child: image),
+                              SizedBox.expand(
+                                  child: Container(
+                                color: Colors.black.withOpacity(0.4),
+                              )),
+                              Center(
+                                child: Column(
+                                  children: <Widget>[
+                                    Text(itemName,
+                                        style: TextStyle(color: Colors.white)),
+                                    // Text("Pickup Time: \n" + DateTime.fromMillisecondsSinceEpoch(rentalDS[ 'pickupStart'].millisecondsSinceEpoch).toString(), style: TextStyle(color:Colors.white)),
+                                    StreamBuilder(
+                                        stream: Stream.periodic(
+                                            Duration(seconds: 30), (i) => i),
+                                        builder: (BuildContext context,
+                                            AsyncSnapshot<int> snapshot) {
+                                          DateFormat format = DateFormat(
+                                              "hh 'hours,' mm 'minutes until pickup'");
+                                          int now = DateTime.now()
+                                              .millisecondsSinceEpoch;
+                                          int pickupTime =
+                                              rentalDS['pickupStart']
+                                                  .millisecondsSinceEpoch;
+                                          Duration remaining = Duration(
+                                              milliseconds: (pickupTime - now));
+                                          var dateString;
+                                          remaining.inDays == 0
+                                              ? dateString =
+                                                  '${format.format(DateTime.fromMillisecondsSinceEpoch(remaining.inMilliseconds))}'
+                                              : dateString =
+                                                  '${remaining.inDays} days, ${format.format(DateTime.fromMillisecondsSinceEpoch(remaining.inMilliseconds))}';
+                                          return Container(
+                                            child: Text(
+                                              dateString,
+                                              style: TextStyle(
+                                                  color: Colors.white),
                                             ),
-                                          ),
-                                        );
-                                        // return Container(width: MediaQuery.of(context).size.width/2, padding: EdgeInsets.only(left: 10.0), child: _tile());
-                                      } else {
-                                        return Container();
-                                      }
-                                  }
-                                },
-                              );
-                            } else {
-                              return Container(
-                                color: Colors.pink,
-                              );
-                            }
-                        }
-                      },
+                                          );
+                                        })
+                                  ],
+                                ),
+                              )
+                            ],
+                          ),
+                        ),
+                      ),
                     );
                   },
                 );
@@ -2579,6 +2522,7 @@ class HomePageState extends State<HomePage> {
         stream: Firestore.instance
             .collection('messages')
             .where('users', arrayContains: myUserID)
+            .orderBy('lastSent.timestamp', descending: true)
             .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           switch (snapshot.connectionState) {
@@ -2592,95 +2536,45 @@ class HomePageState extends State<HomePage> {
                   itemBuilder: (context, index) {
                     DocumentSnapshot chatDS = snapshot.data.documents[index];
                     List combinedID = chatDS['users'];
-                    String otherUserID = '';
+                    Map otherUser;
+                    String otherUserId;
+                    String lastMessage = chatDS['lastSent']['content'];
+                    var timestamp = chatDS['lastSent']['timestamp'];
 
                     if (combinedID.length == 2) {
                       if (myUserID == combinedID[0]) {
-                        otherUserID = combinedID[1];
+                        otherUser = chatDS['user1'];
+                        otherUserId = combinedID[1];
                       } else if (myUserID == combinedID[1]) {
-                        otherUserID = combinedID[0];
+                        otherUser = chatDS['user0'];
+                        otherUserId = combinedID[0];
                       }
                     }
-
-                    return StreamBuilder<DocumentSnapshot>(
-                      stream: Firestore.instance
-                          .collection('users')
-                          .document(otherUserID)
-                          .snapshots(),
-                      builder: (BuildContext context,
-                          AsyncSnapshot<DocumentSnapshot> snapshot) {
-                        switch (snapshot.connectionState) {
-                          case ConnectionState.waiting:
-
-                          default:
-                            if (snapshot.hasData) {
-                              DocumentSnapshot otherUserDS = snapshot.data;
-
-                              return StreamBuilder<QuerySnapshot>(
-                                stream: Firestore.instance
-                                    .collection('messages')
-                                    .document(chatDS.documentID)
-                                    .collection('messages')
-                                    .orderBy('timestamp', descending: true)
-                                    .limit(1)
-                                    .snapshots(),
-                                builder: (BuildContext context,
-                                    AsyncSnapshot<QuerySnapshot> snapshot) {
-                                  switch (snapshot.connectionState) {
-                                    case ConnectionState.waiting:
-
-                                    default:
-                                      if (snapshot.hasData &&
-                                          snapshot.data.documents.length > 0) {
-                                        DocumentSnapshot lastMessageDS =
-                                            snapshot.data.documents[0];
-                                        Text title = Text(
-                                          otherUserDS['name'],
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontFamily: 'Quicksand'),
-                                        );
-                                        Text lastActive = Text(
-                                            ('Last seen: ' +
-                                                timeago.format(DateTime
-                                                    .fromMillisecondsSinceEpoch(
-                                                        otherUserDS[
-                                                            'lastActive']))),
-                                            style: TextStyle(
-                                              fontFamily: 'Quicksand',
-                                            ));
-                                        String imageURL = otherUserDS['avatar'];
-                                        String lastMessage =
-                                            lastMessageDS['content'];
-                                        int cutoff = 30;
-                                        String lastMessageCrop;
-
-                                        if (lastMessage.length > cutoff) {
-                                          lastMessageCrop =
-                                              lastMessage.substring(0, cutoff);
-                                          lastMessageCrop += '...';
-                                        } else {
-                                          lastMessageCrop = lastMessage;
-                                        }
-
-                                        return messageCard(
-                                            imageURL,
-                                            title,
-                                            lastActive,
-                                            lastMessageCrop,
-                                            otherUserDS);
-                                      } else {
-                                        return Container();
-                                      }
-                                  }
-                                },
-                              );
-                            } else {
-                              return Container();
-                            }
-                        }
-                      },
+                    Text title = Text(
+                      otherUser['name'],
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold, fontFamily: 'Quicksand'),
                     );
+
+                    String imageURL = otherUser['avatar'];
+                    int cutoff = 30;
+                    String lastMessageCrop;
+
+                    if (lastMessage.length > cutoff) {
+                      lastMessageCrop = lastMessage.substring(0, cutoff);
+                      lastMessageCrop += '...';
+                    } else {
+                      lastMessageCrop = lastMessage;
+                    }
+
+                    return messageCard(
+                        imageURL,
+                        title,
+                        //lastActive,
+                        Text(
+                            '${timeago.format(DateTime.fromMillisecondsSinceEpoch(timestamp))}'),
+                        lastMessageCrop,
+                        otherUserId);
                   },
                 );
               } else {
@@ -2693,7 +2587,7 @@ class HomePageState extends State<HomePage> {
   }
 
   Widget messageCard(
-      imageURL, title, lastActive, lastMessageCrop, otherUserDS) {
+      imageURL, title, lastActive, lastMessageCrop, otherUserID) {
     return Column(
       children: <Widget>[
         ListTile(
@@ -2728,7 +2622,7 @@ class HomePageState extends State<HomePage> {
             Navigator.pushNamed(
               context,
               Chat.routeName,
-              arguments: ChatArgs(otherUserDS),
+              arguments: ChatArgs(otherUserID),
             );
           },
         ),

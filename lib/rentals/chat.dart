@@ -17,9 +17,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class Chat extends StatefulWidget {
   static const routeName = '/chat';
-  final DocumentSnapshot otherUser;
+  final String otherUserID;
 
-  Chat({Key key, this.otherUser}) : super(key: key);
+  Chat({Key key, this.otherUserID}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
@@ -29,17 +29,20 @@ class Chat extends StatefulWidget {
 
 class ChatState extends State<Chat> {
   DocumentSnapshot chatDS;
-
+  FirebaseUser currentUser;
   SharedPreferences prefs;
-  DocumentSnapshot otherUser;
+  Map otherUser;
   List<String> combinedID;
 
   File imageFile;
   bool isLoading = true;
+  bool idIsFirst;
+
   String imageUrl;
   String myUserID;
   String groupChatId;
   String myName;
+  String otherUserID;
 
   var listMessage;
 
@@ -57,10 +60,9 @@ class ChatState extends State<Chat> {
   void initState() {
     super.initState();
 
-    otherUser = widget.otherUser;
+    otherUserID = widget.otherUserID;
     imageUrl = '';
     getMyUserID();
-    getSnapshots();
   }
 
   @override
@@ -86,14 +88,19 @@ class ChatState extends State<Chat> {
 
     if (user != null) {
       myUserID = user.uid;
+      currentUser = user;
 
-      if (myUserID.hashCode <= otherUser.documentID.hashCode) {
-        groupChatId = '$myUserID-${otherUser.documentID}';
-        combinedID = [myUserID, otherUser.documentID];
+      if (myUserID.hashCode <= otherUserID.hashCode) {
+        groupChatId = '$myUserID-$otherUserID';
+        combinedID = [myUserID, otherUserID];
+        idIsFirst = true;
       } else {
-        groupChatId = '${otherUser.documentID}-$myUserID';
-        combinedID = [otherUser.documentID, myUserID];
+        groupChatId = '$otherUserID-$myUserID';
+        combinedID = [otherUserID, myUserID];
+        idIsFirst = false;
       }
+
+      getSnapshots();
     }
   }
 
@@ -102,26 +109,73 @@ class ChatState extends State<Chat> {
         .collection('messages')
         .document(groupChatId)
         .get();
+    bool canProceed = false;
 
     if (ds != null) {
       if (!ds.exists) {
         var documentReference =
             Firestore.instance.collection('messages').document(groupChatId);
 
-        Firestore.instance.runTransaction((transaction) async {
-          await transaction.set(
-            documentReference,
-            {
-              'users': combinedID,
+        DocumentSnapshot otherUserDS = await Firestore.instance
+            .collection('users')
+            .document(otherUserID)
+            .get();
+        Map<String, dynamic> data = {'users': combinedID};
+
+        if (idIsFirst) {
+          data.addAll({
+            'user0': {
+              'name': currentUser.displayName,
+              'avatar': currentUser.photoUrl,
             },
-          );
-        });
+            'user1': {
+              'name': otherUserDS['name'],
+              'avatar': otherUserDS['avatar'],
+            },
+          });
+        } else {
+          data.addAll({
+            'user0': {
+              'name': otherUserDS['name'],
+              'avatar': otherUserDS['avatar'],
+            },
+            'user1': {
+              'name': currentUser.displayName,
+              'avatar': currentUser.photoUrl,
+            },
+          });
+        }
+
+        await Firestore.instance
+            .collection('messages')
+            .document(groupChatId)
+            .setData(data);
+
+//        Firestore.instance.runTransaction((transaction) async {
+//          await transaction.set(documentReference, data);
+//        });
+
+        chatDS = await Firestore.instance
+            .collection('messages')
+            .document(groupChatId)
+            .get();
+
+        canProceed = true;
+      } else {
+        chatDS = ds;
+        canProceed = true;
       }
 
-      chatDS = ds;
+      if (canProceed) {
+        if (idIsFirst) {
+          otherUser = chatDS['user1'];
+        } else {
+          otherUser = chatDS['user0'];
+        }
 
-      if (chatDS != null) {
-        delayPage();
+        setState(() {
+          isLoading = false;
+        });
       }
     }
   }
@@ -156,30 +210,23 @@ class ChatState extends State<Chat> {
     });
   }
 
-  void onSendMessage(String content, int type) {
+  void onSendMessage(String content, int type) async {
     // type: 0 = text, 1 = image, 2 = sticker
     if (content.trim() != '') {
       textEditingController.clear();
 
-      var documentReference = Firestore.instance
+      await Firestore.instance
           .collection('messages')
           .document(groupChatId)
           .collection('messages')
-          .document(DateTime.now().millisecondsSinceEpoch.toString());
-
-      Firestore.instance.runTransaction((transaction) async {
-        await transaction.set(
-          documentReference,
-          {
-            'idFrom': myUserID,
-            'idTo': otherUser.documentID,
-            'timestamp': DateTime.now().millisecondsSinceEpoch,
-            'content': content,
-            'type': type,
-            'pushToken': otherUser['pushToken'],
-            'nameFrom': myName,
-          },
-        );
+          .add({
+        'idFrom': myUserID,
+        'idTo': otherUserID,
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+        'content': content,
+        'type': type,
+        'pushToken': otherUser['pushToken'],
+        'nameFrom': myName,
       });
 
       listScrollController.animateTo(0.0,
@@ -467,7 +514,7 @@ class ChatState extends State<Chat> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: myUserID != otherUser.documentID
+      body: myUserID != otherUserID
           ? WillPopScope(
               child: isLoading
                   ? Container()
@@ -475,9 +522,7 @@ class ChatState extends State<Chat> {
                       children: <Widget>[
                         Column(
                           children: <Widget>[
-                            SizedBox(
-                              height: 30.0,
-                            ),
+                            SizedBox(height: 30.0),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: <Widget>[

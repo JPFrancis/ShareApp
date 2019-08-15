@@ -118,7 +118,7 @@ class MyApp extends StatelessWidget {
               return MaterialPageRoute(
                 builder: (context) {
                   return Chat(
-                    otherUser: args.otherUser,
+                    otherUserID: args.otherUserID,
                   );
                 },
               );
@@ -172,7 +172,7 @@ class MyApp extends StatelessWidget {
               return MaterialPageRoute(
                 builder: (context) {
                   return ProfilePage(
-                    initUserDS: args.userDS,
+                    userID: args.userID,
                   );
                 },
               );
@@ -243,9 +243,9 @@ class RentalDetailArgs {
 }
 
 class ChatArgs {
-  final DocumentSnapshot otherUser;
+  final String otherUserID;
 
-  ChatArgs(this.otherUser);
+  ChatArgs(this.otherUserID);
 }
 
 class NewPickupArgs {
@@ -269,9 +269,9 @@ class AllReviewsArgs {
 }
 
 class ProfilePageArgs {
-  final DocumentSnapshot userDS;
+  final String userID;
 
-  ProfilePageArgs(this.userDS);
+  ProfilePageArgs(this.userID);
 }
 
 class RentalCalendarArgs {
