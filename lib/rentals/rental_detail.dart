@@ -1456,6 +1456,14 @@ class RentalDetailState extends State<RentalDetail> {
       'rating': FieldValue.increment(avg),
     });
 
+    await Firestore.instance
+        .collection('users')
+        .document(ownerDS.documentID)
+        .updateData({
+      'numRatings': FieldValue.increment(1),
+      'rating': FieldValue.increment(avg),
+    });
+
     await Firestore.instance.collection('notifications').add({
       'title': '$myName left you a review',
       'body': '',

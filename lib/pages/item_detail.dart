@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:math';
-import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -40,7 +39,7 @@ class ItemDetailState extends State<ItemDetail> {
       new GlobalKey<RefreshIndicatorState>();
 
   GoogleMapController googleMapController;
-  Marker itemLocationMarker;
+  Map<CircleId, Circle> circles = <CircleId, Circle>{};
   double latOffset;
   double longOffset;
   GeoPoint itemLocationGeoPoint;
@@ -182,7 +181,7 @@ class ItemDetailState extends State<ItemDetail> {
         longOffset -= longRandom;
       }
 
-      setMarker();
+      setCircle();
       getUserLocation();
 
       QuerySnapshot querySnapshot = await Firestore.instance
@@ -636,20 +635,24 @@ class ItemDetailState extends State<ItemDetail> {
         : Text('No images yet\n');
   }
 
-  void setMarker() async {
-    final MarkerId markerId = MarkerId('marker');
-   // BitmapDescriptor markerIcon = await _getAssetIcon(context);
-    BitmapDescriptor markerIcon = null;
-
-    itemLocationMarker = Marker(
-      markerId: MarkerId("marker"),
-      icon: markerIcon,
-      position: LatLng(
-        latOffset,
-        longOffset,
-      ),
-      anchor: Offset(0.5, 0.5),
+  void setCircle() async {
+    final Circle circle = Circle(
+      circleId: CircleId('0'),
+      consumeTapEvents: false,
+      strokeColor: Color.fromARGB(0, 60, 195, 254),
+      //fillColor: Color(2),
+      fillColor: Color.fromRGBO(60, 195, 254, 0.5),
+      //strokeWidth: 5,
+      center: LatLng(latOffset, longOffset),
+      radius: 3500,
+      onTap: () {
+        //_onCircleTapped(circleId);
+      },
     );
+
+    setState(() {
+      circles[CircleId('0')] = circle;
+    });
   }
 
   Widget showItemLocation() {
@@ -664,14 +667,10 @@ class ItemDetailState extends State<ItemDetail> {
           zoom: 11,
           //zoom: 10,
         ),
+        circles: Set<Circle>.of(circles.values),
         onMapCreated: (GoogleMapController controller) {
           googleMapController = controller;
         },
-        markers: Set<Marker>.of(
-          <Marker>[
-            itemLocationMarker,
-          ],
-        ),
         gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>[
           Factory<OneSequenceGestureRecognizer>(
             () =>
@@ -744,22 +743,6 @@ class ItemDetailState extends State<ItemDetail> {
       ),
     );
   }
-
-/*
-  Future<BitmapDescriptor> _getAssetIcon(BuildContext context) async {
-    final Completer<BitmapDescriptor> bitmapIcon =
-        Completer<BitmapDescriptor>();
-    final ImageConfiguration config = createLocalImageConfiguration(context);
-
-    const AssetImage('assets/circle1.png').resolve(config)
-      .addListener((ImageInfo image, bool sync) async {
-        final ByteData bytes = await image.image.toByteData(format: ImageByteFormat.png);
-        final BitmapDescriptor bitmap = BitmapDescriptor.fromBytes(bytes.buffer.asUint8List());
-        bitmapIcon.complete(bitmap);
-      });
-
-    return await bitmapIcon.future;
-  }*/
 
   Widget showItemVisibilityModifier() {
     return Padding(

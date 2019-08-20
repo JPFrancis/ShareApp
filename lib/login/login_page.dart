@@ -80,6 +80,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
           userId = await widget.auth.signIn(email, password);
         } else {
           userId = await widget.auth.createUser(email, password);
+          await Future.delayed(Duration(seconds: 2));
           widget.onSignIn();
         }
         setState(() {
@@ -99,6 +100,10 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
             errorMessage = e.message;
         });
       }
+    } else {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
@@ -165,61 +170,70 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     _loginPage() {
       return Material(
         color: primaryColor,
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-                colors: [primaryColor, Colors.black],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter),
-          ),
-          child: showSignUp
-              ? Form(
-                  key: formKey,
-                  child: Container(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
+        child: Stack(
+          children: <Widget>[
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                    colors: [primaryColor, Colors.black],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter),
+              ),
+              child: showSignUp
+                  ? Form(
+                      key: formKey,
+                      child: Container(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: <Widget>[
+                            Container(height: 70),
+                            Padding(
+                              padding: EdgeInsets.only(left: 40),
+                              child: showEmailInput(),
+                            ),
+                            SizedBox(height: 15.0),
+                            Padding(
+                              padding: EdgeInsets.only(left: 40),
+                              child: showPasswordInput(),
+                            ),
+                            SizedBox(
+                              height: 30.0,
+                            ),
+                            showPrimaryButton(),
+                            showSecondaryButton(),
+                            Container(height: 40),
+                            IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  showSignUp = !showSignUp;
+                                });
+                              },
+                              icon: Icon(Icons.arrow_back),
+                              color: Colors.white,
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: <Widget>[
-                        Container(height: 70),
-                        Padding(
-                          padding: EdgeInsets.only(left: 40),
-                          child: showEmailInput(),
-                        ),
-                        SizedBox(height: 15.0),
-                        Padding(
-                          padding: EdgeInsets.only(left: 40),
-                          child: showPasswordInput(),
-                        ),
-                        SizedBox(
-                          height: 30.0,
-                        ),
-                        showPrimaryButton(),
-                        showSecondaryButton(),
-                        Container(height: 40),
-                        IconButton(
-                          onPressed: () {
-                            setState(() {
-                              showSignUp = !showSignUp;
-                            });
-                          },
-                          icon: Icon(Icons.arrow_back),
-                          color: Colors.white,
-                        ),
+                        // SizedBox(height: h/24,),
+                        FadeTransition(
+                            opacity: logoAnimation, child: _showLogo(false)),
+                        // SizedBox(height: 20.0,),
+                        FadeTransition(
+                            opacity: contentAnimation, child: showBody()),
                       ],
                     ),
-                  ),
-                )
-              : Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: <Widget>[
-                    // SizedBox(height: h/24,),
-                    FadeTransition(
-                        opacity: logoAnimation, child: _showLogo(false)),
-                    // SizedBox(height: 20.0,),
-                    FadeTransition(
-                        opacity: contentAnimation, child: showBody()),
-                  ],
-                ),
+            ),
+            isLoading
+                ? Center(
+                    child: CircularProgressIndicator(
+                        backgroundColor: Colors.white))
+                : Container(),
+          ],
         ),
       );
     }

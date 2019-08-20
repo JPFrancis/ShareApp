@@ -86,11 +86,33 @@ class ProfilePageState extends State<ProfilePage> {
         showNameAndProfilePic(),
         SizedBox(height: 20.0),
         showUserDescription(),
+        showUserRating(),
         divider(),
         reusableCategory("ITEMS"),
         SizedBox(height: 10.0),
         showItems(),
       ],
+    );
+  }
+
+  Widget showUserRating() {
+    double rating = 0;
+
+    if (userDS['numRatings'] > 0) {
+      rating = userDS['totalRating'] / userDS['numRatings'];
+    }
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text('User rating'),
+          StarRating(
+            rating: rating,
+          ),
+        ],
+      ),
     );
   }
 

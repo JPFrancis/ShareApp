@@ -1,8 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:shareapp/main.dart';
 import 'package:shareapp/login/login_page.dart';
 import 'package:shareapp/pages/home_page.dart';
 import 'package:shareapp/services/auth.dart';
@@ -14,7 +12,7 @@ class RootPage extends StatefulWidget {
   final BaseAuth auth;
 
   @override
-  State<StatefulWidget> createState() => new _RootPageState();
+  State<StatefulWidget> createState() => new RootPageState();
 }
 
 enum AuthStatus {
@@ -22,7 +20,7 @@ enum AuthStatus {
   signedIn,
 }
 
-class _RootPageState extends State<RootPage> {
+class RootPageState extends State<RootPage> {
   final FirebaseMessaging firebaseMessaging = FirebaseMessaging();
   AuthStatus authStatus = AuthStatus.notSignedIn;
   bool isLoading = true;

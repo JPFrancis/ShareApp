@@ -1,32 +1,23 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-
-import 'package:shareapp/main.dart';
-
-//import 'package:shareapp/rentals/item_request.dart';
-import 'package:shareapp/services/const.dart';
-import 'package:table_calendar/table_calendar.dart';
-import 'package:shareapp/extras/helpers.dart';
-import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
-
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_picker/flutter_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
+import 'package:shareapp/models/user.dart';
 import 'package:shareapp/pages/profile_tab_pages/payouts_page.dart';
+import 'package:shareapp/pages/profile_tab_pages/profile_edit.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:shareapp/services/picker_data.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:shareapp/pages/profile_tab_pages/payouts_page.dart';
+import 'package:table_calendar/table_calendar.dart';
 
 class RentalCalendar extends StatefulWidget {
   static const routeName = '/rentalCalendar';
@@ -258,7 +249,7 @@ class RentalCalendarState extends State<RentalCalendar>
   }
 
   Widget showBody() {
-    bool canRequest = !events.containsKey(selectedDay);
+    bool canRequest = !isOwner && !events.containsKey(selectedDay);
 
     return ListView(
       children: <Widget>[
@@ -271,7 +262,7 @@ class RentalCalendarState extends State<RentalCalendar>
                 ? showRequestItemDetail()
                 : Center(
                     child: Text(
-                      'Item is unavailable on this day',
+                      '${isOwner ? 'You can\'t rent items you own!' : 'Item is unavailable on this day'}',
                       style: TextStyle(fontSize: 20),
                     ),
                   ),
@@ -599,19 +590,35 @@ class RentalCalendarState extends State<RentalCalendar>
     } else {
       bool timeIsValid = await validateRental();
 
-      if (timeIsValid) {
-        action();
+      if (!timeIsValid) {
+        showRequestErrorDialog(5);
       } else {
-        showRequestErrorDialog(4);
+        DocumentSnapshot myUserDS = await Firestore.instance
+            .collection('users')
+            .document(myUserID)
+            .get();
+
+        if (myUserDS != null && myUserDS.exists) {
+          if (myUserDS['address'] == null ||
+              myUserDS['birthday'] == null ||
+              myUserDS['gender'] == null ||
+              myUserDS['phoneNum'] == null) {
+            showRequestErrorDialog(4, userSnapshot: myUserDS);
+          } else if (myUserDS['defaultSource'] == null) {
+            showRequestErrorDialog(7);
+          } else {
+            action();
+          }
+        }
       }
     }
   }
 
-  Future<bool> showRequestErrorDialog(int type) async {
+  Future<bool> showRequestErrorDialog(int type, {userSnapshot}) async {
     final ThemeData theme = Theme.of(context);
     final TextStyle dialogTextStyle =
         theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
-    String message;
+    String message = 'Error';
 
     switch (type) {
       case 1:
@@ -624,14 +631,17 @@ class RentalCalendarState extends State<RentalCalendar>
         message = 'Pickup window must start at least one hour from now';
         break;
       case 4:
+        message = 'You must complete your profile before renting an item!';
+        break;
+      case 5:
         message = 'Your rental request time interferes with another rental! Try'
             ' selecting a different pickup day or changing the rental duration';
         break;
-      case 5:
-        message = 'Item no longer exists';
-        break;
       case 6:
         message = 'The item owner has disabled renting on this item';
+        break;
+      case 7:
+        message = 'You must add payment information before renting items';
         break;
     }
 
@@ -646,12 +656,40 @@ class RentalCalendarState extends State<RentalCalendar>
               ),
               actions: <Widget>[
                 FlatButton(
-                  child: const Text('Ok'),
+                  child: const Text('CLOSE'),
                   onPressed: () {
                     Navigator.of(context).pop(
                         false); // Pops the confirmation dialog but not the page.
                   },
                 ),
+                type == 4
+                    ? FlatButton(
+                        child: const Text('EDIT PROFILE'),
+                        onPressed: () {
+                          Navigator.of(context).pop(
+                              false); // Pops the confirmation dialog but not the page.
+                          Timestamp timestampBirthday =
+                              userSnapshot['birthday'];
+                          DateTime birthday;
+
+                          if (timestampBirthday != null) {
+                            birthday = timestampBirthday.toDate();
+                          }
+
+                          User userEdit =
+                              User.fromMap(userSnapshot.data, birthday);
+
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (BuildContext context) => ProfileEdit(
+                                      userEdit: userEdit,
+                                    ),
+                                fullscreenDialog: true,
+                              ));
+                        },
+                      )
+                    : Container(),
               ],
             );
           },
@@ -840,6 +878,7 @@ class RentalCalendarState extends State<RentalCalendar>
       'renterCC': null,
       'ownerCC': null,
       'review': null,
+      'submittedReview': false,
       'initialPushNotif': {
         'nameFrom': myName,
         'pushToken': itemOwnerDS['pushToken'],
