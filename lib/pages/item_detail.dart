@@ -380,7 +380,7 @@ class ItemDetailState extends State<ItemDetail> {
                       fontFamily: 'Quicksand', fontWeight: FontWeight.bold),
                 ),
                 Container(width: 5),
-                StarRating(rating: customerReview['average'].toDouble()),
+                StarRating(rating: customerReview['overall'].toDouble()),
               ],
             ),
             Container(
@@ -640,7 +640,7 @@ class ItemDetailState extends State<ItemDetail> {
       fillColor: Color.fromRGBO(60, 195, 254, 0.5),
       //strokeWidth: 5,
       center: LatLng(latOffset, longOffset),
-      radius: 3500,
+      radius: 402,
       onTap: () {
         //_onCircleTapped(circleId);
       },
@@ -660,8 +660,8 @@ class ItemDetailState extends State<ItemDetail> {
         rotateGesturesEnabled: false,
         initialCameraPosition: CameraPosition(
           target: LatLng(latOffset, longOffset),
-          zoom: 11,
-          //zoom: 10,
+          zoom: 13,
+          //zoom: 11,
         ),
         circles: Set<Circle>.of(circles.values),
         onMapCreated: (GoogleMapController controller) {

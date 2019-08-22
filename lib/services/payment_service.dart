@@ -22,14 +22,11 @@ class PaymentService {
       Timestamp rentalEnd,
       String idFrom,
       String idTo,
-      double amount,
+      int amount,
       String description) {
-    // Stripe charges in cents. so $3.00 = 300 cents
-    var processedPrice = amount * 100;
-
     Firestore.instance.collection('charges').add({
       'currency': 'usd',
-      'amount': processedPrice,
+      'amount': amount,
       'description': description,
       'timestamp': DateTime.now(),
       'rental': Firestore.instance.collection('rentals').document(rentalId),

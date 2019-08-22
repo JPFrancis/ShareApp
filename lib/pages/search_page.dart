@@ -39,7 +39,7 @@ class SearchPageState extends State<SearchPage> {
   double distanceFilter;
   String sortByFilter;
 
-  bool distanceIsInfinite = false;
+  bool distanceIsInfinite = true;
   bool pageIsLoading = true;
   bool filterPressed = false;
   bool locIsLoading = false;
