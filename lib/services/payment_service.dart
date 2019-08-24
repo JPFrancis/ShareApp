@@ -16,14 +16,16 @@ class PaymentService {
   }
 
   chargeRental(
-      String rentalId,
-      int rentalDuration,
-      Timestamp rentalStart,
-      Timestamp rentalEnd,
-      String idFrom,
-      String idTo,
-      int amount,
-      String description) {
+    String rentalId,
+    int rentalDuration,
+    Timestamp rentalStart,
+    Timestamp rentalEnd,
+    String idFrom,
+    String idTo,
+    int amount,
+    Map transferData,
+    String description,
+  ) {
     Firestore.instance.collection('charges').add({
       'currency': 'usd',
       'amount': amount,
@@ -37,6 +39,7 @@ class PaymentService {
         'rentalStart': rentalStart,
         'rentalEnd': rentalEnd,
       },
+      'transferData': transferData,
     });
   }
 }

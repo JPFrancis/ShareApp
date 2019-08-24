@@ -283,7 +283,7 @@ class ItemDetailState extends State<ItemDetail> {
           Row(
             children: <Widget>[
               Spacer(),
-              isOwner && itemDS['rental'] == null
+              isOwner
                   ? Container(
                       padding: const EdgeInsets.only(top: 30.0, right: 5.0),
                       child: FloatingActionButton(

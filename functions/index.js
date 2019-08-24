@@ -360,23 +360,38 @@ exports.createCharge = functions.firestore.document('charges/{chargeId}')
         try {
             const idFrom = chargeSnap.data().rentalData['idFrom'];
             const userSnap = await db.collection('users').doc(idFrom).get();
+            const idTo = chargeSnap.data().rentalData['idTo'];
+            const itemOwner = await db.collection('users').doc(idTo).get();
+            const ownerCustId = userSnap.data().custId;
             const customer = userSnap.data().custId;
             const amount = chargeSnap.data().amount;
             const currency = chargeSnap.data().currency;
             const description = chargeSnap.data().description;
-
-            /*
-            application_fee_amount: 123,
-            transfer_data: {
-                amount: 877,
-                destination: "{{CONNECTED_STRIPE_ACCOUNT_ID}}",
-                },
-            */
-
-            const charge = { amount, currency, customer, description };
+            const transferDataMap = chargeSnap.data().transferData;
+            const ourFee = transferDataMap['ourFee'];
+            const ownerPayout = transferDataMap['ownerPayout'];
             const idempotentKey = context.params.chargeId;
 
-            const response = await stripe.charges.create(charge, { idempotency_key: idempotentKey });
+            stripe.tokens.create({
+                customer: "cus_YGGG4Kcl9D5BJ3",
+            }, {
+                    stripe_account: "{{CONNECTED_STRIPE_ACCOUNT_ID}}",
+                }).then(function (token) {
+                    // asynchronously called
+                });
+
+            const response = await stripe.charges.create({
+                amount: amount,
+                currency: currency,
+                //source: customer,
+                source: "tok_visa",
+                application_fee_amount: ourFee,
+                transfer_data: {
+                    amount: ownerPayout,
+                    destination: ownerCustId,
+                },
+                description: description,
+            }, { idempotency_key: idempotentKey });
             return chargeSnap.ref.set(response, { merge: true });
 
         } catch (error) {

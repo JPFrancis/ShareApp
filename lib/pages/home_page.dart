@@ -1054,11 +1054,14 @@ class HomePageState extends State<HomePage> {
                     itemCount: items.length,
                     itemBuilder: (context, index) {
                       DocumentSnapshot itemDS = items[index];
+                      DocumentReference creatorRef = itemDS['creator'];
 
-                      return Container(
-                        width: w / 2.2,
-                        child: itemCard(itemDS, context),
-                      );
+                      return myUserID == creatorRef.documentID
+                          ? Container()
+                          : Container(
+                              width: w / 2.2,
+                              child: itemCard(itemDS, context),
+                            );
                     },
                   );
                 } else {

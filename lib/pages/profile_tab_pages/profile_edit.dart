@@ -9,6 +9,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart' as intl;
@@ -126,16 +127,18 @@ class ProfileEditState extends State<ProfileEdit> {
           showCircularProgress(),
         ],
       ),
-      floatingActionButton: RaisedButton(
-        child: Text(
-          "SAVE",
-          style: TextStyle(color: Colors.white),
-        ),
-        color: Color(0xff007f6e),
-        onPressed: () {
-          saveProfile();
-        },
-      ),
+      floatingActionButton: isLoading
+          ? Container()
+          : RaisedButton(
+              child: Text(
+                "SAVE",
+                style: TextStyle(color: Colors.white),
+              ),
+              color: Color(0xff007f6e),
+              onPressed: () {
+                saveProfile();
+              },
+            ),
     );
   }
 
@@ -638,10 +641,6 @@ class ProfileEditState extends State<ProfileEdit> {
         'phoneNum': userCopy.phoneNum,
         'address': userCopy.address,
       });
-
-      setState(() {
-        isLoading = false;
-      });
     } else {
       Firestore.instance.collection('users').document(myUserID).updateData({
         'name': name,
@@ -666,11 +665,26 @@ class ProfileEditState extends State<ProfileEdit> {
     Navigator.of(context).pop(userCopy);
   }
 
+  Future<File> compressFile(File file, String targetPath) async {
+    var result = await FlutterImageCompress.compressAndGetFile(
+      file.absolute.path,
+      targetPath,
+      minHeight: 1000,
+      minWidth: 1080,
+      quality: 95,
+    );
+
+    return result;
+  }
+
   Future<String> saveImage() async {
+    File compressedImage =
+        await compressFile(imageFile, imageFile.absolute.path);
+
     StorageReference ref =
         FirebaseStorage.instance.ref().child('/profile_pics/${myUserID}.jpg');
-    StorageUploadTask uploadTask =
-        ref.putFile(imageFile, StorageMetadata(contentType: 'image/jpeg'));
+    StorageUploadTask uploadTask = ref.putFile(
+        compressedImage, StorageMetadata(contentType: 'image/jpeg'));
 
     return await (await uploadTask.onComplete).ref.getDownloadURL();
   }
