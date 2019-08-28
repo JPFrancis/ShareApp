@@ -16,20 +16,19 @@ class PaymentService {
   }
 
   chargeRental(
-      String rentalId,
-      int rentalDuration,
-      Timestamp rentalStart,
-      Timestamp rentalEnd,
-      String idFrom,
-      String idTo,
-      double amount,
-      String description) {
-    // Stripe charges in cents. so $3.00 = 300 cents
-    var processedPrice = amount * 100;
-
+    String rentalId,
+    int rentalDuration,
+    Timestamp rentalStart,
+    Timestamp rentalEnd,
+    String idFrom,
+    String idTo,
+    int amount,
+    Map transferData,
+    String description,
+  ) {
     Firestore.instance.collection('charges').add({
       'currency': 'usd',
-      'amount': processedPrice,
+      'amount': amount,
       'description': description,
       'timestamp': DateTime.now(),
       'rental': Firestore.instance.collection('rentals').document(rentalId),
@@ -40,6 +39,7 @@ class PaymentService {
         'rentalStart': rentalStart,
         'rentalEnd': rentalEnd,
       },
+      'transferData': transferData,
     });
   }
 }

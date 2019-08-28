@@ -246,13 +246,48 @@ class RentalDetailState extends State<RentalDetail> {
                 children: <Widget>[
                   showItemImage(),
                   showItemCreator(),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 15),
+                    child: RaisedButton(
+                      onPressed: () async {
+                        var duration = rentalDS['duration'].toInt();
+                        var price = rentalDS['price'].toInt();
+                        double itemPrice = (duration * price).toDouble();
+                        double tax = itemPrice * 0.06;
+                        double ourFee = itemPrice * 0.07;
+                        double baseChargeAmount =
+                            (itemPrice + tax + ourFee) * 1.029 + 0.3;
+                        int finalCharge = (baseChargeAmount * 100).round();
+
+                        Map transferData = {
+                          'ourFee': ourFee * 100,
+                          'ownerPayout': itemPrice * 100,
+                        };
+
+                        PaymentService().chargeRental(
+                          rentalDS.documentID,
+                          rentalDS['duration'],
+                          rentalDS['pickupStart'],
+                          rentalDS['rentalEnd'],
+                          renterId,
+                          ownerId,
+                          finalCharge,
+                          transferData,
+                          '${rentalDS['renterData']['name']} paying ${rentalDS['ownerData']['name']} '
+                          'for renting ${rentalDS['itemName']}',
+                        );
+                      },
+                      textColor: Colors.white,
+                      color: Colors.green,
+                      child: Text('Charge'),
+                    ),
+                  ),
                   SizedBox(
                     height: 10.0,
                   ),
                   Container(
                       padding: EdgeInsets.symmetric(
                           horizontal: MediaQuery.of(context).size.width / 25),
-                      height: MediaQuery.of(context).size.height / 4,
                       child: showItemRequestStatus()),
                   divider(),
                   showRequestButtons(),
@@ -387,6 +422,25 @@ class RentalDetailState extends State<RentalDetail> {
     String duration =
         '${durationDays > 1 ? '$durationDays days' : '$durationDays day'}';
 
+    double itemPrice = rentalDS['price'].toDouble();
+    double itemRentalPrice = itemPrice * durationDays;
+    double taxPrice = itemRentalPrice * 0.06;
+    double ourFeePrice = itemRentalPrice * 0.07;
+    double subtotal = itemRentalPrice + taxPrice + ourFeePrice;
+    double total = subtotal * 1.029 + 0.3;
+    double stripeFeePrice = subtotal * 0.029 + 0.3;
+
+    String receiptText = 'Item rental:\n'
+        'Government\'s cut:\n'
+        'Transaction fee (Not us):\n'
+        'Cost to keep our lights on:\n'
+        'Total:';
+    String receiptValues = '\$${itemRentalPrice.toStringAsFixed(2)}\n'
+        '\$${taxPrice.toStringAsFixed(2)}\n'
+        '\$${stripeFeePrice.toStringAsFixed(2)}\n'
+        '\$${ourFeePrice.toStringAsFixed(2)}\n'
+        '\$${total.toStringAsFixed(2)}';
+
     Widget info;
     bool submittedReview = rentalDS['submittedReview'];
 
@@ -442,12 +496,12 @@ class RentalDetailState extends State<RentalDetail> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: <Widget>[
                       Text(
-                        "Total:",
+                        receiptText,
                         style:
                             TextStyle(fontFamily: appFont, color: Colors.white),
                       ),
                       Text(
-                        "$price",
+                        receiptValues,
                         style:
                             TextStyle(fontFamily: appFont, color: Colors.white),
                       ),
@@ -500,12 +554,12 @@ class RentalDetailState extends State<RentalDetail> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: <Widget>[
                       Text(
-                        "Total:",
+                        receiptText,
                         style:
                             TextStyle(fontFamily: appFont, color: Colors.white),
                       ),
                       Text(
-                        "$price",
+                        receiptValues,
                         style:
                             TextStyle(fontFamily: appFont, color: Colors.white),
                       ),
@@ -562,12 +616,12 @@ class RentalDetailState extends State<RentalDetail> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: <Widget>[
                       Text(
-                        "Total:",
+                        receiptText,
                         style:
                             TextStyle(fontFamily: appFont, color: Colors.white),
                       ),
                       Text(
-                        "\$$price",
+                        receiptValues,
                         style:
                             TextStyle(fontFamily: appFont, color: Colors.white),
                       ),
@@ -620,12 +674,12 @@ class RentalDetailState extends State<RentalDetail> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: <Widget>[
                       Text(
-                        "Total:",
+                        receiptText,
                         style:
                             TextStyle(fontFamily: appFont, color: Colors.white),
                       ),
                       Text(
-                        "\$$price",
+                        receiptValues,
                         style:
                             TextStyle(fontFamily: appFont, color: Colors.white),
                       ),
@@ -682,12 +736,13 @@ class RentalDetailState extends State<RentalDetail> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: <Widget>[
                       Text(
-                        "Total:",
+                        receiptText,
                         style:
                             TextStyle(fontFamily: appFont, color: Colors.white),
                       ),
                       Text(
-                        "\$$price",
+                        receiptValues,
+                        textAlign: TextAlign.right,
                         style:
                             TextStyle(fontFamily: appFont, color: Colors.white),
                       ),
@@ -740,12 +795,13 @@ class RentalDetailState extends State<RentalDetail> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: <Widget>[
                       Text(
-                        "Total:",
+                        receiptText,
                         style:
                             TextStyle(fontFamily: appFont, color: Colors.white),
                       ),
                       Text(
-                        "\$$price",
+                        receiptValues,
+                        textAlign: TextAlign.right,
                         style:
                             TextStyle(fontFamily: appFont, color: Colors.white),
                       ),
@@ -802,12 +858,12 @@ class RentalDetailState extends State<RentalDetail> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: <Widget>[
                       Text(
-                        "Total:",
+                        receiptText,
                         style:
                             TextStyle(fontFamily: appFont, color: Colors.white),
                       ),
                       Text(
-                        "\$$price",
+                        receiptValues,
                         style:
                             TextStyle(fontFamily: appFont, color: Colors.white),
                       ),
@@ -860,12 +916,12 @@ class RentalDetailState extends State<RentalDetail> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: <Widget>[
                       Text(
-                        "Total:",
+                        receiptText,
                         style:
                             TextStyle(fontFamily: appFont, color: Colors.white),
                       ),
                       Text(
-                        "\$$price",
+                        receiptValues,
                         style:
                             TextStyle(fontFamily: appFont, color: Colors.white),
                       ),
@@ -907,7 +963,7 @@ class RentalDetailState extends State<RentalDetail> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: <Widget>[
                       Text(
-                        "Rented for:",
+                        "Rented for: ",
                         style:
                             TextStyle(fontFamily: appFont, color: Colors.white),
                       ),
@@ -922,12 +978,12 @@ class RentalDetailState extends State<RentalDetail> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: <Widget>[
                       Text(
-                        "Total:",
+                        receiptText,
                         style:
                             TextStyle(fontFamily: appFont, color: Colors.white),
                       ),
                       Text(
-                        "\$$price",
+                        receiptValues,
                         style:
                             TextStyle(fontFamily: appFont, color: Colors.white),
                       ),
@@ -980,12 +1036,12 @@ class RentalDetailState extends State<RentalDetail> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: <Widget>[
                       Text(
-                        "Total:",
+                        receiptText,
                         style:
                             TextStyle(fontFamily: appFont, color: Colors.white),
                       ),
                       Text(
-                        "\$$price",
+                        receiptValues,
                         style:
                             TextStyle(fontFamily: appFont, color: Colors.white),
                       ),
@@ -1048,11 +1104,11 @@ class RentalDetailState extends State<RentalDetail> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
                 Text(
-                  "Total:",
+                  receiptText,
                   style: TextStyle(fontFamily: appFont, color: Colors.white),
                 ),
                 Text(
-                  "\$$price",
+                  receiptValues,
                   style: TextStyle(fontFamily: appFont, color: Colors.white),
                 ),
               ],
@@ -1096,19 +1152,32 @@ class RentalDetailState extends State<RentalDetail> {
       'pushToken': otherUserDS['pushToken'],
       'rentalID': rentalDS.documentID,
       'timestamp': DateTime.now().millisecondsSinceEpoch,
-    }).then((_) {
-      double chargeAmount = 1.0;
+    }).then((_) async {
+      var duration = rentalDS['duration'].toInt();
+      var price = rentalDS['price'].toInt();
+      double itemPrice = (duration * price).toDouble();
+      double tax = itemPrice * 0.06;
+      double ourFee = itemPrice * 0.07;
+      double baseChargeAmount = (itemPrice + tax + ourFee) * 1.029 + 0.3;
+      int finalCharge = (baseChargeAmount * 100).round();
+
+      Map transferData = {
+        'ourFee': ourFee * 100,
+        'ownerPayout': itemPrice * 100,
+      };
 
       PaymentService().chargeRental(
-          rentalDS.documentID,
-          rentalDS['duration'],
-          rentalDS['pickupStart'],
-          rentalDS['rentalEnd'],
-          renterId,
-          ownerId,
-          chargeAmount,
-          '${rentalDS['renterData']['name']} paying ${rentalDS['ownerData']['name']} '
-          'for renting ${rentalDS['itemName']}');
+        rentalDS.documentID,
+        rentalDS['duration'],
+        rentalDS['pickupStart'],
+        rentalDS['rentalEnd'],
+        renterId,
+        ownerId,
+        finalCharge,
+        transferData,
+        '${rentalDS['renterData']['name']} paying ${rentalDS['ownerData']['name']} '
+        'for renting ${rentalDS['itemName']}',
+      );
     });
   }
 

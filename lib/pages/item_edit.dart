@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -7,6 +8,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -196,14 +198,17 @@ class ItemEditState extends State<ItemEdit> {
           showCircularProgress(),
         ],
       ),
-      floatingActionButton: RaisedButton(
-        child: Text('Next ＞',
-            style: TextStyle(color: Colors.white, fontFamily: 'Quicksand')),
-        color: Color(0xff007f6e),
-        onPressed: () {
-          saveWarning();
-        },
-      ),
+      floatingActionButton: isLoading
+          ? Container()
+          : RaisedButton(
+              child: Text('Next ＞',
+                  style:
+                      TextStyle(color: Colors.white, fontFamily: 'Quicksand')),
+              color: Color(0xff007f6e),
+              onPressed: () {
+                saveWarning();
+              },
+            ),
     );
   }
 
@@ -683,6 +688,7 @@ class ItemEditState extends State<ItemEdit> {
     if (itemCopy.id == null) {
       final DocumentReference documentReference =
           await Firestore.instance.collection("items").add({
+        'created': DateTime.now(),
         'id': null,
         'status': itemCopy.isVisible,
         'creator': itemCopy.creator,
@@ -734,7 +740,7 @@ class ItemEditState extends State<ItemEdit> {
         Firestore.instance
             .collection('items')
             .document(returnedID)
-            .updateData({'images': List()});
+            .updateData({'images': []});
         Navigator.of(context).pop(true);
       } else {
         String done;
@@ -870,9 +876,25 @@ class ItemEditState extends State<ItemEdit> {
     return done;
   }
 
+  Future<List<int>> compressList(List<int> list) async {
+    var result = await FlutterImageCompress.compressWithList(
+      list,
+      minHeight: 1000,
+      minWidth: 1080,
+      quality: 95,
+    );
+
+    return result;
+  }
+
   Future<String> saveImage(Asset asset, String fileName, int index) async {
     ByteData byteData = await asset.requestOriginal();
-    List<int> imageData = byteData.buffer.asUint8List();
+//    List<int> imageData = byteData.buffer.asUint8List();
+    var imageList = byteData.buffer.asUint8List().toList();
+    List<int> ret = await compressList(imageList);
+    Uint8List imageData = Uint8List.fromList(ret);
+    debugPrint('========= ${imageData.runtimeType}');
+
     StorageReference ref =
         FirebaseStorage.instance.ref().child('/items/$fileName/$index.jpg');
     StorageUploadTask uploadTask =
@@ -1001,7 +1023,8 @@ class ItemEditState extends State<ItemEdit> {
   Future<bool> saveWarning() async {
     if (itemCopy.location != null &&
         totalImagesCount > 0 &&
-        itemCopy.name.length > 0) {
+        itemCopy.name.length > 0 &&
+        itemCopy.description.length > 0) {
       saveItem();
       return true;
     }
@@ -1016,7 +1039,7 @@ class ItemEditState extends State<ItemEdit> {
             return AlertDialog(
               title: Text('Error!'),
               content: Text(
-                'Please add item name, images, and/or location',
+                'Please add item name, description, images, and location',
                 style: dialogTextStyle,
               ),
               actions: <Widget>[
