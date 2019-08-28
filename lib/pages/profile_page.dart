@@ -9,9 +9,9 @@ import 'package:shareapp/services/const.dart';
 class ProfilePage extends StatefulWidget {
   static const routeName = '/profilePage';
 
-  final DocumentSnapshot initUserDS;
+  final String userID;
 
-  ProfilePage({Key key, this.initUserDS}) : super(key: key);
+  ProfilePage({Key key, this.userID}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
@@ -30,17 +30,14 @@ class ProfilePageState extends State<ProfilePage> {
     // TODO: implement initState
     super.initState();
 
-    userDS = widget.initUserDS;
-    getSnapshots(false);
+    getSnapshots();
   }
 
-  Future<Null> getSnapshots(bool refreshItemDS) async {
-    DocumentSnapshot ds = refreshItemDS
-        ? await Firestore.instance
-            .collection('users')
-            .document(userDS.documentID)
-            .get()
-        : userDS;
+  Future<Null> getSnapshots() async {
+    DocumentSnapshot ds = await Firestore.instance
+        .collection('users')
+        .document(widget.userID)
+        .get();
 
     if (ds != null) {
       userDS = ds;
@@ -73,7 +70,7 @@ class ProfilePageState extends State<ProfilePage> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.startTop,
       body: RefreshIndicator(
-        onRefresh: () => getSnapshots(true),
+        onRefresh: () => getSnapshots(),
         child: isLoading ? Container() : showBody(),
       ),
     );

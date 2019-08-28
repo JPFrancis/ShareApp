@@ -33,6 +33,7 @@ class RentalCalendar extends StatefulWidget {
 
 class RentalCalendarState extends State<RentalCalendar>
     with TickerProviderStateMixin {
+  FirebaseUser currentUser;
   SharedPreferences prefs;
   DocumentSnapshot itemDS;
   String myUserID;
@@ -96,6 +97,7 @@ class RentalCalendarState extends State<RentalCalendar>
     var user = await FirebaseAuth.instance.currentUser();
 
     if (user != null) {
+      currentUser = user;
       myUserID = user.uid;
 
       DocumentReference ownerRef = itemDS['creator'];
@@ -861,10 +863,19 @@ class RentalCalendarState extends State<RentalCalendar>
       'item':
           Firestore.instance.collection('items').document(itemDS.documentID),
       'itemName': itemDS['name'],
+      'itemAvatar': itemDS['images'][0],
       'owner': Firestore.instance
           .collection('users')
           .document(itemOwnerDS.documentID),
+      'ownerData': {
+        'name': itemOwnerDS['name'],
+        'avatar': itemOwnerDS['avatar'],
+      },
       'renter': Firestore.instance.collection('users').document(myUserID),
+      'renterData': {
+        'name': currentUser.displayName,
+        'avatar': currentUser.photoUrl,
+      },
       'pickupStart': pickupTime,
       'pickupEnd': pickupTime.add(Duration(hours: 1)),
       'rentalEnd': pickupTime.add(Duration(days: duration, hours: 1)),
@@ -884,6 +895,7 @@ class RentalCalendarState extends State<RentalCalendar>
         'pushToken': itemOwnerDS['pushToken'],
         'itemName': itemDS['name'],
       },
+      'price': itemDS['price'],
     });
 
     if (rentalDR != null) {

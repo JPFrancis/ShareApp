@@ -50,12 +50,12 @@ class ItemDetailState extends State<ItemDetail> {
   double padding = 5.0;
 
   DocumentSnapshot itemDS;
-  DocumentSnapshot creatorDS;
-  DocumentSnapshot rentalDS;
   SharedPreferences prefs;
   String myUserID;
   String itemCreator;
+  String itemOwnerID;
   Map<Map, DocumentSnapshot> recentReviews = {}; // review : writer of review
+  Map owner;
 
   bool isAuthenticated;
   bool isLoading = true;
@@ -136,27 +136,13 @@ class ItemDetailState extends State<ItemDetail> {
       itemDS = ds;
 
       DocumentReference dr = itemDS['creator'];
-      String str = dr.documentID;
+      itemOwnerID = dr.documentID;
 
-      ds = await Firestore.instance.collection('users').document(str).get();
-
-      if (ds != null) {
-        creatorDS = ds;
-      }
-
-      isOwner = myUserID == creatorDS.documentID ? true : false;
+      owner = itemDS['owner'];
+      isOwner = myUserID == itemOwnerID ? true : false;
       isVisible = itemDS['isVisible'];
 
       dr = itemDS['rental'];
-
-      if (dr != null) {
-        str = dr.documentID;
-        ds = await Firestore.instance.collection('rentals').document(str).get();
-
-        if (ds != null) {
-          rentalDS = ds;
-        }
-      }
 
       var rng = new Random();
 
@@ -208,7 +194,7 @@ class ItemDetailState extends State<ItemDetail> {
         }
       }
 
-      if (itemDS != null && creatorDS != null) {
+      if (itemDS != null) {
         delayPage();
       }
     }
@@ -246,16 +232,6 @@ class ItemDetailState extends State<ItemDetail> {
   }
 
   Container bottomDetails() {
-    bool userIsInRental;
-
-    if (creatorDS.documentID == myUserID) {
-      userIsInRental = true;
-    } else if (rentalDS != null && rentalDS['renter'].documentID == myUserID) {
-      userIsInRental = true;
-    } else {
-      userIsInRental = false;
-    }
-
     return Container(
       height: 70.0,
       decoration: BoxDecoration(color: Colors.white, boxShadow: [
@@ -349,8 +325,10 @@ class ItemDetailState extends State<ItemDetail> {
           ? Container()
           : GestureDetector(
               onTap: () {
-                Navigator.of(context)
-                    .pushNamed(Chat.routeName, arguments: ChatArgs(creatorDS));
+                Navigator.of(context).pushNamed(
+                  Chat.routeName,
+                  arguments: ChatArgs(itemOwnerID),
+                );
               },
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -465,7 +443,7 @@ class ItemDetailState extends State<ItemDetail> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
                 Text(
-                  'Shared by ${creatorDS['name']}',
+                  'Shared by ${owner['name']}',
                   style: TextStyle(
                       color: Colors.black, fontSize: 15.0, fontFamily: 'Quicksand'),
                   textAlign: TextAlign.left,
@@ -475,7 +453,7 @@ class ItemDetailState extends State<ItemDetail> {
                   child: ClipOval(
                     child: CachedNetworkImage(
                       //key: ValueKey(DateTime.now().millisecondsSinceEpoch),
-                      imageUrl: creatorDS['avatar'],
+                      imageUrl: owner['avatar'],
                       placeholder: (context, url) =>
                           new CircularProgressIndicator(),
                     ),
@@ -890,7 +868,7 @@ class ItemDetailState extends State<ItemDetail> {
       context,
       ProfilePage.routeName,
       arguments: ProfilePageArgs(
-        creatorDS,
+        itemOwnerID,
       ),
     );
   }
@@ -901,8 +879,11 @@ class ItemDetailState extends State<ItemDetail> {
     double long = gp.longitude;
 
     LatLng newLoc = LatLng(lat, long);
-    googleMapController.animateCamera(CameraUpdate.newCameraPosition(
-        new CameraPosition(target: newLoc, zoom: 11.5)));
+    googleMapController.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(target: newLoc, zoom: 11.5),
+      ),
+    );
   }
 
   void deleteItem() async {

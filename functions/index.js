@@ -3,9 +3,9 @@ const admin = require('firebase-admin');
 
 admin.initializeApp(functions.config().firebase);
 
-const firestore = admin.firestore();
+const db = admin.firestore();
 const settings = { timestampInSnapshots: true };
-firestore.settings(settings);
+db.settings(settings);
 
 const storage = admin.storage();
 const bucket = storage.bucket();
@@ -29,7 +29,7 @@ exports.createUser = functions.auth.user().onCreate(event => {
     const name = event.displayName || 'new user';
     const creationDate = Date.now();
 
-    return firestore.collection('users').doc(userID).set({
+    return db.collection('users').doc(userID).set({
         email: email,
         avatar: photoURL,
         name: name,
@@ -70,7 +70,7 @@ exports.deleteUser = functions.auth.user().onDelete(event => {
         console.error(`Failed to remove images, error: ${err}`);
     });
 
-    return firestore.collection('users').doc(userID).delete().then(function () {
+    return db.collection('users').doc(userID).delete().then(function () {
         console.log('Deleted user: ', userID);
         return 'Deleted user $userID';
     }).catch(error => {
@@ -233,7 +233,7 @@ exports.addStripeSource = functions.firestore.document('users/{userId}/tokens/{t
         }
 
         const token = data.tokenId;
-        const snapshot = await firestore.collection('users').doc(context.params.userId).get();
+        const snapshot = await db.collection('users').doc(context.params.userId).get();
         const customerId = snapshot.data().custId;
         const customerEmail = snapshot.data().email;
 
@@ -246,12 +246,12 @@ exports.addStripeSource = functions.firestore.document('users/{userId}/tokens/{t
             const customerSource = customer.sources.data[0];
             const customerSourceId = customerSource.id;
 
-            firestore.collection('users').doc(context.params.userId).update({
+            db.collection('users').doc(context.params.userId).update({
                 custId: customer.id,
                 defaultSource: customerSourceId,
             });
 
-            firestore.collection('users').doc(context.params.userId).collection('sources').
+            db.collection('users').doc(context.params.userId).collection('sources').
                 doc(customerSource.card.fingerprint).set(customerSource, {
                     merge: true
                 });
@@ -273,11 +273,11 @@ exports.addStripeSource = functions.firestore.document('users/{userId}/tokens/{t
             var newDefaultSource = updatedCustomer.default_source;
             console.log(`New default source: ${newDefaultSource}`);
 
-            await firestore.collection('users').doc(context.params.userId).update({
+            await db.collection('users').doc(context.params.userId).update({
                 defaultSource: newDefaultSource,
             });
 
-            await firestore.collection('users').doc(context.params.userId).collection('sources').
+            await db.collection('users').doc(context.params.userId).collection('sources').
                 doc(newSource.card.fingerprint).set(newSource, {
                     merge: true
                 });
@@ -311,7 +311,7 @@ exports.deleteStripeSource = functions.https.onCall(async (data, context) => {
     var newDefaultSource = updatedCustomer.default_source;
     console.log(`New default source: ${newDefaultSource}`);
 
-    var resp = await firestore.collection('users').doc(userId).update({
+    var resp = await db.collection('users').doc(userId).update({
         defaultSource: newDefaultSource,
     });
 
@@ -332,7 +332,7 @@ exports.setDefaultSource = functions.https.onCall(async (data, context) => {
         default_source: newSourceId
     });
 
-    var resp = await firestore.collection('users').doc(userId).update({
+    var resp = await db.collection('users').doc(userId).update({
         defaultSource: updatedCustomer.default_source,
     });
 
@@ -359,7 +359,7 @@ exports.createCharge = functions.firestore.document('charges/{chargeId}')
     .onCreate(async (chargeSnap, context) => {
         try {
             const idFrom = chargeSnap.data().rentalData['idFrom'];
-            const userSnap = await firestore.collection('users').doc(idFrom).get();
+            const userSnap = await db.collection('users').doc(idFrom).get();
             const customer = userSnap.data().custId;
             const amount = chargeSnap.data().amount;
             const currency = chargeSnap.data().currency;
@@ -382,6 +382,227 @@ exports.createCharge = functions.firestore.document('charges/{chargeId}')
         } catch (error) {
             await chargeSnap.ref.set({ error: error.message }, { merge: true });
         }
+    });
+
+// update items and rentals when user edits their name and profile picture
+exports.updateUserConnections = functions.firestore
+    .document('users/{userId}')
+    .onUpdate((userSnap, context) => {
+        const userId = context.params.userId;
+        const oldSnap = userSnap.before.data();
+        const newSnap = userSnap.after.data();
+        var updateName = 0;
+        var updateAvatar = 0;
+
+        if (oldSnap === null || newSnap === null) {
+            return;
+        }
+
+        var oldName = oldSnap.name;
+        var oldAvatar = oldSnap.avatar;
+
+        var newName = newSnap.name;
+        var newAvatar = newSnap.avatar;
+
+        if (oldName !== newName) {
+            // Name needs updating
+            updateName = 1;
+        }
+
+        if (oldAvatar !== newAvatar) {
+            // Avatar needs updating
+            updateAvatar = 1;
+        }
+
+        if (updateName || updateAvatar) {
+            let batch = db.batch();
+            var creatorRef = db.collection('users').doc(userId);
+
+            // update all items the user owns
+            return db.collection('items').where('creator', '==', creatorRef).get()
+                .then(snapshot => {
+                    snapshot.forEach(doc => {
+                        batch.update(doc.ref, {
+                            owner: {
+                                name: newName,
+                                avatar: newAvatar,
+                            }
+                        });
+                    });
+
+                    return null;
+                })
+
+                .then(() => {
+                    return db.collection('messages').where('users', 'array-contains', userId).get();
+                })
+
+                .then(snapshot => {
+                    // update chat rooms the user is in
+                    snapshot.forEach(doc => {
+                        var users = doc.data().users;
+                        if (userId === users[0]) {
+                            batch.update(doc.ref, {
+                                user0: {
+                                    name: newName,
+                                    avatar: newAvatar,
+                                }
+                            });
+                        }
+
+                        if (userId === users[1]) {
+                            batch.update(doc.ref, {
+                                user1: {
+                                    name: newName,
+                                    avatar: newAvatar,
+                                }
+                            });
+                        }
+                    });
+
+                    return null;
+                })
+
+                .then(() => {
+                    var date = admin.firestore.Timestamp.now();
+                    var userRef = db.collection('users').doc(userId);
+                    return db.collection('rentals').where('users', 'array-contains', userRef)
+                        .where('rentalEnd', '>', date).get();
+                })
+
+                .then(snapshot => {
+                    // update the rentals the user is involved in                    
+                    snapshot.forEach(doc => {
+                        var ownerRef = doc.data().owner;
+                        var renterRef = doc.data().renter;
+                        console.log(`Owner ref: ${ownerRef}`);
+                        console.log(`Owner ref id: ${ownerRef.id}`);
+                        console.log(`Doc: ${doc.data()}`);
+
+                        if (userId === ownerRef.id) {
+                            batch.update(doc.ref, {
+                                ownerData: {
+                                    name: newName,
+                                    avatar: newAvatar,
+                                }
+                            });
+                        }
+
+                        if (userId === renterRef.id) {
+                            batch.update(doc.ref, {
+                                renterData: {
+                                    name: newName,
+                                    avatar: newAvatar,
+                                }
+                            });
+                        }
+                    });
+
+                    return null;
+                })
+
+                .then(() => {
+                    return batch.commit();
+                })
+
+                .then(() => {
+                    console.log("Success");
+                    return null;
+                })
+
+                .catch(err => {
+                    console.log(err);
+                });
+        }
+
+        return 'Success';
+    });
+
+// update items and rentals when user edits their name and profile picture
+exports.updateItemConnections = functions.firestore
+    .document('items/{itemId}')
+    .onUpdate((itemSnap, context) => {
+        const itemId = context.params.itemId;
+        const oldSnap = itemSnap.before.data();
+        const newSnap = itemSnap.after.data();
+        var updateName = 0;
+        var updateAvatar = 0;
+
+        if (oldSnap === null || newSnap === null) {
+            return;
+        }
+
+        var oldName = oldSnap.name;
+        var oldAvatar = oldSnap.avatar;
+
+        var newName = newSnap.name;
+        var newAvatar = newSnap.avatar;
+
+        if (oldName !== newName) {
+            // Name needs updating
+            updateName = 1;
+        }
+
+        if (oldAvatar !== newAvatar) {
+            // Avatar needs updating
+            updateAvatar = 1;
+        }
+
+        if (updateName || updateAvatar) {
+            let batch = db.batch();
+            var itemRef = db.collection('items').doc(itemId);
+            var date = admin.firestore.Timestamp.now();
+
+            // update all rentals involving the item (excluding past rentals)
+            return db.collection('rentals').where('item', '==', itemRef)
+                .where('rentalEnd', '>', date).get()
+                .then(snapshot => {
+                    snapshot.forEach(doc => {
+                        batch.update(doc.ref, {
+                            itemName: newName,
+                            itemAvatar: newAvatar,
+                        });
+                    });
+
+                    return null;
+                })
+
+                .then(() => {
+                    return batch.commit();
+                })
+
+                .then(() => {
+                    console.log("Success");
+                    return null;
+                })
+
+                .catch(err => {
+                    console.log(err);
+                });
+        }
+
+        return 'Success';
+    });
+
+exports.updateMessageData = functions.firestore
+    .document('messages/{chatRoomId}/messages/{messageId}')
+    .onCreate((messageSnap, context) => {
+        const chatRoomId = context.params.chatRoomId;
+        const messageId = context.params.messageId;
+        const timestamp = messageSnap.data().timestamp;
+        const content = messageSnap.data().content;
+
+        var messageRef = db.collection('messages').doc(chatRoomId);
+        let batch = db.batch();
+
+        batch.update(messageRef, {
+            lastSent: {
+                content: content,
+                timestamp: timestamp,
+            }
+        });
+
+        return batch.commit();
     });
 
 /*

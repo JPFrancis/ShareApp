@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' show timeDilation;
 import 'package:flutter_svg/flutter_svg.dart';
@@ -81,6 +82,15 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
         } else {
           userId = await widget.auth.createUser(email, password);
           await Future.delayed(Duration(seconds: 2));
+          FirebaseUser createdUser = await widget.auth.getFirebaseUser();
+
+          if (createdUser != null) {
+            UserUpdateInfo userUpdateInfo = UserUpdateInfo();
+            userUpdateInfo.displayName = 'new user';
+            await createdUser.updateProfile(userUpdateInfo);
+            await createdUser.reload();
+          }
+
           widget.onSignIn();
         }
         setState(() {
