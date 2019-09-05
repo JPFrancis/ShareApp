@@ -1,17 +1,12 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter_facebook_login/flutter_facebook_login.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:http/http.dart' as http;
 
 abstract class BaseAuth {
   Future<String> signIn(String email, String password);
 
   Future<String> createUser(String email, String password);
-
-  Future<String> loginFB();
 
   Future<String> logInGoogle();
 
@@ -39,7 +34,6 @@ GoogleSignIn _googleSignIn = GoogleSignIn(
 
 class Auth implements BaseAuth {
   final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
-  var facebookLogin = FacebookLogin();
   bool isFbLoggedIn = false;
   var profileData;
   String fbProfileStr;
@@ -50,55 +44,25 @@ class Auth implements BaseAuth {
   FirebaseUser firebaseUser;
 
   Future<String> signIn(String email, String password) async {
-    FirebaseUser user = await firebaseAuth.signInWithEmailAndPassword(
+    AuthResult user = await firebaseAuth.signInWithEmailAndPassword(
         email: email, password: password);
 
     if (user != null) {
-      firebaseUser = user;
+      firebaseUser = user.user;
     }
 
     return firebaseUser.uid;
   }
 
   Future<String> createUser(String email, String password) async {
-    FirebaseUser user = await firebaseAuth.createUserWithEmailAndPassword(
+    AuthResult user = await firebaseAuth.createUserWithEmailAndPassword(
         email: email, password: password);
 
     if (user != null) {
-      firebaseUser = user;
+      firebaseUser = user.user;
     }
 
     return firebaseUser.uid;
-  }
-
-  Future<String> loginFB() async {
-    var facebookLoginResult =
-        await facebookLogin.logInWithReadPermissions(['email']);
-
-    switch (facebookLoginResult.status) {
-      case FacebookLoginStatus.error:
-        onLoginStatusChanged(false);
-        break;
-      case FacebookLoginStatus.cancelledByUser:
-        onLoginStatusChanged(false);
-        break;
-      case FacebookLoginStatus.loggedIn:
-        var graphResponse = await http.get(
-            'https://graph.facebook.com/v2.12/me?fields=name,first_name,last_name,email,picture.height(200)&access_token=${facebookLoginResult.accessToken.token}');
-
-        var profile = json.decode(graphResponse.body);
-        //print(profile.toString());
-        fbProfileStr = profile.toString();
-
-        onLoginStatusChanged(true, profileData: profile);
-        break;
-    }
-
-    firebaseAuth.signInWithCredential(FacebookAuthProvider.getCredential());
-
-    id = fbProfileStr;
-    return fbProfileStr;
-    //return user.uid;
   }
 
   Future<String> logInGoogle() async {
@@ -111,11 +75,11 @@ class Auth implements BaseAuth {
       idToken: googleAuth.idToken,
     );
 
-    final FirebaseUser user =
+    AuthResult user =
         await FirebaseAuth.instance.signInWithCredential(credential);
 
     if (user != null) {
-      firebaseUser = user;
+      firebaseUser = user.user;
     }
 
     return firebaseUser.uid;
@@ -127,11 +91,7 @@ class Auth implements BaseAuth {
   }
 
   Future<void> signOut() async {
-    if (isFbLoggedIn)
-      return facebookLogin.logOut();
-    else {
-      return firebaseAuth.signOut();
-    }
+    return firebaseAuth.signOut();
   }
 
   Future<FirebaseUser> getFirebaseUser() async {

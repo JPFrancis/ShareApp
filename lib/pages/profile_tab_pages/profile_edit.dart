@@ -8,9 +8,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:shareapp/extras/helpers.dart';
@@ -41,15 +39,10 @@ class ProfileEditState extends State<ProfileEdit> {
   final GlobalKey<FormState> formKey = new GlobalKey<FormState>();
   final UsNumberTextInputFormatter phoneNumberFormatter =
       UsNumberTextInputFormatter();
-  final UpperCaseTextFormatter stateFormatter = UpperCaseTextFormatter();
 
   TextEditingController nameController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
   TextEditingController phoneNumController = TextEditingController();
-  TextEditingController streetAddressController = TextEditingController();
-  TextEditingController cityAddressController = TextEditingController();
-  TextEditingController stateAddressController = TextEditingController();
-  TextEditingController zipAddressController = TextEditingController();
 
   DateTime selectedDate = DateTime.now();
 
@@ -66,6 +59,10 @@ class ProfileEditState extends State<ProfileEdit> {
   TextStyle inputTextStyle;
   ThemeData theme;
 
+  double statusBarHeight;
+  double pageHeight;
+  double pageWidth;
+
   User userCopy;
 
   @override
@@ -79,23 +76,18 @@ class ProfileEditState extends State<ProfileEdit> {
     descriptionController.text = userCopy.description;
     phoneNumController.text = userCopy.phoneNum ?? '';
 
-    if (userCopy.address != null) {
-      Map address = userCopy.address;
-      streetAddressController.text = address['street'];
-      cityAddressController.text = address['city'];
-      stateAddressController.text = address['state'];
-      zipAddressController.text = address['zip'];
-    } else {
+    if (userCopy.address == null) {
       userCopy.address = {};
     }
   }
 
   @override
   void dispose() {
+    super.dispose();
+
     nameController.dispose();
     descriptionController.dispose();
     phoneNumController.dispose();
-    super.dispose();
   }
 
   void getUserID() async {
@@ -115,6 +107,9 @@ class ProfileEditState extends State<ProfileEdit> {
   Widget build(BuildContext context) {
     textStyle = TextStyle(fontSize: 20, fontFamily: 'Quicksand');
     inputTextStyle = Theme.of(context).textTheme.subtitle;
+    statusBarHeight = MediaQuery.of(context).padding.top;
+    pageHeight = MediaQuery.of(context).size.height - statusBarHeight;
+    pageWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
       body: Stack(
@@ -224,71 +219,39 @@ class ProfileEditState extends State<ProfileEdit> {
     String phoneNum = userCopy.phoneNum ?? 'Tap to enter';
 
     return InkWell(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            Text("Phone",
-                style:
-                    TextStyle(fontFamily: font, fontWeight: FontWeight.w500)),
-            Text(
-              '$phoneNum',
-              style: TextStyle(fontFamily: font),
-            )
-          ],
-        ),
-        onTap: () => showPhoneNumEditor(context));
-  }
-
-  showPhoneNumEditor(BuildContext context) async {
-    return showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: Text('Enter Phone Number'),
-            content: TextField(
-              autofocus: true,
-              controller: phoneNumController,
-              maxLength: 14,
-              inputFormatters: <TextInputFormatter>[
-                WhitelistingTextInputFormatter.digitsOnly,
-                phoneNumberFormatter,
-              ],
-              keyboardType: TextInputType.numberWithOptions(
-                signed: false,
-                decimal: false,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          Text("Phone",
+              style: TextStyle(fontFamily: font, fontWeight: FontWeight.w500)),
+          Text(
+            '$phoneNum',
+            style: TextStyle(fontFamily: font),
+          )
+        ],
+      ),
+      onTap: () async {
+        String value = await showDialog(
+          barrierDismissible: true,
+          context: context,
+          builder: (BuildContext context) {
+            return Container(
+              child: PhoneNumberDialog(
+                pageHeight: pageHeight,
+                pageWidth: pageWidth,
+                phoneNumber: userCopy.phoneNum,
               ),
-              onSubmitted: (text) {
-                if (phoneNumController.text.length == 14) {
-                  setState(() {
-                    userCopy.phoneNum = text;
-                  });
+            );
+          },
+        );
 
-                  Navigator.of(context).pop();
-                }
-              },
-            ),
-            actions: <Widget>[
-              FlatButton(
-                child: new Text('CANCEL'),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-              FlatButton(
-                child: new Text('SAVE'),
-                onPressed: () {
-                  if (phoneNumController.text.length == 14) {
-                    setState(() {
-                      userCopy.phoneNum = phoneNumController.text;
-                    });
-
-                    Navigator.of(context).pop();
-                  }
-                },
-              ),
-            ],
-          );
-        });
+        if (value != null && value is String && value.isNotEmpty) {
+          setState(() {
+            userCopy.phoneNum = value;
+          });
+        }
+      },
+    );
   }
 
   Widget addressEntry() {
@@ -305,124 +268,42 @@ class ProfileEditState extends State<ProfileEdit> {
     }
 
     return InkWell(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            Text("Address",
-                style:
-                    TextStyle(fontFamily: font, fontWeight: FontWeight.w500)),
-            Text(
-              address,
-              textAlign: TextAlign.right,
-              style: TextStyle(
-                fontFamily: font,
-              ),
-            )
-          ],
-        ),
-        onTap: () => showAddressEditor(context));
-  }
-
-  showAddressEditor(BuildContext context) async {
-    return showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: Text('Enter Address'),
-            content: Container(
-              height: 170,
-              child: Column(
-                children: <Widget>[
-                  TextField(
-                    autofocus: true,
-                    decoration: InputDecoration(
-                      hintText: 'Street',
-                    ),
-                    controller: streetAddressController,
-                  ),
-                  TextField(
-                    autofocus: true,
-                    decoration: InputDecoration(
-                      hintText: 'City',
-                    ),
-                    controller: cityAddressController,
-                  ),
-                  Row(
-                    children: <Widget>[
-                      Flexible(
-                        flex: 1,
-                        child: TextField(
-                          autofocus: true,
-                          decoration: InputDecoration(
-                            hintText: 'State',
-                          ),
-                          controller: stateAddressController,
-                          maxLength: 2,
-                          inputFormatters: <TextInputFormatter>[
-                            stateFormatter,
-                          ],
-                        ),
-                      ),
-                      Container(
-                        width: 20,
-                      ),
-                      Flexible(
-                        flex: 2,
-                        child: TextField(
-                          autofocus: true,
-                          decoration: InputDecoration(
-                            hintText: 'Zip',
-                          ),
-                          controller: zipAddressController,
-                          maxLength: 5,
-                          keyboardType: TextInputType.numberWithOptions(
-                            signed: false,
-                            decimal: false,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          Text("Address",
+              style: TextStyle(fontFamily: font, fontWeight: FontWeight.w500)),
+          Text(
+            address,
+            textAlign: TextAlign.right,
+            style: TextStyle(
+              fontFamily: font,
             ),
-            actions: <Widget>[
-              FlatButton(
-                child: new Text('CANCEL'),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
+          )
+        ],
+      ),
+      onTap: () async {
+        Map value = await showDialog(
+          barrierDismissible: true,
+          context: context,
+          builder: (BuildContext context) {
+            return Container(
+              child: AddressDialog(
+                pageHeight: pageHeight,
+                pageWidth: pageWidth,
+                address: userCopy.address,
               ),
-              FlatButton(
-                child: new Text('SAVE'),
-                onPressed: () {
-                  if (streetAddressController.text.isEmpty) {
-                    Fluttertoast.showToast(msg: 'Street name can\'t be empty');
-                  } else if (cityAddressController.text.isEmpty) {
-                    Fluttertoast.showToast(msg: 'City can\'t be empty');
-                  } else if (stateAddressController.text.length != 2) {
-                    Fluttertoast.showToast(msg: 'Please enter valid state');
-                  } else if (zipAddressController.text.length != 5) {
-                    Fluttertoast.showToast(msg: 'Please enter valid zip code');
-                  } else {
-                    setState(() {
-                      userCopy.address['street'] =
-                          streetAddressController.text.trim();
-                      userCopy.address['city'] =
-                          cityAddressController.text.trim();
-                      userCopy.address['state'] =
-                          stateAddressController.text.trim();
-                      userCopy.address['zip'] =
-                          zipAddressController.text.trim();
-                    });
+            );
+          },
+        );
 
-                    Navigator.of(context).pop();
-                  }
-                },
-              ),
-            ],
-          );
-        });
+        if (value != null && value is Map && value.isNotEmpty) {
+          setState(() {
+            userCopy.address = value;
+          });
+        }
+      },
+    );
   }
 
   Widget birthDatePicker() {
@@ -447,23 +328,27 @@ class ProfileEditState extends State<ProfileEdit> {
           ),
         ],
       ),
-      onTap: showBirthDatePicker,
-    );
-  }
+      onTap: () async {
+        var value = await showDialog(
+          barrierDismissible: true,
+          context: context,
+          builder: (BuildContext context) {
+            return Container(
+              child: BirthdayDialog(
+                pageHeight: pageHeight,
+                pageWidth: pageWidth,
+                birthday: userCopy.birthday,
+              ),
+            );
+          },
+        );
 
-  void showBirthDatePicker() {
-    DatePicker.showDatePicker(
-      context,
-      showTitleActions: true,
-      minTime: DateTime(1900, 1, 1),
-      maxTime: DateTime.now(),
-      onConfirm: (date) {
-        setState(() {
-          userCopy.birthday = date;
-        });
+        if (value != null && value is DateTime) {
+          setState(() {
+            userCopy.birthday = value;
+          });
+        }
       },
-      currentTime: userCopy.birthday ?? DateTime.now(),
-      locale: LocaleType.en,
     );
   }
 
@@ -489,12 +374,12 @@ class ProfileEditState extends State<ProfileEdit> {
             ]
                 .map(
                   (gender) => DropdownMenuItem<String>(
-                        value: gender,
-                        child: Text(
-                          gender,
-                          style: TextStyle(fontFamily: font),
-                        ),
-                      ),
+                    value: gender,
+                    child: Text(
+                      gender,
+                      style: TextStyle(fontFamily: font),
+                    ),
+                  ),
                 )
                 .toList()),
       ),

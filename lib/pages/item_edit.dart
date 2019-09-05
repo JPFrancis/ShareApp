@@ -331,35 +331,6 @@ class ItemEditState extends State<ItemEdit> {
   }
 
   getAllImages(BuildContext context) {
-    _showAlertDialog(BuildContext context) {
-      // set up the buttons
-      Widget cameraButton = FlatButton(
-        child: Icon(Icons.camera),
-        onPressed: () {},
-      );
-      Widget galleryButton = FlatButton(
-        child: Icon(Icons.image),
-        onPressed: () {
-          loadAssets();
-          Navigator.pop(context);
-        },
-      );
-
-      CupertinoAlertDialog alert = CupertinoAlertDialog(
-        actions: [
-          cameraButton,
-          galleryButton,
-        ],
-      );
-      // show the dialog
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return alert;
-        },
-      );
-    }
-
     List<Widget> databaseImages = itemCopy.images
         .map((image) => Container(
             decoration: BoxDecoration(border: Border.all()),
@@ -385,7 +356,9 @@ class ItemEditState extends State<ItemEdit> {
     List<Widget> allImages = []..addAll(databaseImages)..addAll(assetImages);
     allImages.add(
       InkWell(
-        onTap: () => _showAlertDialog(context),
+        onTap: () {
+          loadAssets();
+        },
         child: totalImagesCount < 8
             ? Container(
                 decoration: BoxDecoration(border: Border.all()),
@@ -804,7 +777,7 @@ class ItemEditState extends State<ItemEdit> {
     try {
       resultList = await MultiImagePicker.pickImages(
         maxImages: 8 - totalImagesCount,
-        enableCamera: false,
+        enableCamera: true,
       );
     } on PlatformException catch (e) {}
 

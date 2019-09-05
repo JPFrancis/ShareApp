@@ -296,7 +296,6 @@ class NewPickupState extends State<NewPickup> {
             height: 10,
           ),
           showNoteEdit(),
-          showTimeInfo(), // testing purposes only
         ],
       ),
     );

@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
-
+import 'package:shareapp/services/functions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_picker/flutter_picker.dart';
@@ -685,8 +686,8 @@ class RentalCalendarState extends State<RentalCalendar>
                               context,
                               MaterialPageRoute(
                                 builder: (BuildContext context) => ProfileEdit(
-                                      userEdit: userEdit,
-                                    ),
+                                  userEdit: userEdit,
+                                ),
                                 fullscreenDialog: true,
                               ));
                         },
@@ -840,18 +841,17 @@ class RentalCalendarState extends State<RentalCalendar>
 
     String rentalID;
     String groupChatId;
-    List<String> combinedID;
+    List combinedId;
 
     DocumentReference itemCreatorDR = itemDS['creator'];
     DocumentSnapshot itemOwnerDS = await itemCreatorDR.get();
 
     if (itemOwnerDS != null && itemOwnerDS.exists) {
-      if (myUserID.hashCode <= itemOwnerDS.documentID.hashCode) {
-        groupChatId = '$myUserID-${itemOwnerDS.documentID}';
-        combinedID = [myUserID, itemOwnerDS.documentID];
-      } else {
-        groupChatId = '${itemOwnerDS.documentID}-$myUserID';
-        combinedID = [itemOwnerDS.documentID, myUserID];
+      Map data = getChatRoomData(myUserID, itemOwnerDS.documentID);
+
+      if (data != null) {
+        groupChatId = data['combinedId'];
+        combinedId = data['users'];
       }
     }
 
@@ -908,16 +908,25 @@ class RentalCalendarState extends State<RentalCalendar>
 
       if (ds != null) {
         if (!ds.exists) {
-          var documentReference =
-              Firestore.instance.collection('messages').document(groupChatId);
+          Map map = setChatUserData({
+            'id': myUserID,
+            'name': currentUser.displayName,
+            'avatar': currentUser.photoUrl,
+          }, {
+            'id': itemOwnerDS.documentID,
+            'name': itemOwnerDS['name'],
+            'avatar': itemOwnerDS['avatar'],
+          });
 
-          Firestore.instance.runTransaction((transaction) async {
-            await transaction.set(
-              documentReference,
-              {
-                'users': combinedID,
-              },
-            );
+          HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
+            functionName: 'createChatRoom',
+          );
+
+          var resp = await callable.call(<String, dynamic>{
+            'users': combinedId,
+            'combinedId': groupChatId,
+            'user0': map['user0'],
+            'user1': map['user1'],
           });
         }
 

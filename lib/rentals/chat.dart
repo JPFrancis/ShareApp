@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
@@ -13,6 +14,7 @@ import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/const.dart';
+import 'package:shareapp/services/functions.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Chat extends StatefulWidget {
@@ -28,11 +30,11 @@ class Chat extends StatefulWidget {
 }
 
 class ChatState extends State<Chat> {
-  DocumentSnapshot chatDS;
+  Map chatData;
   FirebaseUser currentUser;
   SharedPreferences prefs;
   Map otherUser;
-  List<String> combinedID;
+  List combinedId;
 
   File imageFile;
   bool isLoading = true;
@@ -89,18 +91,16 @@ class ChatState extends State<Chat> {
     if (user != null) {
       myUserID = user.uid;
       currentUser = user;
+      idIsFirst = checkIdIsFirst(myUserID, otherUserID);
 
-      if (myUserID.hashCode <= otherUserID.hashCode) {
-        groupChatId = '$myUserID-$otherUserID';
-        combinedID = [myUserID, otherUserID];
-        idIsFirst = true;
-      } else {
-        groupChatId = '$otherUserID-$myUserID';
-        combinedID = [otherUserID, myUserID];
-        idIsFirst = false;
+      Map data = getChatRoomData(myUserID, otherUserID);
+
+      if (data != null) {
+        groupChatId = data['combinedId'];
+        combinedId = data['users'];
+
+        getSnapshots();
       }
-
-      getSnapshots();
     }
   }
 
@@ -109,74 +109,49 @@ class ChatState extends State<Chat> {
         .collection('messages')
         .document(groupChatId)
         .get();
-    bool canProceed = false;
 
-    if (ds != null) {
-      if (!ds.exists) {
-        var documentReference =
-            Firestore.instance.collection('messages').document(groupChatId);
+    DocumentSnapshot otherUserDS = await Firestore.instance
+        .collection('users')
+        .document(otherUserID)
+        .get();
 
-        DocumentSnapshot otherUserDS = await Firestore.instance
-            .collection('users')
-            .document(otherUserID)
-            .get();
-        Map<String, dynamic> data = {'users': combinedID};
+    if (!ds.exists) {
+      Map map = setChatUserData({
+        'id': myUserID,
+        'name': currentUser.displayName,
+        'avatar': currentUser.photoUrl,
+      }, {
+        'id': otherUserID,
+        'name': otherUserDS['name'],
+        'avatar': otherUserDS['avatar'],
+      });
 
-        if (idIsFirst) {
-          data.addAll({
-            'user0': {
-              'name': currentUser.displayName,
-              'avatar': currentUser.photoUrl,
-            },
-            'user1': {
-              'name': otherUserDS['name'],
-              'avatar': otherUserDS['avatar'],
-            },
-          });
-        } else {
-          data.addAll({
-            'user0': {
-              'name': otherUserDS['name'],
-              'avatar': otherUserDS['avatar'],
-            },
-            'user1': {
-              'name': currentUser.displayName,
-              'avatar': currentUser.photoUrl,
-            },
-          });
-        }
+      HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
+        functionName: 'createChatRoom',
+      );
 
-        await Firestore.instance
-            .collection('messages')
-            .document(groupChatId)
-            .setData(data);
+      var resp = await callable.call(<String, dynamic>{
+        'users': combinedId,
+        'combinedId': groupChatId,
+        'user0': map['user0'],
+        'user1': map['user1'],
+      });
 
-//        Firestore.instance.runTransaction((transaction) async {
-//          await transaction.set(documentReference, data);
-//        });
-
-        chatDS = await Firestore.instance
-            .collection('messages')
-            .document(groupChatId)
-            .get();
-
-        canProceed = true;
-      } else {
-        chatDS = ds;
-        canProceed = true;
-      }
-
-      if (canProceed) {
-        if (idIsFirst) {
-          otherUser = chatDS['user1'];
-        } else {
-          otherUser = chatDS['user0'];
-        }
+      if (resp != null) {
+        chatData = resp.data;
 
         setState(() {
+          otherUser = otherUserDS.data;
           isLoading = false;
         });
       }
+    } else {
+      chatData = ds.data;
+
+      setState(() {
+        otherUser = otherUserDS.data;
+        isLoading = false;
+      });
     }
   }
 
@@ -294,32 +269,32 @@ class ChatState extends State<Chat> {
                       child: Material(
                         child: CachedNetworkImage(
                           placeholder: (context, url) => Container(
-                                child: CircularProgressIndicator(
-                                  valueColor:
-                                      AlwaysStoppedAnimation<Color>(red),
-                                ),
-                                width: 200.0,
-                                height: 200.0,
-                                padding: EdgeInsets.all(70.0),
-                                decoration: BoxDecoration(
-                                  color: greyColor2,
-                                  borderRadius: BorderRadius.all(
-                                    Radius.circular(8.0),
-                                  ),
-                                ),
+                            child: CircularProgressIndicator(
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(primaryColor),
+                            ),
+                            width: 200.0,
+                            height: 200.0,
+                            padding: EdgeInsets.all(70.0),
+                            decoration: BoxDecoration(
+                              color: greyColor2,
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(8.0),
                               ),
+                            ),
+                          ),
                           errorWidget: (context, url, error) => Material(
-                                child: Image.asset(
-                                  'images/img_not_available.jpeg',
-                                  width: 200.0,
-                                  height: 200.0,
-                                  fit: BoxFit.cover,
-                                ),
-                                borderRadius: BorderRadius.all(
-                                  Radius.circular(8.0),
-                                ),
-                                clipBehavior: Clip.hardEdge,
-                              ),
+                            child: Image.asset(
+                              'images/img_not_available.jpeg',
+                              width: 200.0,
+                              height: 200.0,
+                              fit: BoxFit.cover,
+                            ),
+                            borderRadius: BorderRadius.all(
+                              Radius.circular(8.0),
+                            ),
+                            clipBehavior: Clip.hardEdge,
+                          ),
                           imageUrl: ds['content'],
                           width: 200.0,
                           height: 200.0,
@@ -358,15 +333,14 @@ class ChatState extends State<Chat> {
                     ? Material(
                         child: CachedNetworkImage(
                           placeholder: (context, url) => Container(
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 1.0,
-                                  valueColor:
-                                      AlwaysStoppedAnimation<Color>(red),
-                                ),
-                                width: 35.0,
-                                height: 35.0,
-                                padding: EdgeInsets.all(10.0),
-                              ),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 1.0,
+                              valueColor: AlwaysStoppedAnimation<Color>(red),
+                            ),
+                            width: 35.0,
+                            height: 35.0,
+                            padding: EdgeInsets.all(10.0),
+                          ),
                           imageUrl: otherUser['avatar'],
                           width: 35.0,
                           height: 35.0,
@@ -410,32 +384,32 @@ class ChatState extends State<Chat> {
                             child: Material(
                               child: CachedNetworkImage(
                                 placeholder: (context, url) => Container(
-                                      child: CircularProgressIndicator(
-                                        valueColor:
-                                            AlwaysStoppedAnimation<Color>(red),
-                                      ),
-                                      width: 200.0,
-                                      height: 200.0,
-                                      padding: EdgeInsets.all(70.0),
-                                      decoration: BoxDecoration(
-                                        color: greyColor2,
-                                        borderRadius: BorderRadius.all(
-                                          Radius.circular(8.0),
-                                        ),
-                                      ),
+                                  child: CircularProgressIndicator(
+                                    valueColor:
+                                        AlwaysStoppedAnimation<Color>(red),
+                                  ),
+                                  width: 200.0,
+                                  height: 200.0,
+                                  padding: EdgeInsets.all(70.0),
+                                  decoration: BoxDecoration(
+                                    color: greyColor2,
+                                    borderRadius: BorderRadius.all(
+                                      Radius.circular(8.0),
                                     ),
+                                  ),
+                                ),
                                 errorWidget: (context, url, error) => Material(
-                                      child: Image.asset(
-                                        'images/img_not_available.jpeg',
-                                        width: 200.0,
-                                        height: 200.0,
-                                        fit: BoxFit.cover,
-                                      ),
-                                      borderRadius: BorderRadius.all(
-                                        Radius.circular(8.0),
-                                      ),
-                                      clipBehavior: Clip.hardEdge,
-                                    ),
+                                  child: Image.asset(
+                                    'images/img_not_available.jpeg',
+                                    width: 200.0,
+                                    height: 200.0,
+                                    fit: BoxFit.cover,
+                                  ),
+                                  borderRadius: BorderRadius.all(
+                                    Radius.circular(8.0),
+                                  ),
+                                  clipBehavior: Clip.hardEdge,
+                                ),
                                 imageUrl: ds['content'],
                                 width: 200.0,
                                 height: 200.0,
@@ -505,10 +479,8 @@ class ChatState extends State<Chat> {
     }
   }
 
-  Future<bool> onBackPress() {
+  void onBackPress() {
     Navigator.pop(context);
-
-    return Future.value(false);
   }
 
   @override
@@ -560,7 +532,9 @@ class ChatState extends State<Chat> {
                         buildLoading()
                       ],
                     ),
-              onWillPop: onBackPress,
+              onWillPop: () {
+                onBackPress();
+              },
             )
           : Container(),
     );
@@ -741,7 +715,7 @@ class ChatState extends State<Chat> {
   Widget buildListMessage() {
     return Expanded(
       flex: 5,
-      child: chatDS.documentID == ''
+      child: groupChatId == ''
           ? Center(
               child: CircularProgressIndicator(
                   valueColor: AlwaysStoppedAnimation<Color>(red)))

@@ -45,13 +45,19 @@ exports.createUser = functions.auth.user().onCreate(event => {
         address: null,
         verified: false,
         acceptedTOS: false,
-        totalRating: 0,
-        numRatings: 0,
+        renterRating: {
+            total: 0,
+            count: 0,
+        },
+        ownerRating: {
+            total: 0,
+            count: 0,
+        },
     }).then(function () {
         console.log('Created user: ', userID);
         return `Created user ${userID}`;
     }).catch(error => {
-        console.error('Error when creating user! ', error);
+        console.error('Error when creating user!', error);
     });
 });
 
@@ -372,6 +378,7 @@ exports.createCharge = functions.firestore.document('charges/{chargeId}')
             const ownerPayout = transferDataMap['ownerPayout'];
             const idempotentKey = context.params.chargeId;
 
+            /*
             stripe.tokens.create({
                 customer: "cus_YGGG4Kcl9D5BJ3",
             }, {
@@ -379,6 +386,7 @@ exports.createCharge = functions.firestore.document('charges/{chargeId}')
                 }).then(function (token) {
                     // asynchronously called
                 });
+            */
 
             const response = await stripe.charges.create({
                 amount: amount,
@@ -620,25 +628,38 @@ exports.updateMessageData = functions.firestore
         return batch.commit();
     });
 
-/*
-exports.addItem = functions.https.onCall((data, context) => {
-    const itemsCollection = firestore.collection('items');
-    const snapshot = await itemsCollection.add({
-        id: data['id'],
-        status: data['status'],
-        creator: data['creator'],
-        name: data['name'],
-        description: data['description'],
-        type: data['type'],
-        condition: data['condition'],
-        price: data['price'],
-        numImages: data['numImages'],
-        location: data['location'],
-        rental: data['rental'],
-    });
+exports.createChatRoom = functions.https.onCall(async (data, context) => {
+    var users = data.users;
+    var user0 = data.user0;
+    var user0Name = user0.name;
+    var user0Avatar = user0.avatar;
+    var user1 = data.user1;
+    var user1Name = user1.name;
+    var user1Avatar = user1.avatar;
+    var combinedId = data.combinedId;
 
-    itemsCollection.doc(snapshot.documentID).update({
-        id: customer.id
-    });
+    if (users === null || user0Name === null || user0Avatar === null ||
+        user1Name === null || user1Avatar === null || combinedId === null) {
+        return 'Invalid input';
+    } else {
+        var docRef = db.collection('messages').doc(combinedId);
+
+        let resp = await docRef.set({
+            users: users,
+            user0: {
+                name: user0Name,
+                avatar: user0Avatar
+            },
+            user1: {
+                name: user1Name,
+                avatar: user1Avatar
+            },
+        });
+
+        if (resp === null) {
+            return 'Error creating chat room';
+        } else {
+            return await docRef.get();
+        }
+    }
 });
-*/

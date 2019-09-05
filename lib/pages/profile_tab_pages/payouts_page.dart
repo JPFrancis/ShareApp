@@ -104,17 +104,17 @@ class PayoutsPageState extends State<PayoutsPage> {
     double w = MediaQuery.of(context).size.width;
 
     return InkWell(
-      onTap: () {
+      onTap: () async {
         if (!stripeInit) {
-          Firestore.instance
+          var snap = await Firestore.instance
               .collection('keys')
               .document('stripe_pk')
-              .get()
-              .then((DocumentSnapshot ds) {
-            StripeSource.setPublishableKey(ds['key']);
-          });
+              .get();
 
-          stripeInit = true;
+          if (snap != null && snap.exists) {
+            StripeSource.setPublishableKey(snap['key']);
+            stripeInit = true;
+          }
         }
 
         StripeSource.addSource().then((token) {
@@ -635,6 +635,7 @@ class PayoutsPageState extends State<PayoutsPage> {
     setState(() {
       isLoading = true;
     });
+
     final HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
       functionName: 'setDefaultSource',
     );

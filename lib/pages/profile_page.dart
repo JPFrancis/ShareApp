@@ -93,10 +93,17 @@ class ProfilePageState extends State<ProfilePage> {
   }
 
   Widget showUserRating() {
-    double rating = 0;
+    double renterRating = 0;
+    double ownerRating = 0;
+    Map renterRatingMap = userDS['renterRating'];
+    Map ownerRatingMap = userDS['ownerRating'];
 
-    if (userDS['numRatings'] > 0) {
-      rating = userDS['totalRating'] / userDS['numRatings'];
+    if (renterRatingMap['count'] > 0) {
+      renterRating = renterRatingMap['total'] / renterRatingMap['count'];
+    }
+
+    if (ownerRatingMap['count'] > 0) {
+      ownerRating = ownerRatingMap['total'] / ownerRatingMap['count'];
     }
 
     return Container(
@@ -104,9 +111,13 @@ class ProfilePageState extends State<ProfilePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text('User rating'),
+          Text('Renter rating'),
           StarRating(
-            rating: rating,
+            rating: renterRating,
+          ),
+          Text('Owner rating'),
+          StarRating(
+            rating: ownerRating,
           ),
         ],
       ),
@@ -114,8 +125,12 @@ class ProfilePageState extends State<ProfilePage> {
   }
 
   Widget showUserDescription() {
-    bool empty = userDS['description'].toString().isEmpty ? true : false;
-    String desc = userDS['description'].toString().isEmpty
+    bool empty = userDS['description']
+        .toString()
+        .isEmpty ? true : false;
+    String desc = userDS['description']
+        .toString()
+        .isEmpty
         ? "The user hasn't added a description yet!"
         : userDS['description'];
     return Column(
@@ -124,7 +139,10 @@ class ProfilePageState extends State<ProfilePage> {
         SizedBox(height: 10.0),
         Text("$desc",
             style: TextStyle(
-                fontSize: MediaQuery.of(context).size.width / 25,
+                fontSize: MediaQuery
+                    .of(context)
+                    .size
+                    .width / 25,
                 fontFamily: appFont,
                 color: empty ? Colors.grey : Colors.black54)),
         SizedBox(height: 10.0),
@@ -136,8 +154,14 @@ class ProfilePageState extends State<ProfilePage> {
   }
 
   Widget showNameAndProfilePic() {
-    double h = MediaQuery.of(context).size.height;
-    double w = MediaQuery.of(context).size.width;
+    double h = MediaQuery
+        .of(context)
+        .size
+        .height;
+    double w = MediaQuery
+        .of(context)
+        .size
+        .width;
 
     return Container(
         decoration: new BoxDecoration(
@@ -163,8 +187,14 @@ class ProfilePageState extends State<ProfilePage> {
   }
 
   Widget showItems() {
-    double h = MediaQuery.of(context).size.height;
-    double w = MediaQuery.of(context).size.width;
+    double h = MediaQuery
+        .of(context)
+        .size
+        .height;
+    double w = MediaQuery
+        .of(context)
+        .size
+        .width;
 
     return Container(
       height: h / 3.2,
@@ -172,9 +202,9 @@ class ProfilePageState extends State<ProfilePage> {
         stream: Firestore.instance
             .collection('items')
             .where('creator',
-                isEqualTo: Firestore.instance
-                    .collection('users')
-                    .document(userDS.documentID))
+            isEqualTo: Firestore.instance
+                .collection('users')
+                .document(userDS.documentID))
             .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {

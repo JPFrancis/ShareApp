@@ -2,7 +2,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:shareapp/login/login_page.dart';
+import 'package:shareapp/main.dart';
 import 'package:shareapp/pages/home_page.dart';
+import 'package:shareapp/rentals/chat.dart';
+import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/auth.dart';
 
 class RootPage extends StatefulWidget {
@@ -27,10 +30,13 @@ class RootPageState extends State<RootPage> {
 
   initState() {
     super.initState();
+
+    configureFCM();
+
     widget.auth.getUserID().then((userId) {
       setState(() {
         authStatus =
-            userId != null ? AuthStatus.signedIn : AuthStatus.notSignedIn;
+        userId != null ? AuthStatus.signedIn : AuthStatus.notSignedIn;
       });
     });
   }
@@ -39,6 +45,54 @@ class RootPageState extends State<RootPage> {
     setState(() {
       authStatus = status;
     });
+  }
+
+  void configureFCM() async {
+    firebaseMessaging.configure(
+
+      /// called if app is closed but running in background
+      onResume: (Map<String, dynamic> message) async {
+        handleNotifications(message);
+      },
+
+      /// called if app is fully closed
+      onLaunch: (Map<String, dynamic> message) async {
+        handleNotifications(message);
+      },
+
+      /// called when app is running in foreground
+      onMessage: (Map<String, dynamic> message) async {},
+    );
+  }
+
+  void handleNotifications(Map<String, dynamic> message) async {
+    var data = message['data'];
+    var rentalID = data['rentalID'];
+    String otherUserID = data['idFrom'];
+
+    switch (data['type']) {
+      case 'rental':
+        Navigator.of(context).popUntil(ModalRoute.withName('/'));
+        Navigator.of(context).pushNamed(
+          RentalDetail.routeName,
+          arguments: RentalDetailArgs(
+            rentalID,
+          ),
+        );
+
+        break;
+
+      case 'chat':
+//        Navigator.of(context).popUntil(ModalRoute.withName('/'));
+        Navigator.of(context).pushNamed(
+          Chat.routeName,
+          arguments: ChatArgs(
+            otherUserID,
+          ),
+        );
+
+        break;
+    }
   }
 
   @override
