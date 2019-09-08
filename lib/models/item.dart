@@ -23,7 +23,6 @@ false = inactive
  */
 
 class Item {
-  String id; // doc id for firestore
   bool isVisible;
   DocumentReference creator; // user ID of user who created the item
   String name;
@@ -39,7 +38,6 @@ class Item {
   Map<dynamic, dynamic> location;
 
   Item({
-    this.id,
     this.isVisible,
     this.creator,
     this.name,
@@ -56,7 +54,6 @@ class Item {
 
   Item.fromMap(Map<String, dynamic> data)
       : this(
-          id: data['id'],
           isVisible: data['status'],
           creator: data['creator'],
           name: data['name'],
@@ -73,7 +70,6 @@ class Item {
 
   Item.copy(Item other)
       : this(
-          id: other.id,
           isVisible: other.isVisible,
           creator: other.creator,
           name: other.name,
@@ -98,8 +94,7 @@ class Item {
   }
 
   Item fromItem(Item other) {
-    return new Item(
-      id: other.id,
+    return Item(
       isVisible: other.isVisible,
       creator: other.creator,
       name: other.name,

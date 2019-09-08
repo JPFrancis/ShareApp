@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'dart:typed_data';
-
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
@@ -29,8 +30,9 @@ enum DismissDialogAction {
 class ItemEdit extends StatefulWidget {
   static const routeName = '/itemEdit';
   final Item item;
+  final String itemId;
 
-  ItemEdit({Key key, this.item}) : super(key: key);
+  ItemEdit({Key key, this.item, this.itemId}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
@@ -42,6 +44,7 @@ class ItemEdit extends StatefulWidget {
 class ItemEditState extends State<ItemEdit> {
   final GlobalKey<FormState> formKey = new GlobalKey<FormState>();
   FirebaseUser currentUser;
+  String itemId;
 
   String appBarText = "Edit"; // Either 'Edit' or 'Add'. Prepended to " Item"
   String addButton = "Edit"; // 'Edit' if edit, 'Add' if adding
@@ -52,7 +55,7 @@ class ItemEditState extends State<ItemEdit> {
   String imageFileName;
   int totalImagesCount;
   bool imageButton = false;
-  bool isEdit = true; // true if on editing mode, false if on adding mode
+  bool isEdit; // true if on editing mode, false if on adding mode
   bool isLoading = false;
 
   GoogleMapController googleMapController;
@@ -76,6 +79,8 @@ class ItemEditState extends State<ItemEdit> {
     super.initState();
 
     isLoading = true;
+    itemId = widget.itemId;
+    isEdit = itemId != null ? true : false;
     itemCopy = Item.copy(widget.item);
 
     nameController.text = itemCopy.name;
@@ -83,8 +88,7 @@ class ItemEditState extends State<ItemEdit> {
     priceController.text = itemCopy.price.toString();
 
     /// new item
-    if (itemCopy.id == null) {
-      isEdit = false;
+    if (!isEdit) {
       appBarText = "Add";
       addButton = "Add";
       updateButton = "Add";
@@ -658,64 +662,40 @@ class ItemEditState extends State<ItemEdit> {
         geo.point(latitude: gp.latitude, longitude: gp.longitude);
 
     // new item
-    if (itemCopy.id == null) {
-      final DocumentReference documentReference =
-          await Firestore.instance.collection("items").add({
-        'created': DateTime.now(),
-        'id': null,
-        'status': itemCopy.isVisible,
-        'creator': itemCopy.creator,
-        'name': itemCopy.name,
-        'description': itemCopy.description,
-        'type': itemCopy.type,
-        'condition': itemCopy.condition,
-        'rating': 0,
-        'numRatings': 0,
-        'price': itemCopy.price,
-        'numImages': totalImagesCount,
-        'location': myLocation.data,
-        'searchKey': searchKeyList,
-        'isVisible': true,
-        'owner': {
-          'name': currentUser.displayName,
-          'avatar': currentUser.photoUrl,
-        },
-      });
-/*
-      CloudFunctions.instance.getHttpsCallable(
-        functionName: 'addItem',
-        parameters: {
-          'id': null,
-          'status': itemCopy.status,
-          'creator': itemCopy.creator,
-          'name': itemCopy.name,
-          'description': itemCopy.description,
-          'type': itemCopy.type,
-          'condition': itemCopy.condition,
-          'price': itemCopy.price,
-          'numImages': itemCopy.numImages,
-          'location': itemCopy.location,
-          'rental': itemCopy.rental,
-        },
-      );
-*/
-      // update the newly added item with the updated doc id
-      final String returnedID = documentReference.documentID;
+    if (!isEdit) {
+      try {
+        HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
+          functionName: 'addItem',
+        );
 
-      itemCopy.id = returnedID;
+        final HttpsCallableResult result = await callable.call(
+          <String, dynamic>{
+            'status': itemCopy.isVisible,
+            'creator': itemCopy.creator.documentID,
+            'name': itemCopy.name,
+            'description': itemCopy.description,
+            'type': itemCopy.type,
+            'condition': itemCopy.condition,
+            'rating': 0,
+            'numRatings': 0,
+            'price': itemCopy.price,
+            'images': [],
+            'numImages': totalImagesCount,
+            'geohash': myLocation.data['geohash'],
+            'lat': gp.latitude,
+            'long': gp.longitude,
+            'searchKey': searchKeyList,
+            'isVisible': true,
+            'owner': {
+              'name': currentUser.displayName,
+              'avatar': currentUser.photoUrl,
+            },
+          },
+        );
 
-      Firestore.instance
-          .collection('items')
-          .document(returnedID)
-          .updateData({'id': returnedID});
+        final String returnedID = result.data;
+        itemId=returnedID;
 
-      if (imageAssets.length == 0) {
-        Firestore.instance
-            .collection('items')
-            .document(returnedID)
-            .updateData({'images': []});
-        Navigator.of(context).pop(true);
-      } else {
         String done;
 
         if (imageAssets.length > 0) {
@@ -723,8 +703,11 @@ class ItemEditState extends State<ItemEdit> {
         }
 
         if (done != null) {
-          //Navigator.of(context).pop(true);
-          documentReference.get().then((DocumentSnapshot ds) {
+          Firestore.instance
+              .collection('items')
+              .document(returnedID)
+              .get()
+              .then((DocumentSnapshot ds) {
             Navigator.popAndPushNamed(
               context,
               ItemDetail.routeName,
@@ -734,12 +717,24 @@ class ItemEditState extends State<ItemEdit> {
             );
           });
         }
+      } on CloudFunctionsException catch (e) {
+        Fluttertoast.showToast(msg: '${e.message}');
+
+        setState(() {
+          isLoading = false;
+        });
+      } catch (e) {
+        Fluttertoast.showToast(msg: '${e}');
+
+        setState(() {
+          isLoading = false;
+        });
       }
     }
 
     // update item aka item already exists
     else {
-      Firestore.instance.collection('items').document(itemCopy.id).updateData({
+      Firestore.instance.collection('items').document(itemId).updateData({
         'name': itemCopy.name,
         'description': itemCopy.description,
         'type': itemCopy.type,
@@ -756,7 +751,7 @@ class ItemEditState extends State<ItemEdit> {
         String done;
 
         if (imageAssets.length > 0) {
-          done = await uploadImages(itemCopy.id);
+          done = await uploadImages(itemId);
         }
 
         if (done != null) {
@@ -797,7 +792,7 @@ class ItemEditState extends State<ItemEdit> {
       for (int i = 0; i < itemCopy.numImages; i++) {
         FirebaseStorage.instance
             .ref()
-            .child('/items/${itemCopy.id}/$i.jpg')
+            .child('/items/${itemId}/$i.jpg')
             .delete();
       }
 
@@ -809,12 +804,12 @@ class ItemEditState extends State<ItemEdit> {
       if (isEdit) {
         Firestore.instance
             .collection('items')
-            .document(itemCopy.id)
+            .document(itemId)
             .updateData({'images': List()});
 
         Firestore.instance
             .collection('items')
-            .document(itemCopy.id)
+            .document(itemId)
             .updateData({'numImages': 0});
 
         widget.item.numImages = itemCopy.numImages;
@@ -843,7 +838,7 @@ class ItemEditState extends State<ItemEdit> {
 
     Firestore.instance
         .collection('items')
-        .document(itemCopy.id)
+        .document(itemId)
         .updateData({'images': imageURLs});
 
     return done;
@@ -1048,8 +1043,9 @@ class ItemEditState extends State<ItemEdit> {
                 FlatButton(
                   child: const Text('Yes'),
                   onPressed: () {
-                    Navigator.of(context).pop(false);
                     deleteItem();
+                    Navigator.of(context).pop(false);
+
                     // Pops the confirmation dialog but not the page.
                   },
                 ),
@@ -1096,7 +1092,7 @@ class ItemEditState extends State<ItemEdit> {
 
     Firestore.instance
         .collection('items')
-        .document(itemCopy.id)
+        .document(itemId)
         .delete()
         .then((_) => Navigator.popUntil(
               context,

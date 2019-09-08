@@ -12,6 +12,8 @@ const bucket = storage.bucket();
 
 const stripe = require('stripe')(functions.config().stripe.token);
 
+const error_message = 'Invalid input. Make sure you\'re using the latest version of the app';
+
 // create new user document when account created
 exports.createUser = functions.auth.user().onCreate(event => {
     console.log('User id to be created: ', event.uid);
@@ -108,9 +110,9 @@ exports.deleteUserAccount = functions.firestore
 exports.deleteItemImages = functions.firestore.document('items/{itemId}')
     .onDelete(async (snap, context) => {
         const deletedValue = snap.data();
-        const id = deletedValue.id;
+        const id = context.params.itemId;
 
-        if (id === null) {
+        if (id === undefined) {
             return null;
         }
 
@@ -638,9 +640,9 @@ exports.createChatRoom = functions.https.onCall(async (data, context) => {
     var user1Avatar = user1.avatar;
     var combinedId = data.combinedId;
 
-    if (users === null || user0Name === null || user0Avatar === null ||
-        user1Name === null || user1Avatar === null || combinedId === null) {
-        return 'Invalid input';
+    if (users === undefined || user0Name === undefined || user0Avatar === undefined ||
+        user1Name === undefined || user1Avatar === undefined || combinedId === undefined) {
+        throw new functions.https.HttpsError('unknown', error_message);
     } else {
         var docRef = db.collection('messages').doc(combinedId);
 
@@ -657,9 +659,70 @@ exports.createChatRoom = functions.https.onCall(async (data, context) => {
         });
 
         if (resp === null) {
-            return 'Error creating chat room';
+            throw new functions.https.HttpsError('unknown', 'Error creating chat room');
         } else {
             return await docRef.get();
+        }
+    }
+});
+
+exports.addItem = functions.https.onCall(async (data, context) => {
+    var status = data.status;
+    var creator = data.creator;
+    var name = data.name;
+    var description = data.description;
+    var type = data.type;
+    var condition = data.condition;
+    var rating = data.rating;
+    var numRatings = data.numRatings;
+    var price = data.price;
+    var images = data.images;
+    var numImages = data.numImages;
+    var geohash = data.geohash;
+    var lat = data.lat;
+    var long = data.long;
+    var searchKey = data.searchKey;
+    var isVisible = data.isVisible;
+    var owner = data.owner;
+    var ownerName = owner.name;
+    var ownerAvatar = owner.avatar;
+
+    if (status === undefined || creator === undefined || name === undefined || description === undefined ||
+        type === undefined || condition === undefined || rating === undefined || numRatings === undefined ||
+        price === undefined || images === undefined || numImages === undefined || geohash === undefined ||
+        lat === undefined || long === undefined || searchKey === undefined || isVisible === undefined ||
+        owner === undefined || ownerName === undefined || ownerAvatar === undefined) {
+        throw new functions.https.HttpsError('unknown', error_message);
+    } else {
+        var docRef = await db.collection('items').add({
+            created: new Date(),
+            status: status,
+            creator: db.collection('users').doc(creator),
+            name: name,
+            description: description,
+            type: type,
+            condition: condition,
+            rating: rating,
+            numRatings: numRatings,
+            price: price,
+            images: images,
+            numImages: numImages,
+            location: {
+                geohash: geohash,
+                geopoint: new admin.firestore.GeoPoint(lat, long),
+            },
+            searchKey: searchKey,
+            isVisible: isVisible,
+            owner: {
+                name: ownerName,
+                avatar: ownerAvatar,
+            },
+        });
+
+        if (docRef === null) {
+            throw new functions.https.HttpsError('unknown', 'Error creating item');
+        } else {
+            return docRef.id;
         }
     }
 });

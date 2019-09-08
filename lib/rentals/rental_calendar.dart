@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shareapp/services/functions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -918,16 +919,22 @@ class RentalCalendarState extends State<RentalCalendar>
             'avatar': itemOwnerDS['avatar'],
           });
 
-          HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
-            functionName: 'createChatRoom',
-          );
+          try {
+            HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
+              functionName: 'createChatRoom',
+            );
 
-          var resp = await callable.call(<String, dynamic>{
-            'users': combinedId,
-            'combinedId': groupChatId,
-            'user0': map['user0'],
-            'user1': map['user1'],
-          });
+            final HttpsCallableResult result = await callable.call(
+              <String, dynamic>{
+                'users': combinedId,
+                'combinedId': groupChatId,
+                'user0': map['user0'],
+                'user1': map['user1'],
+              },
+            );
+          } on CloudFunctionsException catch (e) {
+            Fluttertoast.showToast(msg: '${e.message}');
+          } catch (e) {}
         }
 
         var messageReference = Firestore.instance

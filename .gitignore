@@ -1,5 +1,12 @@
+# built application files
+*.apk
+*.ap_
+
+**/android/**/AndroidManifest.xml
+
 # Firestore backend
 **/android/**/google-services.json
+**/android/gradle.properties
 
 # Miscellaneous
 *.class

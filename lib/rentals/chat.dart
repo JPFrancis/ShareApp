@@ -126,25 +126,29 @@ class ChatState extends State<Chat> {
         'avatar': otherUserDS['avatar'],
       });
 
-      HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
-        functionName: 'createChatRoom',
-      );
+      try {
+        HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
+          functionName: 'createChatRoom',
+        );
 
-      var resp = await callable.call(<String, dynamic>{
-        'users': combinedId,
-        'combinedId': groupChatId,
-        'user0': map['user0'],
-        'user1': map['user1'],
-      });
+        final HttpsCallableResult result = await callable.call(
+          <String, dynamic>{
+            'users': combinedId,
+            'combinedId': groupChatId,
+            'user0': map['user0'],
+            'user1': map['user1'],
+          },
+        );
 
-      if (resp != null) {
-        chatData = resp.data;
+        chatData = result.data;
 
         setState(() {
           otherUser = otherUserDS.data;
           isLoading = false;
         });
-      }
+      } on CloudFunctionsException catch (e) {
+        Fluttertoast.showToast(msg: '${e.message}');
+      } catch (e) {}
     } else {
       chatData = ds.data;
 

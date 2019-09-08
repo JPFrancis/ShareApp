@@ -161,6 +161,14 @@ Widget itemCard(DocumentSnapshot ds, context) {
       builder: (BuildContext context, BoxConstraints constraints) {
     double h = constraints.maxHeight;
     double w = constraints.maxWidth;
+
+    List images = ds['images'];
+    var url = '';
+
+    if (images.isNotEmpty) {
+      url = images[0];
+    }
+
     return Container(
       height: h,
       width: w,
@@ -180,7 +188,7 @@ Widget itemCard(DocumentSnapshot ds, context) {
             child: FittedBox(
               fit: BoxFit.cover,
               child: CachedNetworkImage(
-                imageUrl: ds['images'][0],
+                imageUrl: url,
                 placeholder: (context, url) => Center(
                   child: CircularProgressIndicator(),
                 ),
