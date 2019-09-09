@@ -295,8 +295,9 @@ Widget reusableCategoryWithAll(text, action) {
                   fontSize: 11.0,
                   fontWeight: FontWeight.w400,
                   fontFamily: 'Quicksand'))),
-      Container(
-          child: FlatButton(
+      SizedBox(width: 20.0,),
+      Expanded(child: Divider(),), 
+      Container(child: FlatButton(
         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         child: Text(
           "View All",

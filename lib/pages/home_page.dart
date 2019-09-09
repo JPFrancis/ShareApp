@@ -895,12 +895,18 @@ class HomePageState extends State<HomePage> {
   }
 
   Widget searchPage() {
+    Widget _image(){
+      return Container(height: 200.0,
+        decoration: BoxDecoration(image: DecorationImage(image: AssetImage('assets/lines2.png'), fit: BoxFit.fill),)
+        );
+    }
     return Container(
       child: MediaQuery.removePadding(
         removeTop: true,
+        removeBottom: true,
         context: context,
         child: ListView(
-          //physics: const NeverScrollableScrollPhysics(),
+          physics: const ClampingScrollPhysics(),
           // shrinkWrap: true,
           children: <Widget>[
             introImageAndSearch(),
@@ -912,6 +918,7 @@ class HomePageState extends State<HomePage> {
               height: 10,
             ),
             nearby(),
+            _image(),
           ],
         ),
       ),
@@ -1279,17 +1286,20 @@ class HomePageState extends State<HomePage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                Container(
-                    padding: EdgeInsets.only(left: 80.0),
-                    alignment: Alignment.bottomLeft,
-                    child: Text(
-                      "make it happen",
-                      style: TextStyle(
-                          color: Colors.black,
-                          fontFamily: appFont,
-                          fontSize: 20.0,
-                          fontWeight: FontWeight.w300),
-                    )),
+                Row(children: <Widget>[
+                  Image.asset('assets/white_logo.png', height: 80.0, width: 80.0),
+                  Container(
+                      padding: EdgeInsets.only(left: 80.0),
+                      alignment: Alignment.bottomLeft,
+                      child: Text(
+                        "make it happen",
+                        style: TextStyle(
+                            color: Colors.black,
+                            fontFamily: appFont,
+                            fontSize: 20.0,
+                            fontWeight: FontWeight.w300),
+                      )),
+                ],),
                 searchField(),
               ],
             ),
@@ -1491,14 +1501,11 @@ class HomePageState extends State<HomePage> {
           children: <Widget>[
             reusableCategoryWithAll("REQUESTING", () => navToTransactionsPage(RentalPhase.requesting, 'renter')),
             buildRequests("renter"),
-            reusableCategoryWithAll("UPCOMING",
-                () => navToTransactionsPage(RentalPhase.upcoming, 'renter')),
+            reusableCategoryWithAll("UPCOMING", () => navToTransactionsPage(RentalPhase.upcoming, 'renter')),
             buildTransactions(RentalPhase.upcoming, "renter"),
-            reusableCategoryWithAll("CURRENT",
-                () => navToTransactionsPage(RentalPhase.current, 'renter')),
+            reusableCategoryWithAll("CURRENT", () => navToTransactionsPage(RentalPhase.current, 'renter')),
             buildTransactions(RentalPhase.current, "renter"),
-            reusableCategoryWithAll("PAST",
-                () => navToTransactionsPage(RentalPhase.past, 'renter')),
+            reusableCategoryWithAll("PAST", () => navToTransactionsPage(RentalPhase.past, 'renter')),
             buildTransactions(RentalPhase.past, "renter"),
           ],
         ));

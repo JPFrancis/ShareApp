@@ -252,6 +252,7 @@ class RentalCalendarState extends State<RentalCalendar>
 
   Widget showBody() {
     bool canRequest = !isOwner && !events.containsKey(selectedDay);
+    double w = MediaQuery.of(context).size.width;
 
     return ListView(
       children: <Widget>[
@@ -263,9 +264,7 @@ class RentalCalendarState extends State<RentalCalendar>
             canRequest
                 ? showRequestItemDetail()
                 : Center(
-                    child: Text(
-                      '${isOwner ? 'You can\'t rent items you own!' : 'Item is unavailable on this day'}',
-                      style: TextStyle(fontSize: 20),
+                    child: Text( '${isOwner ? 'Dates that your item is available to be rented by others' : 'Item is unavailable on this day'}', style: TextStyle(fontSize: w/30, fontFamily: appFont, color: Colors.grey[800]),
                     ),
                   ),
           ],

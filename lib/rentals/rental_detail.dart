@@ -248,7 +248,7 @@ class RentalDetailState extends State<RentalDetail> {
                   showItemCreator(),
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 15),
-                    child: RaisedButton(
+                    child: OutlineButton(
                       onPressed: () async {
                         var duration = rentalDS['duration'].toInt();
                         var price = rentalDS['price'].toInt();
@@ -277,13 +277,14 @@ class RentalDetailState extends State<RentalDetail> {
                           'for renting ${rentalDS['itemName']}',
                         );
                       },
-                      textColor: Colors.white,
-                      color: Colors.green,
-                      child: Text('Charge'),
+                      borderSide: BorderSide(color: Colors.green),
+                      textColor: Colors.green,
+                      color: coolerWhite,
+                      child: Text('Charge', style: TextStyle(fontFamily: appFont),),
                     ),
                   ),
                   SizedBox(
-                    height: 10.0,
+                    height: 20.0,
                   ),
                   Container(
                       padding: EdgeInsets.symmetric(
@@ -455,11 +456,11 @@ class RentalDetailState extends State<RentalDetail> {
                 children: <Widget>[
                   Text(
                     "Waiting for response from ${rentalDS['ownerData']['name']}",
-                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                    style: TextStyle(fontFamily: appFont, color: primaryColor),
                   ),
                   Text(
-                    "Your proposal",
-                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                    "The Receipt",
+                    style: TextStyle(fontFamily: appFont, color: primaryColor),
                   ),
                   Divider(),
                   Row(
@@ -468,12 +469,12 @@ class RentalDetailState extends State<RentalDetail> {
                       Text(
                         "Pickup Time:",
                         style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                            TextStyle(fontFamily: appFont, color: primaryColor),
                       ),
                       Text(
                         "$start",
                         style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                            TextStyle(fontFamily: appFont, color: primaryColor),
                       ),
                     ],
                   ),
@@ -483,12 +484,12 @@ class RentalDetailState extends State<RentalDetail> {
                       Text(
                         "Duration:",
                         style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                            TextStyle(fontFamily: appFont, color: primaryColor),
                       ),
                       Text(
                         "$duration",
                         style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                            TextStyle(fontFamily: appFont, color: primaryColor),
                       ),
                     ],
                   ),
@@ -498,26 +499,26 @@ class RentalDetailState extends State<RentalDetail> {
                       Text(
                         receiptText,
                         style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                            TextStyle(fontFamily: appFont, color: primaryColor),
                       ),
                       Text(
                         receiptValues,
                         style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                            TextStyle(fontFamily: appFont, color: primaryColor),
                       ),
                     ],
                   ),
-                ],
+                ]
               )
             : Column(
                 children: <Widget>[
                   Text(
                     "${rentalDS['ownerData']['name']} has proposed a pickup!",
-                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                    style: TextStyle(fontFamily: appFont, color: primaryColor),
                   ),
                   Text(
                     "Proposal",
-                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                    style: TextStyle(fontFamily: appFont, color: primaryColor),
                   ),
                   Divider(),
                   Row(
@@ -526,12 +527,12 @@ class RentalDetailState extends State<RentalDetail> {
                       Text(
                         "Pickup Time:",
                         style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                            TextStyle(fontFamily: appFont, color: primaryColor),
                       ),
                       Text(
                         "$start",
                         style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                            TextStyle(fontFamily: appFont, color: primaryColor),
                       ),
                     ],
                   ),
@@ -541,12 +542,12 @@ class RentalDetailState extends State<RentalDetail> {
                       Text(
                         "Duration:",
                         style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                            TextStyle(fontFamily: appFont, color: primaryColor),
                       ),
                       Text(
                         "$duration",
                         style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                            TextStyle(fontFamily: appFont, color: primaryColor),
                       ),
                     ],
                   ),
@@ -556,16 +557,16 @@ class RentalDetailState extends State<RentalDetail> {
                       Text(
                         receiptText,
                         style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                            TextStyle(fontFamily: appFont, color: primaryColor),
                       ),
                       Text(
                         receiptValues,
                         style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                            TextStyle(fontFamily: appFont, color: primaryColor),
                       ),
                     ],
                   ),
-                ],
+                ]
               );
         break;
 
@@ -1122,20 +1123,24 @@ class RentalDetailState extends State<RentalDetail> {
         break;
     }
 
-    return Container(
-        decoration: new BoxDecoration(
-          color: primaryColor,
-          borderRadius: new BorderRadius.all(Radius.circular(12.0)),
-          boxShadow: <BoxShadow>[
-            CustomBoxShadow(
-                color: Colors.black45,
-                blurRadius: 3.0,
-                blurStyle: BlurStyle.outer),
-          ],
-        ),
-        child: Container(padding: EdgeInsets.all(10), child: info)
-        //Text(statusMessage, style: TextStyle(fontSize: 18, color: Colors.white, fontFamily: appFont)),
-        );
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 30.0),
+      child: Container(
+        height: MediaQuery.of(context).size.height / 2.5,
+          decoration: new BoxDecoration(
+            color: coolerWhite,
+            borderRadius: new BorderRadius.all(Radius.circular(12.0)),
+            boxShadow: <BoxShadow>[
+              CustomBoxShadow(
+                  color: primaryColor.withOpacity(0.35),
+                  blurRadius: 4.0,
+                  blurStyle: BlurStyle.outer),
+            ],
+          ),
+          child: Container(padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15.0), child: info)
+          //Text(statusMessage, style: TextStyle(fontSize: 18, color: Colors.white, fontFamily: appFont)),
+          ),
+    );
   }
 
   void handleAcceptedRental() async {
@@ -1569,4 +1574,4 @@ class RentalDetailState extends State<RentalDetail> {
     );
     */
   }
-}
+} 
