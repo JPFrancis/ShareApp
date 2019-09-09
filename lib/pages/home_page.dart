@@ -144,7 +144,6 @@ class HomePageState extends State<HomePage> {
     ];
 
     if (isAuthenticated) {
-      scheduleNotifications();
       updateRentals();
     } else {
       setState(() {
@@ -152,7 +151,8 @@ class HomePageState extends State<HomePage> {
       });
     }
 
-    getUserLocation();}
+    getUserLocation();
+  }
 
   void updateRentals() async {
     CollectionReference rentalsCollection =
@@ -220,9 +220,7 @@ class HomePageState extends State<HomePage> {
       }
     }
 
-    setState(() {
-      pageIsLoading = false;
-    });
+    scheduleNotifications();
   }
 
   void scheduleNotifications() async {
@@ -313,6 +311,43 @@ class HomePageState extends State<HomePage> {
         );
       }
     }
+
+    removeUnavailableItemDays();
+  }
+
+  void removeUnavailableItemDays() async {
+    CollectionReference itemRef = Firestore.instance.collection('items');
+
+    QuerySnapshot snaps = await itemRef
+        .where('creator',
+            isEqualTo:
+                Firestore.instance.collection('users').document(myUserID))
+        .getDocuments();
+    List<DocumentSnapshot> docs = snaps.documents;
+
+    if (snaps != null && docs.isNotEmpty) {
+      for (DocumentSnapshot snap in docs) {
+        List timestamps = snap['unavailable'];
+        List<DateTime> times = [];
+
+        for (var timestamp in timestamps) {
+          times.add(timestamp.toDate());
+        }
+
+        for (DateTime time in times) {
+          if (time.add(Duration(days: 1)).isBefore(DateTime.now())) {
+
+            await itemRef.document(snap.documentID).updateData({
+              'unavailable': FieldValue.arrayRemove([time]),
+            });
+          }
+        }
+      }
+    }
+
+    setState(() {
+      pageIsLoading = false;
+    });
   }
 
   /*
@@ -475,7 +510,7 @@ class HomePageState extends State<HomePage> {
       deviceToken = token;
       Firestore.instance.collection('users').document(myUserID).updateData({
         'lastActive': DateTime.now().millisecondsSinceEpoch,
-        'pushToken': FieldValue.arrayUnion([token]),
+        'pushToken': token,
       });
 
 //      configureFCM();

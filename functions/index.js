@@ -39,7 +39,7 @@ exports.createUser = functions.auth.user().onCreate(event => {
         creationDate: creationDate,
         custId: 'new',
         defaultSource: null,
-        pushToken: [],
+        pushToken: '',
         description: '',
         gender: null,
         phoneNum: null,
@@ -717,12 +717,55 @@ exports.addItem = functions.https.onCall(async (data, context) => {
                 name: ownerName,
                 avatar: ownerAvatar,
             },
+            unavailable: null,
         });
 
         if (docRef === null) {
             throw new functions.https.HttpsError('unknown', 'Error creating item');
         } else {
             return docRef.id;
+        }
+    }
+});
+
+exports.updateItem = functions.https.onCall(async (data, context) => {
+    var itemId = data.itemId;
+    var name = data.name;
+    var description = data.description;
+    var type = data.type;
+    var condition = data.condition;
+    var price = data.price;
+    var numImages = data.numImages;
+    var geohash = data.geohash;
+    var lat = data.lat;
+    var long = data.long;
+    var searchKey = data.searchKey;
+
+    if (itemId === undefined || name === undefined || description === undefined || type === undefined ||
+        condition === undefined || price === undefined || numImages === undefined || geohash === undefined ||
+        lat === undefined || long === undefined || searchKey === undefined) {
+        throw new functions.https.HttpsError('unknown', error_message);
+    } else {
+        let itemRef = db.collection('items').doc(itemId);
+
+        var update = await itemRef.update({
+            name: name,
+            description: description,
+            type: type,
+            condition: condition,
+            price: price,
+            numImages: numImages,
+            location: {
+                geohash: geohash,
+                geopoint: new admin.firestore.GeoPoint(lat, long),
+            },
+            searchKey: searchKey,
+        });
+
+        if (update === null) {
+            throw new functions.https.HttpsError('unknown', 'Error updating item');
+        } else {
+            return 'Item update successful';
         }
     }
 });

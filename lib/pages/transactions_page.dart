@@ -161,15 +161,14 @@ class TransactionsPageState extends State<TransactionsPage> {
             'Renter',
           ]
               .map(
-                (selection) =>
-                DropdownMenuItem<String>(
+                (selection) => DropdownMenuItem<String>(
                   value: selection,
                   child: Text(
                     selection,
                     style: TextStyle(fontFamily: font),
                   ),
                 ),
-          )
+              )
               .toList()),
     );
   }
@@ -209,15 +208,14 @@ class TransactionsPageState extends State<TransactionsPage> {
             'Past',
           ]
               .map(
-                (selection) =>
-                DropdownMenuItem<String>(
+                (selection) => DropdownMenuItem<String>(
                   value: selection,
                   child: Text(
                     selection,
                     style: TextStyle(fontFamily: font),
                   ),
                 ),
-          )
+              )
               .toList()),
     );
   }
@@ -259,9 +257,7 @@ class TransactionsPageState extends State<TransactionsPage> {
                             DocumentSnapshot itemDS = snapshot.data;
                             int durationDays = rentalDS['duration'];
                             String duration =
-                                '${durationDays > 1
-                                ? '$durationDays days'
-                                : '$durationDays day'}';
+                                '${durationDays > 1 ? '$durationDays days' : '$durationDays day'}';
 
                             return StreamBuilder<DocumentSnapshot>(
                               stream: person == "renter"
@@ -281,19 +277,19 @@ class TransactionsPageState extends State<TransactionsPage> {
                                           snapshot.data;
                                       int status = rentalDS['status'];
                                       bool isRenter =
-                                      person == 'renter' ? true : false;
+                                          person == 'renter' ? true : false;
 
                                       CustomBoxShadow cbs =
-                                      (isRenter && status == 1) ||
-                                          (!isRenter && status == 0)
-                                          ? CustomBoxShadow(
-                                          color: primaryColor,
-                                          blurRadius: 6.0,
-                                          blurStyle: BlurStyle.outer)
-                                          : CustomBoxShadow(
-                                          color: Colors.black38,
-                                          blurRadius: 3.0,
-                                          blurStyle: BlurStyle.outer);
+                                          (isRenter && status == 1) ||
+                                                  (!isRenter && status == 0)
+                                              ? CustomBoxShadow(
+                                                  color: primaryColor,
+                                                  blurRadius: 6.0,
+                                                  blurStyle: BlurStyle.outer)
+                                              : CustomBoxShadow(
+                                                  color: Colors.black38,
+                                                  blurRadius: 3.0,
+                                                  blurStyle: BlurStyle.outer);
 
                                       return Column(
                                         children: <Widget>[
@@ -301,14 +297,14 @@ class TransactionsPageState extends State<TransactionsPage> {
                                             decoration: new BoxDecoration(
                                               image: DecorationImage(
                                                 image:
-                                                CachedNetworkImageProvider(
-                                                    itemDS['images'][0]),
+                                                    CachedNetworkImageProvider(
+                                                        itemDS['images'][0]),
                                                 fit: BoxFit.cover,
                                                 colorFilter:
-                                                new ColorFilter.mode(
-                                                    Colors.black
-                                                        .withOpacity(0.45),
-                                                    BlendMode.srcATop),
+                                                    new ColorFilter.mode(
+                                                        Colors.black
+                                                            .withOpacity(0.45),
+                                                        BlendMode.srcATop),
                                               ),
                                               boxShadow: <BoxShadow>[cbs],
                                             ),
@@ -321,8 +317,8 @@ class TransactionsPageState extends State<TransactionsPage> {
                                               },
                                               child: Row(
                                                 mainAxisAlignment:
-                                                MainAxisAlignment
-                                                    .spaceAround,
+                                                    MainAxisAlignment
+                                                        .spaceAround,
                                                 children: <Widget>[
                                                   Column(
                                                     children: <Widget>[
@@ -336,11 +332,11 @@ class TransactionsPageState extends State<TransactionsPage> {
                                                               shape: BoxShape
                                                                   .circle,
                                                               color:
-                                                              Colors.white,
+                                                                  Colors.white,
                                                               image: DecorationImage(
                                                                   image: CachedNetworkImageProvider(
                                                                       otherUserDS[
-                                                                      'avatar']),
+                                                                          'avatar']),
                                                                   fit: BoxFit
                                                                       .fill))),
                                                       Text(
@@ -348,10 +344,10 @@ class TransactionsPageState extends State<TransactionsPage> {
                                                         style: TextStyle(
                                                             color: Colors.white,
                                                             fontFamily:
-                                                            'Quicksand',
+                                                                'Quicksand',
                                                             fontWeight:
-                                                            FontWeight
-                                                                .bold),
+                                                                FontWeight
+                                                                    .bold),
                                                       ),
                                                     ],
                                                   ),
@@ -363,20 +359,20 @@ class TransactionsPageState extends State<TransactionsPage> {
                                                                 color: Colors
                                                                     .white,
                                                                 fontFamily:
-                                                                'Quicksand')),
+                                                                    'Quicksand')),
                                                         Text(
                                                           timeago.format(
                                                               rentalDS[
-                                                              'created']
+                                                                      'created']
                                                                   .toDate()),
                                                           style: TextStyle(
                                                               color:
-                                                              Colors.white,
+                                                                  Colors.white,
                                                               fontFamily:
-                                                              'Quicksand',
+                                                                  'Quicksand',
                                                               fontWeight:
-                                                              FontWeight
-                                                                  .bold),
+                                                                  FontWeight
+                                                                      .bold),
                                                         )
                                                       ]),
                                                       Row(
@@ -387,17 +383,17 @@ class TransactionsPageState extends State<TransactionsPage> {
                                                                 color: Colors
                                                                     .white,
                                                                 fontFamily:
-                                                                'Quicksand'),
+                                                                    'Quicksand'),
                                                           ),
                                                           Text(duration,
                                                               style: TextStyle(
                                                                   color: Colors
                                                                       .white,
                                                                   fontFamily:
-                                                                  'Quicksand',
+                                                                      'Quicksand',
                                                                   fontWeight:
-                                                                  FontWeight
-                                                                      .bold))
+                                                                      FontWeight
+                                                                          .bold))
                                                         ],
                                                       )
                                                     ],

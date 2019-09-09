@@ -228,7 +228,7 @@ class ItemEditArgs {
   final Item item;
   final String itemId;
 
-  ItemEditArgs(this.item,this.itemId);
+  ItemEditArgs(this.item, this.itemId);
 }
 
 class ItemRequestArgs {

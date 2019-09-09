@@ -694,7 +694,7 @@ class ItemEditState extends State<ItemEdit> {
         );
 
         final String returnedID = result.data;
-        itemId=returnedID;
+        itemId = returnedID;
 
         String done;
 
@@ -734,34 +734,56 @@ class ItemEditState extends State<ItemEdit> {
 
     // update item aka item already exists
     else {
-      Firestore.instance.collection('items').document(itemId).updateData({
-        'name': itemCopy.name,
-        'description': itemCopy.description,
-        'type': itemCopy.type,
-        'condition': itemCopy.condition,
-        'price': itemCopy.price,
-        'numImages': totalImagesCount,
-        'location': myLocation.data,
-        'searchKey': searchKeyList,
-      });
+      try {
+        HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
+          functionName: 'updateItem',
+        );
 
-      if (imageAssets.length == 0) {
-        Navigator.of(context).pop(itemCopy);
-      } else {
-        String done;
+        final HttpsCallableResult result = await callable.call(
+          <String, dynamic>{
+            'itemId': itemId,
+            'name': itemCopy.name,
+            'description': itemCopy.description,
+            'type': itemCopy.type,
+            'condition': itemCopy.condition,
+            'price': itemCopy.price,
+            'numImages': totalImagesCount,
+            'geohash': myLocation.data['geohash'],
+            'lat': gp.latitude,
+            'long': gp.longitude,
+            'searchKey': searchKeyList,
+          },
+        );
 
-        if (imageAssets.length > 0) {
-          done = await uploadImages(itemId);
-        }
+        if (result != null) {
+          Fluttertoast.showToast(msg: '${result.data}');
 
-        if (done != null) {
-          setState(() {
-            if (isEdit) {
-              //widget.item.images = imageURLs;
+          if (imageAssets.length == 0) {
+            Navigator.of(context).pop(itemCopy);
+          } else {
+            String done;
+
+            if (imageAssets.length > 0) {
+              done = await uploadImages(itemId);
             }
-          });
-          Navigator.of(context).pop(itemCopy);
+
+            if (done != null) {
+              Navigator.of(context).pop(itemCopy);
+            }
+          }
         }
+      } on CloudFunctionsException catch (e) {
+        Fluttertoast.showToast(msg: '${e.message}');
+
+        setState(() {
+          isLoading = false;
+        });
+      } catch (e) {
+        Fluttertoast.showToast(msg: '${e}');
+
+        setState(() {
+          isLoading = false;
+        });
       }
     }
   }

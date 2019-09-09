@@ -1134,3 +1134,154 @@ class BirthdayDialogState extends State<BirthdayDialog> {
     );
   }
 }
+
+class DailyRateDialog extends StatefulWidget {
+  final double pageHeight;
+  final double pageWidth;
+  final double rate;
+
+  DailyRateDialog({
+    @required this.pageHeight,
+    @required this.pageWidth,
+    @required this.rate,
+  });
+
+  @override
+  DailyRateDialogState createState() => DailyRateDialogState();
+}
+
+class DailyRateDialogState extends State<DailyRateDialog> {
+  double rate;
+  double pageHeight;
+  double pageWidth;
+  TextEditingController rateController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+
+    pageHeight = widget.pageHeight;
+    pageWidth = widget.pageWidth;
+    rate = widget.rate;
+    String rateControllerText = '$rate';
+
+    if (rate % 1 == 0) {
+    rateControllerText = '${rate.toStringAsFixed(0)}';
+    }
+    rateController.text=rateControllerText;
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+
+    rateController.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return customDialog.AlertDialog(
+      elevation: 0.0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(dialogBorderRadius),
+      ),
+      titlePadding: EdgeInsets.all(0),
+      contentPadding: EdgeInsets.all(0),
+      content: Container(
+        width: pageWidth * 0.9,
+        child: ScrollConfiguration(
+          behavior: RemoveScrollGlow(),
+          child: ListView(
+            shrinkWrap: true,
+            children: <Widget>[
+              Align(
+                alignment: Alignment.topRight,
+                child: IconButton(
+                  padding: EdgeInsets.all(0),
+                  iconSize: closeButtonSize,
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: Icon(
+                    Icons.close,
+                  ),
+                  color: primaryColor,
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: pageWidth * 0.06),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Text(
+                      'New Daily Rate',
+                      style: TextStyle(
+                        fontFamily: appFont,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Container(height: pageHeight * 0.03),
+                    TextField(
+                      controller: rateController,
+                      onChanged: (value) {
+                        setState(() {});
+                      },
+                      textAlign: TextAlign.left,
+                      cursorColor: primaryColor,
+                      keyboardType: TextInputType.numberWithOptions(
+                        signed: false,
+                        decimal: true,
+                      ),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontFamily: appFont,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'Daily Rate',
+                        hintStyle: TextStyle(
+                          fontFamily: appFont,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        contentPadding: EdgeInsets.all(12),
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    Container(height: pageHeight * 0.03),
+                    Container(
+                      height: pageHeight * 0.073,
+                      width: pageWidth * 0.6655,
+                      child: RaisedButton(
+                        elevation: 0.0,
+                        onPressed: () {
+                          if (rateController.text.isNotEmpty) {
+                            Navigator.of(context)
+                                .pop(double.parse(rateController.text));
+                          }
+                        },
+                        color: primaryColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(appBorderRadius),
+                        ),
+                        child: Text(
+                          'SAVE',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontFamily: appFont,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Container(height: pageHeight * 0.05),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+

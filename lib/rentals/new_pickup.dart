@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_picker/flutter_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:shareapp/extras/helpers.dart';
+import 'package:shareapp/services/const.dart';
 import 'package:shareapp/services/picker_data.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -35,10 +36,11 @@ class NewPickupState extends State<NewPickup> {
   SharedPreferences prefs;
 
   bool isUploading = false;
-  bool isLoading;
+  bool isLoading = true;
   String myUserID;
   String myName;
   String groupChatId;
+  double dailyRate;
 
   DocumentSnapshot rentalDS;
   DocumentSnapshot itemDS;
@@ -63,6 +65,10 @@ class NewPickupState extends State<NewPickup> {
   ThemeData theme;
   double padding = 5.0;
 
+  double statusBarHeight;
+  double pageHeight;
+  double pageWidth;
+
   @override
   void initState() {
     // TODO: implement initState
@@ -71,7 +77,6 @@ class NewPickupState extends State<NewPickup> {
     note = '';
 
     getMyUserID();
-    getSnapshots();
   }
 
   @override
@@ -87,6 +92,7 @@ class NewPickupState extends State<NewPickup> {
     var user = await FirebaseAuth.instance.currentUser();
     if (user != null) {
       myUserID = user.uid;
+      getSnapshots();
     }
   }
 
@@ -99,6 +105,7 @@ class NewPickupState extends State<NewPickup> {
 
     if (ds != null) {
       rentalDS = ds;
+      dailyRate = rentalDS['price'].toDouble();
 
       DocumentReference itemDR = rentalDS['item'];
 
@@ -244,6 +251,9 @@ class NewPickupState extends State<NewPickup> {
     textStyle =
         Theme.of(context).textTheme.headline.merge(TextStyle(fontSize: 20));
     inputTextStyle = Theme.of(context).textTheme.subtitle;
+    statusBarHeight = MediaQuery.of(context).padding.top;
+    pageHeight = MediaQuery.of(context).size.height - statusBarHeight;
+    pageWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
       appBar: AppBar(
@@ -270,15 +280,6 @@ class NewPickupState extends State<NewPickup> {
           showCircularProgress(),
         ],
       ),
-      bottomNavigationBar: Container(
-        height: MediaQuery.of(context).size.height / 10,
-        color: Colors.black,
-        child: RaisedButton(
-          child: Text("test"),
-          onPressed: null,
-          color: Colors.red,
-        ),
-      ),
     );
   }
 
@@ -290,11 +291,72 @@ class NewPickupState extends State<NewPickup> {
           Container(
             height: 10,
           ),
-          showItemPriceInfo(),
           showTimePickers(),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 5),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text('Daily Rate', style: theme.textTheme.caption),
+                Container(
+                  //margin: const EdgeInsets.only(left: 8.0),
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  decoration: BoxDecoration(
+                      border: Border(
+                          bottom: BorderSide(color: theme.dividerColor))),
+                  child: InkWell(
+                    onTap: () async {
+                      var value = await showDialog(
+                        barrierDismissible: true,
+                        context: context,
+                        builder: (BuildContext context) {
+                          return Container(
+                            child: DailyRateDialog(
+                              pageHeight: pageHeight,
+                              pageWidth: pageWidth,
+                              rate: dailyRate,
+                            ),
+                          );
+                        },
+                      );
+
+                      if (value != null && value is double) {
+                        setState(() {
+                          dailyRate = value;
+                        });
+                      }
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: <Widget>[
+                        Text(
+                          '\$${dailyRate.toStringAsFixed(2)}',
+                          style: TextStyle(
+                            fontSize: 17,
+                          ),
+                        ),
+                        const Icon(Icons.arrow_drop_down,
+                            color: Colors.black54),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
           Container(
             height: 10,
           ),
+          Container(
+            padding: EdgeInsets.only(left: 5),
+            child: Text(
+              'Total: \$${(dailyRate * duration).toStringAsFixed(2)}',
+              style: TextStyle(
+                fontSize: 18,
+              ),
+            ),
+          ),
+          Container(height: 10),
           showNoteEdit(),
         ],
       ),
@@ -314,24 +376,6 @@ class NewPickupState extends State<NewPickup> {
         'duration: $duration',
         style: theme.textTheme.caption,
       ),
-    );
-  }
-
-  Widget showItemPriceInfo() {
-    return Padding(
-      padding: EdgeInsets.all(padding),
-      child: SizedBox(
-          height: 50.0,
-          child: Container(
-            color: Color(0x00000000),
-            child: Text(
-              'Item daily rate: \$${itemDS['price']}\n'
-              'Total due: \$${itemDS['price'] * duration}',
-              //itemName,
-              style: TextStyle(color: Colors.black, fontSize: 20.0),
-              textAlign: TextAlign.left,
-            ),
-          )),
     );
   }
 
@@ -432,6 +476,7 @@ class NewPickupState extends State<NewPickup> {
       'pickupEnd': pickupTime.add(Duration(hours: 1)),
       'rentalEnd': pickupTime.add(Duration(days: duration, hours: 1)),
       'duration': duration,
+      'price': dailyRate,
       'lastUpdateTime': DateTime.now(),
       'note': note,
     }).then((_) {
@@ -480,7 +525,8 @@ class NewPickupState extends State<NewPickup> {
 
     message = 'New pickup proposal\nPickup window: $range\n'
         'Date: ${DateFormat('EEE, MMM d yyyy').format(pickupTime)}\n'
-        'Duration: ${duration > 1 ? '$duration days' : '$duration day'}';
+        'Duration: ${duration > 1 ? '$duration days' : '$duration day'}\n'
+        'Daily rate: \$${dailyRate.toStringAsFixed(2)}';
 
     return await showDialog<bool>(
           context: context,
@@ -755,6 +801,9 @@ class DateTimeItem extends StatelessWidget {
                 ],
               ),
             ),
+          ),
+          Container(
+            height: 12,
           ),
         ],
       ),

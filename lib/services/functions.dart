@@ -1,5 +1,3 @@
-
-
 bool checkIdIsFirst(String id0, String id1) {
   return id0.hashCode < id1.hashCode ? true : false;
 }

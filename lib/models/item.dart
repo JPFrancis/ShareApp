@@ -36,6 +36,7 @@ class Item {
   int numImages;
   List images;
   Map<dynamic, dynamic> location;
+  List unavailable;
 
   Item({
     this.isVisible,
@@ -50,6 +51,7 @@ class Item {
     this.numImages,
     this.images,
     this.location,
+    this.unavailable,
   });
 
   Item.fromMap(Map<String, dynamic> data)
@@ -66,6 +68,7 @@ class Item {
           numImages: data['numImages'],
           images: data['images'],
           location: data['location'],
+          unavailable: data['unavailable'],
         );
 
   Item.copy(Item other)
@@ -82,6 +85,7 @@ class Item {
           numImages: other.numImages,
           images: other.images.toList(),
           location: other.location,
+          unavailable: other.unavailable,
         );
 
   bool compare(Item other) {
@@ -107,6 +111,7 @@ class Item {
       numImages: other.numImages,
       images: other.images.toList(),
       location: other.location,
+      unavailable: other.unavailable,
     );
   }
 }

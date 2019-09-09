@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shareapp/services/functions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -40,6 +41,8 @@ class RentalCalendarState extends State<RentalCalendar>
   DocumentSnapshot itemDS;
   String myUserID;
   String myName;
+  double dailyRate;
+  List<DateTime> unavailableDays = [];
 
   DateTime selectedDay;
   DateTime visibleDay;
@@ -60,12 +63,23 @@ class RentalCalendarState extends State<RentalCalendar>
   int amPm; // 0 for AM, 1 for PM
   String message;
 
+  double statusBarHeight;
+  double pageHeight;
+  double pageWidth;
+
   @override
   void initState() {
     super.initState();
     itemDS = widget.itemDS;
+    List unavailable = itemDS['unavailable'];
+
+    for (var timestamp in unavailable) {
+      unavailableDays.add(timestamp.toDate());
+    }
+
     events = {};
     visibleEvents = {};
+    dailyRate = itemDS['price'].toDouble();
 
     getMyUserID();
     checkAuthentication();
@@ -159,11 +173,29 @@ class RentalCalendarState extends State<RentalCalendar>
             dateTime: ['unavailable']
           });
         }
-
-        selectedEvents = events[selectedDay] ?? [];
-        visibleEvents = events;
       });
     }
+
+    DocumentSnapshot itemSnap = await Firestore.instance
+        .collection('items')
+        .document(itemDS.documentID)
+        .get();
+
+    if (itemSnap != null && itemSnap.exists) {
+      List unavailableTimestamps = itemSnap['unavailable'];
+      unavailableDays = [];
+
+      for (int i = 0; i < unavailableTimestamps.length; i++) {
+        DateTime dateTime = unavailableTimestamps[i].toDate();
+        unavailableDays.add(dateTime);
+        events.addAll({
+          dateTime: ['unavailable']
+        });
+      }
+    }
+
+    selectedEvents = events[selectedDay] ?? [];
+    visibleEvents = events;
 
     if (refresh && events != null) {
       setState(() {
@@ -201,6 +233,10 @@ class RentalCalendarState extends State<RentalCalendar>
 
   @override
   Widget build(BuildContext context) {
+    statusBarHeight = MediaQuery.of(context).padding.top;
+    pageHeight = MediaQuery.of(context).size.height - statusBarHeight;
+    pageWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       appBar: AppBar(
         title: Text('${itemDS['name']}'),
@@ -233,27 +269,35 @@ class RentalCalendarState extends State<RentalCalendar>
     );
   }
 
+  void refresh() async {
+    DateTime first = DateTime(visibleDay.year, visibleDay.month, 1);
+    DateTime last = DateTime(visibleDay.year, visibleDay.month + 1, 0);
+    getItemAvailability(first, last, true);
+
+    if (visibleDay.month != selectedDay.month ||
+        visibleDay.year != selectedDay.year) {
+      setState(() {
+        selectedDay = stripHourMin(visibleDay);
+      });
+    }
+  }
+
   Widget refreshButton() {
     return IconButton(
       icon: Icon(Icons.refresh),
       tooltip: 'Refresh',
       onPressed: () {
-        DateTime first = DateTime(visibleDay.year, visibleDay.month, 1);
-        DateTime last = DateTime(visibleDay.year, visibleDay.month + 1, 0);
-        getItemAvailability(first, last, true);
-
-        if (visibleDay.month != selectedDay.month ||
-            visibleDay.year != selectedDay.year) {
-          setState(() {
-            selectedDay = stripHourMin(visibleDay);
-          });
-        }
+        refresh();
       },
     );
   }
 
   Widget showBody() {
     bool canRequest = !isOwner && !events.containsKey(selectedDay);
+    bool unavailable = unavailableDays.contains(selectedDay);
+    String unavailableText = unavailable
+        ? 'Make item available for this day'
+        : 'Make item unavailable for this day';
 
     return ListView(
       children: <Widget>[
@@ -265,9 +309,48 @@ class RentalCalendarState extends State<RentalCalendar>
             canRequest
                 ? showRequestItemDetail()
                 : Center(
-                    child: Text(
-                      '${isOwner ? 'You can\'t rent items you own!' : 'Item is unavailable on this day'}',
-                      style: TextStyle(fontSize: 20),
+                    child: Column(
+                      children: <Widget>[
+                        isOwner
+                            ? RaisedButton(
+                                onPressed: () async {
+                                  setState(() {
+                                    isLoading = true;
+                                  });
+
+                                  if (unavailable) {
+                                    Firestore.instance
+                                        .collection('items')
+                                        .document(itemDS.documentID)
+                                        .updateData({
+                                      'unavailable':
+                                          FieldValue.arrayRemove([selectedDay]),
+                                    }).then((_) {
+                                      unavailableDays.remove(selectedDay);
+                                      refresh();
+                                    });
+                                  } else {
+                                    Firestore.instance
+                                        .collection('items')
+                                        .document(itemDS.documentID)
+                                        .updateData({
+                                      'unavailable':
+                                          FieldValue.arrayUnion([selectedDay]),
+                                    }).then((_) {
+                                      unavailableDays.add(selectedDay);
+                                      refresh();
+                                    });
+                                  }
+                                },
+                                color: primaryColor,
+                                textColor: Colors.white,
+                                child: Text(unavailableText),
+                              )
+                            : Text(
+                                'Item is unavailable on this day',
+                                style: TextStyle(fontSize: 20),
+                              ),
+                      ],
                     ),
                   ),
           ],
@@ -389,6 +472,8 @@ class RentalCalendarState extends State<RentalCalendar>
         ),
         divider(),
         showPaymentMethod(),
+        Container(height: 20),
+        showPriceRequest(),
         Container(height: 20),
         showItemPriceInfo(),
         Container(height: 20),
@@ -552,6 +637,62 @@ class RentalCalendarState extends State<RentalCalendar>
     );
   }
 
+  Widget showPriceRequest() {
+    return InkWell(
+      onTap: () async {
+        var value = await showDialog(
+          barrierDismissible: true,
+          context: context,
+          builder: (BuildContext context) {
+            return Container(
+              child: DailyRateDialog(
+                pageHeight: pageHeight,
+                pageWidth: pageWidth,
+                rate: dailyRate,
+              ),
+            );
+          },
+        );
+
+        if (value != null && value is double) {
+          setState(() {
+            dailyRate = value;
+          });
+        }
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 20.0),
+        child: Column(
+          children: <Widget>[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                Text('Daily Rate',
+                    style: TextStyle(fontSize: 15.0, fontFamily: 'Quicksand')),
+                Text('\$${dailyRate.toStringAsFixed(2)}',
+                    style: TextStyle(
+                        fontSize: 15.0,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Quicksand')),
+              ],
+            ),
+            SizedBox(
+              height: 5.0,
+            ),
+            Align(
+                alignment: Alignment.bottomLeft,
+                child: Text('Click to propose new daily rate',
+                    style: TextStyle(
+                        fontSize: 10.0,
+                        fontFamily: 'Quicksand',
+                        fontWeight: FontWeight.w100,
+                        fontStyle: FontStyle.italic))),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget showItemPriceInfo() {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 20.0),
@@ -562,7 +703,7 @@ class RentalCalendarState extends State<RentalCalendar>
             children: <Widget>[
               Text('Total',
                   style: TextStyle(fontSize: 15.0, fontFamily: 'Quicksand')),
-              Text('\$${itemDS['price'] * duration}',
+              Text('\$${(dailyRate * duration).toStringAsFixed(2)}',
                   style: TextStyle(
                       fontSize: 15.0,
                       fontWeight: FontWeight.bold,
@@ -638,8 +779,9 @@ class RentalCalendarState extends State<RentalCalendar>
         message = 'You must complete your profile before renting an item!';
         break;
       case 5:
-        message = 'Your rental request time interferes with another rental! Try'
-            ' selecting a different pickup day or changing the rental duration';
+        message = 'Your rental request time interferes with another rental, '
+            'or the owner has blocked off this day! Try selecting a different '
+            'pickup day or changing the rental duration';
         break;
       case 6:
         message = 'The item owner has disabled renting on this item';
@@ -706,6 +848,25 @@ class RentalCalendarState extends State<RentalCalendar>
         Firestore.instance.collection('items').document(itemDS.documentID);
 
     DateTime pickupTimeCopy = stripHourMin(pickupTime);
+    DocumentSnapshot itemSnap = await itemDR.get();
+
+    if (itemSnap != null && itemSnap.exists) {
+      List unavailable = itemSnap['unavailable'];
+      List unavailableDateTimes = [];
+      List rentalDateTimes = [];
+
+      for (var timestamp in unavailable) {
+        unavailableDateTimes.add(timestamp.toDate());
+      }
+
+      for (int i = 0; i < duration; i++) {
+        rentalDateTimes.add(pickupTimeCopy.add(Duration(days: i)));
+      }
+
+      if (rentalDateTimes.any((item) => unavailableDateTimes.contains(item))) {
+        return false;
+      }
+    }
 
     // get the rental that starts immediately before the current request
     var rentalBeforeCurrent = await Firestore.instance
@@ -896,7 +1057,7 @@ class RentalCalendarState extends State<RentalCalendar>
         'pushToken': itemOwnerDS['pushToken'],
         'itemName': itemDS['name'],
       },
-      'price': itemDS['price'],
+      'price': dailyRate,
     });
 
     if (rentalDR != null) {

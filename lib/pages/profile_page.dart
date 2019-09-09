@@ -125,12 +125,8 @@ class ProfilePageState extends State<ProfilePage> {
   }
 
   Widget showUserDescription() {
-    bool empty = userDS['description']
-        .toString()
-        .isEmpty ? true : false;
-    String desc = userDS['description']
-        .toString()
-        .isEmpty
+    bool empty = userDS['description'].toString().isEmpty ? true : false;
+    String desc = userDS['description'].toString().isEmpty
         ? "The user hasn't added a description yet!"
         : userDS['description'];
     return Column(
@@ -139,10 +135,7 @@ class ProfilePageState extends State<ProfilePage> {
         SizedBox(height: 10.0),
         Text("$desc",
             style: TextStyle(
-                fontSize: MediaQuery
-                    .of(context)
-                    .size
-                    .width / 25,
+                fontSize: MediaQuery.of(context).size.width / 25,
                 fontFamily: appFont,
                 color: empty ? Colors.grey : Colors.black54)),
         SizedBox(height: 10.0),
@@ -154,14 +147,8 @@ class ProfilePageState extends State<ProfilePage> {
   }
 
   Widget showNameAndProfilePic() {
-    double h = MediaQuery
-        .of(context)
-        .size
-        .height;
-    double w = MediaQuery
-        .of(context)
-        .size
-        .width;
+    double h = MediaQuery.of(context).size.height;
+    double w = MediaQuery.of(context).size.width;
 
     return Container(
         decoration: new BoxDecoration(
@@ -187,14 +174,8 @@ class ProfilePageState extends State<ProfilePage> {
   }
 
   Widget showItems() {
-    double h = MediaQuery
-        .of(context)
-        .size
-        .height;
-    double w = MediaQuery
-        .of(context)
-        .size
-        .width;
+    double h = MediaQuery.of(context).size.height;
+    double w = MediaQuery.of(context).size.width;
 
     return Container(
       height: h / 3.2,
@@ -202,9 +183,9 @@ class ProfilePageState extends State<ProfilePage> {
         stream: Firestore.instance
             .collection('items')
             .where('creator',
-            isEqualTo: Firestore.instance
-                .collection('users')
-                .document(userDS.documentID))
+                isEqualTo: Firestore.instance
+                    .collection('users')
+                    .document(userDS.documentID))
             .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
