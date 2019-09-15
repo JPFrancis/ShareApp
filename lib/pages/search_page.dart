@@ -500,12 +500,12 @@ class SearchPageState extends State<SearchPage> {
           ]
               .map(
                 (selection) => DropdownMenuItem<String>(
-                      value: selection,
-                      child: Text(
-                        selection,
-                        style: TextStyle(fontFamily: font),
-                      ),
-                    ),
+                  value: selection,
+                  child: Text(
+                    selection,
+                    style: TextStyle(fontFamily: font),
+                  ),
+                ),
               )
               .toList()),
     );
@@ -538,12 +538,12 @@ class SearchPageState extends State<SearchPage> {
           ]
               .map(
                 (selection) => DropdownMenuItem<String>(
-                      value: selection,
-                      child: Text(
-                        selection,
-                        style: TextStyle(fontFamily: font),
-                      ),
-                    ),
+                  value: selection,
+                  child: Text(
+                    selection,
+                    style: TextStyle(fontFamily: font),
+                  ),
+                ),
               )
               .toList()),
     );
@@ -599,12 +599,12 @@ class SearchPageState extends State<SearchPage> {
             ]
                 .map(
                   (selection) => DropdownMenuItem<String>(
-                        value: selection,
-                        child: Text(
-                          '$selection',
-                          style: TextStyle(fontFamily: font),
-                        ),
-                      ),
+                    value: selection,
+                    child: Text(
+                      '$selection',
+                      style: TextStyle(fontFamily: font),
+                    ),
+                  ),
                 )
                 .toList()),
       ),

@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:io';
-
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -50,8 +50,6 @@ class HomePage extends StatefulWidget {
 }
 
 class HomePageState extends State<HomePage> {
-  final GlobalKey<RefreshIndicatorState> refreshIndicatorKey =
-      GlobalKey<RefreshIndicatorState>();
   final FirebaseMessaging firebaseMessaging = FirebaseMessaging();
   String deviceToken;
 
@@ -81,7 +79,7 @@ class HomePageState extends State<HomePage> {
   List<String> searchList;
   List<String> filteredList;
 
-  Geoflutterfire geo = Geoflutterfire();
+  Geoflutterfire geo;
   Position currentLocation;
   double searchRange = 10.0; // in miles
 
@@ -94,11 +92,18 @@ class HomePageState extends State<HomePage> {
   var initializationSettingsAndroid;
   var initializationSettingsIOS;
   var initializationSettings;
+  var androidSpecs = AndroidNotificationDetails('Default channel ID',
+      'Rental notifications', 'Notifications for rental updates',
+      importance: Importance.Max, priority: Priority.High, ticker: 'ticker');
+  var iosSpecs = IOSNotificationDetails();
+  NotificationDetails specs;
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+
+    geo = Geoflutterfire();
 
     initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -111,6 +116,8 @@ class HomePageState extends State<HomePage> {
 
     localNotificationManager.initialize(initializationSettings,
         onSelectNotification: onSelectNotification);
+
+    specs = NotificationDetails(androidSpecs, iosSpecs);
 
     currentTabIndex = 0;
 
@@ -138,7 +145,6 @@ class HomePageState extends State<HomePage> {
     ];
 
     if (isAuthenticated) {
-      scheduleNotifications();
       updateRentals();
     } else {
       setState(() {
@@ -215,19 +221,11 @@ class HomePageState extends State<HomePage> {
       }
     }
 
-    setState(() {
-      pageIsLoading = false;
-    });
+    scheduleNotifications();
   }
 
   void scheduleNotifications() async {
     await localNotificationManager.cancelAll();
-
-    var androidSpecs = AndroidNotificationDetails('Default channel ID',
-        'Rental notifications', 'Notifications for rental updates',
-        importance: Importance.Max, priority: Priority.High, ticker: 'ticker');
-    var iosSpecs = IOSNotificationDetails();
-    NotificationDetails specs = NotificationDetails(androidSpecs, iosSpecs);
 
     DocumentReference userDR =
         Firestore.instance.collection('users').document(myUserID);
@@ -314,8 +312,46 @@ class HomePageState extends State<HomePage> {
         );
       }
     }
+
+    removeUnavailableItemDays();
   }
 
+  void removeUnavailableItemDays() async {
+    CollectionReference itemRef = Firestore.instance.collection('items');
+
+    QuerySnapshot snaps = await itemRef
+        .where('creator',
+            isEqualTo:
+                Firestore.instance.collection('users').document(myUserID))
+        .getDocuments();
+    List<DocumentSnapshot> docs = snaps.documents;
+
+    if (snaps != null && docs.isNotEmpty) {
+      for (DocumentSnapshot snap in docs) {
+        List timestamps = snap['unavailable'];
+        List<DateTime> times = [];
+
+        for (var timestamp in timestamps) {
+          times.add(timestamp.toDate());
+        }
+
+        for (DateTime time in times) {
+          if (time.add(Duration(days: 1)).isBefore(DateTime.now())) {
+
+            await itemRef.document(snap.documentID).updateData({
+              'unavailable': FieldValue.arrayRemove([time]),
+            });
+          }
+        }
+      }
+    }
+
+    setState(() {
+      pageIsLoading = false;
+    });
+  }
+
+  /*
   void configureFCM() async {
     firebaseMessaging.configure(
       /// called if app is closed but running in background
@@ -330,24 +366,6 @@ class HomePageState extends State<HomePage> {
 
       /// called when app is running in foreground
       onMessage: (Map<String, dynamic> message) async {
-        //handleNotifications(message);
-        /*
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-                content: ListTile(
-                  title: Text(message['notification']['title']),
-                  subtitle: Text(message['notification']['body']),
-                ),
-                actions: <Widget>[
-                  FlatButton(
-                    child: Text('Ok'),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
-              ),
-        );
-        */
       },
     );
   }
@@ -359,7 +377,8 @@ class HomePageState extends State<HomePage> {
 
     switch (data['type']) {
       case 'rental':
-        await Navigator.of(context).pushNamed(
+        Navigator.of(context).popUntil(ModalRoute.withName('/'));
+        Navigator.of(context).pushNamed(
           RentalDetail.routeName,
           arguments: RentalDetailArgs(
             rentalID,
@@ -369,23 +388,18 @@ class HomePageState extends State<HomePage> {
         break;
 
       case 'chat':
-        DocumentSnapshot otherUserDS = await Firestore.instance
-            .collection('users')
-            .document(otherUserID)
-            .get();
-
-        if (otherUserDS != null && otherUserDS.exists) {
-          await Navigator.of(context).pushNamed(
-            Chat.routeName,
-            arguments: ChatArgs(
-              otherUserDS.documentID,
-            ),
-          );
-        }
+        Navigator.of(context).popUntil(ModalRoute.withName('/'));
+        Navigator.of(context).pushNamed(
+          Chat.routeName,
+          arguments: ChatArgs(
+            otherUserID,
+          ),
+        );
 
         break;
     }
   }
+  */
 
   Future onSelectNotification(String payload) async {
     if (payload != null) {
@@ -497,10 +511,10 @@ class HomePageState extends State<HomePage> {
       deviceToken = token;
       Firestore.instance.collection('users').document(myUserID).updateData({
         'lastActive': DateTime.now().millisecondsSinceEpoch,
-        'pushToken': FieldValue.arrayUnion([token]),
+        'pushToken': token,
       });
 
-      configureFCM();
+//      configureFCM();
     });
   }
 
@@ -668,7 +682,6 @@ class HomePageState extends State<HomePage> {
               } else {
                 navigateToEdit(
                   Item(
-                    id: null,
                     isVisible: true,
                     creator: Firestore.instance
                         .collection('users')
@@ -682,6 +695,7 @@ class HomePageState extends State<HomePage> {
                     images: new List(),
                     location: {'geopoint': null},
                   ),
+                  false,
                 );
               }
             }
@@ -996,12 +1010,12 @@ class HomePageState extends State<HomePage> {
               ]
                   .map(
                     (selection) => DropdownMenuItem<double>(
-                          value: selection,
-                          child: Text(
-                            '$selection',
-                            style: TextStyle(fontFamily: font),
-                          ),
-                        ),
+                      value: selection,
+                      child: Text(
+                        '$selection',
+                        style: TextStyle(fontFamily: font),
+                      ),
+                    ),
                   )
                   .toList()),
         ),
@@ -1876,8 +1890,32 @@ class HomePageState extends State<HomePage> {
                                             Duration(seconds: 30), (i) => i),
                                         builder: (BuildContext context,
                                             AsyncSnapshot<int> snapshot) {
-                                          DateFormat format = DateFormat(
-                                              "hh 'hours,' mm 'minutes until pickup'");
+                                          DateTime now = DateTime.now();
+                                          DateTime pickupTime =
+                                              rentalDS['pickupStart'].toDate();
+
+                                          int days =
+                                              pickupTime.difference(now).inDays;
+                                          int hours = pickupTime
+                                              .difference(
+                                                  now.add(Duration(days: days)))
+                                              .inHours;
+                                          int minutes = pickupTime
+                                              .difference(now.add(Duration(
+                                                  days: days, hours: hours)))
+                                              .inMinutes;
+
+                                          var dateString = '';
+
+                                          if (days == 0) {
+                                            dateString =
+                                                '$hours hours, $minutes min until pickup';
+                                          } else {
+                                            dateString =
+                                                '$days days, $hours hours, $minutes min until pickup';
+                                          }
+
+                                          /*
                                           int now = DateTime.now()
                                               .millisecondsSinceEpoch;
                                           int pickupTime =
@@ -1891,6 +1929,8 @@ class HomePageState extends State<HomePage> {
                                                   '${format.format(DateTime.fromMillisecondsSinceEpoch(remaining.inMilliseconds))}'
                                               : dateString =
                                                   '${remaining.inDays} days, ${format.format(DateTime.fromMillisecondsSinceEpoch(remaining.inMilliseconds))}';
+                                          */
+
                                           return Container(
                                             child: Text(
                                               dateString,
@@ -2626,7 +2666,7 @@ class HomePageState extends State<HomePage> {
     );
   }
 
-  void navigateToEdit(Item newItem) async {
+  void navigateToEdit(Item newItem, bool isEdit) async {
     if (!isAuthenticated || !myUserDS['acceptedTOS']) {
       return;
     }
@@ -2636,6 +2676,7 @@ class HomePageState extends State<HomePage> {
       ItemEdit.routeName,
       arguments: ItemEditArgs(
         newItem,
+        null,
       ),
     );
   }
@@ -2655,9 +2696,9 @@ class HomePageState extends State<HomePage> {
         context,
         MaterialPageRoute(
           builder: (BuildContext context) => SearchPage(
-                typeFilter: filter,
-                showSearch: false,
-              ),
+            typeFilter: filter,
+            showSearch: false,
+          ),
         ));
   }
 
@@ -2687,8 +2728,8 @@ class HomePageState extends State<HomePage> {
           context,
           MaterialPageRoute(
             builder: (BuildContext context) => ProfileEdit(
-                  userEdit: userEdit,
-                ),
+              userEdit: userEdit,
+            ),
             fullscreenDialog: true,
           ));
     }

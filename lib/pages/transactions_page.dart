@@ -162,12 +162,12 @@ class TransactionsPageState extends State<TransactionsPage> {
           ]
               .map(
                 (selection) => DropdownMenuItem<String>(
-                      value: selection,
-                      child: Text(
-                        selection,
-                        style: TextStyle(fontFamily: font),
-                      ),
-                    ),
+                  value: selection,
+                  child: Text(
+                    selection,
+                    style: TextStyle(fontFamily: font),
+                  ),
+                ),
               )
               .toList()),
     );
@@ -209,12 +209,12 @@ class TransactionsPageState extends State<TransactionsPage> {
           ]
               .map(
                 (selection) => DropdownMenuItem<String>(
-                      value: selection,
-                      child: Text(
-                        selection,
-                        style: TextStyle(fontFamily: font),
-                      ),
-                    ),
+                  value: selection,
+                  child: Text(
+                    selection,
+                    style: TextStyle(fontFamily: font),
+                  ),
+                ),
               )
               .toList()),
     );

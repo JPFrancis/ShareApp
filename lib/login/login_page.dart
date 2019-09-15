@@ -119,9 +119,10 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
 
   @override
   void initState() {
+    super.initState();
+
     errorMessage = "";
     isLoading = false;
-    super.initState();
 
     timeDilation = 2.0; // 3.0
     logoController = AnimationController(
@@ -666,22 +667,6 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   void initGoogleLogin() async {
     try {
       String userId = await widget.auth.logInGoogle();
-
-      setState(() {
-        errorMessage = 'Signed In\n\nUser id: $userId';
-      });
-      widget.onSignIn();
-    } catch (e) {
-      setState(() {
-        errorMessage = 'Sign In Error\n\n${e.toString()}';
-      });
-      print(e);
-    }
-  }
-
-  void initFacebookLogin() async {
-    try {
-      String userId = await widget.auth.loginFB();
 
       setState(() {
         errorMessage = 'Signed In\n\nUser id: $userId';

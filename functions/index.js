@@ -12,6 +12,8 @@ const bucket = storage.bucket();
 
 const stripe = require('stripe')(functions.config().stripe.token);
 
+const error_message = 'Invalid input. Make sure you\'re using the latest version of the app';
+
 // create new user document when account created
 exports.createUser = functions.auth.user().onCreate(event => {
     console.log('User id to be created: ', event.uid);
@@ -37,7 +39,7 @@ exports.createUser = functions.auth.user().onCreate(event => {
         creationDate: creationDate,
         custId: 'new',
         defaultSource: null,
-        pushToken: [],
+        pushToken: '',
         description: '',
         gender: null,
         phoneNum: null,
@@ -45,13 +47,19 @@ exports.createUser = functions.auth.user().onCreate(event => {
         address: null,
         verified: false,
         acceptedTOS: false,
-        totalRating: 0,
-        numRatings: 0,
+        renterRating: {
+            total: 0,
+            count: 0,
+        },
+        ownerRating: {
+            total: 0,
+            count: 0,
+        },
     }).then(function () {
         console.log('Created user: ', userID);
         return `Created user ${userID}`;
     }).catch(error => {
-        console.error('Error when creating user! ', error);
+        console.error('Error when creating user!', error);
     });
 });
 
@@ -102,9 +110,9 @@ exports.deleteUserAccount = functions.firestore
 exports.deleteItemImages = functions.firestore.document('items/{itemId}')
     .onDelete(async (snap, context) => {
         const deletedValue = snap.data();
-        const id = deletedValue.id;
+        const id = context.params.itemId;
 
-        if (id === null) {
+        if (id === undefined) {
             return null;
         }
 
@@ -372,6 +380,7 @@ exports.createCharge = functions.firestore.document('charges/{chargeId}')
             const ownerPayout = transferDataMap['ownerPayout'];
             const idempotentKey = context.params.chargeId;
 
+            /*
             stripe.tokens.create({
                 customer: "cus_YGGG4Kcl9D5BJ3",
             }, {
@@ -379,6 +388,7 @@ exports.createCharge = functions.firestore.document('charges/{chargeId}')
                 }).then(function (token) {
                     // asynchronously called
                 });
+            */
 
             const response = await stripe.charges.create({
                 amount: amount,
@@ -620,25 +630,142 @@ exports.updateMessageData = functions.firestore
         return batch.commit();
     });
 
-/*
-exports.addItem = functions.https.onCall((data, context) => {
-    const itemsCollection = firestore.collection('items');
-    const snapshot = await itemsCollection.add({
-        id: data['id'],
-        status: data['status'],
-        creator: data['creator'],
-        name: data['name'],
-        description: data['description'],
-        type: data['type'],
-        condition: data['condition'],
-        price: data['price'],
-        numImages: data['numImages'],
-        location: data['location'],
-        rental: data['rental'],
-    });
+exports.createChatRoom = functions.https.onCall(async (data, context) => {
+    var users = data.users;
+    var user0 = data.user0;
+    var user0Name = user0.name;
+    var user0Avatar = user0.avatar;
+    var user1 = data.user1;
+    var user1Name = user1.name;
+    var user1Avatar = user1.avatar;
+    var combinedId = data.combinedId;
 
-    itemsCollection.doc(snapshot.documentID).update({
-        id: customer.id
-    });
+    if (users === undefined || user0Name === undefined || user0Avatar === undefined ||
+        user1Name === undefined || user1Avatar === undefined || combinedId === undefined) {
+        throw new functions.https.HttpsError('unknown', error_message);
+    } else {
+        var docRef = db.collection('messages').doc(combinedId);
+
+        let resp = await docRef.set({
+            users: users,
+            user0: {
+                name: user0Name,
+                avatar: user0Avatar
+            },
+            user1: {
+                name: user1Name,
+                avatar: user1Avatar
+            },
+        });
+
+        if (resp === null) {
+            throw new functions.https.HttpsError('unknown', 'Error creating chat room');
+        } else {
+            return await docRef.get();
+        }
+    }
 });
-*/
+
+exports.addItem = functions.https.onCall(async (data, context) => {
+    var status = data.status;
+    var creator = data.creator;
+    var name = data.name;
+    var description = data.description;
+    var type = data.type;
+    var condition = data.condition;
+    var rating = data.rating;
+    var numRatings = data.numRatings;
+    var price = data.price;
+    var images = data.images;
+    var numImages = data.numImages;
+    var geohash = data.geohash;
+    var lat = data.lat;
+    var long = data.long;
+    var searchKey = data.searchKey;
+    var isVisible = data.isVisible;
+    var owner = data.owner;
+    var ownerName = owner.name;
+    var ownerAvatar = owner.avatar;
+
+    if (status === undefined || creator === undefined || name === undefined || description === undefined ||
+        type === undefined || condition === undefined || rating === undefined || numRatings === undefined ||
+        price === undefined || images === undefined || numImages === undefined || geohash === undefined ||
+        lat === undefined || long === undefined || searchKey === undefined || isVisible === undefined ||
+        owner === undefined || ownerName === undefined || ownerAvatar === undefined) {
+        throw new functions.https.HttpsError('unknown', error_message);
+    } else {
+        var docRef = await db.collection('items').add({
+            created: new Date(),
+            status: status,
+            creator: db.collection('users').doc(creator),
+            name: name,
+            description: description,
+            type: type,
+            condition: condition,
+            rating: rating,
+            numRatings: numRatings,
+            price: price,
+            images: images,
+            numImages: numImages,
+            location: {
+                geohash: geohash,
+                geopoint: new admin.firestore.GeoPoint(lat, long),
+            },
+            searchKey: searchKey,
+            isVisible: isVisible,
+            owner: {
+                name: ownerName,
+                avatar: ownerAvatar,
+            },
+            unavailable: null,
+        });
+
+        if (docRef === null) {
+            throw new functions.https.HttpsError('unknown', 'Error creating item');
+        } else {
+            return docRef.id;
+        }
+    }
+});
+
+exports.updateItem = functions.https.onCall(async (data, context) => {
+    var itemId = data.itemId;
+    var name = data.name;
+    var description = data.description;
+    var type = data.type;
+    var condition = data.condition;
+    var price = data.price;
+    var numImages = data.numImages;
+    var geohash = data.geohash;
+    var lat = data.lat;
+    var long = data.long;
+    var searchKey = data.searchKey;
+
+    if (itemId === undefined || name === undefined || description === undefined || type === undefined ||
+        condition === undefined || price === undefined || numImages === undefined || geohash === undefined ||
+        lat === undefined || long === undefined || searchKey === undefined) {
+        throw new functions.https.HttpsError('unknown', error_message);
+    } else {
+        let itemRef = db.collection('items').doc(itemId);
+
+        var update = await itemRef.update({
+            name: name,
+            description: description,
+            type: type,
+            condition: condition,
+            price: price,
+            numImages: numImages,
+            location: {
+                geohash: geohash,
+                geopoint: new admin.firestore.GeoPoint(lat, long),
+            },
+            searchKey: searchKey,
+        });
+
+        if (update === null) {
+            throw new functions.https.HttpsError('unknown', 'Error updating item');
+        } else {
+            return 'Item update successful';
+        }
+    }
+});

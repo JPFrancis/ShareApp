@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -40,8 +39,6 @@ class ItemDetailState extends State<ItemDetail> {
 
   GoogleMapController googleMapController;
   Map<CircleId, Circle> circles = <CircleId, Circle>{};
-  double latOffset;
-  double longOffset;
   GeoPoint itemLocationGeoPoint;
   Position currentLocation;
   String milesAway = 'Getting location...';
@@ -70,7 +67,6 @@ class ItemDetailState extends State<ItemDetail> {
     itemDS = widget.initItemDS;
 
     getMyUserID();
-    getSnapshots(false);
   }
 
   void delayPage() async {
@@ -90,6 +86,8 @@ class ItemDetailState extends State<ItemDetail> {
     } else {
       isAuthenticated = false;
     }
+
+    getSnapshots(false);
   }
 
   getUserLocation() async {
@@ -144,28 +142,7 @@ class ItemDetailState extends State<ItemDetail> {
 
       dr = itemDS['rental'];
 
-      var rng = new Random();
-
-      bool addLat = rng.nextBool();
-      bool addLong = rng.nextBool();
-      double latRandom = rng.nextDouble() / 50;
-      double longRandom = rng.nextDouble() / 50;
-
       itemLocationGeoPoint = itemDS['location']['geopoint'];
-      latOffset = itemLocationGeoPoint.latitude;
-      longOffset = itemLocationGeoPoint.longitude;
-
-      if (addLat) {
-        latOffset += latRandom;
-      } else {
-        latOffset -= latRandom;
-      }
-
-      if (addLong) {
-        longOffset += longRandom;
-      } else {
-        longOffset -= longRandom;
-      }
 
       setCircle();
       getUserLocation();
@@ -607,7 +584,7 @@ class ItemDetailState extends State<ItemDetail> {
     List imagesList = itemDS['images'];
     return imagesList.length > 0
         ? Hero(
-            tag: "${itemDS['id']}",
+            tag: "${itemDS.documentID}",
             child: Container(
                 height: w, width: w, child: getImagesListView(context)))
         : Text('No images yet\n');
@@ -621,7 +598,8 @@ class ItemDetailState extends State<ItemDetail> {
       //fillColor: Color(2),
       fillColor: Color.fromRGBO(60, 195, 254, 0.5),
       //strokeWidth: 5,
-      center: LatLng(latOffset, longOffset),
+      center:
+          LatLng(itemLocationGeoPoint.latitude, itemLocationGeoPoint.longitude),
       radius: 402,
       onTap: () {
         //_onCircleTapped(circleId);
@@ -641,7 +619,8 @@ class ItemDetailState extends State<ItemDetail> {
         mapType: MapType.normal,
         rotateGesturesEnabled: false,
         initialCameraPosition: CameraPosition(
-          target: LatLng(latOffset, longOffset),
+          target: LatLng(
+              itemLocationGeoPoint.latitude, itemLocationGeoPoint.longitude),
           zoom: 13,
           //zoom: 11,
         ),
@@ -796,8 +775,8 @@ class ItemDetailState extends State<ItemDetail> {
         context,
         MaterialPageRoute(
           builder: (BuildContext context) => AllReviews(
-                itemDS: itemDS,
-              ),
+            itemDS: itemDS,
+          ),
         ));
   }
 
@@ -807,7 +786,10 @@ class ItemDetailState extends State<ItemDetail> {
     Item result = await Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (BuildContext context) => ItemEdit(item: editItem),
+          builder: (BuildContext context) => ItemEdit(
+            item: editItem,
+            itemId: itemDS.documentID,
+          ),
           fullscreenDialog: true,
         ));
 

@@ -59,18 +59,18 @@ class RentalDetailState extends State<RentalDetail> {
   double communicationRating;
   double itemQualityRating;
   double overallExpRating;
+  double renterRating;
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     stripeInit = false;
     communicationRating = 0.0;
     itemQualityRating = 0.0;
     overallExpRating = 0.0;
+    renterRating = 0.0;
 
     getMyUserID();
-    getSnapshots();
     //delayPage();
   }
 
@@ -88,6 +88,8 @@ class RentalDetailState extends State<RentalDetail> {
     var user = await FirebaseAuth.instance.currentUser();
     if (user != null) {
       myUserId = user.uid;
+
+      getSnapshots();
     }
   }
 
@@ -246,43 +248,42 @@ class RentalDetailState extends State<RentalDetail> {
                 children: <Widget>[
                   showItemImage(),
                   showItemCreator(),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 15),
-                    child: OutlineButton(
-                      onPressed: () async {
-                        var duration = rentalDS['duration'].toInt();
-                        var price = rentalDS['price'].toInt();
-                        double itemPrice = (duration * price).toDouble();
-                        double tax = itemPrice * 0.06;
-                        double ourFee = itemPrice * 0.07;
-                        double baseChargeAmount =
-                            (itemPrice + tax + ourFee) * 1.029 + 0.3;
-                        int finalCharge = (baseChargeAmount * 100).round();
-
-                        Map transferData = {
-                          'ourFee': ourFee * 100,
-                          'ownerPayout': itemPrice * 100,
-                        };
-
-                        PaymentService().chargeRental(
-                          rentalDS.documentID,
-                          rentalDS['duration'],
-                          rentalDS['pickupStart'],
-                          rentalDS['rentalEnd'],
-                          renterId,
-                          ownerId,
-                          finalCharge,
-                          transferData,
-                          '${rentalDS['renterData']['name']} paying ${rentalDS['ownerData']['name']} '
-                          'for renting ${rentalDS['itemName']}',
-                        );
-                      },
-                      borderSide: BorderSide(color: Colors.green),
-                      textColor: Colors.green,
-                      color: coolerWhite,
-                      child: Text('Charge', style: TextStyle(fontFamily: appFont),),
-                    ),
-                  ),
+//                  Container(
+//                    padding: EdgeInsets.symmetric(horizontal: 15),
+//                    child: RaisedButton(
+//                      onPressed: () async {
+//                        var duration = rentalDS['duration'].toInt();
+//                        var price = rentalDS['price'].toInt();
+//                        double itemPrice = (duration * price).toDouble();
+//                        double tax = itemPrice * 0.06;
+//                        double ourFee = itemPrice * 0.07;
+//                        double baseChargeAmount =
+//                            (itemPrice + tax + ourFee) * 1.029 + 0.3;
+//                        int finalCharge = (baseChargeAmount * 100).round();
+//
+//                        Map transferData = {
+//                          'ourFee': ourFee * 100,
+//                          'ownerPayout': itemPrice * 100,
+//                        };
+//
+//                        PaymentService().chargeRental(
+//                          rentalDS.documentID,
+//                          rentalDS['duration'],
+//                          rentalDS['pickupStart'],
+//                          rentalDS['rentalEnd'],
+//                          renterId,
+//                          ownerId,
+//                          finalCharge,
+//                          transferData,
+//                          '${rentalDS['renterData']['name']} paying ${rentalDS['ownerData']['name']} '
+//                          'for renting ${rentalDS['itemName']}',
+//                        );
+//                      },
+//                      textColor: Colors.white,
+//                      color: Colors.green,
+//                      child: Text('Charge'),
+//                    ),
+//                  ),
                   SizedBox(
                     height: 20.0,
                   ),
@@ -431,16 +432,21 @@ class RentalDetailState extends State<RentalDetail> {
     double total = subtotal * 1.029 + 0.3;
     double stripeFeePrice = subtotal * 0.029 + 0.3;
 
-    String receiptText = 'Item rental:\n'
-        'Government\'s cut:\n'
-        'Transaction fee (Not us):\n'
-        'Cost to keep our lights on:\n'
-        'Total:';
-    String receiptValues = '\$${itemRentalPrice.toStringAsFixed(2)}\n'
-        '\$${taxPrice.toStringAsFixed(2)}\n'
-        '\$${stripeFeePrice.toStringAsFixed(2)}\n'
-        '\$${ourFeePrice.toStringAsFixed(2)}\n'
-        '\$${total.toStringAsFixed(2)}';
+    String receiptText = isRenter
+        ? 'Item rental:\n'
+            'Government\'s cut:\n'
+            'Transaction fee (Not us):\n'
+            'Cost to keep our lights on:\n'
+            'Total:'
+        : 'Payout:';
+
+    String receiptValues = isRenter
+        ? '\$${itemRentalPrice.toStringAsFixed(2)}\n'
+            '\$${taxPrice.toStringAsFixed(2)}\n'
+            '\$${stripeFeePrice.toStringAsFixed(2)}\n'
+            '\$${ourFeePrice.toStringAsFixed(2)}\n'
+            '\$${total.toStringAsFixed(2)}'
+        : '\$${itemRentalPrice.toStringAsFixed(2)}';
 
     Widget info;
     bool submittedReview = rentalDS['submittedReview'];
@@ -493,22 +499,7 @@ class RentalDetailState extends State<RentalDetail> {
                       ),
                     ],
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      Text(
-                        receiptText,
-                        style:
-                            TextStyle(fontFamily: appFont, color: primaryColor),
-                      ),
-                      Text(
-                        receiptValues,
-                        style:
-                            TextStyle(fontFamily: appFont, color: primaryColor),
-                      ),
-                    ],
-                  ),
-                ]
+                ],
               )
             : Column(
                 children: <Widget>[
@@ -551,22 +542,7 @@ class RentalDetailState extends State<RentalDetail> {
                       ),
                     ],
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      Text(
-                        receiptText,
-                        style:
-                            TextStyle(fontFamily: appFont, color: primaryColor),
-                      ),
-                      Text(
-                        receiptValues,
-                        style:
-                            TextStyle(fontFamily: appFont, color: primaryColor),
-                      ),
-                    ],
-                  ),
-                ]
+                ],
               );
         break;
 
@@ -613,21 +589,6 @@ class RentalDetailState extends State<RentalDetail> {
                       ),
                     ],
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      Text(
-                        receiptText,
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
-                      ),
-                      Text(
-                        receiptValues,
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
-                      ),
-                    ],
-                  ),
                 ],
               )
             : Column(
@@ -666,21 +627,6 @@ class RentalDetailState extends State<RentalDetail> {
                       ),
                       Text(
                         "$duration",
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      Text(
-                        receiptText,
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
-                      ),
-                      Text(
-                        receiptValues,
                         style:
                             TextStyle(fontFamily: appFont, color: Colors.white),
                       ),
@@ -1307,7 +1253,7 @@ class RentalDetailState extends State<RentalDetail> {
             children: <Widget>[
               starRating('How was the communication?', 1),
               starRating('How was the quality of the item?', 2),
-              starRating('How was your overal experience?', 3),
+              starRating('How was your overall experience?', 3),
               showWriteReviewTextBox(),
               Align(
                 alignment: AlignmentDirectional(0, 0),
@@ -1321,8 +1267,16 @@ class RentalDetailState extends State<RentalDetail> {
       if (rentalDS['submittedReview']) {
         return showCompletedReview();
       } else {
-        return Container(
-          child: Text('Waiting for renter to write review'),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            starRating('Leave a rating for the renter', 1),
+            showWriteReviewTextBox(),
+            Align(
+              alignment: AlignmentDirectional(0, 0),
+              child: showSubmitReviewButton(),
+            ),
+          ],
         );
       }
     } else {
@@ -1394,6 +1348,10 @@ class RentalDetailState extends State<RentalDetail> {
                 overallExpRating = value;
                 debugPrint('overal exp: $overallExpRating');
                 break;
+              case 4:
+                renterRating = value;
+                debugPrint('renter rating: $renterRating');
+                break;
             }
 
             setState(() {});
@@ -1464,50 +1422,87 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   void submitReview() async {
-    double avg =
-        (communicationRating + itemQualityRating + overallExpRating) / 3;
+    if (isRenter) {
+      if (communicationRating > 0 &&
+          itemQualityRating > 0 &&
+          overallExpRating > 0) {
+        double avg =
+            (communicationRating + itemQualityRating + overallExpRating) / 3;
 
-    var review = {
-      'communication': communicationRating,
-      'itemQuality': itemQualityRating,
-      'overall': overallExpRating,
-      'average': avg,
-      'reviewNote': reviewController.text
-    };
+        var review = {
+          'communication': communicationRating,
+          'itemQuality': itemQualityRating,
+          'overall': overallExpRating,
+          'average': avg,
+          'reviewNote': reviewController.text
+        };
 
-    await Firestore.instance
-        .collection('rentals')
-        .document(rentalDS.documentID)
-        .updateData({
-      'lastUpdateTime': DateTime.now(),
-      'review': review,
-      'submittedReview': true,
-    });
+        await Firestore.instance
+            .collection('rentals')
+            .document(rentalDS.documentID)
+            .updateData({
+          'lastUpdateTime': DateTime.now(),
+          'review': review,
+          'submittedReview': true,
+        });
 
-    await Firestore.instance.collection('items').document(itemId).updateData({
-      'numRatings': FieldValue.increment(1),
-      'rating': FieldValue.increment(avg),
-    });
+        await Firestore.instance
+            .collection('items')
+            .document(itemId)
+            .updateData({
+          'numRatings': FieldValue.increment(1),
+          'rating': FieldValue.increment(avg),
+        });
 
-    await Firestore.instance.collection('users').document(ownerId).updateData({
-      'numRatings': FieldValue.increment(1),
-      'rating': FieldValue.increment(avg),
-    });
+        await Firestore.instance
+            .collection('users')
+            .document(ownerId)
+            .updateData({
+          'ownerRating': {
+            'count': FieldValue.increment(1),
+            'total': FieldValue.increment(avg),
+          },
+        });
 
-    DocumentSnapshot otherUserDS = await Firestore.instance
-        .collection('users')
-        .document(otherUserId)
-        .get();
+        DocumentSnapshot otherUserDS = await Firestore.instance
+            .collection('users')
+            .document(otherUserId)
+            .get();
 
-    await Firestore.instance.collection('notifications').add({
-      'title': '$myName left you a review',
-      'body': '',
-      'pushToken': otherUserDS['pushToken'],
-      'rentalID': rentalDS.documentID,
-      'timestamp': DateTime.now().millisecondsSinceEpoch,
-    });
+        await Firestore.instance.collection('notifications').add({
+          'title': '$myName left you a review',
+          'body': '',
+          'pushToken': otherUserDS['pushToken'],
+          'rentalID': rentalDS.documentID,
+          'timestamp': DateTime.now().millisecondsSinceEpoch,
+        });
+      }
+    } else {
+      if (renterRating > 0) {
+        await Firestore.instance
+            .collection('users')
+            .document(renterId)
+            .updateData({
+          'renterRating': {
+            'count': FieldValue.increment(1),
+            'total': FieldValue.increment(renterRating),
+          },
+        });
 
-    /// UPDATE USER RATINGS
+        DocumentSnapshot otherUserDS = await Firestore.instance
+            .collection('users')
+            .document(otherUserId)
+            .get();
+
+        await Firestore.instance.collection('notifications').add({
+          'title': '$myName left you a review',
+          'body': '',
+          'pushToken': otherUserDS['pushToken'],
+          'rentalID': rentalDS.documentID,
+          'timestamp': DateTime.now().millisecondsSinceEpoch,
+        });
+      }
+    }
   }
 
   Future<bool> deleteRentalDialog() async {

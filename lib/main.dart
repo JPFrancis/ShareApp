@@ -77,6 +77,7 @@ class MyApp extends StatelessWidget {
                 builder: (context) {
                   return ItemEdit(
                     item: args.item,
+                    itemId: args.itemId,
                   );
                 },
                 fullscreenDialog: true,
@@ -225,8 +226,9 @@ class ItemDetailArgs {
 
 class ItemEditArgs {
   final Item item;
+  final String itemId;
 
-  ItemEditArgs(this.item);
+  ItemEditArgs(this.item, this.itemId);
 }
 
 class ItemRequestArgs {

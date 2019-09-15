@@ -5,10 +5,8 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.3.1'
-        //classpath 'com.google.gms:google-services:4.0.1'
-        classpath 'com.google.gms:google-services:4.2.0'
-        classpath 'com.deploygate:gradle:2.0.1'
+        classpath 'com.android.tools.build:gradle:3.3.0' //3.2.1
+        classpath 'com.google.gms:google-services:4.2.0'//4.3.1
     }
 }
 
@@ -17,12 +15,6 @@ allprojects {
         google()
         jcenter()
     }
-/*
-    configurations.all {
-        resolutionStrategy {
-            force 'com.facebook.android:facebook-android-sdk:4.35.0'
-        }
-    }*/
 }
 
 rootProject.buildDir = '../build'
@@ -48,15 +40,3 @@ subprojects {
         }
     }
 }
-
-/*
-subprojects {
-    project.configurations.all {
-        resolutionStrategy.eachDependency { details ->
-            if (details.requested.group == 'androidx.core' &&
-                    !details.requested.name.contains('androidx')) {
-                details.useVersion "1.0.1"
-            }
-        }
-    }
-}*/

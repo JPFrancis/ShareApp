@@ -93,10 +93,17 @@ class ProfilePageState extends State<ProfilePage> {
   }
 
   Widget showUserRating() {
-    double rating = 0;
+    double renterRating = 0;
+    double ownerRating = 0;
+    Map renterRatingMap = userDS['renterRating'];
+    Map ownerRatingMap = userDS['ownerRating'];
 
-    if (userDS['numRatings'] > 0) {
-      rating = userDS['totalRating'] / userDS['numRatings'];
+    if (renterRatingMap['count'] > 0) {
+      renterRating = renterRatingMap['total'] / renterRatingMap['count'];
+    }
+
+    if (ownerRatingMap['count'] > 0) {
+      ownerRating = ownerRatingMap['total'] / ownerRatingMap['count'];
     }
 
     return Container(
@@ -104,9 +111,13 @@ class ProfilePageState extends State<ProfilePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text('User rating'),
+          Text('Renter rating'),
           StarRating(
-            rating: rating,
+            rating: renterRating,
+          ),
+          Text('Owner rating'),
+          StarRating(
+            rating: ownerRating,
           ),
         ],
       ),
