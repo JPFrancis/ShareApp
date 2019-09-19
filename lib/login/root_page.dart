@@ -36,7 +36,7 @@ class RootPageState extends State<RootPage> {
     widget.auth.getUserID().then((userId) {
       setState(() {
         authStatus =
-            userId != null ? AuthStatus.signedIn : AuthStatus.notSignedIn;
+        userId != null ? AuthStatus.signedIn : AuthStatus.notSignedIn;
       });
     });
   }
@@ -49,6 +49,7 @@ class RootPageState extends State<RootPage> {
 
   void configureFCM() async {
     firebaseMessaging.configure(
+
       /// called if app is closed but running in background
       onResume: (Map<String, dynamic> message) async {
         handleNotifications(message);

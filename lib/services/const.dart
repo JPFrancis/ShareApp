@@ -5,7 +5,7 @@ final coolerWhite = Color(0xffFDFDFF);
 final greyColor = Color(0xffaeaeae);
 final greyColor2 = Color(0xffE8E8E8);
 final dialogBorderRadius = 12.0;
-final appBorderRadius = 5.0;
+final appBorderRadius = 3.0;
 
 final appFont = 'Quicksand';
 
