@@ -37,14 +37,6 @@ class AllReviewsState extends State<AllReviews> {
     getStream();
   }
 
-  void delayPage() async {
-    Future.delayed(Duration(milliseconds: 750)).then((_) {
-      setState(() {
-        isLoading = false;
-      });
-    });
-  }
-
   void getStream() {
     setState(() {
       isLoading = true;
@@ -56,7 +48,7 @@ class AllReviewsState extends State<AllReviews> {
             isEqualTo: Firestore.instance
                 .collection('items')
                 .document(widget.itemDS.documentID))
-        .where('submittedReview', isEqualTo: true);
+        .where('renterReviewSubmitted', isEqualTo: true);
 
     switch (filter) {
       case SortByFilter.recent:

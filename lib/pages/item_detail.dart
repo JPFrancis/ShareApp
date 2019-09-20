@@ -153,7 +153,7 @@ class ItemDetailState extends State<ItemDetail> {
               isEqualTo: Firestore.instance
                   .collection('items')
                   .document(itemDS.documentID))
-          .where('submittedReview', isEqualTo: true)
+          .where('renterReviewSubmitted', isEqualTo: true)
           .orderBy('lastUpdateTime', descending: true)
           .limit(3)
           .getDocuments();

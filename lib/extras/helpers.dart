@@ -1,15 +1,16 @@
-import 'package:flutter_picker/flutter_picker.dart';
 import 'dart:math';
-import 'package:flutter/gestures.dart';
-import 'package:shareapp/services/custom_dialog.dart' as customDialog;
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:fluttertoast/fluttertoast.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_picker/flutter_picker.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/pages/item_detail.dart';
 import 'package:shareapp/services/const.dart';
+import 'package:shareapp/services/custom_dialog.dart' as customDialog;
 
 double closeButtonSize = 31;
 
@@ -461,8 +462,9 @@ Widget searchTile(ds, context) {
                     fit: BoxFit.cover,
                     child: CachedNetworkImage(
                       imageUrl: ds['images'][0],
-                      placeholder: (context, url) =>
-                          CircularProgressIndicator(),
+                      placeholder: (context, url) => Center(
+                        child: CircularProgressIndicator(),
+                      ),
                     ),
                   ),
                 ),
@@ -1167,9 +1169,9 @@ class DailyRateDialogState extends State<DailyRateDialog> {
     String rateControllerText = '$rate';
 
     if (rate % 1 == 0) {
-    rateControllerText = '${rate.toStringAsFixed(0)}';
+      rateControllerText = '${rate.toStringAsFixed(0)}';
     }
-    rateController.text=rateControllerText;
+    rateController.text = rateControllerText;
   }
 
   @override
@@ -1286,3 +1288,361 @@ class DailyRateDialogState extends State<DailyRateDialog> {
   }
 }
 
+/*
+class ReviewDialog extends StatefulWidget {
+  final DocumentSnapshot rentalDS;
+  final double pageHeight;
+  final double pageWidth;
+  final String avatar;
+  final String name;
+  final String description;
+  final String date;
+
+  ReviewDialog({
+    @required this.rentalDS,
+    @required this.pageHeight,
+    @required this.pageWidth,
+    @required this.avatar,
+    @required this.name,
+    @required this.description,
+    @required this.date,
+  });
+
+  @override
+  ReviewDialogState createState() => ReviewDialogState();
+}
+
+class ReviewDialogState extends State<ReviewDialog> {
+  bool isRenter;
+
+  String avatar;
+  String name;
+  String description;
+  String date;
+
+  TextEditingController reviewController = TextEditingController();
+  String reviewControllerHintText = '';
+  String ratingText;
+
+  double starRating = 0.0;
+
+  double pageHeight;
+  double pageWidth;
+
+  @override
+  void initState() {
+    super.initState();
+
+    isInstructor = widget.isInstructor;
+    pageHeight = widget.pageHeight;
+    pageWidth = widget.pageWidth;
+    avatar = widget.avatar;
+    name = widget.name;
+    description = widget.description;
+    date = widget.date;
+    reviewController.text = '';
+
+    switch (isInstructor) {
+      case true:
+        reviewControllerHintText =
+        'Let other instructors know what it was like to teach at this studio';
+        ratingText = 'Leave a rating for the studio';
+
+        break;
+      case false:
+        reviewControllerHintText =
+        'Let other studios know what it was like working with this instructor';
+        ratingText = 'Leave a rating for this instructor';
+
+        break;
+    }
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+
+    reviewController.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    double dialogBorderRadius = 12.0;
+    double headerHeight = pageHeight * 0.2;
+    double avatarSize = headerHeight * 0.65;
+    double headerIntroPadding = (headerHeight - avatarSize) / 2;
+
+    return customDialog.AlertDialog(
+      elevation: 0.0,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(dialogBorderRadius)),
+      titlePadding: EdgeInsets.all(0),
+      contentPadding: EdgeInsets.all(0),
+      content: Container(
+        width: pageWidth * 0.9,
+        child: ScrollConfiguration(
+          behavior: RemoveScrollGlow(),
+          child: ListView(
+            shrinkWrap: true,
+            children: <Widget>[
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Container(
+                    padding: EdgeInsets.symmetric(vertical: headerIntroPadding),
+                    height: headerHeight,
+                    decoration: ShapeDecoration(
+                      color: Color(0xffEDEDED),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(dialogBorderRadius),
+                        ),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: <Widget>[
+                        Container(width: headerIntroPadding),
+                        isInstructor
+                            ? ClipRRect(
+                          borderRadius:
+                          BorderRadius.circular(imageBorderRadius),
+                          child: CachedNetworkImage(
+                            imageUrl: avatar,
+                            height: avatarSize,
+                            width: avatarSize,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => Center(
+                                child: CircularProgressIndicator()),
+                          ),
+                        )
+                            : ClipOval(
+                          child: CachedNetworkImage(
+                            imageUrl: avatar,
+                            height: avatarSize,
+                            width: avatarSize,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => Center(
+                                child: CircularProgressIndicator()),
+                          ),
+                        ),
+                        Container(width: headerIntroPadding),
+                        Container(
+                          padding:
+                          EdgeInsets.symmetric(vertical: avatarSize * 0.1),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text(
+                                name,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontFamily: appFont,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: appLetterSpacing,
+                                  wordSpacing: appWordSpacing,
+                                ),
+                              ),
+                              Text(
+                                description,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontFamily: appFont,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w400,
+                                  letterSpacing: appLetterSpacing,
+                                  wordSpacing: appWordSpacing,
+                                ),
+                              ),
+                              Text(
+                                date,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontFamily: appFont,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w400,
+                                  letterSpacing: appLetterSpacing,
+                                  wordSpacing: appWordSpacing,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    height: pageHeight * 0.15,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: <Widget>[
+                        Text(
+                          ratingText,
+                          style: TextStyle(
+                            fontFamily: appFont,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: appLetterSpacing,
+                            wordSpacing: appWordSpacing,
+                          ),
+                        ),
+                        SmoothStarRating(
+                          allowHalfRating: false,
+                          onRatingChanged: (double value) {
+                            setState(() {
+                              starRating = value;
+                            });
+                          },
+                          starCount: 5,
+                          rating: starRating,
+                          size: 35,
+                          color: Colors.yellow[700],
+                          spacing: 1,
+                          borderColor: Color(0xffCECFD2),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    height: pageHeight * 0.17,
+                    width: pageWidth * 0.8,
+                    decoration: ShapeDecoration(
+                      shape: RoundedRectangleBorder(
+                        side: BorderSide(
+                          width: 1.0,
+                          color: Colors.grey[300],
+                        ),
+                        borderRadius:
+                        BorderRadius.all(Radius.circular(appBorderRadius)),
+                      ),
+                    ),
+                    child: TextField(
+                      controller: reviewController,
+                      onChanged: (value) {
+                        setState(() {});
+                      },
+                      keyboardType: TextInputType.multiline,
+                      maxLines: 4,
+                      textAlign: TextAlign.left,
+                      cursorColor: secondaryColor,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontFamily: appFont,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: appLetterSpacing,
+                        wordSpacing: appWordSpacing,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: reviewControllerHintText,
+                        hintStyle: TextStyle(
+                          fontSize: 15,
+                          fontFamily: appFont,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: appLetterSpacing,
+                          wordSpacing: appWordSpacing,
+                        ),
+                        contentPadding: EdgeInsets.all(12),
+                        border: InputBorder.none,
+                      ),
+                    ),
+                  ),
+                  Container(height: pageHeight * 0.038),
+                  Container(
+                    height: pageHeight * 0.073,
+                    width: pageWidth * 0.6655,
+                    child: RaisedButton(
+                      elevation: 0.0,
+                      disabledColor: inactiveButtonColor,
+                      onPressed: canSubmit()
+                          ? () {
+                        Navigator.of(context).pop(
+                            'rating: $starRating, review: ${reviewController.text}, instabook: $instabook');
+                      }
+                          : null,
+                      color: primaryColor,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(appBorderRadius)),
+                      child: Text(
+                        'SUBMIT',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontFamily: appFont,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: appLetterSpacing,
+                          wordSpacing: appWordSpacing,
+                        ),
+                      ),
+                    ),
+                  ),
+                  isInstructor
+                      ? Container()
+                      : Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      Container(height: pageHeight * 0.035),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          InkWell(
+                            splashColor: Colors.transparent,
+                            highlightColor: Colors.transparent,
+                            onTap: () {
+                              setState(() {
+                                instabook = !instabook;
+                              });
+                            },
+                            child: Container(
+                              height: pageHeight * 0.04,
+                              width: pageHeight * 0.04,
+                              decoration: ShapeDecoration(
+                                shape: RoundedRectangleBorder(
+                                  side: BorderSide(
+                                    width: 1.0,
+                                    color: Colors.grey[400],
+                                  ),
+                                  borderRadius: BorderRadius.all(
+                                      Radius.circular(appBorderRadius)),
+                                ),
+                              ),
+                              child: instabook
+                                  ? Icon(
+                                Icons.check,
+                                color: secondaryColor,
+                              )
+                                  : Container(),
+                            ),
+                          ),
+                          Container(width: pageWidth * 0.02),
+                          Text(
+                            'Allow instructor to Instabook classes',
+                            style: TextStyle(
+                              fontFamily: appFont,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: appLetterSpacing,
+                              wordSpacing: appWordSpacing,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  Container(height: pageHeight * 0.05),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  bool canSubmit() {
+    return starRating == 0 || reviewController.text.isEmpty ? false : true;
+  }
+}
+*/

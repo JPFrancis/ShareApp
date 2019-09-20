@@ -19,17 +19,28 @@ class ProfilePage extends StatefulWidget {
   }
 }
 
-class ProfilePageState extends State<ProfilePage> {
+class ProfilePageState extends State<ProfilePage>
+    with SingleTickerProviderStateMixin {
   DocumentSnapshot userDS;
   List<DocumentSnapshot> searchList;
   TextEditingController searchController = TextEditingController();
   bool isLoading = true;
+  TabController tabController;
+
+  final List<Tab> myTabs = <Tab>[
+    Tab(text: 'From renters'),
+    Tab(text: 'From owners'),
+  ];
+
+  double pageHeight;
+  double pageWidth;
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
 
+    tabController = TabController(vsync: this, length: myTabs.length);
     getSnapshots();
   }
 
@@ -56,6 +67,10 @@ class ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    double statusBarHeight = MediaQuery.of(context).padding.top;
+    pageHeight = MediaQuery.of(context).size.height - statusBarHeight;
+    pageWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       backgroundColor: coolerWhite,
       floatingActionButton: Container(
@@ -84,6 +99,48 @@ class ProfilePageState extends State<ProfilePage> {
         SizedBox(height: 20.0),
         showUserDescription(),
         showUserRating(),
+        Container(
+          padding: EdgeInsets.only(
+            left: pageWidth * 0.04,
+            top: pageHeight * 0.02,
+          ),
+          child: Text(
+            'Reviews',
+            style: TextStyle(
+              fontFamily: appFont,
+              fontSize: 20,
+              fontWeight: FontWeight.w500,
+              color: Colors.black87,
+            ),
+          ),
+        ),
+        Container(
+          height: 50,
+          padding: EdgeInsets.symmetric(horizontal: pageWidth * 0.04),
+          child: AppBar(
+            automaticallyImplyLeading: false,
+            primary: false,
+            elevation: 0,
+            backgroundColor: Colors.transparent,
+            bottom: TabBar(
+              labelColor: primaryColor,
+              controller: tabController,
+              indicatorColor: primaryColor,
+              unselectedLabelColor: Colors.black87,
+              tabs: myTabs,
+            ),
+          ),
+        ),
+        Container(
+          height: pageHeight * 0.2,
+          child: TabBarView(
+            controller: tabController,
+            children: <Widget>[
+              Container(),
+              Container(),
+            ],
+          ),
+        ),
         divider(),
         reusableCategory("ITEMS"),
         SizedBox(height: 10.0),

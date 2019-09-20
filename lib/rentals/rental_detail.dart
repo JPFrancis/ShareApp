@@ -308,26 +308,91 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   Widget showItemImage() {
-    double widthOfScreen = MediaQuery.of(context).size.width;
+    double statusBarHeight = MediaQuery.of(context).padding.top;
+    double height = MediaQuery.of(context).size.height - statusBarHeight;
+    double width = MediaQuery.of(context).size.width;
     String imageUrl = rentalDS['itemAvatar'];
+
     _getItemImage(BuildContext context) {
-      return new Container(
-        child: FittedBox(
-          fit: BoxFit.cover,
-          child: CachedNetworkImage(
-            imageUrl: imageUrl,
-            placeholder: (context, url) => new CircularProgressIndicator(),
+      return Stack(
+        children: <Widget>[
+          Container(
+            child: FittedBox(
+              fit: BoxFit.cover,
+              child: CachedNetworkImage(
+                imageUrl: imageUrl,
+                placeholder: (context, url) => CircularProgressIndicator(),
+              ),
+            ),
           ),
-        ),
+          Positioned(
+            top: statusBarHeight,
+            right: 0,
+            child: PopupMenuButton<String>(
+              icon: Icon(
+                Icons.more_vert,
+                color: primaryColor,
+              ),
+              onSelected: (value) {
+                if (value == 'cancel') {
+                  cancelRental();
+                }
+              },
+              itemBuilder: (BuildContext context) => <PopupMenuItem<String>>[
+                const PopupMenuItem<String>(
+                  value: 'cancel',
+                  child: Text('Cancel Rental'),
+                ),
+              ],
+            ),
+          ),
+        ],
       );
     }
 
     return imageUrl != null
         ? Container(
-            height: widthOfScreen / 1,
+            height: width / 1,
             child: _getItemImage(context),
           )
         : Text('No images yet\n');
+  }
+
+  Future<bool> cancelRental() async {
+    final ThemeData theme = Theme.of(context);
+    final TextStyle dialogTextStyle =
+        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+
+    return await showDialog<bool>(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Warning'),
+              content: Text(
+                'Cancel rental?',
+                style: dialogTextStyle,
+              ),
+              actions: <Widget>[
+                FlatButton(
+                  child: const Text('CLOSE3'),
+                  onPressed: () {
+                    Navigator.of(context).pop(
+                        false); // Pops the confirmation dialog but not the page.
+                  },
+                ),
+                FlatButton(
+                  child: const Text('PROCEED'),
+                  onPressed: () {
+                    Navigator.of(context).pop(false);
+
+                    // Pops the confirmation dialog but not the page.
+                  },
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
   }
 
   Widget showItemCreator() {
@@ -449,9 +514,8 @@ class RentalDetailState extends State<RentalDetail> {
         : '\$${itemRentalPrice.toStringAsFixed(2)}';
 
     Widget info;
-    bool submittedReview = rentalDS['submittedReview'];
 
-    if (submittedReview) {
+    if (rentalDS['renterReview'] != null) {
       itemStatus = 5;
     }
 
@@ -998,95 +1062,92 @@ class RentalDetailState extends State<RentalDetail> {
               );
         break;
 
-      case 5: // completed
-        info = Column(
-          children: <Widget>[
-            Text(
-              "The transaction is complete.",
-              style: TextStyle(fontFamily: appFont, color: Colors.white),
-            ),
-            Text(
-              "Transaction Details",
-              style: TextStyle(fontFamily: appFont, color: Colors.white),
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                Text(
-                  "Rented Out On:",
-                  style: TextStyle(fontFamily: appFont, color: Colors.white),
-                ),
-                Text(
-                  "$start",
-                  style: TextStyle(fontFamily: appFont, color: Colors.white),
-                ),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                Text(
-                  "Returned On:",
-                  style: TextStyle(fontFamily: appFont, color: Colors.white),
-                ),
-                Text(
-                  "$end",
-                  style: TextStyle(fontFamily: appFont, color: Colors.white),
-                ),
-              ],
-            ),
-            Row(
-              children: <Widget>[
-                Text(
-                  "Rented for:",
-                  style: TextStyle(fontFamily: appFont, color: Colors.white),
-                ),
-                Text(
-                  "$duration",
-                  style: TextStyle(fontFamily: appFont, color: Colors.white),
-                ),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                Text(
-                  receiptText,
-                  style: TextStyle(fontFamily: appFont, color: Colors.white),
-                ),
-                Text(
-                  receiptValues,
-                  style: TextStyle(fontFamily: appFont, color: Colors.white),
-                ),
-              ],
-            ),
-          ],
-        );
-        break;
-
       default:
         info = Container();
         break;
     }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 30.0),
-      child: Container(
-        height: MediaQuery.of(context).size.height / 2.5,
-          decoration: new BoxDecoration(
-            color: coolerWhite,
-            borderRadius: new BorderRadius.all(Radius.circular(12.0)),
-            boxShadow: <BoxShadow>[
-              CustomBoxShadow(
-                  color: primaryColor.withOpacity(0.35),
-                  blurRadius: 4.0,
-                  blurStyle: BlurStyle.outer),
+    if ((isRenter && rentalDS['rentalReview'] != null) ||
+        (!isRenter && rentalDS['ownerReview'] != null)) {
+      info = Column(
+        children: <Widget>[
+          Text(
+            "The transaction is complete.",
+            style: TextStyle(fontFamily: appFont, color: Colors.white),
+          ),
+          Text(
+            "Transaction Details",
+            style: TextStyle(fontFamily: appFont, color: Colors.white),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Text(
+                "Rented Out On:",
+                style: TextStyle(fontFamily: appFont, color: Colors.white),
+              ),
+              Text(
+                "$start",
+                style: TextStyle(fontFamily: appFont, color: Colors.white),
+              ),
             ],
           ),
-          child: Container(padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15.0), child: info)
-          //Text(statusMessage, style: TextStyle(fontSize: 18, color: Colors.white, fontFamily: appFont)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Text(
+                "Returned On:",
+                style: TextStyle(fontFamily: appFont, color: Colors.white),
+              ),
+              Text(
+                "$end",
+                style: TextStyle(fontFamily: appFont, color: Colors.white),
+              ),
+            ],
           ),
-    );
+          Row(
+            children: <Widget>[
+              Text(
+                "Rented for:",
+                style: TextStyle(fontFamily: appFont, color: Colors.white),
+              ),
+              Text(
+                "$duration",
+                style: TextStyle(fontFamily: appFont, color: Colors.white),
+              ),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Text(
+                receiptText,
+                style: TextStyle(fontFamily: appFont, color: Colors.white),
+              ),
+              Text(
+                receiptValues,
+                style: TextStyle(fontFamily: appFont, color: Colors.white),
+              ),
+            ],
+          ),
+        ],
+      );
+    }
+
+    return Container(
+        decoration: BoxDecoration(
+          color: primaryColor,
+          borderRadius: BorderRadius.all(Radius.circular(12.0)),
+          boxShadow: <BoxShadow>[
+            CustomBoxShadow(
+                color: Colors.black45,
+                blurRadius: 3.0,
+                blurStyle: BlurStyle.outer),
+          ],
+        ),
+        child: Container(padding: EdgeInsets.all(10), child: info)
+        //Text(statusMessage, style: TextStyle(fontSize: 18, color: Colors.white, fontFamily: appFont)),
+        );
   }
 
   void handleAcceptedRental() async {
@@ -1244,7 +1305,7 @@ class RentalDetailState extends State<RentalDetail> {
 
   Widget showReview() {
     if (isRenter && rentalDS['status'] == 4) {
-      if (rentalDS['submittedReview']) {
+      if (rentalDS['ownerReview'] != null) {
         return showCompletedReview();
       } else {
         return Container(
@@ -1264,13 +1325,13 @@ class RentalDetailState extends State<RentalDetail> {
         );
       }
     } else if (!isRenter && rentalDS['status'] == 4) {
-      if (rentalDS['submittedReview']) {
+      if (rentalDS['renterReview'] != null) {
         return showCompletedReview();
       } else {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            starRating('Leave a rating for the renter', 1),
+            starRating('Leave a rating for the renter', 4),
             showWriteReviewTextBox(),
             Align(
               alignment: AlignmentDirectional(0, 0),
@@ -1285,12 +1346,13 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   Widget showCompletedReview() {
-    Map review = rentalDS['review'];
+    Map review = !isRenter ? rentalDS['renterReview'] : rentalDS['ownerReview'];
 
     if (review == null) {
       return Container();
     }
 
+    var renterRating = review['rating'];
     var communication = review['communication'];
     var itemQuality = review['itemQuality'];
     var overall = review['overall'];
@@ -1299,12 +1361,17 @@ class RentalDetailState extends State<RentalDetail> {
     return Container(
       child: Column(
         children: <Widget>[
-          Text(
-            'Communication: $communication\n'
-            'Item quality: $itemQuality\n'
-            'Overall experience: $overall\n'
-            'Review note: $reviewNote',
-          ),
+          isRenter
+              ? Text(
+                  'Communication: $communication\n'
+                  'Item quality: $itemQuality\n'
+                  'Overall experience: $overall\n'
+                  'Review note: $reviewNote',
+                )
+              : Text(
+                  'Rating: $renterRating\n'
+                  'Review note: $reviewNote',
+                ),
         ],
       ),
     );
@@ -1320,6 +1387,12 @@ class RentalDetailState extends State<RentalDetail> {
         break;
       case 3:
         return overallExpRating;
+        break;
+      case 4:
+        return renterRating;
+        break;
+      default:
+        return 0.0;
         break;
     }
   }
@@ -1422,6 +1495,10 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   void submitReview() async {
+    setState(() {
+      isLoading = true;
+    });
+
     if (isRenter) {
       if (communicationRating > 0 &&
           itemQualityRating > 0 &&
@@ -1442,8 +1519,8 @@ class RentalDetailState extends State<RentalDetail> {
             .document(rentalDS.documentID)
             .updateData({
           'lastUpdateTime': DateTime.now(),
-          'review': review,
-          'submittedReview': true,
+          'ownerReview': review,
+          'ownerReviewSubmitted': true,
         });
 
         await Firestore.instance
@@ -1480,6 +1557,18 @@ class RentalDetailState extends State<RentalDetail> {
     } else {
       if (renterRating > 0) {
         await Firestore.instance
+            .collection('rentals')
+            .document(rentalDS.documentID)
+            .updateData({
+          'lastUpdateTime': DateTime.now(),
+          'renterReview': {
+            'rating': renterRating,
+            'reviewNote': reviewController.text,
+          },
+          'renterReviewSubmitted': true,
+        });
+
+        await Firestore.instance
             .collection('users')
             .document(renterId)
             .updateData({
@@ -1503,6 +1592,10 @@ class RentalDetailState extends State<RentalDetail> {
         });
       }
     }
+
+    setState(() {
+      isLoading = false;
+    });
   }
 
   Future<bool> deleteRentalDialog() async {

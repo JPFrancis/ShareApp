@@ -1,15 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
-import 'package:fluttertoast/fluttertoast.dart';
-import 'package:shareapp/services/functions.dart';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_picker/flutter_picker.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
@@ -18,6 +17,7 @@ import 'package:shareapp/pages/profile_tab_pages/payouts_page.dart';
 import 'package:shareapp/pages/profile_tab_pages/profile_edit.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/const.dart';
+import 'package:shareapp/services/functions.dart';
 import 'package:shareapp/services/picker_data.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -73,8 +73,10 @@ class RentalCalendarState extends State<RentalCalendar>
     itemDS = widget.itemDS;
     List unavailable = itemDS['unavailable'];
 
-    for (var timestamp in unavailable) {
-      unavailableDays.add(timestamp.toDate());
+    if (unavailable != null) {
+      for (var timestamp in unavailable) {
+        unavailableDays.add(timestamp.toDate());
+      }
     }
 
     events = {};
@@ -185,12 +187,14 @@ class RentalCalendarState extends State<RentalCalendar>
       List unavailableTimestamps = itemSnap['unavailable'];
       unavailableDays = [];
 
-      for (int i = 0; i < unavailableTimestamps.length; i++) {
-        DateTime dateTime = unavailableTimestamps[i].toDate();
-        unavailableDays.add(dateTime);
-        events.addAll({
-          dateTime: ['unavailable']
-        });
+      if (unavailableTimestamps != null) {
+        for (int i = 0; i < unavailableTimestamps.length; i++) {
+          DateTime dateTime = unavailableTimestamps[i].toDate();
+          unavailableDays.add(dateTime);
+          events.addAll({
+            dateTime: ['unavailable']
+          });
+        }
       }
     }
 
@@ -855,8 +859,10 @@ class RentalCalendarState extends State<RentalCalendar>
       List unavailableDateTimes = [];
       List rentalDateTimes = [];
 
-      for (var timestamp in unavailable) {
-        unavailableDateTimes.add(timestamp.toDate());
+      if (unavailable != null) {
+        for (var timestamp in unavailable) {
+          unavailableDateTimes.add(timestamp.toDate());
+        }
       }
 
       for (int i = 0; i < duration; i++) {
@@ -1050,8 +1056,10 @@ class RentalCalendarState extends State<RentalCalendar>
       ],
       'renterCC': null,
       'ownerCC': null,
-      'review': null,
-      'submittedReview': false,
+      'renterReviewSubmitted': false,
+      'ownerReviewSubmitted': false,
+      'renterReview': null,
+      'ownerReview': null,
       'initialPushNotif': {
         'nameFrom': myName,
         'pushToken': itemOwnerDS['pushToken'],

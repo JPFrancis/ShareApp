@@ -58,8 +58,8 @@ class SearchPageState extends State<SearchPage> {
     super.initState();
 
     showSearch = widget.showSearch;
-    showSuggestions = showSearch ? true : false;
     typeFilter = widget.typeFilter;
+    showSuggestions = showSearch ? true : false;
     conditionFilter = 'All';
     distanceFilter = 20.0;
     sortByFilter = 'Distance';
@@ -215,7 +215,7 @@ class SearchPageState extends State<SearchPage> {
     setState(() {
       typeFilter = 'All';
       conditionFilter = 'All';
-      distanceFilter = 20.0;
+      distanceFilter = 5.0;
       sortByFilter = 'Alphabetically';
     });
   }

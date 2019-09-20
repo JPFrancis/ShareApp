@@ -12,7 +12,6 @@ import 'package:shareapp/pages/profile_page.dart';
 import 'package:shareapp/pages/search_page.dart';
 import 'package:shareapp/pages/transactions_page.dart';
 import 'package:shareapp/rentals/chat.dart';
-import 'package:shareapp/rentals/item_request.dart';
 import 'package:shareapp/rentals/new_pickup.dart';
 import 'package:shareapp/rentals/rental_calendar.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
@@ -78,21 +77,6 @@ class MyApp extends StatelessWidget {
                   return ItemEdit(
                     item: args.item,
                     itemId: args.itemId,
-                  );
-                },
-                fullscreenDialog: true,
-              );
-            }
-
-          case ItemRequest.routeName:
-            {
-              final ItemRequestArgs args = settings.arguments;
-
-              return MaterialPageRoute(
-                builder: (context) {
-                  return ItemRequest(
-                    itemID: args.itemID,
-                    startDate: args.startDate,
                   );
                 },
                 fullscreenDialog: true,

@@ -630,6 +630,140 @@ exports.updateMessageData = functions.firestore
         return batch.commit();
     });
 
+// update items and users when rental reviews are submitted
+exports.updateRatings = functions.firestore
+    .document('rentals/{rentalId}')
+    .onUpdate((rentalSnap, context) => {
+        const rentalId = context.params.rentalId;
+        const oldSnap = rentalSnap.before.data();
+        const newSnap = rentalSnap.after.data();
+        var updateRenter = 0;
+        var updateOwner = 0;
+
+        if (oldSnap === undefined || newSnap === undefined) {
+            return;
+        }
+
+        var oldRenterReview = oldSnap.renterReviewSubmitted;
+        var oldOwnerReview = oldSnap.ownerReviewSubmitted;
+
+        var newRenterReview = newSnap.renterReviewSubmitted;
+        var newOwnerReview = newSnap.ownerReviewSubmitted;
+
+        if (oldRenterReview !== newRenterReview) {
+            // renter needs updating
+            updateRenter = 1;
+        }
+
+        if (oldOwnerReview !== newOwnerReview) {
+            // owner needs updating
+            updateOwner = 1;
+        }
+
+        if (updateName || updateAvatar) {
+            let batch = db.batch();
+            var creatorRef = db.collection('users').doc(userId);
+
+            // update all items the user owns
+            return db.collection('items').where('creator', '==', creatorRef).get()
+                .then(snapshot => {
+                    snapshot.forEach(doc => {
+                        batch.update(doc.ref, {
+                            owner: {
+                                name: newName,
+                                avatar: newAvatar,
+                            }
+                        });
+                    });
+
+                    return null;
+                })
+
+                .then(() => {
+                    return db.collection('messages').where('users', 'array-contains', userId).get();
+                })
+
+                .then(snapshot => {
+                    // update chat rooms the user is in
+                    snapshot.forEach(doc => {
+                        var users = doc.data().users;
+                        if (userId === users[0]) {
+                            batch.update(doc.ref, {
+                                user0: {
+                                    name: newName,
+                                    avatar: newAvatar,
+                                }
+                            });
+                        }
+
+                        if (userId === users[1]) {
+                            batch.update(doc.ref, {
+                                user1: {
+                                    name: newName,
+                                    avatar: newAvatar,
+                                }
+                            });
+                        }
+                    });
+
+                    return null;
+                })
+
+                .then(() => {
+                    var date = admin.firestore.Timestamp.now();
+                    var userRef = db.collection('users').doc(userId);
+                    return db.collection('rentals').where('users', 'array-contains', userRef)
+                        .where('rentalEnd', '>', date).get();
+                })
+
+                .then(snapshot => {
+                    // update the rentals the user is involved in                    
+                    snapshot.forEach(doc => {
+                        var ownerRef = doc.data().owner;
+                        var renterRef = doc.data().renter;
+                        console.log(`Owner ref: ${ownerRef}`);
+                        console.log(`Owner ref id: ${ownerRef.id}`);
+                        console.log(`Doc: ${doc.data()}`);
+
+                        if (userId === ownerRef.id) {
+                            batch.update(doc.ref, {
+                                ownerData: {
+                                    name: newName,
+                                    avatar: newAvatar,
+                                }
+                            });
+                        }
+
+                        if (userId === renterRef.id) {
+                            batch.update(doc.ref, {
+                                renterData: {
+                                    name: newName,
+                                    avatar: newAvatar,
+                                }
+                            });
+                        }
+                    });
+
+                    return null;
+                })
+
+                .then(() => {
+                    return batch.commit();
+                })
+
+                .then(() => {
+                    console.log("Success");
+                    return null;
+                })
+
+                .catch(err => {
+                    console.log(err);
+                });
+        }
+
+        return 'Success';
+    });
+
 exports.createChatRoom = functions.https.onCall(async (data, context) => {
     var users = data.users;
     var user0 = data.user0;
@@ -766,6 +900,68 @@ exports.updateItem = functions.https.onCall(async (data, context) => {
             throw new functions.https.HttpsError('unknown', 'Error updating item');
         } else {
             return 'Item update successful';
+        }
+    }
+});
+
+exports.createRental = functions.https.onCall(async (data, context) => {
+    var status = data.status;
+    var requesting = data.requesting;
+    var item = data.item;
+    var itemName = data.itemName;
+    var type = data.type;
+    var condition = data.condition;
+    var rating = data.rating;
+    var numRatings = data.numRatings;
+    var price = data.price;
+    var images = data.images;
+    var numImages = data.numImages;
+    var geohash = data.geohash;
+    var lat = data.lat;
+    var long = data.long;
+    var searchKey = data.searchKey;
+    var isVisible = data.isVisible;
+    var owner = data.owner;
+    var ownerName = owner.name;
+    var ownerAvatar = owner.avatar;
+
+    if (status === undefined || creator === undefined || name === undefined || description === undefined ||
+        type === undefined || condition === undefined || rating === undefined || numRatings === undefined ||
+        price === undefined || images === undefined || numImages === undefined || geohash === undefined ||
+        lat === undefined || long === undefined || searchKey === undefined || isVisible === undefined ||
+        owner === undefined || ownerName === undefined || ownerAvatar === undefined) {
+        throw new functions.https.HttpsError('unknown', error_message);
+    } else {
+        var docRef = await db.collection('items').add({
+            created: new Date(),
+            status: status,
+            creator: db.collection('users').doc(creator),
+            name: name,
+            description: description,
+            type: type,
+            condition: condition,
+            rating: rating,
+            numRatings: numRatings,
+            price: price,
+            images: images,
+            numImages: numImages,
+            location: {
+                geohash: geohash,
+                geopoint: new admin.firestore.GeoPoint(lat, long),
+            },
+            searchKey: searchKey,
+            isVisible: isVisible,
+            owner: {
+                name: ownerName,
+                avatar: ownerAvatar,
+            },
+            unavailable: null,
+        });
+
+        if (docRef === null) {
+            throw new functions.https.HttpsError('unknown', 'Error creating item');
+        } else {
+            return docRef.id;
         }
     }
 });

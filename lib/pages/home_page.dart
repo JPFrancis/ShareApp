@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:cloud_functions/cloud_functions.dart';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -13,7 +13,6 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/extras/quote_icons.dart';
 import 'package:shareapp/main.dart';
@@ -22,6 +21,7 @@ import 'package:shareapp/models/user.dart';
 import 'package:shareapp/pages/item_detail.dart';
 import 'package:shareapp/pages/item_edit.dart';
 import 'package:shareapp/pages/profile_tab_pages/help_page.dart';
+import 'package:shareapp/pages/profile_tab_pages/my_reviews.dart';
 import 'package:shareapp/pages/profile_tab_pages/payouts_page.dart';
 import 'package:shareapp/pages/profile_tab_pages/profile_edit.dart';
 import 'package:shareapp/pages/search_page.dart';
@@ -75,6 +75,7 @@ class HomePageState extends State<HomePage> {
   TextEditingController nameController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
 
+  List<DocumentSnapshot> reviewRentals = [];
   List<DocumentSnapshot> allItems;
   List<String> searchList;
   List<String> filteredList;
@@ -97,6 +98,9 @@ class HomePageState extends State<HomePage> {
       importance: Importance.Max, priority: Priority.High, ticker: 'ticker');
   var iosSpecs = IOSNotificationDetails();
   NotificationDetails specs;
+
+  double pageHeight;
+  double pageWidth;
 
   @override
   void initState() {
@@ -329,21 +333,45 @@ class HomePageState extends State<HomePage> {
     if (snaps != null && docs.isNotEmpty) {
       for (DocumentSnapshot snap in docs) {
         List timestamps = snap['unavailable'];
-        List<DateTime> times = [];
 
-        for (var timestamp in timestamps) {
-          times.add(timestamp.toDate());
-        }
+        if (timestamps != null) {
+          List<DateTime> times = [];
 
-        for (DateTime time in times) {
-          if (time.add(Duration(days: 1)).isBefore(DateTime.now())) {
+          for (var timestamp in timestamps) {
+            times.add(timestamp.toDate());
+          }
 
-            await itemRef.document(snap.documentID).updateData({
-              'unavailable': FieldValue.arrayRemove([time]),
-            });
+          for (DateTime time in times) {
+            if (time.add(Duration(days: 1)).isBefore(DateTime.now())) {
+              await itemRef.document(snap.documentID).updateData({
+                'unavailable': FieldValue.arrayRemove([time]),
+              });
+            }
           }
         }
       }
+    }
+
+    showReviewDialog();
+  }
+
+  void showReviewDialog() async {
+    CollectionReference rentalsCollection =
+        Firestore.instance.collection('rentals');
+
+    // Check for expired rentals
+    var rentalQuerySnaps = await rentalsCollection
+        .where('renter',
+            isEqualTo:
+                Firestore.instance.collection('users').document(myUserID))
+        .where('status', isEqualTo: 4)
+        .where('renterReviewSubmitted', isEqualTo: false)
+        .getDocuments();
+
+    List<DocumentSnapshot> rentalSnaps = rentalQuerySnaps.documents;
+
+    if (rentalSnaps != null && rentalSnaps.length > 0) {
+      reviewRentals = rentalSnaps;
     }
 
     setState(() {
@@ -436,14 +464,6 @@ class HomePageState extends State<HomePage> {
       ),
     );
     */
-  }
-
-  void delayPage() async {
-    Future.delayed(Duration(milliseconds: 750)).then((_) {
-      setState(() {
-        pageIsLoading = false;
-      });
-    });
   }
 
   void setPrefs() async {
@@ -555,6 +575,10 @@ class HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    double statusBarHeight = MediaQuery.of(context).padding.top;
+    pageHeight = MediaQuery.of(context).size.height - statusBarHeight;
+    pageWidth = MediaQuery.of(context).size.width - statusBarHeight;
+
     bottomTabPages = <Widget>[
       searchPage(),
       myRentalsPage(),
@@ -634,10 +658,48 @@ class HomePageState extends State<HomePage> {
       return showTermsOfService();
     }
 
+    //showReviewDialogs();
+
     return IndexedStack(
       index: currentTabIndex,
       children: bottomTabPages,
     );
+  }
+
+  void showReviewDialogs() async {
+    if (reviewRentals != null && reviewRentals.isNotEmpty) {
+      for (int i = 0; i < reviewRentals.length; i++) {
+        DocumentSnapshot rentalDS = reviewRentals[i];
+
+        /*
+
+        var value = await showDialog(
+          barrierDismissible: true,
+          context: context,
+          builder: (BuildContext context) {
+            DocumentSnapshot studioSnap = studioSnapshots[0];
+
+            return Container(
+              //padding: EdgeInsets.only(bottom: pageHeight * 0.1),
+              child: WillPopScope(
+                onWillPop: () {},
+                child: ReviewDialog(
+                  isInstructor: isInstructor,
+                  pageHeight: pageHeight,
+                  pageWidth: pageWidth,
+                  avatar: studioSnap['avatar'],
+                  name: studioSnap['name'],
+                  description: '60 mins advanced yoga',
+                  date: 'Thursday, May 9 11:30 AM',
+                ),
+              ),
+            );
+          },
+        );
+
+        */
+      }
+    }
   }
 
   Widget showFAB() {
@@ -1443,7 +1505,7 @@ class HomePageState extends State<HomePage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
               InkWell(
-                onTap: () => navToItemFilter('Tools'),
+                onTap: () => navToItemFilter('Tool'),
                 child: _categoryTile('Tools', 'assets/tools.jpg'),
               ),
               InkWell(
@@ -2366,7 +2428,7 @@ class HomePageState extends State<HomePage> {
                           reusableFlatButton("Payments and Payouts",
                               Icons.payment, navToPayouts),
                           reusableFlatButton(
-                              "Notifications", Icons.notifications, null),
+                              "Reviews", Icons.rate_review, navToReviews),
                           reusableCategory("SUPPORT"),
                           reusableFlatButton("Get help", Icons.help_outline,
                               () => navToSendEmail('Help')),
@@ -2810,6 +2872,14 @@ class HomePageState extends State<HomePage> {
         await Firestore.instance.collection('users').document(userID).get();
 
     return ds;
+  }
+
+  void navToReviews() {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (BuildContext context) => MyReviews(),
+        ));
   }
 
   void navToPayouts() {
