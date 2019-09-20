@@ -359,19 +359,38 @@ class HomePageState extends State<HomePage> {
     CollectionReference rentalsCollection =
         Firestore.instance.collection('rentals');
 
-    // Check for expired rentals
+    // Check for rentals where you are the renter
     var rentalQuerySnaps = await rentalsCollection
         .where('renter',
             isEqualTo:
                 Firestore.instance.collection('users').document(myUserID))
         .where('status', isEqualTo: 4)
-        .where('renterReviewSubmitted', isEqualTo: false)
+        .where('ownerReviewSubmitted', isEqualTo: false)
         .getDocuments();
 
     List<DocumentSnapshot> rentalSnaps = rentalQuerySnaps.documents;
 
     if (rentalSnaps != null && rentalSnaps.length > 0) {
       reviewRentals = rentalSnaps;
+    }
+
+    // Check for rentals where you are the owner
+    rentalQuerySnaps = await rentalsCollection
+        .where('owner',
+            isEqualTo:
+                Firestore.instance.collection('users').document(myUserID))
+        .where('status', isEqualTo: 4)
+        .where('renterReviewSubmitted', isEqualTo: false)
+        .getDocuments();
+
+    rentalSnaps = rentalQuerySnaps.documents;
+
+    if (rentalSnaps != null && rentalSnaps.length > 0) {
+      reviewRentals.addAll(rentalSnaps);
+    }
+
+    if (reviewRentals.isNotEmpty) {
+      showReviewDialogs();
     }
 
     setState(() {
@@ -658,8 +677,6 @@ class HomePageState extends State<HomePage> {
       return showTermsOfService();
     }
 
-    //showReviewDialogs();
-
     return IndexedStack(
       index: currentTabIndex,
       children: bottomTabPages,
@@ -670,34 +687,25 @@ class HomePageState extends State<HomePage> {
     if (reviewRentals != null && reviewRentals.isNotEmpty) {
       for (int i = 0; i < reviewRentals.length; i++) {
         DocumentSnapshot rentalDS = reviewRentals[i];
-
-        /*
+        DocumentReference userRef =
+            Firestore.instance.collection('users').document(myUserID);
+        bool isRenter = rentalDS['renter'] == userRef ? true : false;
 
         var value = await showDialog(
           barrierDismissible: true,
           context: context,
           builder: (BuildContext context) {
-            DocumentSnapshot studioSnap = studioSnapshots[0];
-
-            return Container(
-              //padding: EdgeInsets.only(bottom: pageHeight * 0.1),
-              child: WillPopScope(
-                onWillPop: () {},
-                child: ReviewDialog(
-                  isInstructor: isInstructor,
-                  pageHeight: pageHeight,
-                  pageWidth: pageWidth,
-                  avatar: studioSnap['avatar'],
-                  name: studioSnap['name'],
-                  description: '60 mins advanced yoga',
-                  date: 'Thursday, May 9 11:30 AM',
-                ),
-              ),
+            return ReviewDialog(
+              rentalDS: rentalDS,
+              myUserId: myUserID,
+              isRenter: isRenter,
+              pageHeight: pageHeight,
+              pageWidth: pageWidth,
             );
           },
         );
 
-        */
+        if (value != null) {}
       }
     }
   }
