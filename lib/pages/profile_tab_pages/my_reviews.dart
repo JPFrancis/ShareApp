@@ -70,8 +70,8 @@ class MyReviewsState extends State<MyReviews> {
             bottom: TabBar(
               indicatorColor: Colors.black,
               tabs: [
-                Tab(child: Text("From renters")),
-                Tab(child: Text("From owners")),
+                Tab(child: Text(fromRentersTabText)),
+                Tab(child: Text(fromOwnersTabText)),
               ],
             ),
           ),
@@ -82,8 +82,8 @@ class MyReviewsState extends State<MyReviews> {
               )
             : TabBarView(
                 children: [
-                  showCreditCards(),
-                  showCreditCards(),
+                  reviewsList(myUserID, ReviewType.fromRenters),
+                  reviewsList(myUserID, ReviewType.fromOwners),
                 ],
               ),
       ),

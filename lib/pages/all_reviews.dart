@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -48,7 +47,7 @@ class AllReviewsState extends State<AllReviews> {
             isEqualTo: Firestore.instance
                 .collection('items')
                 .document(widget.itemDS.documentID))
-        .where('renterReviewSubmitted', isEqualTo: true);
+        .where('ownerReviewSubmitted', isEqualTo: true);
 
     switch (filter) {
       case SortByFilter.recent:
@@ -57,7 +56,7 @@ class AllReviewsState extends State<AllReviews> {
         break;
       case SortByFilter.highToLow:
         filterText = 'High to low';
-        query = query.orderBy('review.average', descending: true);
+        query = query.orderBy('ownerReview.average', descending: true);
         break;
     }
 
@@ -148,91 +147,37 @@ class AllReviewsState extends State<AllReviews> {
 
   Widget buildReviewsList() {
     return Expanded(
-      child: StreamBuilder<QuerySnapshot>(
+      child: StreamBuilder(
         stream: stream,
-        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+        builder: (BuildContext context, AsyncSnapshot snapshot) {
           switch (snapshot.connectionState) {
             case ConnectionState.waiting:
             default:
               if (snapshot.hasData) {
-                return Padding(
-                  padding: EdgeInsets.all(10),
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    padding: EdgeInsets.symmetric(horizontal: 15),
-                    itemCount: snapshot.data.documents.length,
-                    itemBuilder: (context, index) {
-                      DocumentSnapshot rentalDS =
-                          snapshot.data.documents[index];
-                      Map review = rentalDS['review'];
+                List snaps = snapshot.data.documents;
+                List<Widget> reviews = [];
 
-                      return StreamBuilder<DocumentSnapshot>(
-                        stream: rentalDS['renter'].snapshots(),
-                        builder: (BuildContext context,
-                            AsyncSnapshot<DocumentSnapshot> snapshot) {
-                          switch (snapshot.connectionState) {
-                            case ConnectionState.waiting:
+                snaps.forEach((var snap) {
+                  Map renter = snap['renterData'];
+                  Map customerReview = snap['ownerReview'];
 
-                            default:
-                              if (snapshot.hasData) {
-                                DocumentSnapshot reviewerDS = snapshot.data;
+                  reviews.add(reviewTile(
+                      renter['avatar'],
+                      renter['name'],
+                      customerReview['overall'].toDouble(),
+                      customerReview['reviewNote'],
+                      snap['lastUpdateTime'].toDate()));
+                });
 
-                                return Container(
-                                  child: Column(
-                                    children: <Widget>[
-                                      Row(
-                                        children: <Widget>[
-                                          Container(
-                                            height: 40.0,
-                                            child: ClipOval(
-                                              child: CachedNetworkImage(
-                                                imageUrl: reviewerDS['avatar'],
-                                                placeholder: (context, url) =>
-                                                    CircularProgressIndicator(),
-                                              ),
-                                            ),
-                                          ),
-                                          SizedBox(width: 5),
-                                          Text(
-                                            reviewerDS['name'],
-                                            style: TextStyle(
-                                                fontFamily: 'Quicksand',
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                          Container(width: 5),
-                                          StarRating(
-                                              rating: rentalDS['review']
-                                                      ['average']
-                                                  .toDouble()),
-                                        ],
-                                      ),
-                                      Container(
-                                          padding: EdgeInsets.only(left: 45.0),
-                                          alignment: Alignment.centerLeft,
-                                          child: Text(
-                                              rentalDS['review']['reviewNote'],
-                                              style: TextStyle(
-                                                  fontFamily: 'Quicksand'))),
-                                      Container(
-                                          padding: EdgeInsets.only(left: 45.0),
-                                          alignment: Alignment.centerLeft,
-                                          child: Text(
-                                              '${dateFormat.format(rentalDS['lastUpdateTime'].toDate())}',
-                                              style: TextStyle(
-                                                  fontFamily: 'Quicksand'))),
-                                      Container(height: 10),
-                                    ],
-                                  ),
-                                );
-                              } else {
-                                return Container();
-                              }
-                          }
-                        },
+                return reviews.isNotEmpty
+                    ? ListView(
+                        shrinkWrap: true,
+                        padding: const EdgeInsets.all(20.0),
+                        children: reviews,
+                      )
+                    : Center(
+                        child: Text('No results'),
                       );
-                    },
-                  ),
-                );
               } else {
                 return Container();
               }

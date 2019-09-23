@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
@@ -28,8 +30,8 @@ class ProfilePageState extends State<ProfilePage>
   TabController tabController;
 
   final List<Tab> myTabs = <Tab>[
-    Tab(text: 'From renters'),
-    Tab(text: 'From owners'),
+    Tab(text: fromRentersTabText),
+    Tab(text: fromOwnersTabText),
   ];
 
   double pageHeight;
@@ -132,12 +134,12 @@ class ProfilePageState extends State<ProfilePage>
           ),
         ),
         Container(
-          height: pageHeight * 0.2,
+          height: pageHeight * 0.3,
           child: TabBarView(
             controller: tabController,
             children: <Widget>[
-              Container(),
-              Container(),
+              reviewsList(widget.userID, ReviewType.fromRenters),
+              reviewsList(widget.userID, ReviewType.fromOwners),
             ],
           ),
         ),
