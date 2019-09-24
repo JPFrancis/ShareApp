@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 bool checkIdIsFirst(String id0, String id1) {
   return id0.hashCode < id1.hashCode ? true : false;
 }
@@ -59,4 +61,113 @@ Map setChatUserData(Map user0, Map user1) {
   }
 
   return map;
+}
+
+Future<void> submitReview(
+  bool isRenter,
+  String myUserId,
+  DocumentSnapshot rentalDS,
+  String reviewNote,
+  double communicationRating,
+  double itemQualityRating,
+  double overallExpRating,
+  double renterRating,
+) async {
+  String otherUserId =
+      isRenter ? rentalDS['owner'].documentID : rentalDS['renter'].documentID;
+
+  if (isRenter) {
+    if (communicationRating > 0 &&
+        itemQualityRating > 0 &&
+        overallExpRating > 0) {
+      double avg =
+          (communicationRating + itemQualityRating + overallExpRating) / 3;
+
+      var review = {
+        'communication': communicationRating,
+        'itemQuality': itemQualityRating,
+        'overall': overallExpRating,
+        'average': avg,
+        'reviewNote': reviewNote,
+      };
+
+      return await Firestore.instance
+          .collection('rentals')
+          .document(rentalDS.documentID)
+          .updateData({
+        'lastUpdateTime': DateTime.now(),
+        'ownerReview': review,
+        'ownerReviewSubmitted': true,
+      });
+
+      /*
+      await Firestore.instance.collection('items').document(rentalDS['item'].documentID).updateData({
+        'numRatings': FieldValue.increment(1),
+        'rating': FieldValue.increment(avg),
+      });
+
+      await Firestore.instance
+          .collection('users')
+          .document(rentalDS['owner'].documentID)
+          .updateData({
+        'ownerRating': {
+          'count': FieldValue.increment(1),
+          'total': FieldValue.increment(avg),
+        },
+      });
+
+      DocumentSnapshot otherUserDS = await Firestore.instance
+          .collection('users')
+          .document(otherUserId)
+          .get();
+
+      await Firestore.instance.collection('notifications').add({
+        'title': '$myName left you a review',
+        'body': '',
+        'pushToken': otherUserDS['pushToken'],
+        'rentalID': rentalDS.documentID,
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+      });
+      */
+    }
+  } else {
+    if (renterRating > 0) {
+      return await Firestore.instance
+          .collection('rentals')
+          .document(rentalDS.documentID)
+          .updateData({
+        'lastUpdateTime': DateTime.now(),
+        'renterReview': {
+          'rating': renterRating,
+          'reviewNote': reviewNote,
+        },
+        'renterReviewSubmitted': true,
+      });
+
+      /*
+      await Firestore.instance
+          .collection('users')
+          .document(rentalDS['renter'].documentID)
+          .updateData({
+        'renterRating': {
+          'count': FieldValue.increment(1),
+          'total': FieldValue.increment(renterRating),
+        },
+      });
+
+      DocumentSnapshot otherUserDS = await Firestore.instance
+          .collection('users')
+          .document(otherUserId)
+          .get();
+
+      await Firestore.instance.collection('notifications').add({
+        'title': '$myName left you a review',
+        'body': '',
+        'pushToken': otherUserDS['pushToken'],
+        'rentalID': rentalDS.documentID,
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+      });
+       */
+    }
+  }
 }

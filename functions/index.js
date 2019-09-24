@@ -246,6 +246,7 @@ exports.addStripeSource = functions.firestore.document('users/{userId}/tokens/{t
         const customerEmail = snapshot.data().email;
 
         if (customerId === 'new') {
+            console.log(`customerId: ${customerId}`);
             customer = await stripe.customers.create({
                 email: customerEmail,
                 source: token,
@@ -639,6 +640,7 @@ exports.updateRatings = functions.firestore
         const newSnap = rentalSnap.after.data();
         var updateRenter = 0;
         var updateOwner = 0;
+        var itemAverage = 0;
 
         if (oldSnap === undefined || newSnap === undefined) {
             return;
@@ -651,115 +653,94 @@ exports.updateRatings = functions.firestore
         var newOwnerReview = newSnap.ownerReviewSubmitted;
 
         if (oldRenterReview !== newRenterReview) {
-            // renter needs updating
             updateRenter = 1;
         }
 
         if (oldOwnerReview !== newOwnerReview) {
-            // owner needs updating
             updateOwner = 1;
+            itemAverage = newSnap.ownerReview.average;
         }
 
-        if (updateName || updateAvatar) {
-            let batch = db.batch();
-            var creatorRef = db.collection('users').doc(userId);
+        let batch = db.batch();
 
-            // update all items the user owns
-            return db.collection('items').where('creator', '==', creatorRef).get()
-                .then(snapshot => {
-                    snapshot.forEach(doc => {
-                        batch.update(doc.ref, {
-                            owner: {
-                                name: newName,
-                                avatar: newAvatar,
-                            }
-                        });
-                    });
+        if (updateRenter) {
+            var renterRef = newSnap.renter;
+            var renterRating = newSnap.renterReview.rating;
 
-                    return null;
-                })
-
-                .then(() => {
-                    return db.collection('messages').where('users', 'array-contains', userId).get();
-                })
-
-                .then(snapshot => {
-                    // update chat rooms the user is in
-                    snapshot.forEach(doc => {
-                        var users = doc.data().users;
-                        if (userId === users[0]) {
-                            batch.update(doc.ref, {
-                                user0: {
-                                    name: newName,
-                                    avatar: newAvatar,
-                                }
-                            });
-                        }
-
-                        if (userId === users[1]) {
-                            batch.update(doc.ref, {
-                                user1: {
-                                    name: newName,
-                                    avatar: newAvatar,
-                                }
-                            });
-                        }
-                    });
-
-                    return null;
-                })
-
-                .then(() => {
-                    var date = admin.firestore.Timestamp.now();
-                    var userRef = db.collection('users').doc(userId);
-                    return db.collection('rentals').where('users', 'array-contains', userRef)
-                        .where('rentalEnd', '>', date).get();
-                })
-
-                .then(snapshot => {
-                    // update the rentals the user is involved in                    
-                    snapshot.forEach(doc => {
-                        var ownerRef = doc.data().owner;
-                        var renterRef = doc.data().renter;
-                        console.log(`Owner ref: ${ownerRef}`);
-                        console.log(`Owner ref id: ${ownerRef.id}`);
-                        console.log(`Doc: ${doc.data()}`);
-
-                        if (userId === ownerRef.id) {
-                            batch.update(doc.ref, {
-                                ownerData: {
-                                    name: newName,
-                                    avatar: newAvatar,
-                                }
-                            });
-                        }
-
-                        if (userId === renterRef.id) {
-                            batch.update(doc.ref, {
-                                renterData: {
-                                    name: newName,
-                                    avatar: newAvatar,
-                                }
-                            });
-                        }
-                    });
-
-                    return null;
-                })
-
-                .then(() => {
-                    return batch.commit();
-                })
-
-                .then(() => {
-                    console.log("Success");
-                    return null;
-                })
-
-                .catch(err => {
-                    console.log(err);
-                });
+            batch.update(renterRef, {
+                "renterRating.count": admin.firestore.FieldValue.increment(1),
+                "renterRating.total": admin.firestore.FieldValue.increment(renterRating),
+            });
         }
+
+        if (updateOwner) {
+            var itemRef = newSnap.item;
+            var ownerRef = newSnap.owner;
+
+            // update item ratings
+            batch.update(itemRef, {
+                numRatings: admin.firestore.FieldValue.increment(1),
+                rating: admin.firestore.FieldValue.increment(itemAverage),
+            });
+
+            // update item owner ratings
+            batch.update(ownerRef, {
+                "ownerRating.count": admin.firestore.FieldValue.increment(1),
+                "ownerRating.total": admin.firestore.FieldValue.increment(itemAverage),
+            });
+        }
+
+        batch.commit();
+
+        return 'Success';
+    });
+
+// if a rental is deleted, remove item and user ratings if review is there
+exports.removeRatings = functions.firestore
+    .document('rentals/{rentalId}')
+    .onDelete((rentalSnap, context) => {
+        const rentalId = context.params.rentalId;
+        var renterRating;
+
+        if (rentalSnap.data().renterReview !== null) {
+            renterRating = rentalSnap.data().renterReview.rating;
+        }
+
+        var itemAverage;
+
+        if (rentalSnap.data().ownerReview !== null) {
+            itemAverage = rentalSnap.data().ownerReview.average;
+        }
+
+        var renterRef = rentalSnap.data().renter;
+        var itemRef = rentalSnap.data().item;
+        var ownerRef = rentalSnap.data().owner;
+        let batch = db.batch();
+
+        if (renterRating !== undefined) {
+            // remove renter rating            
+            batch.update(renterRef, {
+                "renterRating.count": admin.firestore.FieldValue.increment(-1),
+                "renterRating.total": admin.firestore.FieldValue.increment(renterRating * -1.0),
+            });
+        }
+
+        if (itemAverage !== undefined) {
+            // remove item ratings
+            batch.update(itemRef, {
+                numRatings: admin.firestore.FieldValue.increment(-1),
+                rating: admin.firestore.FieldValue.increment(itemAverage * -1.0),
+            });
+
+
+            // remove item owner ratings
+            batch.update(ownerRef, {
+                "ownerRating.count": admin.firestore.FieldValue.increment(-1),
+                "ownerRating.total": admin.firestore.FieldValue.increment(itemAverage * -1.0),
+            });
+        }
+
+        batch.commit();
 
         return 'Success';
     });

@@ -10,6 +10,7 @@ import 'package:shareapp/main.dart';
 import 'package:shareapp/rentals/chat.dart';
 import 'package:shareapp/rentals/new_pickup.dart';
 import 'package:shareapp/services/const.dart';
+import 'package:shareapp/services/functions.dart';
 import 'package:shareapp/services/payment_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smooth_star_rating/smooth_star_rating.dart';
@@ -335,7 +336,7 @@ class RentalDetailState extends State<RentalDetail> {
               ),
               onSelected: (value) {
                 if (value == 'cancel') {
-                  cancelRental();
+                  cancelRentalWarning();
                 }
               },
               itemBuilder: (BuildContext context) => <PopupMenuItem<String>>[
@@ -358,7 +359,7 @@ class RentalDetailState extends State<RentalDetail> {
         : Text('No images yet\n');
   }
 
-  Future<bool> cancelRental() async {
+  Future<bool> cancelRentalWarning() async {
     final ThemeData theme = Theme.of(context);
     final TextStyle dialogTextStyle =
         theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
@@ -374,7 +375,7 @@ class RentalDetailState extends State<RentalDetail> {
               ),
               actions: <Widget>[
                 FlatButton(
-                  child: const Text('CLOSE3'),
+                  child: const Text('CLOSE'),
                   onPressed: () {
                     Navigator.of(context).pop(
                         false); // Pops the confirmation dialog but not the page.
@@ -382,17 +383,28 @@ class RentalDetailState extends State<RentalDetail> {
                 ),
                 FlatButton(
                   child: const Text('PROCEED'),
-                  onPressed: () {
-                    Navigator.of(context).pop(false);
-
-                    // Pops the confirmation dialog but not the page.
-                  },
+                  onPressed: () => cancelRental(),
                 ),
               ],
             );
           },
         ) ??
         false;
+  }
+
+  void cancelRental() async {
+    {
+      Navigator.of(context).pop(false);
+
+      setState(() {
+        isLoading = true;
+      });
+
+      await Future.delayed(Duration(seconds: 3));
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   Widget showItemCreator() {
@@ -1466,7 +1478,7 @@ class RentalDetailState extends State<RentalDetail> {
         textScaleFactor: 1.25,
       ),
       onPressed: () {
-        submitReview();
+        updateReview();
       },
     );
   }
@@ -1494,103 +1506,38 @@ class RentalDetailState extends State<RentalDetail> {
     );
   }
 
-  void submitReview() async {
+  void updateReview() async {
     setState(() {
       isLoading = true;
     });
 
-    if (isRenter) {
-      if (communicationRating > 0 &&
-          itemQualityRating > 0 &&
-          overallExpRating > 0) {
-        double avg =
-            (communicationRating + itemQualityRating + overallExpRating) / 3;
+    if ((isRenter &&
+            communicationRating > 0 &&
+            itemQualityRating > 0 &&
+            overallExpRating > 0) ||
+        (!isRenter && renterRating > 0)) {
+      submitReview(
+          isRenter,
+          myUserId,
+          rentalDS,
+          reviewController.text,
+          communicationRating,
+          itemQualityRating,
+          overallExpRating,
+          renterRating);
 
-        var review = {
-          'communication': communicationRating,
-          'itemQuality': itemQualityRating,
-          'overall': overallExpRating,
-          'average': avg,
-          'reviewNote': reviewController.text
-        };
-
-        await Firestore.instance
-            .collection('rentals')
-            .document(rentalDS.documentID)
-            .updateData({
-          'lastUpdateTime': DateTime.now(),
-          'ownerReview': review,
-          'ownerReviewSubmitted': true,
-        });
-
-        await Firestore.instance
-            .collection('items')
-            .document(itemId)
-            .updateData({
-          'numRatings': FieldValue.increment(1),
-          'rating': FieldValue.increment(avg),
-        });
-
-        await Firestore.instance
-            .collection('users')
-            .document(ownerId)
-            .updateData({
-          'ownerRating': {
-            'count': FieldValue.increment(1),
-            'total': FieldValue.increment(avg),
-          },
-        });
-
-        DocumentSnapshot otherUserDS = await Firestore.instance
-            .collection('users')
-            .document(otherUserId)
-            .get();
-
-        await Firestore.instance.collection('notifications').add({
-          'title': '$myName left you a review',
-          'body': '',
-          'pushToken': otherUserDS['pushToken'],
-          'rentalID': rentalDS.documentID,
-          'timestamp': DateTime.now().millisecondsSinceEpoch,
-        });
-      }
-    } else {
-      if (renterRating > 0) {
-        await Firestore.instance
-            .collection('rentals')
-            .document(rentalDS.documentID)
-            .updateData({
-          'lastUpdateTime': DateTime.now(),
-          'renterReview': {
-            'rating': renterRating,
-            'reviewNote': reviewController.text,
-          },
-          'renterReviewSubmitted': true,
-        });
-
-        await Firestore.instance
-            .collection('users')
-            .document(renterId)
-            .updateData({
-          'renterRating': {
-            'count': FieldValue.increment(1),
-            'total': FieldValue.increment(renterRating),
-          },
-        });
-
-        DocumentSnapshot otherUserDS = await Firestore.instance
-            .collection('users')
-            .document(otherUserId)
-            .get();
-
-        await Firestore.instance.collection('notifications').add({
-          'title': '$myName left you a review',
-          'body': '',
-          'pushToken': otherUserDS['pushToken'],
-          'rentalID': rentalDS.documentID,
-          'timestamp': DateTime.now().millisecondsSinceEpoch,
-        });
-      }
+//        DocumentSnapshot otherUserDS = await Firestore.instance
+//            .collection('users')
+//            .document(otherUserId)
+//            .get();
+//
+//        await Firestore.instance.collection('notifications').add({
+//          'title': '$myName left you a review',
+//          'body': '',
+//          'pushToken': otherUserDS['pushToken'],
+//          'rentalID': rentalDS.documentID,
+//          'timestamp': DateTime.now().millisecondsSinceEpoch,
+//        });
     }
 
     setState(() {

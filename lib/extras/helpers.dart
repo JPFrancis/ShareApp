@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -8,11 +9,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_picker/flutter_picker.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:intl/intl.dart' as intl;
+import 'package:intl/intl.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/pages/item_detail.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:shareapp/services/custom_dialog.dart' as customDialog;
+import 'package:shareapp/services/functions.dart';
 import 'package:smooth_star_rating/smooth_star_rating.dart';
 
 double closeButtonSize = 31;
@@ -1340,7 +1342,7 @@ class ReviewDialogState extends State<ReviewDialog> {
     reviewController.text = '';
     reviewControllerHintText = 'Optional';
     DateTime dateTime = rentalDS['pickupStart'].toDate();
-    var dateFormat = intl.DateFormat('E, LLL d');
+    var dateFormat = DateFormat('E, LLL d');
     date = dateFormat.format(dateTime);
 
     switch (isRenter) {
@@ -1611,7 +1613,18 @@ class ReviewDialogState extends State<ReviewDialog> {
                                 elevation: 0.0,
                                 onPressed: canSubmit()
                                     ? () {
-                                        Navigator.of(context).pop('x');
+                                        submitReview(
+                                                isRenter,
+                                                myUserId,
+                                                rentalDS,
+                                                reviewController.text,
+                                                communicationRating,
+                                                itemQualityRating,
+                                                overallExpRating,
+                                                renterRating)
+                                            .then((_) {
+                                          Navigator.of(context).pop();
+                                        });
                                       }
                                     : null,
                                 color: primaryColor,
@@ -1655,4 +1668,116 @@ class ReviewDialogState extends State<ReviewDialog> {
       return renterRating == 0 ? false : true;
     }
   }
+}
+
+Widget reviewTile(String avatar, String name, double starRating,
+    String reviewNote, DateTime date) {
+  final dateFormat = new DateFormat('MMM dd, yyyy');
+
+  return Container(
+    child: Column(
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            Container(
+              height: 40.0,
+              child: ClipOval(
+                child: CachedNetworkImage(
+                  imageUrl: avatar,
+                  placeholder: (context, url) => CircularProgressIndicator(),
+                ),
+              ),
+            ),
+            SizedBox(width: 5),
+            Text(
+              name,
+              style: TextStyle(
+                  fontFamily: 'Quicksand', fontWeight: FontWeight.bold),
+            ),
+            Container(width: 5),
+            StarRating(rating: starRating),
+          ],
+        ),
+        Container(
+            padding: EdgeInsets.only(left: 45.0),
+            alignment: Alignment.centerLeft,
+            child: Text(reviewNote, style: TextStyle(fontFamily: 'Quicksand'))),
+        Container(
+            padding: EdgeInsets.only(left: 45.0),
+            alignment: Alignment.centerLeft,
+            child: Text('${dateFormat.format(date)}',
+                style: TextStyle(fontFamily: 'Quicksand'))),
+        Container(height: 10),
+      ],
+    ),
+  );
+}
+
+Widget reviewsList(String userId, ReviewType type) {
+  Stream stream;
+
+  DocumentReference userRef =
+      Firestore.instance.collection('users').document(userId);
+  Query query = Firestore.instance.collection('rentals');
+
+  switch (type) {
+    case ReviewType.fromRenters:
+      query = query
+          .where('owner', isEqualTo: userRef)
+          .where('ownerReviewSubmitted', isEqualTo: true);
+      break;
+    case ReviewType.fromOwners:
+      query = query
+          .where('renter', isEqualTo: userRef)
+          .where('renterReviewSubmitted', isEqualTo: true);
+      break;
+  }
+
+  query = query.orderBy('lastUpdateTime', descending: true);
+  stream = query.snapshots();
+
+  return StreamBuilder(
+    stream: stream,
+    builder: (BuildContext context, AsyncSnapshot snapshot) {
+      switch (snapshot.connectionState) {
+        case ConnectionState.waiting:
+        default:
+          if (snapshot.hasData) {
+            List snaps = snapshot.data.documents;
+            List<Widget> reviews = [];
+
+            snaps.forEach((var snap) {
+              bool isRenter =
+                  userId == snap['renter'].documentID ? true : false;
+              Map otherUserData =
+                  isRenter ? snap['ownerData'] : snap['renterData'];
+              Map customerReview = ReviewType.fromOwners == type
+                  ? snap['renterReview']
+                  : snap['ownerReview'];
+
+              reviews.add(reviewTile(
+                  otherUserData['avatar'],
+                  otherUserData['name'],
+                  ReviewType.fromRenters == type
+                      ? customerReview['overall'].toDouble()
+                      : customerReview['rating'].toDouble(),
+                  customerReview['reviewNote'],
+                  snap['lastUpdateTime'].toDate()));
+            });
+
+            return reviews.isNotEmpty
+                ? ListView(
+                    shrinkWrap: true,
+                    padding: const EdgeInsets.all(20.0),
+                    children: reviews,
+                  )
+                : Center(
+                    child: Text('No reviews yet'),
+                  );
+          } else {
+            return Container();
+          }
+      }
+    },
+  );
 }

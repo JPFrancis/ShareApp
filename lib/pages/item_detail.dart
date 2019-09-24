@@ -51,7 +51,7 @@ class ItemDetailState extends State<ItemDetail> {
   String myUserID;
   String itemCreator;
   String itemOwnerID;
-  Map<Map, DocumentSnapshot> recentReviews = {}; // review : writer of review
+  List recentReviews = [];
   Map owner;
 
   bool isAuthenticated;
@@ -153,22 +153,14 @@ class ItemDetailState extends State<ItemDetail> {
               isEqualTo: Firestore.instance
                   .collection('items')
                   .document(itemDS.documentID))
-          .where('renterReviewSubmitted', isEqualTo: true)
+          .where('ownerReviewSubmitted', isEqualTo: true)
           .orderBy('lastUpdateTime', descending: true)
           .limit(3)
           .getDocuments();
       List rentalSnapshots = querySnapshot.documents;
 
-      if (rentalSnapshots != null && rentalSnapshots.length > 0) {
-        for (int i = 0; i < rentalSnapshots.length; i++) {
-          DocumentSnapshot rentalDS = rentalSnapshots[i];
-          DocumentReference renterDR = rentalDS['renter'];
-          DocumentSnapshot reviewerDS = await renterDR.get();
-
-          if (reviewerDS != null) {
-            recentReviews[rentalDS['review']] = reviewerDS;
-          }
-        }
+      if (rentalSnapshots != null && rentalSnapshots.isNotEmpty) {
+        recentReviews = rentalSnapshots;
       }
 
       if (itemDS != null) {
@@ -321,47 +313,19 @@ class ItemDetailState extends State<ItemDetail> {
       return Container();
     }
 
-    Widget reviewTile(DocumentSnapshot renter, Map customerReview) {
-      return Container(
-        child: Column(
-          children: <Widget>[
-            Row(
-              children: <Widget>[
-                Container(
-                  height: 40.0,
-                  child: ClipOval(
-                    child: CachedNetworkImage(
-                      imageUrl: renter['avatar'],
-                      placeholder: (context, url) =>
-                          new CircularProgressIndicator(),
-                    ),
-                  ),
-                ),
-                SizedBox(width: 5),
-                Text(
-                  renter['name'],
-                  style: TextStyle(
-                      fontFamily: 'Quicksand', fontWeight: FontWeight.bold),
-                ),
-                Container(width: 5),
-                StarRating(rating: customerReview['overall'].toDouble()),
-              ],
-            ),
-            Container(
-                padding: EdgeInsets.only(left: 45.0),
-                alignment: Alignment.centerLeft,
-                child: Text(customerReview['reviewNote'],
-                    style: TextStyle(fontFamily: 'Quicksand'))),
-          ],
-        ),
-      );
-    }
-
     double h = MediaQuery.of(context).size.height;
     List<Widget> reviews = [];
 
-    recentReviews.forEach((k, v) {
-      reviews.add(reviewTile(v, k));
+    recentReviews.forEach((var snap) {
+      Map renter = snap['renterData'];
+      Map customerReview = snap['ownerReview'];
+
+      reviews.add(reviewTile(
+          renter['avatar'],
+          renter['name'],
+          customerReview['overall'].toDouble(),
+          customerReview['reviewNote'],
+          snap['lastUpdateTime'].toDate()));
     });
 
     double rating = itemDS['rating'].toDouble();
