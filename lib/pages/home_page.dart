@@ -980,8 +980,9 @@ class HomePageState extends State<HomePage> {
 
   Widget searchPage() {
     Widget _image(){
-      return Container(height: 200.0,
-        decoration: BoxDecoration(image: DecorationImage(image: AssetImage('assets/lines2.png'), fit: BoxFit.fill),)
+      return Container(
+        height: 200.0,
+        decoration: BoxDecoration(image: DecorationImage(image: AssetImage('assets/lines.png'), fit: BoxFit.fill),)
         );
     }
     return Container(
@@ -1002,6 +1003,7 @@ class HomePageState extends State<HomePage> {
               height: 10,
             ),
             nearby(),
+            SizedBox(height: 70.0,),
             _image(),
           ],
         ),
@@ -1016,16 +1018,13 @@ class HomePageState extends State<HomePage> {
       padding: EdgeInsets.symmetric(horizontal: h / 55),
       child: Column(
         children: <Widget>[
-          Text(
-            'Nearby Items',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              fontFamily: font,
+          Container(
+            padding: EdgeInsets.only(left: 5.0, top: 10.0),
+            alignment: Alignment.centerLeft,
+            child: Text('Nearby Items', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, fontFamily: appFont,),
             ),
           ),
           Row(
-            //mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
               searchRangeDropdown(),
               ButtonTheme(
@@ -1106,7 +1105,7 @@ class HomePageState extends State<HomePage> {
         ),
       );
     } else if (currentLocation == null) {
-      return Text('No location data');
+      return Text('No location data', style: TextStyle(fontFamily: appFont));
     } else {
       GeoFirePoint center = geo.point(
           latitude: currentLocation.latitude,
@@ -1368,23 +1367,30 @@ class HomePageState extends State<HomePage> {
           Align(
             alignment: Alignment.bottomCenter,
             child: Column(
-              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
-                Row(children: <Widget>[
-                  Image.asset('assets/white_logo.png', height: 80.0, width: 80.0),
-                  Container(
-                      padding: EdgeInsets.only(left: 80.0),
-                      alignment: Alignment.bottomLeft,
-                      child: Text(
-                        "make it happen",
-                        style: TextStyle(
-                            color: Colors.black,
-                            fontFamily: appFont,
-                            fontSize: 20.0,
-                            fontWeight: FontWeight.w300),
-                      )),
-                ],),
-                searchField(),
+                Container(
+                  padding: EdgeInsets.only(top: 40.0, right: 20.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: <Widget>[
+                    Container(
+                        padding: EdgeInsets.only(right: 10.0),
+                        child: Text(
+                          "make it happen",
+                          style: TextStyle(
+                              color: Colors.black,
+                              fontFamily: appFont,
+                              fontSize: 20.0,
+                              fontWeight: FontWeight.w300),
+                        )),
+                    Image.asset('assets/black_logo.png', height: 35.0, width: 35.0),
+                  ],),
+                ),
+                Align(
+                  alignment: Alignment.bottomLeft,
+                  child: searchField(),
+                ),
               ],
             ),
           ),
@@ -1662,7 +1668,7 @@ class HomePageState extends State<HomePage> {
               var updated = snapshot.data.documents.toList();
 
               if (updated.length == 0) {
-                return Text('Nothing to show');
+                return Container();
               }
 
               return ListView.builder(
@@ -1906,7 +1912,7 @@ class HomePageState extends State<HomePage> {
                 var updated = snapshot.data.documents;
 
                 if (updated.length == 0) {
-                  return Text('Nothing to show');
+                  return Container(); 
                 }
 
                 return ListView.builder(

@@ -442,6 +442,7 @@ class PayoutsPageState extends State<PayoutsPage> {
   }
 
   Widget buildChargesList() {
+    double w = MediaQuery.of(context).size.width;
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
         stream: Firestore.instance
@@ -468,13 +469,41 @@ class PayoutsPageState extends State<PayoutsPage> {
                       DocumentSnapshot ds = docs[index];
                       double amount = ds['amount'] / 100;
 
+                      Widget _paymentCard() {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 15.0),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              boxShadow: <BoxShadow>[
+                                CustomBoxShadow(
+                                    color: Colors.grey,
+                                    blurRadius: 5.0,
+                                    blurStyle: BlurStyle.outer),
+                              ],
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            height: 80.0,
+                            child: Container(
+                              padding: EdgeInsets.symmetric(horizontal: 10.0),
+                              child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: <Widget>[
+                                  Text("${ds['description']}", style: TextStyle(fontFamily: appFont, fontSize: w/28),),
+                                  Text("\$${amount.toStringAsFixed(0)}", style: TextStyle(fontWeight: FontWeight.bold, color: primaryColor.withOpacity(0.85), fontSize: w/15, fontFamily: appFont),),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+
+                      return _paymentCard();
+
+/*
                       return ListTile(
-                        title: Text(
-                          '\$${amount.toStringAsFixed(0)}',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
+                        title: Text( '\$${amount.toStringAsFixed(0)}', style: TextStyle(fontWeight: FontWeight.bold),),
                         subtitle: Text('${ds['description']}'),
-                      );
+                      );*/
                     });
               } else {
                 return Container();
