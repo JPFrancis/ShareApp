@@ -410,6 +410,53 @@ exports.createCharge = functions.firestore.document('charges/{chargeId}')
         }
     });
 
+exports.createChargeTEST = functions.firestore.document('charges/{chargeId}')
+    .onCreate(async (chargeSnap, context) => {
+        try {
+            const idFrom = chargeSnap.data().rentalData['idFrom'];
+            const userSnap = await db.collection('users').doc(idFrom).get();
+            const idTo = chargeSnap.data().rentalData['idTo'];
+            const itemOwner = await db.collection('users').doc(idTo).get();
+            const ownerCustId = userSnap.data().custId;
+            const customer = userSnap.data().custId;
+            const amount = chargeSnap.data().amount;
+            const currency = chargeSnap.data().currency;
+            const description = chargeSnap.data().description;
+            const transferDataMap = chargeSnap.data().transferData;
+            const ourFee = transferDataMap['ourFee'];
+            const ownerPayout = transferDataMap['ownerPayout'];
+            const idempotentKey = context.params.chargeId;
+
+            /*
+            stripe.tokens.create({
+                customer: "cus_YGGG4Kcl9D5BJ3",
+            }, {
+                    stripe_account: "{{CONNECTED_STRIPE_ACCOUNT_ID}}",
+                }).then(function (token) {
+                    // asynchronously called
+                });
+            */
+
+            const response = await stripe.subscriptions.create({
+                customer: customer,
+                amount: amount,
+                currency: currency,
+                //source: customer,
+                source: "tok_visa",
+                application_fee_amount: ourFee,
+                transfer_data: {
+                    amount: ownerPayout,
+                    destination: ownerCustId,
+                },
+                description: description,
+            }, { idempotency_key: idempotentKey });
+            return chargeSnap.ref.set(response, { merge: true });
+
+        } catch (error) {
+            await chargeSnap.ref.set({ error: error.message }, { merge: true });
+        }
+    });
+
 // update items and rentals when user edits their name and profile picture
 exports.updateUserConnections = functions.firestore
     .document('users/{userId}')

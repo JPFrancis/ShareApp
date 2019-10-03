@@ -267,7 +267,7 @@ class RentalDetailState extends State<RentalDetail> {
 //                          'ownerPayout': itemPrice * 100,
 //                        };
 //
-//                        PaymentService().chargeRental(
+//                        PaymentService().createSubscription(
 //                          rentalDS.documentID,
 //                          rentalDS['duration'],
 //                          rentalDS['pickupStart'],
@@ -526,10 +526,6 @@ class RentalDetailState extends State<RentalDetail> {
         : '\$${itemRentalPrice.toStringAsFixed(2)}';
 
     Widget info;
-
-    if (rentalDS['renterReview'] != null) {
-      itemStatus = 5;
-    }
 
     switch (itemStatus) {
       case 0: //requested, renter has sent request
