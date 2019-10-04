@@ -23,6 +23,11 @@ enum Status {
   completed,
 }
 
+enum RentalWarning {
+  cancel,
+  reject,
+}
+
 class RentalDetail extends StatefulWidget {
   static const routeName = '/itemRental';
   final String rentalID;
@@ -51,6 +56,7 @@ class RentalDetailState extends State<RentalDetail> {
   String ownerId;
   String renterId;
   String otherUserId;
+  int status=-1;
 
   TextStyle textStyle;
   double padding = 5.0;
@@ -132,21 +138,28 @@ class RentalDetailState extends State<RentalDetail> {
   Widget build(BuildContext context) {
     textStyle = Theme.of(context).textTheme.title;
 
-    return Scaffold(
-      backgroundColor: coolerWhite,
-      body: showBody(),
-      floatingActionButton: Container(
-        padding: const EdgeInsets.only(top: 120.0, left: 5.0),
-        child: FloatingActionButton(
-          onPressed: () => Navigator.pop(context),
-          child: Icon(Icons.close),
-          elevation: 1,
-          backgroundColor: Colors.white70,
-          foregroundColor: primaryColor,
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.miniStartTop,
-    );
+    return isLoading
+        ? Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          )
+        : Scaffold(
+            backgroundColor: coolerWhite,
+            body: showBody(),
+            floatingActionButton: Container(
+              padding: const EdgeInsets.only(top: 120.0, left: 5.0),
+              child: FloatingActionButton(
+                onPressed: () => Navigator.pop(context),
+                child: Icon(Icons.close),
+                elevation: 1,
+                backgroundColor: Colors.white70,
+                foregroundColor: primaryColor,
+              ),
+            ),
+            floatingActionButtonLocation:
+                FloatingActionButtonLocation.miniStartTop,
+          );
   }
 
   Widget chatButton() {
@@ -184,11 +197,7 @@ class RentalDetailState extends State<RentalDetail> {
 
   Widget showBody() {
     if (rentalExists) {
-      return isLoading
-          ? Container(
-              child: Center(child: CircularProgressIndicator()),
-            )
-          : buildRentalDetails();
+      return buildRentalDetails();
     } else {
       return Center(
         child: Column(
@@ -228,6 +237,7 @@ class RentalDetailState extends State<RentalDetail> {
               }
 
               rentalDS = snapshot.data;
+              status = rentalDS['status'];
 
               DateTime now = DateTime.now();
               //DateTime now = DateTime(2019, 7, 16, 6,30);
@@ -326,7 +336,7 @@ class RentalDetailState extends State<RentalDetail> {
               ),
             ),
           ),
-          Positioned(
+          status >= 0 ? Positioned(
             top: statusBarHeight,
             right: 0,
             child: PopupMenuButton<String>(
@@ -336,7 +346,7 @@ class RentalDetailState extends State<RentalDetail> {
               ),
               onSelected: (value) {
                 if (value == 'cancel') {
-                  cancelRentalWarning();
+                  removeRentalWarning(RentalWarning.cancel);
                 }
               },
               itemBuilder: (BuildContext context) => <PopupMenuItem<String>>[
@@ -346,7 +356,7 @@ class RentalDetailState extends State<RentalDetail> {
                 ),
               ],
             ),
-          ),
+          ):Container(),
         ],
       );
     }
@@ -359,10 +369,26 @@ class RentalDetailState extends State<RentalDetail> {
         : Text('No images yet\n');
   }
 
-  Future<bool> cancelRentalWarning() async {
+  Future<bool> removeRentalWarning(RentalWarning warning) async {
     final ThemeData theme = Theme.of(context);
     final TextStyle dialogTextStyle =
         theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+
+    String text = '';
+    var action;
+
+    switch (warning) {
+      case RentalWarning.reject:
+        text = 'Reject rental?';
+        action = () => rejectRental();
+
+        break;
+      case RentalWarning.cancel:
+        text = 'Cancel rental?';
+        action = () => cancelRental();
+
+        break;
+    }
 
     return await showDialog<bool>(
           context: context,
@@ -370,7 +396,7 @@ class RentalDetailState extends State<RentalDetail> {
             return AlertDialog(
               title: Text('Warning'),
               content: Text(
-                'Cancel rental?',
+                text,
                 style: dialogTextStyle,
               ),
               actions: <Widget>[
@@ -383,7 +409,7 @@ class RentalDetailState extends State<RentalDetail> {
                 ),
                 FlatButton(
                   child: const Text('PROCEED'),
-                  onPressed: () => cancelRental(),
+                  onPressed: () => action(),
                 ),
               ],
             );
@@ -393,6 +419,21 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   void cancelRental() async {
+    {
+      Navigator.of(context).pop(false);
+
+      setState(() {
+        isLoading = true;
+      });
+
+      await Future.delayed(Duration(seconds: 3));
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  void rejectRental() async {
     {
       Navigator.of(context).pop(false);
 
@@ -1227,7 +1268,8 @@ class RentalDetailState extends State<RentalDetail> {
                       width: 10,
                     ),
                     Expanded(
-                      child: reusableButton('Reject', Colors.red[800], null),
+                      child: reusableButton('Reject', Colors.red[800],
+                          () => removeRentalWarning(RentalWarning.reject)),
                     ),
                   ],
                 ),

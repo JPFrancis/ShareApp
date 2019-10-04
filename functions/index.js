@@ -381,16 +381,6 @@ exports.createCharge = functions.firestore.document('charges/{chargeId}')
             const ownerPayout = transferDataMap['ownerPayout'];
             const idempotentKey = context.params.chargeId;
 
-            /*
-            stripe.tokens.create({
-                customer: "cus_YGGG4Kcl9D5BJ3",
-            }, {
-                    stripe_account: "{{CONNECTED_STRIPE_ACCOUNT_ID}}",
-                }).then(function (token) {
-                    // asynchronously called
-                });
-            */
-
             const response = await stripe.charges.create({
                 amount: amount,
                 currency: currency,
