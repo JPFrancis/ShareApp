@@ -2912,13 +2912,14 @@ class HomePageState extends State<HomePage> {
 
     switch (type) {
       case 'Help':
-        subject = '[Help] ';
+        subject = 'Help';
         break;
       case 'Feedback':
-        subject = '[Feedback] ';
+        subject = 'Feedback';
         break;
     }
 
+    //String url = 'mailto:$email?subject=$subject&body=$body';
     String url = 'mailto:$email?subject=$subject&body=$body';
 
     if (await canLaunch(url)) {
