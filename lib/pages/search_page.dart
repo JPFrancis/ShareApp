@@ -8,6 +8,8 @@ import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/services/const.dart';
+import 'package:shareapp/services/functions.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SearchPage extends StatefulWidget {
   static const routeName = '/searchPage';
@@ -23,6 +25,7 @@ class SearchPage extends StatefulWidget {
 }
 
 class SearchPageState extends State<SearchPage> {
+  SharedPreferences prefs;
   Geoflutterfire geo = Geoflutterfire();
   Position currentLocation;
 
@@ -62,8 +65,7 @@ class SearchPageState extends State<SearchPage> {
 
     getMyUserID();
     getSuggestions();
-    getUserLocation();
-    delayPage();
+    getUserLoc();
   }
 
   @override
@@ -72,16 +74,12 @@ class SearchPageState extends State<SearchPage> {
     super.dispose();
   }
 
-  void delayPage() async {
-    Future.delayed(Duration(milliseconds: 750)).then((_) {
-      setState(() {
-        pageIsLoading = false;
-      });
-    });
-  }
-
   void getMyUserID() async {
     FirebaseUser user = await FirebaseAuth.instance.currentUser();
+    prefs = await SharedPreferences.getInstance();
+    double lat = prefs.getDouble('lat');
+    double long = prefs.getDouble('long');
+    currentLocation = Position(latitude: lat, longitude: long);
 
     if (user != null) {
       isAuthenticated = true;
@@ -91,35 +89,28 @@ class SearchPageState extends State<SearchPage> {
     }
   }
 
-  getUserLocation() async {
+  getUserLoc() async {
     setState(() {
-      locIsLoading = true;
+      pageIsLoading = true;
     });
-    GeolocationStatus geolocationStatus =
-        await Geolocator().checkGeolocationPermissionStatus();
 
-    if (geolocationStatus != null) {
-      if (geolocationStatus != GeolocationStatus.granted) {
-        setState(() {
-          locIsLoading = false;
-        });
+    currentLocation = await getUserLocation();
 
-        showUserLocationError();
-      } else {
-        currentLocation = await locateUser();
+    if (currentLocation != null) {
+      await prefs.setDouble('lat', currentLocation.latitude);
+      await prefs.setDouble('long', currentLocation.longitude);
+    } else {
+      double lat = prefs.getDouble('lat');
+      double long = prefs.getDouble('long');
 
-        if (currentLocation != null) {
-          setState(() {
-            locIsLoading = false;
-          });
-        }
-      }
+      currentLocation = Position(latitude: lat, longitude: long);
+
+      showToast('Could not get location. Using last known location.');
     }
-  }
 
-  Future<Position> locateUser() async {
-    return Geolocator()
-        .getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    setState(() {
+      pageIsLoading = false;
+    });
   }
 
   Future<Null> getSuggestions() async {

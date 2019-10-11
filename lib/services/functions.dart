@@ -1,4 +1,19 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:permission_handler/permission_handler.dart';
+
+void showToast(String message) {
+  Fluttertoast.showToast(
+    msg: message,
+    toastLength: Toast.LENGTH_SHORT,
+    gravity: ToastGravity.BOTTOM,
+    timeInSecForIos: 1,
+    fontSize: 15.5,
+    backgroundColor: Colors.grey[800],
+  );
+}
 
 bool checkIdIsFirst(String id0, String id1) {
   return id0.hashCode < id1.hashCode ? true : false;
@@ -170,4 +185,41 @@ Future<void> submitReview(
        */
     }
   }
+}
+
+Future<Position> getUserLocation() async {
+  Position currentLocation;
+
+  GeolocationStatus geolocationStatus =
+      await Geolocator().checkGeolocationPermissionStatus();
+
+  Future<Position> onTimeout() {
+    return null;
+  }
+
+  Future<Position> getLoc() async {
+    return await Geolocator()
+        .getCurrentPosition(desiredAccuracy: LocationAccuracy.high)
+        .timeout(const Duration(seconds: 5), onTimeout: onTimeout);
+  }
+
+  if (geolocationStatus != null) {
+    if (geolocationStatus == GeolocationStatus.granted) {
+      currentLocation = await getLoc();
+    } else {
+      if (geolocationStatus != GeolocationStatus.granted) {
+        Map<PermissionGroup, PermissionStatus> permissions =
+            await PermissionHandler()
+                .requestPermissions([PermissionGroup.location]);
+
+        if (permissions[PermissionGroup.location] == PermissionStatus.granted) {
+          currentLocation = await getLoc();
+        }
+      }
+    }
+
+    return currentLocation ?? null;
+  }
+
+  return currentLocation;
 }

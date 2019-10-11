@@ -7,6 +7,7 @@ import 'package:shareapp/main.dart';
 import 'package:shareapp/pages/home_page.dart';
 import 'package:shareapp/services/auth.dart';
 import 'package:shareapp/services/const.dart';
+import 'package:shareapp/services/functions.dart';
 
 class LoginPage extends StatefulWidget {
   static const routeName = '/loginPage';
@@ -36,6 +37,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   bool isIos;
   bool isLoading;
   bool showSignUp = false;
+  bool passwordHidden = true;
 
   // for animation
   AnimationController logoController;
@@ -80,18 +82,22 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
         if (formMode == FormMode.LOGIN) {
           userId = await widget.auth.signIn(email, password);
         } else {
-          userId = await widget.auth.createUser(email, password);
-          await Future.delayed(Duration(seconds: 2));
-          FirebaseUser createdUser = await widget.auth.getFirebaseUser();
+          try {
+            userId = await widget.auth.createUser(email, password);
+            await Future.delayed(Duration(seconds: 2));
+            FirebaseUser createdUser = await widget.auth.getFirebaseUser();
 
-          if (createdUser != null) {
-            UserUpdateInfo userUpdateInfo = UserUpdateInfo();
-            userUpdateInfo.displayName = 'new user';
-            await createdUser.updateProfile(userUpdateInfo);
-            await createdUser.reload();
+            if (createdUser != null) {
+              UserUpdateInfo userUpdateInfo = UserUpdateInfo();
+              userUpdateInfo.displayName = 'new user';
+              await createdUser.updateProfile(userUpdateInfo);
+              await createdUser.reload();
+            }
+
+            widget.onSignIn();
+          } catch (e) {
+            showToast('$e');
           }
-
-          widget.onSignIn();
         }
         setState(() {
           isLoading = false;
@@ -205,7 +211,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                             ),
                             SizedBox(height: 15.0),
                             Padding(
-                              padding: EdgeInsets.only(left: 40),
+                              padding: EdgeInsets.symmetric(horizontal: 40),
                               child: showPasswordInput(),
                             ),
                             SizedBox(
@@ -529,10 +535,21 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       child: Center(
         child: new TextFormField(
           maxLines: 1,
-          obscureText: true,
+          obscureText: passwordHidden,
           autofocus: false,
           style: TextStyle(color: Colors.white),
           decoration: new InputDecoration(
+              suffixIcon: IconButton(
+                icon: Icon(
+                  passwordHidden ? Icons.visibility : Icons.visibility_off,
+                  color: Colors.grey[400],
+                ),
+                onPressed: () {
+                  setState(() {
+                    passwordHidden = !passwordHidden;
+                  });
+                },
+              ),
               hintText: 'Password',
               border: InputBorder.none,
               hintStyle:

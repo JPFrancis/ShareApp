@@ -120,7 +120,7 @@ class SelectLocationState extends State<SelectLocation> {
                     borderRadius: new BorderRadius.circular(7.0)),
                 onPressed: _handlePressButton,
                 child: Text(
-                  "Search",
+                  'Search',
                   textScaleFactor: 1.4,
                 ),
               ),
