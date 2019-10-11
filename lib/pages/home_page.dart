@@ -1169,16 +1169,16 @@ class HomePageState extends State<HomePage> {
     setState(() {
       locIsLoading = true;
     });
-    GeolocationStatus geolocationStatus =
-        await Geolocator().checkGeolocationPermissionStatus();
+    GeolocationStatus geolocationStatus = await Geolocator().checkGeolocationPermissionStatus();
 
     if (geolocationStatus != null) {
       if (geolocationStatus != GeolocationStatus.granted) {
+        /*
         setState(() {
           locIsLoading = false;
         });
 
-        showUserLocationError();
+        showUserLocationError();*/
       } else {
         currentLocation = await locateUser();
 
@@ -1192,8 +1192,7 @@ class HomePageState extends State<HomePage> {
   }
 
   Future<Position> locateUser() async {
-    return Geolocator()
-        .getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    return Geolocator().getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
   }
 
   Future<bool> showUserLocationError() async {
