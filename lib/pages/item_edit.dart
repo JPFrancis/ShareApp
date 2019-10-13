@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:shareapp/services/functions.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
@@ -131,7 +132,7 @@ class ItemEditState extends State<ItemEdit> {
             child: Text(value, style: TextStyle(fontFamily: 'Quicksand'))))
         .toList();
 
-    getUserLocation();
+    getLoc();
   }
 
   @override
@@ -143,7 +144,7 @@ class ItemEditState extends State<ItemEdit> {
     super.dispose();
   }
 
-  getUserLocation() async {
+  void getLoc() async {
     if (isEdit) {
       setState(() {
         isLoading = false;
@@ -153,34 +154,21 @@ class ItemEditState extends State<ItemEdit> {
         currentUser = user;
       });
 
-      GeolocationStatus geolocationStatus =
-          await Geolocator().checkGeolocationPermissionStatus();
+      currentLocation = await getUserLocation();
 
-      if (geolocationStatus != null) {
-        if (geolocationStatus != GeolocationStatus.granted) {
-          setState(() {
-            isLoading = false;
-          });
-
-          showUserLocationError();
-        } else {
-          currentLocation = await locateUser();
-
-          if (currentLocation != null) {
-            setState(() {
-              itemCopy.location['geopoint'] =
-                  GeoPoint(currentLocation.latitude, currentLocation.longitude);
-              isLoading = false;
-            });
-          }
-        }
+      if (currentLocation != null) {
+        setState(() {
+          itemCopy.location['geopoint'] =
+              GeoPoint(currentLocation.latitude, currentLocation.longitude);
+          isLoading = false;
+        });
+      } else {
+        showToast('Could not get location');
+        setState(() {
+          isLoading = false;
+        });
       }
     }
-  }
-
-  Future<Position> locateUser() async {
-    return Geolocator()
-        .getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
   }
 
   @override
@@ -491,7 +479,7 @@ class ItemEditState extends State<ItemEdit> {
 
   Widget showSelectedLocation() {
     return Container(
-      child: itemCopy.location != null
+      child: itemCopy.location['geopoint'] != null
           ? Text(
               "Selected location: ${itemCopy.location['geopoint'].latitude}, ${itemCopy.location['geopoint'].longitude}",
               style: TextStyle(fontSize: 16),
@@ -504,7 +492,7 @@ class ItemEditState extends State<ItemEdit> {
   }
 
   Widget showItemLocation() {
-    if (itemCopy.location == null) {
+    if (itemCopy.location['geopoint'] == null) {
       return Container();
     } else {
       double widthOfScreen = MediaQuery.of(context).size.width;
@@ -569,7 +557,7 @@ class ItemEditState extends State<ItemEdit> {
             child: RaisedButton(
               color: primaryColor,
               textColor: Colors.white,
-              child: itemCopy.location == null
+              child: itemCopy.location['geopoint'] == null
                   ? Text(
                       "Add Location",
                       style: TextStyle(fontFamily: 'Quicksand'),
@@ -924,7 +912,7 @@ class ItemEditState extends State<ItemEdit> {
 
   void resetLocation() {
     setState(() {
-      itemCopy.location = null;
+      itemCopy.location['geopoint'] = null;
     });
   }
 
@@ -1012,7 +1000,7 @@ class ItemEditState extends State<ItemEdit> {
   }
 
   Future<bool> saveWarning() async {
-    if (itemCopy.location != null &&
+    if (itemCopy.location['geopoint'] != null &&
         totalImagesCount > 0 &&
         itemCopy.name.length > 0 &&
         itemCopy.description.length > 0) {

@@ -67,6 +67,10 @@ class MyReviewsState extends State<MyReviews> {
               icon: Icon(Icons.close),
               onPressed: () => Navigator.pop(context),
             ),
+            title: Text(
+              'My Reviews',
+            ),
+            centerTitle: true,
             bottom: TabBar(
               indicatorColor: Colors.black,
               tabs: [

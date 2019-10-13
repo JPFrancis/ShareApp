@@ -35,13 +35,12 @@
 	<true/>
 
 	<!-- permissions for location -->
-	<!--<key>NSLocationAlwaysUsageDescription</key>
+	<key>NSLocationAlwaysUsageDescription</key>
 	<string>This app needs access to location when open and in the background.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>This app needs access to location when open and in the background.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>This app needs access to location when open and in the background.</string>
-	-->
 	<!-- permissions for camera -->
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Can I use the PhotoLibrary please?</string>

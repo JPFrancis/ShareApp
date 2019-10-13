@@ -14,6 +14,7 @@ environment:
 
 dependencies:
 
+  #braintree_payment: ^1.2.2
   cached_network_image: ^1.1.1
   cloud_firestore: ^0.12.9+3
   cloud_functions: ^0.4.0+2
@@ -43,6 +44,7 @@ dependencies:
   multi_image_picker: ^4.5.3
   numberpicker: ^1.1.0
   path_provider: ^1.2.0
+  permission_handler: ^3.2.2
   shared_preferences: ^0.5.3+4
   smooth_star_rating: ^1.0.3
   stripe_payment: ^0.1.1

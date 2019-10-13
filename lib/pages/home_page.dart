@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:io';
-
+import 'package:shareapp/services/functions.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -156,7 +156,7 @@ class HomePageState extends State<HomePage> {
       });
     }
 
-    getUserLocation();
+    getCurrentLoc();
   }
 
   void updateRentals() async {
@@ -1035,7 +1035,7 @@ class HomePageState extends State<HomePage> {
                   ),
                   color: Colors.green,
                   textColor: Colors.white,
-                  onPressed: getUserLocation,
+                  onPressed: getCurrentLoc,
                   child: Icon(Icons.location_searching),
                 ),
               ),
@@ -1066,7 +1066,7 @@ class HomePageState extends State<HomePage> {
                 setState(() {
                   searchRange = value;
                   if (currentLocation == null) {
-                    getUserLocation();
+                    getCurrentLoc();
                   }
                 });
               },
@@ -1165,30 +1165,23 @@ class HomePageState extends State<HomePage> {
     }
   }
 
-  getUserLocation() async {
+  getCurrentLoc() async {
     setState(() {
       locIsLoading = true;
     });
-    GeolocationStatus geolocationStatus = await Geolocator().checkGeolocationPermissionStatus();
 
-    if (geolocationStatus != null) {
-      if (geolocationStatus != GeolocationStatus.granted) {
-        /*
-        setState(() {
-          locIsLoading = false;
-        });
+    currentLocation = await getUserLocation();
 
-        showUserLocationError();*/
-      } else {
-        currentLocation = await locateUser();
-
-        if (currentLocation != null) {
-          setState(() {
-            locIsLoading = false;
-          });
-        }
-      }
+    if (currentLocation != null) {
+      await prefs.setDouble('lat', currentLocation.latitude);
+      await prefs.setDouble('long', currentLocation.longitude);
+    } else {
+      showToast('Could not get location');
     }
+
+    setState(() {
+      locIsLoading = false;
+    });
   }
 
   Future<Position> locateUser() async {
@@ -2984,15 +2977,6 @@ Widget template() {
       }
     },
   );
-}
-
-void showToast(String msg) {
-  Fluttertoast.showToast(
-      msg: msg,
-      toastLength: Toast.LENGTH_LONG,
-      gravity: ToastGravity.BOTTOM,
-      timeInSecForIos: 1,
-      fontSize: 16.0);
 }
 
 // to show all items created by you

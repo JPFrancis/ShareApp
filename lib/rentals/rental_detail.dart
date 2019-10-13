@@ -1,5 +1,7 @@
+//import 'package:braintree_payment/braintree_payment.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -56,7 +58,7 @@ class RentalDetailState extends State<RentalDetail> {
   String ownerId;
   String renterId;
   String otherUserId;
-  int status=-1;
+  int status = -1;
 
   TextStyle textStyle;
   double padding = 5.0;
@@ -295,6 +297,15 @@ class RentalDetailState extends State<RentalDetail> {
 //                      child: Text('Charge'),
 //                    ),
 //                  ),
+/*
+                  FlatButton(
+                    onPressed: braintreeCharge,
+                    color: Colors.teal,
+                    child: Text(
+                      'Test braintree charge',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),*/
                   SizedBox(
                     height: 20.0,
                   ),
@@ -318,6 +329,43 @@ class RentalDetailState extends State<RentalDetail> {
     );
   }
 
+//    DocumentSnapshot userSnap = await Firestore.instance.collection('users').document(myUserId).get();
+//
+//    if (userSnap['custId']=='new') {
+//      HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
+//        functionName: 'createCustomer',
+//      );
+//
+//      final HttpsCallableResult result = await callable.call(
+//        <String, dynamic>{
+//          userSnap['']
+//        },
+//      );
+//    }
+
+  void braintreeCharge() async {
+    try {
+      HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
+        functionName: 'getClientNonce',
+      );
+
+      dynamic result = await callable.call({});
+
+      final value = result.data;
+
+     // var data = await BraintreePayment().showDropIn( nonce: value, amount: '2.0', enableGooglePay: false, inSandbox: true);
+      var data = null;
+
+      if (data != null) {
+        print("=============Response of the payment $data");
+      }
+    } on CloudFunctionsException catch (e) {
+      showToast('An error occurred');
+    } catch (e) {
+      showToast('An error occurred');
+    }
+  }
+
   Widget showItemImage() {
     double statusBarHeight = MediaQuery.of(context).padding.top;
     double height = MediaQuery.of(context).size.height - statusBarHeight;
@@ -336,27 +384,30 @@ class RentalDetailState extends State<RentalDetail> {
               ),
             ),
           ),
-          status >= 0 ? Positioned(
-            top: statusBarHeight,
-            right: 0,
-            child: PopupMenuButton<String>(
-              icon: Icon(
-                Icons.more_vert,
-                color: primaryColor,
-              ),
-              onSelected: (value) {
-                if (value == 'cancel') {
-                  removeRentalWarning(RentalWarning.cancel);
-                }
-              },
-              itemBuilder: (BuildContext context) => <PopupMenuItem<String>>[
-                const PopupMenuItem<String>(
-                  value: 'cancel',
-                  child: Text('Cancel Rental'),
-                ),
-              ],
-            ),
-          ):Container(),
+          status >= 0
+              ? Positioned(
+                  top: statusBarHeight,
+                  right: 0,
+                  child: PopupMenuButton<String>(
+                    icon: Icon(
+                      Icons.more_vert,
+                      color: primaryColor,
+                    ),
+                    onSelected: (value) {
+                      if (value == 'cancel') {
+                        removeRentalWarning(RentalWarning.cancel);
+                      }
+                    },
+                    itemBuilder: (BuildContext context) =>
+                        <PopupMenuItem<String>>[
+                      const PopupMenuItem<String>(
+                        value: 'cancel',
+                        child: Text('Cancel Rental'),
+                      ),
+                    ],
+                  ),
+                )
+              : Container(),
         ],
       );
     }
@@ -426,6 +477,8 @@ class RentalDetailState extends State<RentalDetail> {
         isLoading = true;
       });
 
+      showToast('Feature not connected yet');
+
       await Future.delayed(Duration(seconds: 3));
       setState(() {
         isLoading = false;
@@ -434,16 +487,42 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   void rejectRental() async {
-    {
-      Navigator.of(context).pop(false);
+    // close the dialog
+    Navigator.of(context).pop(false);
 
-      setState(() {
-        isLoading = true;
-      });
+    setState(() {
+      isLoading = true;
+    });
 
-      await Future.delayed(Duration(seconds: 3));
-      setState(() {
-        isLoading = false;
+    Map copy = rentalDS.data;
+    copy['lastUpdateTime'] = DateTime.now();
+
+    var addToDeclinedRentals =
+        await Firestore.instance.collection('declined_rentals').add(copy);
+
+    if (addToDeclinedRentals != null) {
+      DocumentSnapshot otherUserDS = await Firestore.instance
+          .collection('users')
+          .document(otherUserId)
+          .get();
+
+      if (otherUserDS != null && otherUserDS.exists) {
+        await Firestore.instance.collection('notifications').add({
+          'title': '$myName rejected your rental request',
+          'body': 'Item: ${rentalDS['itemName']}',
+          'pushToken': otherUserDS['pushToken'],
+          'rentalID': rentalDS.documentID,
+          'timestamp': DateTime.now().millisecondsSinceEpoch,
+        });
+      }
+
+      Firestore.instance
+          .collection('rentals')
+          .document(rentalDS.documentID)
+          .delete()
+          .then((_) {
+        showToast('Request successfully declined');
+        Navigator.of(context).pop();
       });
     }
   }

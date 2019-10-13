@@ -209,6 +209,9 @@ class ProfilePageState extends State<ProfilePage>
     double h = MediaQuery.of(context).size.height;
     double w = MediaQuery.of(context).size.width;
 
+    String name = '${userDS['name']}'.trim();
+    String firstName = name.split(' ')[0];
+
     return Container(
         decoration: new BoxDecoration(
           image: DecorationImage(
@@ -222,7 +225,7 @@ class ProfilePageState extends State<ProfilePage>
         child: Align(
           alignment: Alignment.bottomLeft,
           child: Text(
-            '${userDS['name']}',
+            firstName,
             style: TextStyle(
               color: Colors.white,
               fontSize: h / 20,

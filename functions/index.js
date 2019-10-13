@@ -12,6 +12,16 @@ const bucket = storage.bucket();
 
 const stripe = require('stripe')(functions.config().stripe.token);
 
+var braintree = require('braintree');
+var keys = require('./keys');
+
+var gateway = braintree.connect({
+    environment: braintree.Environment.Sandbox,
+    merchantId: keys.merchantId,
+    publicKey: keys.publicKey,
+    privateKey: keys.privateKey,
+});
+
 const error_message = 'Invalid input. Make sure you\'re using the latest version of the app';
 
 // create new user document when account created
@@ -400,53 +410,6 @@ exports.createCharge = functions.firestore.document('charges/{chargeId}')
         }
     });
 
-exports.createChargeTEST = functions.firestore.document('charges/{chargeId}')
-    .onCreate(async (chargeSnap, context) => {
-        try {
-            const idFrom = chargeSnap.data().rentalData['idFrom'];
-            const userSnap = await db.collection('users').doc(idFrom).get();
-            const idTo = chargeSnap.data().rentalData['idTo'];
-            const itemOwner = await db.collection('users').doc(idTo).get();
-            const ownerCustId = userSnap.data().custId;
-            const customer = userSnap.data().custId;
-            const amount = chargeSnap.data().amount;
-            const currency = chargeSnap.data().currency;
-            const description = chargeSnap.data().description;
-            const transferDataMap = chargeSnap.data().transferData;
-            const ourFee = transferDataMap['ourFee'];
-            const ownerPayout = transferDataMap['ownerPayout'];
-            const idempotentKey = context.params.chargeId;
-
-            /*
-            stripe.tokens.create({
-                customer: "cus_YGGG4Kcl9D5BJ3",
-            }, {
-                    stripe_account: "{{CONNECTED_STRIPE_ACCOUNT_ID}}",
-                }).then(function (token) {
-                    // asynchronously called
-                });
-            */
-
-            const response = await stripe.subscriptions.create({
-                customer: customer,
-                amount: amount,
-                currency: currency,
-                //source: customer,
-                source: "tok_visa",
-                application_fee_amount: ourFee,
-                transfer_data: {
-                    amount: ownerPayout,
-                    destination: ownerCustId,
-                },
-                description: description,
-            }, { idempotency_key: idempotentKey });
-            return chargeSnap.ref.set(response, { merge: true });
-
-        } catch (error) {
-            await chargeSnap.ref.set({ error: error.message }, { merge: true });
-        }
-    });
-
 // update items and rentals when user edits their name and profile picture
 exports.updateUserConnections = functions.firestore
     .document('users/{userId}')
@@ -677,7 +640,7 @@ exports.updateRatings = functions.firestore
         const newSnap = rentalSnap.after.data();
         var updateRenter = 0;
         var updateOwner = 0;
-        var itemAverage = 0;
+        var itemOverall = 0;
 
         if (oldSnap === undefined || newSnap === undefined) {
             return;
@@ -695,7 +658,7 @@ exports.updateRatings = functions.firestore
 
         if (oldOwnerReview !== newOwnerReview) {
             updateOwner = 1;
-            itemAverage = newSnap.ownerReview.average;
+            itemOverall = newSnap.ownerReview.overall;
         }
 
         let batch = db.batch();
@@ -717,13 +680,13 @@ exports.updateRatings = functions.firestore
             // update item ratings
             batch.update(itemRef, {
                 numRatings: admin.firestore.FieldValue.increment(1),
-                rating: admin.firestore.FieldValue.increment(itemAverage),
+                rating: admin.firestore.FieldValue.increment(itemOverall),
             });
 
             // update item owner ratings
             batch.update(ownerRef, {
                 "ownerRating.count": admin.firestore.FieldValue.increment(1),
-                "ownerRating.total": admin.firestore.FieldValue.increment(itemAverage),
+                "ownerRating.total": admin.firestore.FieldValue.increment(itemOverall),
             });
         }
 
@@ -743,10 +706,10 @@ exports.removeRatings = functions.firestore
             renterRating = rentalSnap.data().renterReview.rating;
         }
 
-        var itemAverage;
+        var itemOverall;
 
         if (rentalSnap.data().ownerReview !== null) {
-            itemAverage = rentalSnap.data().ownerReview.average;
+            itemOverall = rentalSnap.data().ownerReview.overall;
         }
 
         var renterRef = rentalSnap.data().renter;
@@ -762,18 +725,18 @@ exports.removeRatings = functions.firestore
             });
         }
 
-        if (itemAverage !== undefined) {
+        if (itemOverall !== undefined) {
             // remove item ratings
             batch.update(itemRef, {
                 numRatings: admin.firestore.FieldValue.increment(-1),
-                rating: admin.firestore.FieldValue.increment(itemAverage * -1.0),
+                rating: admin.firestore.FieldValue.increment(itemOverall * -1.0),
             });
 
 
             // remove item owner ratings
             batch.update(ownerRef, {
                 "ownerRating.count": admin.firestore.FieldValue.increment(-1),
-                "ownerRating.total": admin.firestore.FieldValue.increment(itemAverage * -1.0),
+                "ownerRating.total": admin.firestore.FieldValue.increment(itemOverall * -1.0),
             });
         }
 
@@ -917,7 +880,7 @@ exports.updateItem = functions.https.onCall(async (data, context) => {
         if (update === null) {
             throw new functions.https.HttpsError('unknown', 'Error updating item');
         } else {
-            return 'Item update successful';
+            return 'Item successfully updated';
         }
     }
 });
@@ -983,3 +946,122 @@ exports.createRental = functions.https.onCall(async (data, context) => {
         }
     }
 });
+
+exports.createCustomer = functions.https.onCall(async (data, context) => {
+    // var status = data.varName;
+
+});
+
+exports.getClientNonce = functions.https.onCall(async (data, context) => {
+    /*
+    gateway.clientToken.generate({}).then((result) => {
+        console.log(`result: ${result.clientToken}`);
+        return result.clientToken;
+    }).catch(error => {
+        throw new functions.https.HttpsError('unknown', 'Error getting client nonce');
+    });
+    */
+
+    return new Promise((resolve, reject) => {
+        gateway.clientToken.generate({}, function (err, response) {
+            if (err) {
+                reject(new functions.https.HttpsError('unknown', 'Error getting client nonce'));
+            } else {
+                console.log(`token: ${response.clientToken}`);
+                resolve(response.clientToken);
+            }
+        });
+    });
+
+    /*
+        gateway.clientToken.generate({}, function (err, response) {
+            if (err) {
+                throw new functions.https.HttpsError('unknown', 'Error getting client nonce');
+            } else {
+                console.log(`Client token: ${response.clientToken}`);
+                //return response.clientToken;
+                return 999;
+            }
+        });
+        */
+});
+
+// add braintree card when new card added
+/*
+exports.addBraintreeSource = functions.firestore.document('users/{userId}/tokens/{tokenId}')
+    .onWrite(async (tokenSnap, context) => {
+        var customer;
+        const data = tokenSnap.after.data();
+
+        if (data === null) {
+            return null
+        }
+
+        const token = data.tokenId;
+        const snapshot = await db.collection('users').doc(context.params.userId).get();
+        const customerId = snapshot.data().custId;
+        const customerEmail = snapshot.data().email;
+
+        if (customerId === 'new') {
+            console.log(`customerId: ${customerId}`);
+
+            customer = await gateway.customer.create({
+                firstName: "Jen",
+                lastName: "Smith",
+                email: "jen@example.com",
+              }, function (err, result) {
+                result.success;
+                // true
+              
+                result.customer.id;
+                // e.g. 494019
+              });
+
+            
+            customer = await stripe.customers.create({
+                email: customerEmail,
+                source: token,
+            });
+            
+
+            const customerSource = customer.sources.data[0];
+            const customerSourceId = customerSource.id;
+
+            db.collection('users').doc(context.params.userId).update({
+                custId: customer.id,
+                defaultSource: customerSourceId,
+            });
+
+            db.collection('users').doc(context.params.userId).collection('sources').
+                doc(customerSource.card.fingerprint).set(customerSource, {
+                    merge: true
+                });
+
+        } else {
+            customer = await stripe.customers.retrieve(customerId);
+
+            var newSource = await stripe.customers.createSource(
+                customerId,
+                {
+                    source: token,
+                },
+            );
+
+            var updatedCustomer = await stripe.customers.retrieve(
+                customerId,
+            );
+
+            var newDefaultSource = updatedCustomer.default_source;
+            console.log(`New default source: ${newDefaultSource}`);
+
+            await db.collection('users').doc(context.params.userId).update({
+                defaultSource: newDefaultSource,
+            });
+
+            await db.collection('users').doc(context.params.userId).collection('sources').
+                doc(newSource.card.fingerprint).set(newSource, {
+                    merge: true
+                });
+        }
+    })
+*/

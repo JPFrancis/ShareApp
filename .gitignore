@@ -3,6 +3,7 @@
 *.ap_
 
 **/android/**/AndroidManifest.xml
+**/functions/keys.js
 
 # Firestore backend
 **/android/**/google-services.json
