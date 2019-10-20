@@ -1,11 +1,14 @@
-import 'package:braintree_payment/braintree_payment.dart';
+import 'dart:ui' as prefix0;
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
@@ -297,14 +300,6 @@ class RentalDetailState extends State<RentalDetail> {
 //                      child: Text('Charge'),
 //                    ),
 //                  ),
-                  FlatButton(
-                    onPressed: braintreeCharge,
-                    color: Colors.teal,
-                    child: Text(
-                      'Test braintree charge',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
                   SizedBox(
                     height: 10.0,
                   ),
@@ -341,29 +336,6 @@ class RentalDetailState extends State<RentalDetail> {
 //        },
 //      );
 //    }
-
-  void braintreeCharge() async {
-    try {
-      HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
-        functionName: 'getClientNonce',
-      );
-
-      dynamic result = await callable.call({});
-
-      final value = result.data;
-
-      var data = await BraintreePayment().showDropIn(
-          nonce: value, amount: '2.0', enableGooglePay: false, inSandbox: true);
-
-      if (data != null) {
-        print("=============Response of the payment $data");
-      }
-    } on CloudFunctionsException catch (e) {
-      showToast('An error occurred');
-    } catch (e) {
-      showToast('An error occurred');
-    }
-  }
 
   Widget showItemImage() {
     double statusBarHeight = MediaQuery.of(context).padding.top;
