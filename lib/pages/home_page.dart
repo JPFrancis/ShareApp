@@ -979,6 +979,7 @@ class HomePageState extends State<HomePage> {
   }
 
   Widget searchPage() {
+    double h = MediaQuery.of(context).size.height;
     Widget _image(){
       return Container(
         height: 200.0,
@@ -995,13 +996,9 @@ class HomePageState extends State<HomePage> {
           // shrinkWrap: true,
           children: <Widget>[
             introImageAndSearch(),
-            SizedBox(
-              height: 30.0,
-            ),
+            SizedBox(height: h/50),
             categories(),
-            Container(
-              height: 10,
-            ),
+            Container(height: h/200,),
             nearby(),
             SizedBox(height: 70.0,),
             _image(),
@@ -1362,10 +1359,11 @@ class HomePageState extends State<HomePage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
                 Container(
-                  padding: EdgeInsets.only(top: 40.0, right: 20.0),
+                  padding: EdgeInsets.only(top: 25.0, right: 8.0, left: 20.0),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: <Widget>[
+                    Image.asset('assets/black_logo.png', height: 35.0, width: 35.0),
                     Container(
                         padding: EdgeInsets.only(right: 10.0),
                         child: Text(
@@ -1376,7 +1374,6 @@ class HomePageState extends State<HomePage> {
                               fontSize: 20.0,
                               fontWeight: FontWeight.w300),
                         )),
-                    Image.asset('assets/black_logo.png', height: 35.0, width: 35.0),
                   ],),
                 ),
                 Align(
@@ -1391,95 +1388,16 @@ class HomePageState extends State<HomePage> {
     );
   }
 
-  Widget iconCategories() {
-    double h = MediaQuery.of(context).size.height;
-
-    Widget _categoryTile(category, icon) {
-      return ClipRRect(
-        borderRadius: new BorderRadius.circular(5.0),
-        child: Container(
-          height: h / 7.5,
-          width: h / 7.5,
-          decoration: BoxDecoration(
-            color: Colors.grey[300],
-            border: Border.all(color: Colors.black),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              icon,
-              Container(
-                height: 10,
-              ),
-              Text(
-                category,
-                style: TextStyle(
-                    color: Colors.black,
-                    fontFamily: 'Quicksand',
-                    fontSize: h / 60),
-              )
-            ],
-          ),
-        ),
-      );
-    }
-
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: h / 55),
-      child: Column(
-        children: <Widget>[
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              InkWell(
-                onTap: () => navToItemFilter('Tool'),
-                child: _categoryTile('Tools', Icon(Icons.build)),
-              ),
-              InkWell(
-                onTap: () => navToItemFilter('Leisure'),
-                child: _categoryTile('Leisure', Icon(Icons.golf_course)),
-              ),
-              InkWell(
-                onTap: () => navToItemFilter('Home'),
-                child: _categoryTile('Household', Icon(Icons.home)),
-              ),
-            ],
-          ),
-          SizedBox(
-            height: 15.0,
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              InkWell(
-                onTap: () => navToItemFilter('Equipment'),
-                child: _categoryTile('Equipment', Icon(Icons.straighten)),
-              ),
-              InkWell(
-                onTap: () => navToItemFilter('Other'),
-                child: _categoryTile('Miscellaneous', Icon(Icons.widgets)),
-              ),
-              InkWell(
-                onTap: () => navToItemFilter('All'),
-                child: _categoryTile('More', Icon(Icons.more_horiz)),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget categories() {
     double h = MediaQuery.of(context).size.height;
+    double w = MediaQuery.of(context).size.width;
 
     Widget _categoryTile(category, image) {
       return ClipRRect(
         borderRadius: new BorderRadius.circular(5.0),
         child: Container(
-          height: h / 7.5,
-          width: h / 7.5,
+          height: w / 3.25,
+          width: w / 3.25,
           child: Stack(
             children: <Widget>[
               SizedBox.expand(
@@ -1504,11 +1422,10 @@ class HomePageState extends State<HomePage> {
     }
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: h / 55),
       child: Column(
         children: <Widget>[
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: <Widget>[
               InkWell(
                 onTap: () => navToItemFilter('Tool'),
@@ -1524,11 +1441,9 @@ class HomePageState extends State<HomePage> {
               ),
             ],
           ),
-          SizedBox(
-            height: 15.0,
-          ),
+          SizedBox(height: w/50,),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: <Widget>[
               InkWell(
                 onTap: () => navToItemFilter('Equipment'),
@@ -2285,10 +2200,15 @@ class HomePageState extends State<HomePage> {
           double height = MediaQuery.of(context).size.height;
           double width = MediaQuery.of(context).size.width;
           return Container(
-            padding: EdgeInsets.only(left: width / 5, right: width / 5),
+            decoration: new BoxDecoration(
+              borderRadius: new BorderRadius.only(
+                bottomLeft: const Radius.circular(50.0),
+                bottomRight: const Radius.circular(50.0),
+            )),
+           // padding: EdgeInsets.only(left: width / 5, right: width / 5),
             height: height / 5,
-            child: FittedBox(
-              fit: BoxFit.cover,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10.0),
               child: CachedNetworkImage(
                 //key: ValueKey(DateTime.now().millisecondsSinceEpoch),
                 imageUrl: myUserDS['avatar'],
@@ -2322,6 +2242,8 @@ class HomePageState extends State<HomePage> {
         );
       }
 
+      String first_name = (myUserDS['name'].split(" "))[0];
+
       return Column(
         children: <Widget>[
           _userImage(),
@@ -2329,8 +2251,7 @@ class HomePageState extends State<HomePage> {
             height: 10.0,
           ),
           Center(
-              child: Text("${myUserDS['name']}",
-                  style: TextStyle(fontFamily: font, fontSize: width / 15))),
+              child: Text("$first_name", style: TextStyle(fontFamily: font, fontSize: width / 15))),
           Center(
               child: Text('${myUserDS['email']}',
                   style: TextStyle(
@@ -2340,6 +2261,7 @@ class HomePageState extends State<HomePage> {
           SizedBox(
             height: 5.0,
           ),
+          /*
           Center(
               child: Column(children: <Widget>[
             Align(
@@ -2348,19 +2270,14 @@ class HomePageState extends State<HomePage> {
                   QuoteIcons.quote_left,
                   size: width / 22,
                 )),
-            Text(
-              myUserDS['description'].toString().isEmpty
-                  ? "The user hasn't added a description yet!"
-                  : myUserDS['description'],
-              style: TextStyle(fontFamily: font, fontSize: width / 22),
-            ),
+            Text(myUserDS['description'].toString().isEmpty ? "The user hasn't added a description yet!" : myUserDS['description'], style: TextStyle(fontFamily: font, fontSize: width / 22),),
             Align(
                 alignment: Alignment.bottomRight,
                 child: Icon(
                   QuoteIcons.quote_right,
                   size: width / 22,
                 )),
-          ])),
+          ])),*/
           SizedBox(
             height: 10.0,
           ),
@@ -2430,21 +2347,18 @@ class HomePageState extends State<HomePage> {
                         children: <Widget>[
                           showPersonalInformation(),
                           reusableCategory("ACCOUNT"),
-                          //reusableFlatButton("Personal information", Icons.person_outline, null),
-                          reusableFlatButton("Payments and Payouts",
-                              Icons.payment, navToPayouts),
-                          reusableFlatButton(
-                              "Reviews", Icons.rate_review, navToReviews),
+                          reusableFlatButton("Payments and Payouts", Icons.payment, navToPayouts),
+                          reusableFlatButton("Edit Profile", Icons.person_outline, navToProfileEdit),
+                          reusableFlatButton( "Reviews", Icons.rate_review, navToReviews),
                           reusableCategory("SUPPORT"),
-                          reusableFlatButton("Get help", Icons.help_outline,
-                              () => navToSendEmail('Help')),
-                          reusableFlatButton("Give us feedback", Icons.feedback,
-                              () => navToSendEmail('Feedback')),
+                          reusableFlatButton("Get help", Icons.help_outline, () => navToSendEmail('Help')),
+                          reusableFlatButton("Give us feedback", Icons.feedback, () => navToSendEmail('Feedback')),
                           reusableFlatButton("Log out", null, logout),
                           //getProfileDetails()
                         ],
                       ),
                     ),
+                    /*
                     Align(
                       alignment: Alignment.topRight,
                       child: OutlineButton(
@@ -2457,7 +2371,7 @@ class HomePageState extends State<HomePage> {
                             style: TextStyle(
                                 fontFamily: 'Quicksand',
                                 fontWeight: FontWeight.normal))),
-                    ),
+                    ),*/
                   ],
                 );
               } else {

@@ -429,8 +429,8 @@ class ProfileEditState extends State<ProfileEdit> {
     return Container(
       padding: EdgeInsets.only(left: width / 5, right: width / 5),
       height: height / 5,
-      child: FittedBox(
-        fit: BoxFit.cover,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10.0),
         child: CachedNetworkImage(
           //key: ValueKey(DateTime.now().millisecondsSinceEpoch),
           imageUrl: userCopy.avatar,

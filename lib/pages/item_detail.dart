@@ -285,10 +285,11 @@ class ItemDetailState extends State<ItemDetail> {
 
   Widget chatButton() {
     return Container(
-       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: primaryColor)
-      ),
+       decoration: isOwner ? null :
+        BoxDecoration(
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: primaryColor)
+        ),
       padding: EdgeInsets.symmetric(horizontal: 15, vertical: 5),
       child: isOwner
           ? Container()
@@ -408,7 +409,7 @@ class ItemDetailState extends State<ItemDetail> {
           alignment: Alignment.bottomRight,
           child: Padding(
             padding: const EdgeInsets.only(right: 15, top: 7),
-            child: isAuthenticated ? chatButton() : Container(),
+            child: isAuthenticated ? chatButton() : Container(color: Colors.pink),
           ),
         ),
       ],

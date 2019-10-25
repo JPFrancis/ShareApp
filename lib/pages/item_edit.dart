@@ -906,7 +906,7 @@ class ItemEditState extends State<ItemEdit> {
     double long = gp.longitude;
 
     LatLng newLoc = LatLng(lat, long);
-    googleMapController.animateCamera(CameraUpdate.newCameraPosition(
+    googleMapController?.animateCamera(CameraUpdate.newCameraPosition(
         new CameraPosition(target: newLoc, zoom: 11.5)));
   }
 

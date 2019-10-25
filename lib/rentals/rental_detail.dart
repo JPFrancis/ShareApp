@@ -1,11 +1,14 @@
-//import 'package:braintree_payment/braintree_payment.dart';
+import 'dart:ui' as prefix0;
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
@@ -297,15 +300,6 @@ class RentalDetailState extends State<RentalDetail> {
 //                      child: Text('Charge'),
 //                    ),
 //                  ),
-/*
-                  FlatButton(
-                    onPressed: braintreeCharge,
-                    color: Colors.teal,
-                    child: Text(
-                      'Test braintree charge',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),*/
                   SizedBox(
                     height: 20.0,
                   ),
@@ -342,29 +336,6 @@ class RentalDetailState extends State<RentalDetail> {
 //        },
 //      );
 //    }
-
-  void braintreeCharge() async {
-    try {
-      HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
-        functionName: 'getClientNonce',
-      );
-
-      dynamic result = await callable.call({});
-
-      final value = result.data;
-
-     // var data = await BraintreePayment().showDropIn( nonce: value, amount: '2.0', enableGooglePay: false, inSandbox: true);
-      var data = null;
-
-      if (data != null) {
-        print("=============Response of the payment $data");
-      }
-    } on CloudFunctionsException catch (e) {
-      showToast('An error occurred');
-    } catch (e) {
-      showToast('An error occurred');
-    }
-  }
 
   Widget showItemImage() {
     double statusBarHeight = MediaQuery.of(context).padding.top;
@@ -611,15 +582,14 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   Widget showItemRequestStatus() {
-    int itemStatus = rentalDS['status'];
-    String start = DateFormat('h:mm a on d MMM yyyy')
-        .format(rentalDS['pickupStart'].toDate());
-    String end = DateFormat('h:mm a on d MMM yyyy')
-        .format(rentalDS['rentalEnd'].toDate());
+    //int itemStatus = rentalDS['status'];
+    int itemStatus = 4;
+    TextStyle style = new TextStyle(fontFamily: appFont, color: primaryColor);
+    String start = DateFormat('h:mm a on d MMM yyyy').format(rentalDS['pickupStart'].toDate());
+    String end = DateFormat('h:mm a on d MMM yyyy').format(rentalDS['rentalEnd'].toDate());
     int durationDays = rentalDS['duration'];
-    double price = rentalDS['price'].toDouble() * durationDays.toDouble();
-    String duration =
-        '${durationDays > 1 ? '$durationDays days' : '$durationDays day'}';
+    //double price = rentalDS['price'].toDouble() * durationDays.toDouble();
+    String duration = '${durationDays > 1 ? '$durationDays days' : '$durationDays day'}';
 
     double itemPrice = rentalDS['price'].toDouble();
     double itemRentalPrice = itemPrice * durationDays;
@@ -629,19 +599,20 @@ class RentalDetailState extends State<RentalDetail> {
     double total = subtotal * 1.029 + 0.3;
     double stripeFeePrice = subtotal * 0.029 + 0.3;
 
-    String receiptText = isRenter
-        ? 'Item rental:\n'
+    String receiptText = !isRenter
+        ?  'Item rental:\n'
             'Government\'s cut:\n'
             'Transaction fee (Not us):\n'
             'Cost to keep our lights on:\n'
+            '----------------------------\n'
             'Total:'
         : 'Payout:';
 
-    String receiptValues = isRenter
+    String receiptValues = !isRenter
         ? '\$${itemRentalPrice.toStringAsFixed(2)}\n'
-            '\$${taxPrice.toStringAsFixed(2)}\n'
-            '\$${stripeFeePrice.toStringAsFixed(2)}\n'
-            '\$${ourFeePrice.toStringAsFixed(2)}\n'
+            '+ \$${taxPrice.toStringAsFixed(2)}\n'
+            '+ \$${stripeFeePrice.toStringAsFixed(2)}\n'
+            '+ \$${ourFeePrice.toStringAsFixed(2)}\n'
             '\$${total.toStringAsFixed(2)}'
         : '\$${itemRentalPrice.toStringAsFixed(2)}';
 
@@ -654,11 +625,11 @@ class RentalDetailState extends State<RentalDetail> {
                 children: <Widget>[
                   Text(
                     "Waiting for response from ${rentalDS['ownerData']['name']}",
-                    style: TextStyle(fontFamily: appFont, color: primaryColor),
+                    style: style,
                   ),
                   Text(
                     "The Receipt",
-                    style: TextStyle(fontFamily: appFont, color: primaryColor),
+                    style: style
                   ),
                   Divider(),
                   Row(
@@ -666,13 +637,11 @@ class RentalDetailState extends State<RentalDetail> {
                     children: <Widget>[
                       Text(
                         "Pickup Time:",
-                        style:
-                            TextStyle(fontFamily: appFont, color: primaryColor),
+                        style: style
                       ),
                       Text(
                         "$start",
-                        style:
-                            TextStyle(fontFamily: appFont, color: primaryColor),
+                        style: style,
                       ),
                     ],
                   ),
@@ -681,13 +650,12 @@ class RentalDetailState extends State<RentalDetail> {
                     children: <Widget>[
                       Text(
                         "Duration:",
-                        style:
-                            TextStyle(fontFamily: appFont, color: primaryColor),
+                        style: style,
+                            
                       ),
                       Text(
                         "$duration",
-                        style:
-                            TextStyle(fontFamily: appFont, color: primaryColor),
+                        style: style,
                       ),
                     ],
                   ),
@@ -697,11 +665,11 @@ class RentalDetailState extends State<RentalDetail> {
                 children: <Widget>[
                   Text(
                     "${rentalDS['ownerData']['name']} has proposed a pickup!",
-                    style: TextStyle(fontFamily: appFont, color: primaryColor),
+                    style: style,
                   ),
                   Text(
                     "Proposal",
-                    style: TextStyle(fontFamily: appFont, color: primaryColor),
+                    style: style,
                   ),
                   Divider(),
                   Row(
@@ -709,13 +677,11 @@ class RentalDetailState extends State<RentalDetail> {
                     children: <Widget>[
                       Text(
                         "Pickup Time:",
-                        style:
-                            TextStyle(fontFamily: appFont, color: primaryColor),
+                        style: style,
                       ),
                       Text(
                         "$start",
-                        style:
-                            TextStyle(fontFamily: appFont, color: primaryColor),
+                        style: style,
                       ),
                     ],
                   ),
@@ -724,13 +690,11 @@ class RentalDetailState extends State<RentalDetail> {
                     children: <Widget>[
                       Text(
                         "Duration:",
-                        style:
-                            TextStyle(fontFamily: appFont, color: primaryColor),
+                        style: style,
                       ),
                       Text(
                         "$duration",
-                        style:
-                            TextStyle(fontFamily: appFont, color: primaryColor),
+                        style: style,
                       ),
                     ],
                   ),
@@ -744,11 +708,11 @@ class RentalDetailState extends State<RentalDetail> {
                 children: <Widget>[
                   Text(
                     "${rentalDS['ownerData']['name']} has proposed a new pickup!",
-                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                    style: style,
                   ),
                   Text(
                     "New proposal",
-                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                    style: style,
                   ),
                   Divider(),
                   Row(
@@ -756,13 +720,11 @@ class RentalDetailState extends State<RentalDetail> {
                     children: <Widget>[
                       Text(
                         "Pickup Time:",
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                       Text(
                         "$start",
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                     ],
                   ),
@@ -771,13 +733,11 @@ class RentalDetailState extends State<RentalDetail> {
                     children: <Widget>[
                       Text(
                         "Duration:",
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                       Text(
                         "$duration",
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                     ],
                   ),
@@ -787,11 +747,11 @@ class RentalDetailState extends State<RentalDetail> {
                 children: <Widget>[
                   Text(
                     "Waiting from response from ${rentalDS['renterData']['name']}",
-                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                    style: style,
                   ),
                   Text(
                     "Proposal",
-                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                    style: style,
                   ),
                   Divider(),
                   Row(
@@ -799,13 +759,11 @@ class RentalDetailState extends State<RentalDetail> {
                     children: <Widget>[
                       Text(
                         "Pickup Time:",
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                       Text(
                         "$start",
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                     ],
                   ),
@@ -814,13 +772,11 @@ class RentalDetailState extends State<RentalDetail> {
                     children: <Widget>[
                       Text(
                         "Duration:",
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                       Text(
                         "$duration",
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                     ],
                   ),
@@ -834,11 +790,11 @@ class RentalDetailState extends State<RentalDetail> {
                 children: <Widget>[
                   Text(
                     "${rentalDS['ownerData']['name']} has accepted your request! Make sure to pick it up on time!",
-                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                    style: style,
                   ),
                   Text(
                     "Transaction Details",
-                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                    style: style,
                   ),
                   Divider(),
                   Row(
@@ -846,13 +802,11 @@ class RentalDetailState extends State<RentalDetail> {
                     children: <Widget>[
                       Text(
                         "Pickup Time:",
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                       Text(
                         "$start",
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                     ],
                   ),
@@ -861,13 +815,11 @@ class RentalDetailState extends State<RentalDetail> {
                     children: <Widget>[
                       Text(
                         "Duration:",
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                       Text(
                         "$duration",
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                     ],
                   ),
@@ -876,14 +828,12 @@ class RentalDetailState extends State<RentalDetail> {
                     children: <Widget>[
                       Text(
                         receiptText,
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                       Text(
                         receiptValues,
                         textAlign: TextAlign.right,
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                     ],
                   ),
@@ -893,11 +843,11 @@ class RentalDetailState extends State<RentalDetail> {
                 children: <Widget>[
                   Text(
                     "You have accepted ${rentalDS['renterData']['name']}'s request! Be prepared for their pickup!",
-                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                    style: style,
                   ),
                   Text(
                     "Transaction Details",
-                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                    style: style,
                   ),
                   Divider(),
                   Row(
@@ -905,13 +855,11 @@ class RentalDetailState extends State<RentalDetail> {
                     children: <Widget>[
                       Text(
                         "Pickup Time:",
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                       Text(
                         "$start",
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                     ],
                   ),
@@ -920,13 +868,11 @@ class RentalDetailState extends State<RentalDetail> {
                     children: <Widget>[
                       Text(
                         "Duration:",
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                       Text(
                         "$duration",
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                     ],
                   ),
@@ -935,14 +881,12 @@ class RentalDetailState extends State<RentalDetail> {
                     children: <Widget>[
                       Text(
                         receiptText,
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                       Text(
                         receiptValues,
                         textAlign: TextAlign.right,
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                     ],
                   ),
@@ -956,11 +900,11 @@ class RentalDetailState extends State<RentalDetail> {
                 children: <Widget>[
                   Text(
                     "You are currently renting the item!",
-                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                    style: style,
                   ),
                   Text(
                     "Transaction Details",
-                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                    style: style,
                   ),
                   Divider(),
                   Row(
@@ -968,13 +912,11 @@ class RentalDetailState extends State<RentalDetail> {
                     children: <Widget>[
                       Text(
                         "Return Time:",
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                       Text(
                         "$end",
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                     ],
                   ),
@@ -983,13 +925,11 @@ class RentalDetailState extends State<RentalDetail> {
                     children: <Widget>[
                       Text(
                         "Duration:",
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                       Text(
                         "$duration",
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                     ],
                   ),
@@ -998,13 +938,11 @@ class RentalDetailState extends State<RentalDetail> {
                     children: <Widget>[
                       Text(
                         receiptText,
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                       Text(
                         receiptValues,
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                     ],
                   ),
@@ -1014,11 +952,11 @@ class RentalDetailState extends State<RentalDetail> {
                 children: <Widget>[
                   Text(
                     "${rentalDS['renterData']['name']} has your item!",
-                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                    style: style,
                   ),
                   Text(
                     "Transaction Details",
-                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                    style: style,
                   ),
                   Divider(),
                   Row(
@@ -1026,13 +964,11 @@ class RentalDetailState extends State<RentalDetail> {
                     children: <Widget>[
                       Text(
                         "Return Time:",
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                       Text(
                         "$end",
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                     ],
                   ),
@@ -1041,13 +977,11 @@ class RentalDetailState extends State<RentalDetail> {
                     children: <Widget>[
                       Text(
                         "Duration:",
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                       Text(
                         "$duration",
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                     ],
                   ),
@@ -1056,13 +990,11 @@ class RentalDetailState extends State<RentalDetail> {
                     children: <Widget>[
                       Text(
                         receiptText,
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                       Text(
                         receiptValues,
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                     ],
                   ),
@@ -1076,11 +1008,11 @@ class RentalDetailState extends State<RentalDetail> {
                 children: <Widget>[
                   Text(
                     "You have returned the item.",
-                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                    style: style,
                   ),
                   Text(
                     "Transaction Details",
-                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                    style: style,
                   ),
                   Divider(),
                   Row(
@@ -1088,13 +1020,11 @@ class RentalDetailState extends State<RentalDetail> {
                     children: <Widget>[
                       Text(
                         "Returned On:",
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                       Text(
                         "$end",
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                     ],
                   ),
@@ -1103,13 +1033,11 @@ class RentalDetailState extends State<RentalDetail> {
                     children: <Widget>[
                       Text(
                         "Rented for: ",
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                       Text(
                         "$duration",
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                     ],
                   ),
@@ -1118,13 +1046,11 @@ class RentalDetailState extends State<RentalDetail> {
                     children: <Widget>[
                       Text(
                         receiptText,
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                       Text(
                         receiptValues,
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                     ],
                   ),
@@ -1134,25 +1060,22 @@ class RentalDetailState extends State<RentalDetail> {
                 children: <Widget>[
                   Text(
                     "Your item has been returned to you.",
-                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                    style: style,
                   ),
                   Text(
                     "Transaction Details",
-                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                    style: style,
                   ),
                   Divider(),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      Text(
+                    children: <Widget>[ Text(
                         "Returned On:",
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                       Text(
                         "$end",
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                     ],
                   ),
@@ -1161,13 +1084,11 @@ class RentalDetailState extends State<RentalDetail> {
                     children: <Widget>[
                       Text(
                         "Rented for:",
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                       Text(
                         "$duration",
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                     ],
                   ),
@@ -1176,13 +1097,11 @@ class RentalDetailState extends State<RentalDetail> {
                     children: <Widget>[
                       Text(
                         receiptText,
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                       Text(
                         receiptValues,
-                        style:
-                            TextStyle(fontFamily: appFont, color: Colors.white),
+                        style: style,
                       ),
                     ],
                   ),
@@ -1195,28 +1114,28 @@ class RentalDetailState extends State<RentalDetail> {
         break;
     }
 
-    if ((isRenter && rentalDS['rentalReview'] != null) ||
+    if ((isRenter && rentalDS['rentalReview'] != null) && 
         (!isRenter && rentalDS['ownerReview'] != null)) {
       info = Column(
         children: <Widget>[
           Text(
             "The transaction is complete.",
-            style: TextStyle(fontFamily: appFont, color: Colors.white),
+            style: style,
           ),
           Text(
             "Transaction Details",
-            style: TextStyle(fontFamily: appFont, color: Colors.white),
+            style: style,
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
               Text(
                 "Rented Out On:",
-                style: TextStyle(fontFamily: appFont, color: Colors.white),
+                style: style,
               ),
               Text(
                 "$start",
-                style: TextStyle(fontFamily: appFont, color: Colors.white),
+                style: style,
               ),
             ],
           ),
@@ -1225,23 +1144,24 @@ class RentalDetailState extends State<RentalDetail> {
             children: <Widget>[
               Text(
                 "Returned On:",
-                style: TextStyle(fontFamily: appFont, color: Colors.white),
+                style: style,
               ),
               Text(
                 "$end",
-                style: TextStyle(fontFamily: appFont, color: Colors.white),
+                style: style,
               ),
             ],
           ),
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
               Text(
                 "Rented for:",
-                style: TextStyle(fontFamily: appFont, color: Colors.white),
+                style: style,
               ),
               Text(
                 "$duration",
-                style: TextStyle(fontFamily: appFont, color: Colors.white),
+                style: style,
               ),
             ],
           ),
@@ -1250,11 +1170,11 @@ class RentalDetailState extends State<RentalDetail> {
             children: <Widget>[
               Text(
                 receiptText,
-                style: TextStyle(fontFamily: appFont, color: Colors.white),
+                style: style,
               ),
               Text(
                 receiptValues,
-                style: TextStyle(fontFamily: appFont, color: Colors.white),
+                style: style,
               ),
             ],
           ),
@@ -1264,12 +1184,16 @@ class RentalDetailState extends State<RentalDetail> {
 
     return Container(
         decoration: BoxDecoration(
-          color: primaryColor,
+          color: Colors.white,
           borderRadius: BorderRadius.all(Radius.circular(12.0)),
+          border: Border.all(
+            color: primaryColor,
+            width: 0.5,
+          ),
           boxShadow: <BoxShadow>[
             CustomBoxShadow(
-                color: Colors.black45,
-                blurRadius: 3.0,
+                color: Colors.grey,
+                blurRadius: 0.5,
                 blurStyle: BlurStyle.outer),
           ],
         ),
