@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
@@ -13,6 +15,7 @@ import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:shareapp/services/payment_service.dart';
 import 'package:stripe_payment/stripe_payment.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 enum CardTapAction {
   setDefault,
@@ -69,6 +72,11 @@ class PayoutsPageState extends State<PayoutsPage> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
+        floatingActionButton: FloatingActionButton(
+          onPressed: createStripeAccount,
+          child: Icon(Icons.attach_money),
+          tooltip: 'Create Stripe account',
+        ),
         backgroundColor: coolerWhite,
         appBar: PreferredSize(
           preferredSize: Size.fromHeight(90),
@@ -772,5 +780,28 @@ class PayoutsPageState extends State<PayoutsPage> {
           },
         ) ??
         false;
+  }
+
+  void createStripeAccount() async {
+    String url = 'https://www.google.com';
+
+    if (await canLaunch(url)) {
+      await launch(url);
+    }
+
+
+    HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
+      functionName: 'createStripeAccount',
+    );
+
+    final HttpsCallableResult result = await callable.call(
+      <String, dynamic>{
+        '': '',
+      },
+    );
+
+
+
+
   }
 }
