@@ -1205,6 +1205,8 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   void handleAcceptedRental() async {
+    updateStatus(2);
+
     DocumentSnapshot otherUserDS = await Firestore.instance
         .collection('users')
         .document(otherUserId)
@@ -1258,7 +1260,6 @@ class RentalDetailState extends State<RentalDetail> {
                   children: <Widget>[
                     Expanded(
                       child: reusableButton('Accept', Colors.green, () {
-                        updateStatus(2);
                         handleAcceptedRental();
                       }),
                     ),
