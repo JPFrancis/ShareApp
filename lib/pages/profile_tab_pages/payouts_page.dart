@@ -442,6 +442,7 @@ class PayoutsPageState extends State<PayoutsPage> {
   }
 
   Widget buildChargesList() {
+   
     double w = MediaQuery.of(context).size.width;
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
@@ -468,10 +469,16 @@ class PayoutsPageState extends State<PayoutsPage> {
                     itemBuilder: (context, index) {
                       DocumentSnapshot ds = docs[index];
                       double amount = ds['amount'] / 100;
-
+                      bool _isOwner(){
+                        //print("\n"+ds['rentalData']['idFrom'] + "\n" + myUserID + "\n=============\n");
+                        if (ds['rentalData']['idFrom'] == myUserID) return true;
+                        else return false;
+                      }
+                      EdgeInsets e = _isOwner() ? EdgeInsets.only(top: 8.0, bottom: 8.0, right: 30.0, left: 15.0) 
+                                                : EdgeInsets.only(top: 8.0, bottom: 8.0, left: 30.0, right: 15.0);
                       Widget _paymentCard() {
                         return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 15.0),
+                          padding: e,
                           child: Container(
                             decoration: BoxDecoration(
                               boxShadow: <BoxShadow>[
@@ -488,8 +495,8 @@ class PayoutsPageState extends State<PayoutsPage> {
                               padding: EdgeInsets.symmetric(horizontal: 10.0),
                               child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: <Widget>[
-                                  Text("${ds['description']}", style: TextStyle(fontFamily: appFont, fontSize: w/28),),
-                                  Text("\$${amount.toStringAsFixed(0)}", style: TextStyle(fontWeight: FontWeight.bold, color: primaryColor.withOpacity(0.85), fontSize: w/15, fontFamily: appFont),),
+                                  Text("${ds['description']}", style: TextStyle(fontFamily: appFont, fontSize: w/31),),
+                                  Text("\$${amount.toStringAsFixed(0)}", style: TextStyle(fontWeight: FontWeight.bold, color: _isOwner() ? primaryColor.withOpacity(0.85) : Colors.red, fontSize: w/16, fontFamily: appFont),),
                                 ],
                               ),
                             ),

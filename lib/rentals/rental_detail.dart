@@ -582,8 +582,8 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   Widget showItemRequestStatus() {
-    //int itemStatus = rentalDS['status'];
-    int itemStatus = 4;
+   int itemStatus = rentalDS['status'];
+    //int itemStatus = 4;
     TextStyle style = new TextStyle(fontFamily: appFont, color: primaryColor);
     String start = DateFormat('h:mm a on d MMM yyyy').format(rentalDS['pickupStart'].toDate());
     String end = DateFormat('h:mm a on d MMM yyyy').format(rentalDS['rentalEnd'].toDate());
@@ -1197,7 +1197,9 @@ class RentalDetailState extends State<RentalDetail> {
                 blurStyle: BlurStyle.outer),
           ],
         ),
-        child: Container(padding: EdgeInsets.all(10), child: info)
+        child: Container(
+          width: 300.0,
+          padding: EdgeInsets.all(10), child: info)
         //Text(statusMessage, style: TextStyle(fontSize: 18, color: Colors.white, fontFamily: appFont)),
         );
   }

@@ -986,6 +986,14 @@ class HomePageState extends State<HomePage> {
         decoration: BoxDecoration(image: DecorationImage(image: AssetImage('assets/lines.png'), fit: BoxFit.fill),)
         );
     }
+
+     Widget _logo(){
+      return Container(
+        height: 50.0,
+        width: 50.0,
+        decoration: BoxDecoration(image: DecorationImage(image: AssetImage('assets/green_trans.png'),),)
+        );
+    }
     return Container(
       child: MediaQuery.removePadding(
         removeTop: true,
@@ -1000,7 +1008,8 @@ class HomePageState extends State<HomePage> {
             categories(),
             Container(height: h/200,),
             nearby(),
-            SizedBox(height: 70.0,),
+            SizedBox(height: 350.0,),
+            _logo(),
             _image(),
           ],
         ),
