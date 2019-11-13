@@ -400,6 +400,34 @@ exports.createCharge = functions.firestore.document('charges/{chargeId}')
         }
     });
 
+exports.createStripeAccount = functions.https.onCall(async (data, context) => {
+    var customerId = data.customerId;
+    var source = data.source;
+    var userId = data.userId;
+
+    await stripe.customers.deleteSource(
+        customerId,
+        source,
+    );
+
+    var updatedCustomer = await stripe.customers.retrieve(
+        customerId,
+    );
+
+    var newDefaultSource = updatedCustomer.default_source;
+    console.log(`New default source: ${newDefaultSource}`);
+
+    var resp = await db.collection('users').doc(userId).update({
+        defaultSource: newDefaultSource,
+    });
+
+    if (resp === null) {
+        return 'Error';
+    } else {
+        return 'Card successfully deleted';
+    }
+});
+
 // update items and rentals when user edits their name and profile picture
 exports.updateUserConnections = functions.firestore
     .document('users/{userId}')

@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
@@ -13,6 +15,7 @@ import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:shareapp/services/payment_service.dart';
 import 'package:stripe_payment/stripe_payment.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 enum CardTapAction {
   setDefault,
@@ -69,6 +72,11 @@ class PayoutsPageState extends State<PayoutsPage> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
+        floatingActionButton: FloatingActionButton(
+          onPressed: createStripeAccount,
+          child: Icon(Icons.attach_money),
+          tooltip: 'Create Stripe account',
+        ),
         backgroundColor: coolerWhite,
         appBar: PreferredSize(
           preferredSize: Size.fromHeight(90),
@@ -808,5 +816,45 @@ class PayoutsPageState extends State<PayoutsPage> {
           },
         ) ??
         false;
+  }
+
+  void createStripeAccount() async {
+    String phoneNum = '';
+    String random = 'jhjijihih'; /// CHANGE THIS ~~~~~~~~~~~~~~~~
+    String email = '$random@gmail.com';
+    String firstName = 'Bob';
+    String lastName = 'Jones';
+
+    String url = 'https://connect.stripe.com/express/oauth/authorize?'
+        'redirect_uri=https://share-app.web.app/'
+        'test&client_id=ca_G2aEpUUFBkF4B3U8tgcY0G5NWhCfOj2c&state={STATE_VALUE}'
+        '&stripe_user[country]=US'
+        '&stripe_user[phone_number]=$phoneNum'
+        '&stripe_user[business_type]=individual'
+//        '&stripe_user[email]=$email'
+        '&stripe_user[first_name]=$firstName'
+        '&stripe_user[last_name]=$lastName'
+        '&stripe_user[product_description]=do_not_edit';
+
+    debugPrint('URL: $url');
+
+    if (await canLaunch(url)) {
+      await launch(url);
+    }
+
+
+    HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
+      functionName: 'createStripeAccount',
+    );
+
+    final HttpsCallableResult result = await callable.call(
+      <String, dynamic>{
+        '': '',
+      },
+    );
+
+
+
+
   }
 }
