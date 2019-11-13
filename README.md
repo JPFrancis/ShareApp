@@ -4,4 +4,4 @@
 
 2) clone the repository. We are using Flutter version 1.9.1+hotfix.5
 
-#**CHECK DEVELOP BRANCH FOR THE LATEST CODE**
+**CHECK DEVELOP BRANCH FOR THE LATEST CODE**
