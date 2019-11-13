@@ -805,20 +805,14 @@ class PayoutsPageState extends State<PayoutsPage> {
     if (await canLaunch(url)) {
       await launch(url);
     }
-
-
-    HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
-      functionName: 'createStripeAccount',
-    );
-
-    final HttpsCallableResult result = await callable.call(
-      <String, dynamic>{
-        '': '',
-      },
-    );
-
-
-
-
+//    HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
+//      functionName: 'createStripeAccount',
+//    );
+//
+//    final HttpsCallableResult result = await callable.call(
+//      <String, dynamic>{
+//        '': '',
+//      },
+//    );
   }
 }
