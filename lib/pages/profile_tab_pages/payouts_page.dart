@@ -417,7 +417,7 @@ class PayoutsPageState extends State<PayoutsPage> {
                           return Column(
                             children: <Widget>[
                               Container(height: 10),
-                              buildCard(documents[index])
+                              Text("yeaahhhh")
                             ],
                           );
                         }

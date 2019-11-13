@@ -347,6 +347,8 @@ class RentalDetailState extends State<RentalDetail> {
       return Stack(
         children: <Widget>[
           Container(
+            width: width,
+            height: width,
             child: FittedBox(
               fit: BoxFit.cover,
               child: CachedNetworkImage(
@@ -386,7 +388,8 @@ class RentalDetailState extends State<RentalDetail> {
     return imageUrl != null
         ? Container(
             height: width / 1,
-            child: _getItemImage(context),
+            width: width / 1,
+            child: FittedBox(child: _getItemImage(context), fit: BoxFit.cover),
           )
         : Text('No images yet\n');
   }
@@ -584,7 +587,7 @@ class RentalDetailState extends State<RentalDetail> {
   Widget showItemRequestStatus() {
    int itemStatus = rentalDS['status'];
     //int itemStatus = 4;
-    TextStyle style = new TextStyle(fontFamily: appFont, color: primaryColor);
+    TextStyle style = new TextStyle(fontFamily: appFont, color: primaryColor, fontSize: 13.5);
     String start = DateFormat('h:mm a on d MMM yyyy').format(rentalDS['pickupStart'].toDate());
     String end = DateFormat('h:mm a on d MMM yyyy').format(rentalDS['rentalEnd'].toDate());
     int durationDays = rentalDS['duration'];
@@ -599,22 +602,44 @@ class RentalDetailState extends State<RentalDetail> {
     double total = subtotal * 1.029 + 0.3;
     double stripeFeePrice = subtotal * 0.029 + 0.3;
 
-    String receiptText = !isRenter
-        ?  'Item rental:\n'
-            'Government\'s cut:\n'
-            'Transaction fee (Not us):\n'
-            'Cost to keep our lights on:\n'
-            '----------------------------\n'
-            'Total:'
-        : 'Payout:';
-
-    String receiptValues = !isRenter
-        ? '\$${itemRentalPrice.toStringAsFixed(2)}\n'
-            '+ \$${taxPrice.toStringAsFixed(2)}\n'
-            '+ \$${stripeFeePrice.toStringAsFixed(2)}\n'
-            '+ \$${ourFeePrice.toStringAsFixed(2)}\n'
-            '\$${total.toStringAsFixed(2)}'
-        : '\$${itemRentalPrice.toStringAsFixed(2)}';
+    Widget receipt = isRenter 
+    ? Container(child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: <Widget>[
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
+          Align(alignment: Alignment.centerLeft, child: Text('Item rental:', style:style)),
+          Text('\$${itemRentalPrice.toStringAsFixed(2)}', textAlign: TextAlign.right, style:style),
+        ],),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
+          Align(alignment: Alignment.centerLeft, child: Text('Government\'s cut:', textAlign: TextAlign.left, style:style)),
+          Text('\$${taxPrice.toStringAsFixed(2)}', textAlign: TextAlign.right, style:TextStyle(fontFamily: appFont, color: primaryColor, fontSize: 11.5)),
+        ],),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
+          Align(alignment: Alignment.centerLeft, child: Text('Transaction fee (Not us):', textAlign: TextAlign.left, style:style)),
+          Text('\$${stripeFeePrice.toStringAsFixed(2)}', textAlign: TextAlign.right, style:TextStyle(fontFamily: appFont, color: primaryColor, fontSize: 11.5)),
+        ],),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
+          Align(alignment: Alignment.centerLeft, child: Text('Cost to keep our lights on:', textAlign: TextAlign.left, style:style)),
+          Text('\$${ourFeePrice.toStringAsFixed(2)}', textAlign: TextAlign.right, style:TextStyle(fontFamily: appFont, color: primaryColor, fontSize: 11.5)),
+        ],),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 30.0),
+          child: Divider(),
+        ),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
+          Align(alignment: Alignment.centerLeft, child: Text('Total:', textAlign: TextAlign.left, style:style)),
+          Text('\$${total.toStringAsFixed(2)}', textAlign: TextAlign.right, style:style),
+        ],)
+      ],))
+    : Container(child: Column(children: <Widget>[
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 30.0),
+          child: Divider(),
+        ),        
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
+            Text('Payout:', textAlign: TextAlign.left, style:style),
+            Text('\$${itemRentalPrice.toStringAsFixed(2)}', textAlign: TextAlign.right, style:style)
+          ],),
+      ],
+    ));
 
     Widget info;
 
@@ -823,20 +848,7 @@ class RentalDetailState extends State<RentalDetail> {
                       ),
                     ],
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      Text(
-                        receiptText,
-                        style: style,
-                      ),
-                      Text(
-                        receiptValues,
-                        textAlign: TextAlign.right,
-                        style: style,
-                      ),
-                    ],
-                  ),
+                  receipt,
                 ],
               )
             : Column(
@@ -876,20 +888,7 @@ class RentalDetailState extends State<RentalDetail> {
                       ),
                     ],
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      Text(
-                        receiptText,
-                        style: style,
-                      ),
-                      Text(
-                        receiptValues,
-                        textAlign: TextAlign.right,
-                        style: style,
-                      ),
-                    ],
-                  ),
+                  receipt,
                 ],
               );
         break;
@@ -933,19 +932,7 @@ class RentalDetailState extends State<RentalDetail> {
                       ),
                     ],
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      Text(
-                        receiptText,
-                        style: style,
-                      ),
-                      Text(
-                        receiptValues,
-                        style: style,
-                      ),
-                    ],
-                  ),
+                  receipt,
                 ],
               )
             : Column(
@@ -985,19 +972,7 @@ class RentalDetailState extends State<RentalDetail> {
                       ),
                     ],
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      Text(
-                        receiptText,
-                        style: style,
-                      ),
-                      Text(
-                        receiptValues,
-                        style: style,
-                      ),
-                    ],
-                  ),
+                  receipt,
                 ],
               );
         break;
@@ -1006,54 +981,20 @@ class RentalDetailState extends State<RentalDetail> {
         info = isRenter
             ? Column(
                 children: <Widget>[
-                  Text(
-                    "You have returned the item.",
-                    style: style,
-                  ),
-                  Text(
-                    "Transaction Details",
-                    style: style,
-                  ),
+                  Text( "You have returned the item.", style: style,),
+                  Text( "Transaction Details", style: style,),
                   Divider(),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      Text(
-                        "Returned On:",
-                        style: style,
-                      ),
-                      Text(
-                        "$end",
-                        style: style,
-                      ),
+                  Row( mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
+                      Text( "Returned On:", style: style,),
+                      Text( "$end", style: style,),
                     ],
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      Text(
-                        "Rented for: ",
-                        style: style,
-                      ),
-                      Text(
-                        "$duration",
-                        style: style,
-                      ),
+                  Row( mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
+                      Text( "Rented for: ", style: style,),
+                      Text( "$duration", style: style,),
                     ],
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      Text(
-                        receiptText,
-                        style: style,
-                      ),
-                      Text(
-                        receiptValues,
-                        style: style,
-                      ),
-                    ],
-                  ),
+                  receipt,
                 ],
               )
             : Column(
@@ -1092,19 +1033,7 @@ class RentalDetailState extends State<RentalDetail> {
                       ),
                     ],
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      Text(
-                        receiptText,
-                        style: style,
-                      ),
-                      Text(
-                        receiptValues,
-                        style: style,
-                      ),
-                    ],
-                  ),
+                  receipt,
                 ],
               );
         break;
@@ -1165,19 +1094,7 @@ class RentalDetailState extends State<RentalDetail> {
               ),
             ],
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              Text(
-                receiptText,
-                style: style,
-              ),
-              Text(
-                receiptValues,
-                style: style,
-              ),
-            ],
-          ),
+          receipt,
         ],
       );
     }
