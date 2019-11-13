@@ -783,7 +783,24 @@ class PayoutsPageState extends State<PayoutsPage> {
   }
 
   void createStripeAccount() async {
-    String url = 'https://www.google.com';
+    String phoneNum = '';
+    String random = 'jhjijihih'; /// CHANGE THIS ~~~~~~~~~~~~~~~~
+    String email = '$random@gmail.com';
+    String firstName = 'Bob';
+    String lastName = 'Jones';
+
+    String url = 'https://connect.stripe.com/express/oauth/authorize?'
+        'redirect_uri=https://share-app.web.app/'
+        'test&client_id=ca_G2aEpUUFBkF4B3U8tgcY0G5NWhCfOj2c&state={STATE_VALUE}'
+        '&stripe_user[country]=US'
+        '&stripe_user[phone_number]=$phoneNum'
+        '&stripe_user[business_type]=individual'
+//        '&stripe_user[email]=$email'
+        '&stripe_user[first_name]=$firstName'
+        '&stripe_user[last_name]=$lastName'
+        '&stripe_user[product_description]=do_not_edit';
+
+    debugPrint('URL: $url');
 
     if (await canLaunch(url)) {
       await launch(url);
