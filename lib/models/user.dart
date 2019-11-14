@@ -13,6 +13,7 @@ zip
 class User extends Model {
   DocumentSnapshot snap;
   String id;
+  bool acceptedTOS;
   Map address;
   String avatar;
   DateTime birthday;
@@ -38,6 +39,7 @@ class User extends Model {
 
     this.snap = snap;
     this.id = snap.documentID;
+    this.acceptedTOS = data['acceptedTOS'];
     this.address = data['address'];
     this.avatar = data['avatar'];
     this.birthday = birthday;
