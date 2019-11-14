@@ -12,7 +12,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
-import 'package:shareapp/models/user.dart';
+import 'package:shareapp/models/user_edit.dart';
 import 'package:shareapp/pages/profile_tab_pages/payouts_page.dart';
 import 'package:shareapp/pages/profile_tab_pages/profile_edit.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
@@ -826,8 +826,8 @@ class RentalCalendarState extends State<RentalCalendar>
                             birthday = timestampBirthday.toDate();
                           }
 
-                          User userEdit =
-                              User.fromMap(userSnapshot.data, birthday);
+                          UserEdit userEdit =
+                              UserEdit.fromMap(userSnapshot.data, birthday);
 
                           Navigator.push(
                               context,

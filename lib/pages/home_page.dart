@@ -16,7 +16,7 @@ import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/extras/quote_icons.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/models/item.dart';
-import 'package:shareapp/models/user.dart';
+import 'package:shareapp/models/user_edit.dart';
 import 'package:shareapp/pages/item_detail.dart';
 import 'package:shareapp/pages/item_edit.dart';
 import 'package:shareapp/pages/profile_tab_pages/help_page.dart';
@@ -2793,7 +2793,7 @@ class HomePageState extends State<HomePage> {
         birthday = timestampBirthday.toDate();
       }
 
-      User userEdit = User.fromMap(myUserDS.data, birthday);
+      UserEdit userEdit = UserEdit.fromMap(myUserDS.data, birthday);
 
       Navigator.push(
           context,

@@ -13,7 +13,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/extras/quote_icons.dart';
-import 'package:shareapp/models/user.dart';
+import 'package:shareapp/models/user_edit.dart';
 import 'package:shareapp/services/const.dart';
 
 enum DismissDialogAction {
@@ -24,7 +24,7 @@ enum DismissDialogAction {
 
 class ProfileEdit extends StatefulWidget {
   static const routeName = '/editProfile';
-  final User userEdit;
+  final UserEdit userEdit;
 
   ProfileEdit({Key key, this.userEdit}) : super(key: key);
 
@@ -63,7 +63,7 @@ class ProfileEditState extends State<ProfileEdit> {
   double pageHeight;
   double pageWidth;
 
-  User userCopy;
+  UserEdit userCopy;
 
   @override
   void initState() {
@@ -71,7 +71,7 @@ class ProfileEditState extends State<ProfileEdit> {
     super.initState();
 
     getUserID();
-    userCopy = User.copy(widget.userEdit);
+    userCopy = UserEdit.copy(widget.userEdit);
     nameController.text = userCopy.name;
     descriptionController.text = userCopy.description;
     phoneNumController.text = userCopy.phoneNum ?? '';

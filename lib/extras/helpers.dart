@@ -21,7 +21,6 @@ double closeButtonSize = 31;
 
 // Reusable Classes
 
-
 // testing only
 void qq(String message) {
   debugPrint('========== $message');
