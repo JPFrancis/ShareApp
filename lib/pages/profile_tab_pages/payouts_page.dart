@@ -8,6 +8,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
@@ -15,6 +16,7 @@ import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:shareapp/services/payment_service.dart';
 import 'package:stripe_payment/stripe_payment.dart';
+import 'package:uni_links/uni_links.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 enum CardTapAction {
@@ -784,27 +786,32 @@ class PayoutsPageState extends State<PayoutsPage> {
 
   void createStripeAccount() async {
     String phoneNum = '';
-    String random = 'jhjijihih'; /// CHANGE THIS ~~~~~~~~~~~~~~~~
+    String random = DateTime.now().microsecondsSinceEpoch.toString();
+
+    /// CHANGE THIS ~~~~~~~~~~~~~~~~
     String email = '$random@gmail.com';
     String firstName = 'Bob';
     String lastName = 'Jones';
 
     String url = 'https://connect.stripe.com/express/oauth/authorize?'
         'redirect_uri=https://share-app.web.app/'
-        'test&client_id=ca_G2aEpUUFBkF4B3U8tgcY0G5NWhCfOj2c&state={STATE_VALUE}'
+        '&client_id=ca_G2aEpUUFBkF4B3U8tgcY0G5NWhCfOj2c&state={STATE_VALUE}'
         '&stripe_user[country]=US'
         '&stripe_user[phone_number]=$phoneNum'
         '&stripe_user[business_type]=individual'
-//        '&stripe_user[email]=$email'
+        '&stripe_user[email]=$email'
         '&stripe_user[first_name]=$firstName'
         '&stripe_user[last_name]=$lastName'
         '&stripe_user[product_description]=do_not_edit';
 
-    debugPrint('URL: $url');
+//    debugPrint('URL: $url');
 
     if (await canLaunch(url)) {
       await launch(url);
+      qq('');
+      SystemChannels.platform.invokeMethod('SystemNavigator.pop');
     }
+
 //    HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
 //      functionName: 'createStripeAccount',
 //    );
@@ -814,5 +821,17 @@ class PayoutsPageState extends State<PayoutsPage> {
 //        '': '',
 //      },
 //    );
+  }
+
+  initPlatformState() async {
+    try {
+      String initialLink = await getInitialLink();
+      print('initial link: $initialLink');
+      if (initialLink != null) {
+//        String initialUri = Uri.parse(initialLink);
+      }
+    } catch (e) {
+      debugPrint('Error: $e');
+    }
   }
 }

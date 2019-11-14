@@ -1,12 +1,14 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/login/login_page.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/pages/home_page.dart';
 import 'package:shareapp/rentals/chat.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/auth.dart';
+import 'package:uni_links/uni_links.dart';
 
 class RootPage extends StatefulWidget {
   static const routeName = '/rootPage';
@@ -31,7 +33,8 @@ class RootPageState extends State<RootPage> {
   initState() {
     super.initState();
 
-    configureFCM();
+//    configureFCM();
+    initPlatformState();
 
     widget.auth.getUserID().then((userId) {
       setState(() {
@@ -45,6 +48,18 @@ class RootPageState extends State<RootPage> {
     setState(() {
       authStatus = status;
     });
+  }
+
+  initPlatformState() async {
+    try {
+      String initialLink = await getInitialLink();
+      qq('initial link: $initialLink');
+      if (initialLink != null) {
+//        String initialUri = Uri.parse(initialLink);
+      }
+    } catch(e) {
+      debugPrint('Error: $e');
+    }
   }
 
   void configureFCM() async {
