@@ -61,4 +61,10 @@ class User extends Model {
 
     notifyListeners();
   }
+
+  void acceptTOS() {
+    this.acceptedTOS = true;
+
+    notifyListeners();
+  }
 }

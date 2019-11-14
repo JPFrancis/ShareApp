@@ -3,7 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:scoped_model/scoped_model.dart';
-import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/login/login_page.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/models/current_user.dart';
@@ -56,7 +55,7 @@ class RootPageState extends State<RootPage> {
   initPlatformState() async {
     try {
       String initialLink = await getInitialLink();
-      qq('initial link: $initialLink');
+//      qq('initial link: $initialLink');
       if (initialLink != null) {
 //        String initialUri = Uri.parse(initialLink);
       }

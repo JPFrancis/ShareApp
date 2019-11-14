@@ -1,5 +1,3 @@
-import 'dart:ffi';
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
@@ -808,7 +806,6 @@ class PayoutsPageState extends State<PayoutsPage> {
 
     if (await canLaunch(url)) {
       await launch(url);
-      qq('');
       SystemChannels.platform.invokeMethod('SystemNavigator.pop');
     }
 

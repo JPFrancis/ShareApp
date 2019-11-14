@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:shareapp/services/functions.dart';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -8,13 +8,13 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/extras/quote_icons.dart';
 import 'package:shareapp/main.dart';
+import 'package:shareapp/models/current_user.dart';
 import 'package:shareapp/models/item.dart';
 import 'package:shareapp/models/user_edit.dart';
 import 'package:shareapp/pages/item_detail.dart';
@@ -29,6 +29,7 @@ import 'package:shareapp/rentals/chat.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/auth.dart';
 import 'package:shareapp/services/const.dart';
+import 'package:shareapp/services/functions.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:url_launcher/url_launcher.dart';
@@ -49,11 +50,12 @@ class HomePage extends StatefulWidget {
 }
 
 class HomePageState extends State<HomePage> {
+  CurrentUser currentUser;
   final FirebaseMessaging firebaseMessaging = FirebaseMessaging();
   String deviceToken;
 
   SharedPreferences prefs;
-  FirebaseUser currentUser;
+  FirebaseUser firebaseUser;
   DocumentSnapshot myUserDS;
   String myUserID;
   List<Item> itemList;
@@ -67,7 +69,6 @@ class HomePageState extends State<HomePage> {
 
   bool pageIsLoading = true;
   bool locIsLoading = false;
-  bool showTOS = true;
   bool isAuthenticated;
 
   TextEditingController searchController = TextEditingController();
@@ -128,14 +129,15 @@ class HomePageState extends State<HomePage> {
     edgeInset = EdgeInsets.only(
         left: padding, right: padding, bottom: padding, top: 30);
 
-    currentUser = widget.firebaseUser;
+    firebaseUser = widget.firebaseUser;
+    currentUser = CurrentUser.getModel(context);
+    myUserDS = currentUser.snap;
 
-    if (currentUser == null) {
+    if (firebaseUser == null) {
       isAuthenticated = false;
-      showTOS = false;
     } else {
       isAuthenticated = true;
-      myUserID = currentUser.uid;
+      myUserID = firebaseUser.uid;
       setPrefs();
     }
 
@@ -492,55 +494,7 @@ class HomePageState extends State<HomePage> {
     if (prefs != null) {
       await prefs.setString('userID', myUserID);
 
-      var stream =
-          Firestore.instance.collection('users').document(myUserID).snapshots();
-
-      stream.listen((ds) async {
-        if (ds != null && ds.exists) {
-          myUserDS = ds;
-          var acceptedTOS = myUserDS['acceptedTOS'];
-
-          if (acceptedTOS != null && acceptedTOS is bool) {
-            if (acceptedTOS) {
-              showTOS = false;
-            } else {
-              showTOS = true;
-            }
-          }
-
-          UserUpdateInfo userUpdateInfo = UserUpdateInfo();
-          userUpdateInfo.displayName = myUserDS['name'];
-          userUpdateInfo.photoUrl = myUserDS['avatar'];
-          await currentUser.updateProfile(userUpdateInfo);
-          await currentUser.reload();
-
-          setState(() {});
-        }
-      }, onDone: () {
-        print("Done");
-      }, onError: (error) {
-        print("Error");
-      });
-
       updateLastActiveAndPushToken();
-    }
-  }
-
-  void checkPrefs() async {
-    prefs = await SharedPreferences.getInstance();
-
-    if (prefs != null) {
-      String tempUserID = await prefs.get('userID');
-
-      if (tempUserID != null) {
-        if (myUserID != tempUserID) {
-          setPrefs();
-        } else {
-          setState(() {
-            pageIsLoading = false;
-          });
-        }
-      }
     }
   }
 
@@ -616,9 +570,8 @@ class HomePageState extends State<HomePage> {
   }
 
   Widget bottomNavBar() {
-    return showTOS
-        ? SizedBox(height: 0)
-        : SizedBox(
+    return currentUser.acceptedTOS
+        ? SizedBox(
             //height: 90,
             child: BottomNavigationBar(
               backgroundColor: coolerWhite,
@@ -632,7 +585,8 @@ class HomePageState extends State<HomePage> {
                 });
               },
             ),
-          );
+          )
+        : SizedBox(height: 0);
   }
 
   Widget showTermsOfService() {
@@ -654,11 +608,7 @@ class HomePageState extends State<HomePage> {
                       .document(myUserID)
                       .updateData({'acceptedTOS': true});
 
-                  showTOS = false;
-                  myUserDS = await Firestore.instance
-                      .collection('users')
-                      .document(myUserID)
-                      .get();
+                  currentUser.acceptTOS();
 
                   setState(() {});
                 },
@@ -672,7 +622,7 @@ class HomePageState extends State<HomePage> {
   }
 
   Widget showBody() {
-    if (isAuthenticated && showTOS) {
+    if (isAuthenticated && !currentUser.acceptedTOS) {
       return showTermsOfService();
     }
 

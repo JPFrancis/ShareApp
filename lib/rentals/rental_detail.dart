@@ -1,8 +1,5 @@
-import 'dart:ui' as prefix0;
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -19,7 +16,6 @@ import 'package:shareapp/services/functions.dart';
 import 'package:shareapp/services/payment_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smooth_star_rating/smooth_star_rating.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 enum Status {
   requested,
