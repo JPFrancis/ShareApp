@@ -82,6 +82,7 @@ class ItemEditState extends State<ItemEdit> {
   void initState() {
     super.initState();
 
+    currentUser = CurrentUser.getModel(context);
     isLoading = true;
     itemId = widget.itemId;
     isEdit = itemId != null ? true : false;
@@ -156,7 +157,7 @@ class ItemEditState extends State<ItemEdit> {
         firebaseUser = user;
       });
 
-      currentLocation = await getUserLocation();
+      currentLocation = currentUser.currentLocation;
 
       if (currentLocation != null) {
         setState(() {

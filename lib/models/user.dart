@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:scoped_model/scoped_model.dart';
+import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/models/user_edit.dart';
 
 /*
@@ -54,6 +55,9 @@ class User extends Model {
     this.gender = data['gender'];
     this.name = data['name'];
     this.phoneNum = data['phoneNum'];
+
+    // current user only
+    this.currentLocation = null;
 
     if (constructor == null) {
       notifyListeners();

@@ -19,6 +19,7 @@ import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/auth.dart';
 import 'package:shareapp/services/const.dart';
 
+import 'extras/helpers.dart';
 import 'models/current_user.dart';
 import 'models/user.dart';
 
@@ -81,9 +82,12 @@ class MyApp extends StatelessWidget {
 
               return MaterialPageRoute(
                 builder: (context) {
-                  return ItemEdit(
-                    item: args.item,
-                    itemId: args.itemId,
+                  return ScopedModel<CurrentUser>(
+                    model: args.user,
+                    child: ItemEdit(
+                      item: args.item,
+                      itemId: args.itemId,
+                    ),
                   );
                 },
                 fullscreenDialog: true,
@@ -224,8 +228,9 @@ class ItemDetailArgs {
 class ItemEditArgs {
   final Item item;
   final String itemId;
+  final User user;
 
-  ItemEditArgs(this.item, this.itemId);
+  ItemEditArgs(this.item, this.itemId, this.user);
 }
 
 class ItemRequestArgs {

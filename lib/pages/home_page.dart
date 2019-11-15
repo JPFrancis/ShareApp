@@ -151,18 +151,16 @@ class HomePageState extends State<HomePage> {
     ];
 
     if (isAuthenticated) {
-      updateRentals();
+      initialize();
     } else {
       getCurrentLoc();
       setState(() {
         pageIsLoading = false;
       });
     }
-
-    getCurrentLoc();
   }
 
-  void updateRentals() async {
+  void initialize() async {
     CollectionReference rentalsCollection =
         Firestore.instance.collection('rentals');
 
@@ -228,20 +226,17 @@ class HomePageState extends State<HomePage> {
       }
     }
 
-    scheduleNotifications();
-  }
-
-  void scheduleNotifications() async {
+    // schedule notifications
     await localNotificationManager.cancelAll();
 
     DocumentReference userDR =
         Firestore.instance.collection('users').document(myUserID);
-    var rentalQuerySnaps = await Firestore.instance
+    rentalQuerySnaps = await Firestore.instance
         .collection('rentals')
         .where('users', arrayContains: userDR)
         .where('status', isEqualTo: 2)
         .getDocuments();
-    List<DocumentSnapshot> rentalSnaps = rentalQuerySnaps.documents;
+    rentalSnaps = rentalQuerySnaps.documents;
 
     for (int i = 0; i < rentalSnaps.length; i++) {
       DocumentSnapshot rentalDS = rentalSnaps[i];
@@ -320,10 +315,7 @@ class HomePageState extends State<HomePage> {
       }
     }
 
-    removeUnavailableItemDays();
-  }
-
-  void removeUnavailableItemDays() async {
+    // remove unavailable item days
     CollectionReference itemRef = Firestore.instance.collection('items');
 
     QuerySnapshot snaps = await itemRef
@@ -355,15 +347,11 @@ class HomePageState extends State<HomePage> {
       }
     }
 
-    showReviewDialog();
-  }
-
-  void showReviewDialog() async {
-    CollectionReference rentalsCollection =
-        Firestore.instance.collection('rentals');
+    // show review dialogs
+    rentalsCollection = Firestore.instance.collection('rentals');
 
     // Check for rentals where you are the renter
-    var rentalQuerySnaps = await rentalsCollection
+    rentalQuerySnaps = await rentalsCollection
         .where('renter',
             isEqualTo:
                 Firestore.instance.collection('users').document(myUserID))
@@ -371,7 +359,7 @@ class HomePageState extends State<HomePage> {
         .where('ownerReviewSubmitted', isEqualTo: false)
         .getDocuments();
 
-    List<DocumentSnapshot> rentalSnaps = rentalQuerySnaps.documents;
+    rentalSnaps = rentalQuerySnaps.documents;
 
     if (rentalSnaps != null && rentalSnaps.length > 0) {
       reviewRentals = rentalSnaps;
@@ -396,9 +384,7 @@ class HomePageState extends State<HomePage> {
       showReviewDialogs();
     }
 
-    setState(() {
-      pageIsLoading = false;
-    });
+    getCurrentLoc();
   }
 
   /*
@@ -668,7 +654,7 @@ class HomePageState extends State<HomePage> {
           color: Theme.of(context).primaryColor,
           textColor: Colors.white,
           onPressed: () {
-            if (verifyUser(
+            if (!verifyUser(
                 address: currentUser.address,
                 birthday: currentUser.birthday,
                 gender: currentUser.gender,
@@ -1111,7 +1097,7 @@ class HomePageState extends State<HomePage> {
     }
   }
 
-  getCurrentLoc() async {
+  void getCurrentLoc() async {
     setState(() {
       locIsLoading = true;
     });
@@ -1119,6 +1105,7 @@ class HomePageState extends State<HomePage> {
     currentLocation = await getUserLocation();
 
     if (currentLocation != null) {
+      currentUser.updateCurrentLocation(currentLocation);
       await prefs.setDouble('lat', currentLocation.latitude);
       await prefs.setDouble('long', currentLocation.longitude);
     } else {
@@ -1127,6 +1114,10 @@ class HomePageState extends State<HomePage> {
 
     setState(() {
       locIsLoading = false;
+
+      if (isAuthenticated) {
+        pageIsLoading = false;
+      }
     });
   }
 
@@ -2679,6 +2670,7 @@ class HomePageState extends State<HomePage> {
       arguments: ItemEditArgs(
         newItem,
         null,
+        currentUser,
       ),
     );
   }
