@@ -87,6 +87,12 @@ class User extends Model {
 
     notifyListeners();
   }
+
+  void addConnectedAcctId(String id) {
+    this.connectedAcctId = id;
+
+    notifyListeners();
+  }
 }
 
 bool verifyUser(

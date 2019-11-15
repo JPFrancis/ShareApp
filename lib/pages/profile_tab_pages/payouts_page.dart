@@ -42,6 +42,7 @@ class PayoutsPageState extends State<PayoutsPage> {
 
   bool isLoading = true;
   bool stripeInit = false;
+  bool showFAB = true;
 
   @override
   void initState() {
@@ -80,16 +81,29 @@ class PayoutsPageState extends State<PayoutsPage> {
     });
   }
 
+  void test() {
+    String url =
+        'https://share-app.web.app/?code=ac_GBarfU3LILI74qNnuSmRSvd2ivkrx6bG'
+            .trim();
+
+    RegExp regExp = RegExp(r'code=(.*)');
+    String parsed = regExp.firstMatch(url).group(1);
+
+    qq('$parsed');
+  }
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        floatingActionButton: FloatingActionButton(
-          onPressed: createStripeAccount,
-          child: Icon(Icons.attach_money),
-          tooltip: 'Create Stripe account',
-        ),
+        floatingActionButton: showFAB
+            ? FloatingActionButton(
+                onPressed: createStripeAccount,
+                child: Icon(Icons.attach_money),
+                tooltip: 'Create Stripe account',
+              )
+            : null,
         backgroundColor: coolerWhite,
         appBar: PreferredSize(
           preferredSize: Size.fromHeight(90),
