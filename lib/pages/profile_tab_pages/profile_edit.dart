@@ -16,7 +16,6 @@ import 'package:shareapp/extras/quote_icons.dart';
 import 'package:shareapp/models/current_user.dart';
 import 'package:shareapp/models/user_edit.dart';
 import 'package:shareapp/services/const.dart';
-import 'package:shareapp/models/user.dart';
 
 enum DismissDialogAction {
   cancel,
@@ -533,7 +532,10 @@ class ProfileEditState extends State<ProfileEdit> {
       data.addAll({'avatar': userCopy.avatar});
     }
 
-    await Firestore.instance.collection('users').document(myUserID).updateData(data);
+    await Firestore.instance
+        .collection('users')
+        .document(myUserID)
+        .updateData(data);
 
     currentUser.updateUser(userEdit: userCopy);
 

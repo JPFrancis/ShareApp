@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:scoped_model/scoped_model.dart';
 import 'package:shareapp/models/user_edit.dart';
@@ -62,7 +61,7 @@ class User extends Model {
   }
 
   void updateUser({UserEdit userEdit}) {
-    this.avatar=userEdit.avatar;
+    this.avatar = userEdit.avatar;
     this.name = userEdit.name;
     this.description = userEdit.description;
     this.gender = userEdit.gender;
