@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:scoped_model/scoped_model.dart';
+import 'package:shareapp/models/user_edit.dart';
 
 /*
 Address fields (all strings):
@@ -60,25 +61,14 @@ class User extends Model {
     }
   }
 
-  void updateUser({@required String name}) {
-    Map data = snap.data;
-    Timestamp bDay = data['birthday'];
-    DateTime birthday = bDay?.toDate();
-
-    this.snap = snap;
-    this.id = snap.documentID;
-    this.acceptedTOS = data['acceptedTOS'];
-    this.address = data['address'];
-    this.avatar = data['avatar'];
-    this.birthday = birthday;
-    this.connectedAcctId = data['connectedAcctId'];
-    this.custId = data['custId'];
-    this.defaultSource = data['defaultSource'];
-    this.description = data['description'];
-    this.email = data['email'];
-    this.gender = data['gender'];
-    this.name = data['name'];
-    this.phoneNum = data['phoneNum'];
+  void updateUser({UserEdit userEdit}) {
+    this.avatar=userEdit.avatar;
+    this.name = userEdit.name;
+    this.description = userEdit.description;
+    this.gender = userEdit.gender;
+    this.birthday = userEdit.birthday;
+    this.phoneNum = userEdit.phoneNum;
+    this.address = userEdit.address;
 
     notifyListeners();
   }
