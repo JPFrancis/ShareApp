@@ -15,6 +15,7 @@ import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/extras/quote_icons.dart';
 import 'package:shareapp/models/user_edit.dart';
 import 'package:shareapp/services/const.dart';
+import 'package:shareapp/models/user.dart';
 
 enum DismissDialogAction {
   cancel,

@@ -7,15 +7,18 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:scoped_model/scoped_model.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/extras/quote_icons.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/models/current_user.dart';
 import 'package:shareapp/models/item.dart';
+import 'package:shareapp/models/user.dart';
 import 'package:shareapp/models/user_edit.dart';
 import 'package:shareapp/pages/item_detail.dart';
 import 'package:shareapp/pages/item_edit.dart';
@@ -32,6 +35,7 @@ import 'package:shareapp/services/const.dart';
 import 'package:shareapp/services/functions.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:uni_links/uni_links.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class HomePage extends StatefulWidget {
@@ -56,7 +60,7 @@ class HomePageState extends State<HomePage> {
 
   SharedPreferences prefs;
   FirebaseUser firebaseUser;
-  DocumentSnapshot myUserDS;
+
   String myUserID;
   List<Item> itemList;
   Future<File> selectedImage;
@@ -130,14 +134,14 @@ class HomePageState extends State<HomePage> {
         left: padding, right: padding, bottom: padding, top: 30);
 
     firebaseUser = widget.firebaseUser;
-    currentUser = CurrentUser.getModel(context);
-    myUserDS = currentUser.snap;
 
     if (firebaseUser == null) {
       isAuthenticated = false;
+      setPrefs();
     } else {
       isAuthenticated = true;
       myUserID = firebaseUser.uid;
+      currentUser = CurrentUser.getModel(context);
       setPrefs();
     }
 
@@ -152,6 +156,7 @@ class HomePageState extends State<HomePage> {
     if (isAuthenticated) {
       updateRentals();
     } else {
+      getCurrentLoc();
       setState(() {
         pageIsLoading = false;
       });
@@ -570,7 +575,7 @@ class HomePageState extends State<HomePage> {
   }
 
   Widget bottomNavBar() {
-    return currentUser.acceptedTOS
+    return !isAuthenticated || currentUser.acceptedTOS
         ? SizedBox(
             //height: 90,
             child: BottomNavigationBar(
@@ -666,57 +671,55 @@ class HomePageState extends State<HomePage> {
           color: Theme.of(context).primaryColor,
           textColor: Colors.white,
           onPressed: () {
-            if (myUserDS != null && myUserDS.exists) {
-              if (myUserDS['address'] == null ||
-                  myUserDS['birthday'] == null ||
-                  myUserDS['gender'] == null ||
-                  myUserDS['phoneNum'] == null) {
-                showDialog<bool>(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      title: Text('Error'),
-                      content: Text(
-                        'You must complete your profile before adding an item',
+            if (verifyUser(
+                address: currentUser.address,
+                birthday: currentUser.birthday,
+                gender: currentUser.gender,
+                phoneNum: currentUser.phoneNum)) {
+              showDialog<bool>(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: Text('Error'),
+                    content: Text(
+                      'You must complete your profile before adding an item',
+                    ),
+                    actions: <Widget>[
+                      FlatButton(
+                        child: const Text('Cancel'),
+                        onPressed: () {
+                          Navigator.of(context).pop(
+                              false); // Pops the confirmation dialog but not the page.
+                        },
                       ),
-                      actions: <Widget>[
-                        FlatButton(
-                          child: const Text('Cancel'),
-                          onPressed: () {
-                            Navigator.of(context).pop(
-                                false); // Pops the confirmation dialog but not the page.
-                          },
-                        ),
-                        FlatButton(
-                          child: const Text('Edit profile'),
-                          onPressed: () {
-                            Navigator.of(context).pop(false);
-                            navToProfileEdit();
-                          },
-                        ),
-                      ],
-                    );
-                  },
-                );
-              } else {
-                navigateToEdit(
-                  Item(
-                    isVisible: true,
-                    creator: Firestore.instance
-                        .collection('users')
-                        .document(myUserID),
-                    name: '',
-                    description: '',
-                    type: null,
-                    condition: null,
-                    price: 0,
-                    numImages: 0,
-                    images: new List(),
-                    location: {'geopoint': null},
-                  ),
-                  false,
-                );
-              }
+                      FlatButton(
+                        child: const Text('Edit profile'),
+                        onPressed: () {
+                          Navigator.of(context).pop(false);
+                          navToProfileEdit();
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
+            } else {
+              navigateToEdit(
+                Item(
+                  isVisible: true,
+                  creator:
+                      Firestore.instance.collection('users').document(myUserID),
+                  name: '',
+                  description: '',
+                  type: null,
+                  condition: null,
+                  price: 0,
+                  numImages: 0,
+                  images: new List(),
+                  location: {'geopoint': null},
+                ),
+                false,
+              );
             }
           },
           child: Text("Add Item",
@@ -1092,9 +1095,12 @@ class HomePageState extends State<HomePage> {
 
                       return myUserID == creatorRef.documentID
                           ? Container()
-                          : Container(
-                              width: w / 2.2,
-                              child: itemCard(itemDS, context),
+                          : ScopedModel<User>(
+                              model: currentUser,
+                              child: Container(
+                                width: w / 2.2,
+                                child: itemCard(itemDS, context),
+                              ),
                             );
                     },
                   );
@@ -1538,6 +1544,8 @@ class HomePageState extends State<HomePage> {
 
   Widget buildListingsList() {
     int tilerows = MediaQuery.of(context).size.width > 500 ? 3 : 2;
+    BuildContext homeContext = context;
+
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
         stream: Firestore.instance
@@ -1564,7 +1572,7 @@ class HomePageState extends State<HomePage> {
                     padding: const EdgeInsets.all(15.0),
                     crossAxisSpacing: MediaQuery.of(context).size.width / 25,
                     children: snapshots
-                        .map((snapshot) => itemCard(snapshot, context))
+                        .map((snapshot) => itemCard(snapshot, homeContext))
                         .toList());
               } else {
                 return Container();
@@ -2225,12 +2233,6 @@ class HomePageState extends State<HomePage> {
       double width = MediaQuery.of(context).size.width;
 
       Widget _userImage() {
-        void onImageButtonPressed(ImageSource source) {
-          setState(() {
-            selectedImage = ImagePicker.pickImage(source: source);
-          });
-        }
-
         Widget _showCurrentProfilePic() {
           double height = MediaQuery.of(context).size.height;
           double width = MediaQuery.of(context).size.width;
@@ -2241,7 +2243,7 @@ class HomePageState extends State<HomePage> {
               fit: BoxFit.cover,
               child: CachedNetworkImage(
                 //key: ValueKey(DateTime.now().millisecondsSinceEpoch),
-                imageUrl: myUserDS['avatar'],
+                imageUrl: currentUser.avatar,
                 placeholder: (context, url) => CircularProgressIndicator(),
               ),
             ),
@@ -2249,25 +2251,7 @@ class HomePageState extends State<HomePage> {
         }
 
         return Center(
-          child: InkWell(
-            //onTap: () => onImageButtonPressed(ImageSource.gallery),
-            child: FutureBuilder<File>(
-                future: selectedImage,
-                builder: (BuildContext context, AsyncSnapshot<File> snapshot) {
-                  if (snapshot.connectionState == ConnectionState.done &&
-                      snapshot.data != null) {
-                    imageFile = snapshot.data;
-                    return Image.file(imageFile);
-                  } else if (snapshot.error != null) {
-                    return const Text(
-                      'Error',
-                      textAlign: TextAlign.center,
-                    );
-                  } else {
-                    return _showCurrentProfilePic();
-                  }
-                }),
-          ),
+          child: _showCurrentProfilePic(),
           // Icon(Icons.edit)
         );
       }
@@ -2279,10 +2263,10 @@ class HomePageState extends State<HomePage> {
             height: 10.0,
           ),
           Center(
-              child: Text("${myUserDS['name']}",
+              child: Text(currentUser.name,
                   style: TextStyle(fontFamily: font, fontSize: width / 15))),
           Center(
-              child: Text('${myUserDS['email']}',
+              child: Text(currentUser.email,
                   style: TextStyle(
                       color: Colors.black,
                       fontSize: width / 27,
@@ -2299,9 +2283,9 @@ class HomePageState extends State<HomePage> {
                   size: width / 22,
                 )),
             Text(
-              myUserDS['description'].toString().isEmpty
+              currentUser.description.isEmpty
                   ? "The user hasn't added a description yet!"
-                  : myUserDS['description'],
+                  : currentUser.description,
               style: TextStyle(fontFamily: font, fontSize: width / 22),
             ),
             Align(
@@ -2688,7 +2672,7 @@ class HomePageState extends State<HomePage> {
   }
 
   void navigateToEdit(Item newItem, bool isEdit) async {
-    if (!isAuthenticated || !myUserDS['acceptedTOS']) {
+    if (!isAuthenticated || !currentUser.acceptedTOS) {
       return;
     }
 
@@ -2708,6 +2692,7 @@ class HomePageState extends State<HomePage> {
       ItemDetail.routeName,
       arguments: ItemDetailArgs(
         itemDS,
+        context,
       ),
     );
   }
@@ -2716,9 +2701,12 @@ class HomePageState extends State<HomePage> {
     Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (BuildContext context) => SearchPage(
-            typeFilter: filter,
-            showSearch: false,
+          builder: (BuildContext context) => ScopedModel<User>(
+            model: currentUser,
+            child: SearchPage(
+              typeFilter: filter,
+              showSearch: false,
+            ),
           ),
         ));
   }
@@ -2735,25 +2723,19 @@ class HomePageState extends State<HomePage> {
   }
 
   void navToProfileEdit() async {
-    if (myUserDS != null && myUserDS.exists) {
-      Timestamp timestampBirthday = myUserDS['birthday'];
-      DateTime birthday;
+    UserEdit userEdit = UserEdit.fromUser(currentUser);
 
-      if (timestampBirthday != null) {
-        birthday = timestampBirthday.toDate();
-      }
-
-      UserEdit userEdit = UserEdit.fromMap(myUserDS.data, birthday);
-
-      Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (BuildContext context) => ProfileEdit(
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (BuildContext context) => ScopedModel<CurrentUser>(
+            model: currentUser,
+            child: ProfileEdit(
               userEdit: userEdit,
             ),
-            fullscreenDialog: true,
-          ));
-    }
+          ),
+          fullscreenDialog: true,
+        ));
   }
 
   Future<bool> deleteItemError() async {

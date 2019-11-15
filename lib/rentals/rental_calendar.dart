@@ -818,25 +818,25 @@ class RentalCalendarState extends State<RentalCalendar>
                         onPressed: () {
                           Navigator.of(context).pop(
                               false); // Pops the confirmation dialog but not the page.
-                          Timestamp timestampBirthday =
-                              userSnapshot['birthday'];
-                          DateTime birthday;
-
-                          if (timestampBirthday != null) {
-                            birthday = timestampBirthday.toDate();
-                          }
-
-                          UserEdit userEdit =
-                              UserEdit.fromMap(userSnapshot.data, birthday);
-
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (BuildContext context) => ProfileEdit(
-                                  userEdit: userEdit,
-                                ),
-                                fullscreenDialog: true,
-                              ));
+//                          Timestamp timestampBirthday =
+//                              userSnapshot['birthday'];na
+//                          DateTime birthday;
+//
+//                          if (timestampBirthday != null) {
+//                            birthday = timestampBirthday.toDate();
+//                          }
+//
+//                          UserEdit userEdit =
+//                              UserEdit.fromMap(userSnapshot.data, birthday);
+//
+//                          Navigator.push(
+//                              context,
+//                              MaterialPageRoute(
+//                                builder: (BuildContext context) => ProfileEdit(
+//                                  userEdit: userEdit,
+//                                ),
+//                                fullscreenDialog: true,
+//                              ));
                         },
                       )
                     : Container(),

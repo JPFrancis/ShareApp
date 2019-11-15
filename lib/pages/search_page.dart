@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shareapp/extras/helpers.dart';
+import 'package:shareapp/models/current_user.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:shareapp/services/functions.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -25,6 +26,7 @@ class SearchPage extends StatefulWidget {
 }
 
 class SearchPageState extends State<SearchPage> {
+  CurrentUser currentUser;
   SharedPreferences prefs;
   Geoflutterfire geo = Geoflutterfire();
   Position currentLocation;
@@ -56,6 +58,7 @@ class SearchPageState extends State<SearchPage> {
     // TODO: implement initState
     super.initState();
 
+    currentUser = CurrentUser.getModel(context);
     showSearch = widget.showSearch;
     typeFilter = widget.typeFilter;
     showSuggestions = showSearch ? true : false;
@@ -677,7 +680,7 @@ class SearchPageState extends State<SearchPage> {
                     if (!isAuthenticated ||
                         ds['creator'].documentID != myUserID) {
                       if (searchController.text.isEmpty) {
-                        displayCards.add(searchTile(ds, context));
+                        displayCards.add(searchTile(ds, currentUser, context));
                       } else {
                         String name = ds['name'].toLowerCase();
                         String description = ds['description'].toLowerCase();
@@ -703,7 +706,8 @@ class SearchPageState extends State<SearchPage> {
                         }
 
                         if (add) {
-                          displayCards.add(searchTile(ds, context));
+                          displayCards
+                              .add(searchTile(ds, currentUser, context));
                         }
                       }
                     }

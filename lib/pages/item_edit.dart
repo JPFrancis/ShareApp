@@ -17,6 +17,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:multi_image_picker/multi_image_picker.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
+import 'package:shareapp/models/current_user.dart';
 import 'package:shareapp/models/item.dart';
 import 'package:shareapp/pages/item_detail.dart';
 import 'package:shareapp/services/const.dart';
@@ -45,7 +46,8 @@ class ItemEdit extends StatefulWidget {
 /// We initially assume we are in editing mode
 class ItemEditState extends State<ItemEdit> {
   final GlobalKey<FormState> formKey = new GlobalKey<FormState>();
-  FirebaseUser currentUser;
+  CurrentUser currentUser;
+  FirebaseUser firebaseUser;
   String itemId;
 
   String appBarText = "Edit"; // Either 'Edit' or 'Add'. Prepended to " Item"
@@ -151,7 +153,7 @@ class ItemEditState extends State<ItemEdit> {
       });
     } else {
       FirebaseAuth.instance.currentUser().then((user) {
-        currentUser = user;
+        firebaseUser = user;
       });
 
       currentLocation = await getUserLocation();
@@ -676,8 +678,8 @@ class ItemEditState extends State<ItemEdit> {
             'searchKey': searchKeyList,
             'isVisible': true,
             'owner': {
-              'name': currentUser.displayName,
-              'avatar': currentUser.photoUrl,
+              'name': firebaseUser.displayName,
+              'avatar': firebaseUser.photoUrl,
             },
           },
         );
@@ -702,6 +704,7 @@ class ItemEditState extends State<ItemEdit> {
               ItemDetail.routeName,
               arguments: ItemDetailArgs(
                 ds,
+                context,
               ),
             );
           });

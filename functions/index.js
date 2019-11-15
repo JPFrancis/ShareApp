@@ -11,7 +11,7 @@ const storage = admin.storage();
 const bucket = storage.bucket();
 
 const stripe = require('stripe')(functions.config().stripe.token);
-const error_message = 'Please update your app to perform this action';
+const error_message = 'Invalid input. Make sure you\'re using the latest version of the app';
 
 // create new user document when account created
 exports.createUser = functions.auth.user().onCreate(event => {
@@ -36,6 +36,7 @@ exports.createUser = functions.auth.user().onCreate(event => {
         name: name,
         lastActive: Date.now(),
         creationDate: creationDate,
+        connectedAcctId: null,
         custId: 'new',
         defaultSource: null,
         pushToken: '',

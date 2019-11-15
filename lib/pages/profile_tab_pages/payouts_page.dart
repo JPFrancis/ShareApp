@@ -48,8 +48,22 @@ class PayoutsPageState extends State<PayoutsPage> {
   void initState() {
     // TODO: implement initState
     super.initState();
+
+    initStream();
     getMyUserID();
     //delayPage();
+  }
+
+  void initStream() {
+    getLinksStream().listen((link) {
+      try {
+        var _latestUri;
+        if (link != null) _latestUri = Uri.parse(link);
+        print("=== Link: ${_latestUri}");
+      } on FormatException {
+        print("--- A link got here but was invalid");
+      }
+    });
   }
 
   void delayPage() async {
@@ -793,7 +807,7 @@ class PayoutsPageState extends State<PayoutsPage> {
 
     String url = 'https://connect.stripe.com/express/oauth/authorize?'
         'redirect_uri=https://share-app.web.app/'
-        '&client_id=ca_G2aEpUUFBkF4B3U8tgcY0G5NWhCfOj2c&state={STATE_VALUE}'
+        '&client_id=ca_G2aEpUUFBkF4B3U8tgcY0G5NWhCfOj2c' /*&state={STATE_VALUE}'*/
         '&stripe_user[country]=US'
         '&stripe_user[phone_number]=$phoneNum'
         '&stripe_user[business_type]=individual'
@@ -806,7 +820,6 @@ class PayoutsPageState extends State<PayoutsPage> {
 
     if (await canLaunch(url)) {
       await launch(url);
-      SystemChannels.platform.invokeMethod('SystemNavigator.pop');
     }
 
 //    HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(

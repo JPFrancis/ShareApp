@@ -84,6 +84,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
         } else {
           try {
             userId = await widget.auth.createUser(email, password);
+
             await Future.delayed(Duration(seconds: 2));
             FirebaseUser createdUser = await widget.auth.getFirebaseUser();
 

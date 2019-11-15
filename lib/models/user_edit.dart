@@ -6,6 +6,8 @@
   zip
  */
 
+import 'package:shareapp/models/user.dart';
+
 class UserEdit {
   String avatar;
   String name;
@@ -27,16 +29,16 @@ class UserEdit {
     this.address,
   });
 
-  UserEdit.fromMap(Map<String, dynamic> data, DateTime birthdayAsDateTime)
+  UserEdit.fromUser(User user)
       : this(
-          avatar: data['avatar'],
-          name: data['name'],
-          description: data['description'],
-          gender: data['gender'],
-          email: data['email'],
-          phoneNum: data['phoneNum'],
-          birthday: birthdayAsDateTime,
-          address: data['address'],
+          avatar: user.avatar,
+          name: user.name,
+          description: user.description,
+          gender: user.gender,
+          email: user.email,
+          phoneNum: user.phoneNum,
+          birthday: user.birthday,
+          address: user.address,
         );
 
   UserEdit.copy(UserEdit other)

@@ -12,6 +12,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
+import 'package:shareapp/models/current_user.dart';
 import 'package:shareapp/models/item.dart';
 import 'package:shareapp/pages/all_reviews.dart';
 import 'package:shareapp/pages/item_edit.dart';
@@ -36,7 +37,7 @@ class ItemDetail extends StatefulWidget {
 class ItemDetailState extends State<ItemDetail> {
   final GlobalKey<RefreshIndicatorState> refreshIndicatorKey =
       new GlobalKey<RefreshIndicatorState>();
-
+  CurrentUser currentUser;
   GoogleMapController googleMapController;
   Map<CircleId, Circle> circles = <CircleId, Circle>{};
   GeoPoint itemLocationGeoPoint;
@@ -65,6 +66,8 @@ class ItemDetailState extends State<ItemDetail> {
     super.initState();
 
     itemDS = widget.initItemDS;
+
+    currentUser = CurrentUser.getModel(context);
 
     getMyUserID();
   }
@@ -824,6 +827,7 @@ class ItemDetailState extends State<ItemDetail> {
       ProfilePage.routeName,
       arguments: ProfilePageArgs(
         itemOwnerID,
+        currentUser,
       ),
     );
   }

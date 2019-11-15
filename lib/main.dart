@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:scoped_model/scoped_model.dart';
+import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/login/root_page.dart';
 import 'package:shareapp/models/item.dart';
 import 'package:shareapp/pages/all_reviews.dart';
@@ -17,6 +19,9 @@ import 'package:shareapp/rentals/rental_calendar.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/auth.dart';
 import 'package:shareapp/services/const.dart';
+
+import 'models/current_user.dart';
+import 'models/user.dart';
 
 //void main() => runApp(MyApp());
 
@@ -61,8 +66,11 @@ class MyApp extends StatelessWidget {
 
               return MaterialPageRoute(
                 builder: (context) {
-                  return ItemDetail(
-                    initItemDS: args.initItemDS,
+                  return ScopedModel<CurrentUser>(
+                    model: CurrentUser.getModel(args.context),
+                    child: ItemDetail(
+                      initItemDS: args.initItemDS,
+                    ),
                   );
                 },
               );
@@ -156,8 +164,11 @@ class MyApp extends StatelessWidget {
 
               return MaterialPageRoute(
                 builder: (context) {
-                  return ProfilePage(
-                    userID: args.userID,
+                  return ScopedModel<CurrentUser>(
+                    model: args.user,
+                    child: ProfilePage(
+                      userID: args.userID,
+                    ),
                   );
                 },
               );
@@ -189,6 +200,8 @@ class MyApp extends StatelessWidget {
               );
             }
         }
+
+        return null;
       },
     );
   }
@@ -204,8 +217,9 @@ class HomePageArgs {
 
 class ItemDetailArgs {
   final DocumentSnapshot initItemDS;
+  final BuildContext context;
 
-  ItemDetailArgs(this.initItemDS);
+  ItemDetailArgs(this.initItemDS, this.context);
 }
 
 class ItemEditArgs {
@@ -256,8 +270,9 @@ class AllReviewsArgs {
 
 class ProfilePageArgs {
   final String userID;
+  final User user;
 
-  ProfilePageArgs(this.userID);
+  ProfilePageArgs(this.userID, this.user);
 }
 
 class RentalCalendarArgs {

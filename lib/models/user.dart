@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:scoped_model/scoped_model.dart';
 
@@ -17,6 +18,7 @@ class User extends Model {
   Map address;
   String avatar;
   DateTime birthday;
+  String connectedAcctId;
   String custId;
   String defaultSource;
   String description;
@@ -24,6 +26,7 @@ class User extends Model {
   String gender;
   String name;
   String phoneNum;
+  bool verified;
 
   // current user only
   Position currentLocation;
@@ -35,7 +38,7 @@ class User extends Model {
   void updateData(DocumentSnapshot snap, {bool constructor}) {
     Map data = snap.data;
     Timestamp bDay = data['birthday'];
-    DateTime birthday = bDay.toDate();
+    DateTime birthday = bDay?.toDate();
 
     this.snap = snap;
     this.id = snap.documentID;
@@ -43,6 +46,7 @@ class User extends Model {
     this.address = data['address'];
     this.avatar = data['avatar'];
     this.birthday = birthday;
+    this.connectedAcctId = data['connectedAcctId'];
     this.custId = data['custId'];
     this.defaultSource = data['defaultSource'];
     this.description = data['description'];
@@ -56,6 +60,29 @@ class User extends Model {
     }
   }
 
+  void updateUser({@required String name}) {
+    Map data = snap.data;
+    Timestamp bDay = data['birthday'];
+    DateTime birthday = bDay?.toDate();
+
+    this.snap = snap;
+    this.id = snap.documentID;
+    this.acceptedTOS = data['acceptedTOS'];
+    this.address = data['address'];
+    this.avatar = data['avatar'];
+    this.birthday = birthday;
+    this.connectedAcctId = data['connectedAcctId'];
+    this.custId = data['custId'];
+    this.defaultSource = data['defaultSource'];
+    this.description = data['description'];
+    this.email = data['email'];
+    this.gender = data['gender'];
+    this.name = data['name'];
+    this.phoneNum = data['phoneNum'];
+
+    notifyListeners();
+  }
+
   void updateCurrentLocation(Position position) {
     this.currentLocation = position;
 
@@ -67,4 +94,40 @@ class User extends Model {
 
     notifyListeners();
   }
+}
+
+bool verifyUser(
+    {Map address, DateTime birthday, String gender, String phoneNum}) {
+  if (address == null) {
+    return false;
+  } else {
+    String city = address['city'];
+    String state = address['state'];
+    String street = address['street'];
+    String zip = address['zip'];
+
+    if (city == null || city.isEmpty) {
+      return false;
+    } else if (state == null || state.length != 2) {
+      return false;
+    } else if (street == null || street.isEmpty) {
+      return false;
+    } else if (zip == null || zip.length != 5) {
+      return false;
+    }
+  }
+
+  if (birthday == null) {
+    return false;
+  }
+
+  if (gender == null || gender.isEmpty) {
+    return false;
+  }
+
+  if (phoneNum == null || phoneNum.length != 10) {
+    return false;
+  }
+
+  return true;
 }
