@@ -262,6 +262,17 @@ class HomePageState extends State<HomePage> {
         id += idCounter;
         await localNotificationManager.schedule(
           id,
+          'Pickup window will begin in 1 day',
+          'Item: $itemName',
+          pickupStart.subtract(Duration(days: 1)),
+          specs,
+          payload: '$id',
+        );
+        idCounter++;
+
+        id += idCounter;
+        await localNotificationManager.schedule(
+          id,
           'Pickup window will begin in 1 hour',
           'Item: $itemName',
           pickupStart.subtract(Duration(hours: 1)),
