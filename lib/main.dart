@@ -19,7 +19,6 @@ import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/auth.dart';
 import 'package:shareapp/services/const.dart';
 
-import 'extras/helpers.dart';
 import 'models/current_user.dart';
 import 'models/user.dart';
 

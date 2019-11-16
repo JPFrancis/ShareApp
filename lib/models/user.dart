@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:scoped_model/scoped_model.dart';
-import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/models/user_edit.dart';
 
 /*
