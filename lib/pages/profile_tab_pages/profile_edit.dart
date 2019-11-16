@@ -16,6 +16,7 @@ import 'package:shareapp/extras/quote_icons.dart';
 import 'package:shareapp/models/current_user.dart';
 import 'package:shareapp/models/user_edit.dart';
 import 'package:shareapp/services/const.dart';
+import 'package:shareapp/services/functions.dart';
 
 enum DismissDialogAction {
   cancel,
@@ -134,7 +135,11 @@ class ProfileEditState extends State<ProfileEdit> {
               ),
               color: Color(0xff007f6e),
               onPressed: () {
-                saveProfile();
+                if (nameController.text.trim().isEmpty) {
+                  showToast('Name can\'t be empty');
+                } else {
+                  saveProfile();
+                }
               },
             ),
     );

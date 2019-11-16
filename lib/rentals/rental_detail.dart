@@ -261,42 +261,42 @@ class RentalDetailState extends State<RentalDetail> {
                 children: <Widget>[
                   showItemImage(),
                   showItemCreator(),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 15),
-                    child: RaisedButton(
-                      onPressed: () async {
-                        var duration = rentalDS['duration'].toInt();
-                        var price = rentalDS['price'].toInt();
-                        double itemPrice = (duration * price).toDouble();
-                        double tax = itemPrice * 0.06;
-                        double ourFee = itemPrice * 0.07;
-                        double baseChargeAmount =
-                            (itemPrice + tax + ourFee) * 1.029 + 0.3;
-                        int finalCharge = (baseChargeAmount * 100).round();
-
-                        Map transferData = {
-                          'ourFee': ourFee * 100,
-                          'ownerPayout': itemPrice * 100,
-                        };
-
-                        PaymentService().createSubscription(
-                          rentalDS.documentID,
-                          rentalDS['duration'],
-                          rentalDS['pickupStart'],
-                          rentalDS['rentalEnd'],
-                          renterId,
-                          ownerId,
-                          finalCharge,
-                          transferData,
-                          '${rentalDS['renterData']['name']} paying ${rentalDS['ownerData']['name']} '
-                          'for renting ${rentalDS['itemName']}',
-                        );
-                      },
-                      textColor: Colors.white,
-                      color: Colors.green,
-                      child: Text('Charge'),
-                    ),
-                  ),
+//                  Container(
+//                    padding: EdgeInsets.symmetric(horizontal: 15),
+//                    child: RaisedButton(
+//                      onPressed: () async {
+//                        var duration = rentalDS['duration'].toInt();
+//                        var price = rentalDS['price'].toInt();
+//                        double itemPrice = (duration * price).toDouble();
+//                        double tax = itemPrice * 0.06;
+//                        double ourFee = itemPrice * 0.07;
+//                        double baseChargeAmount =
+//                            (itemPrice + tax + ourFee) * 1.029 + 0.3;
+//                        int finalCharge = (baseChargeAmount * 100).round();
+//
+//                        Map transferData = {
+//                          'ourFee': ourFee * 100,
+//                          'ownerPayout': itemPrice * 100,
+//                        };
+//
+//                        PaymentService().createSubscription(
+//                          rentalDS.documentID,
+//                          rentalDS['duration'],
+//                          rentalDS['pickupStart'],
+//                          rentalDS['rentalEnd'],
+//                          renterId,
+//                          ownerId,
+//                          finalCharge,
+//                          transferData,
+//                          '${rentalDS['renterData']['name']} paying ${rentalDS['ownerData']['name']} '
+//                          'for renting ${rentalDS['itemName']}',
+//                        );
+//                      },
+//                      textColor: Colors.white,
+//                      color: Colors.green,
+//                      child: Text('Charge'),
+//                    ),
+//                  ),
                   SizedBox(
                     height: 10.0,
                   ),
