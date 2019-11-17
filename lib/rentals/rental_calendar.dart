@@ -471,8 +471,15 @@ class RentalCalendarState extends State<RentalCalendar>
     return Column(
       children: <Widget>[
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20),
-          child: showTimePickers(),
+          padding: const EdgeInsets.symmetric(horizontal: 15),
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.blueGrey[100]),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            padding: EdgeInsets.symmetric(vertical: 13),
+            child: showTimePickers(),
+          ),
         ),
         divider(),
         showPaymentMethod(),
@@ -1189,48 +1196,7 @@ class DateTimeItem extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
-          Container(
-            width: 7,
-          ),
-          /*
-          InkWell(
-            onTap: () {
-              showDatePicker(
-                      context: context,
-                      initialDate: stripHourMin(dateTime),
-                      firstDate: stripHourMin(DateTime.now()),
-                      lastDate: DateTime.now().add(Duration(days: 300)))
-                  .then<void>((DateTime value) {
-                if (value != null) {
-                  onChangedDateTime(updateDateTime(value.year, value.month,
-                      value.day, windows, window, amPm));
-                }
-              });
-            },
-            child: Column(
-              children: <Widget>[
-                Text('Pickup Date',
-                    style: TextStyle(
-                        fontFamily: 'Quicksand',
-                        fontWeight: FontWeight.w200,
-                        fontSize: w / 30),
-                    textAlign: TextAlign.start),
-                SizedBox(height: 3),
-                Container(
-                  child: Center(
-                    child: Text(
-                      DateFormat('MMM d').format(dateTime),
-                      style: TextStyle(
-                          color: primaryColor,
-                          fontFamily: 'Quicksand',
-                          fontSize: w / 25),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          */
+          Container(width: 7,),
           InkWell(
             onTap: () {
               Picker(

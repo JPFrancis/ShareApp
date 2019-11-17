@@ -375,68 +375,88 @@ class PayoutsPageState extends State<PayoutsPage> {
   Widget showCreditCards() {
     double w = MediaQuery.of(context).size.width;
 
-    return StreamBuilder(
-      stream:
-          Firestore.instance.collection('users').document(myUserID).snapshots(),
-      builder:
-          (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
-        switch (snapshot.connectionState) {
-          case ConnectionState.waiting:
-          default:
-            DocumentSnapshot ds = snapshot.data;
+    Widget _image(){
+      return Container(
+        height: 100.0,
+        child: Row(children: <Widget>[
+          SizedBox(width: 10.0,),
+          Align(alignment: Alignment.centerLeft, child: Text("Payments secured by", style: TextStyle(fontFamily: 'Quicksand', fontSize: w/25,))),
+          SizedBox(width: 0.0,),
+          Container(
+            height: w/7,
+            width: w/3, 
+            decoration: BoxDecoration(image: DecorationImage(image: AssetImage('assets/stripe_logo.png'), fit: BoxFit.fill),)
+          ),
+        ],),
+      );
+    }
+    return Stack(children: <Widget>[
+        StreamBuilder(
+          stream:
+              Firestore.instance.collection('users').document(myUserID).snapshots(),
+          builder:
+              (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+            switch (snapshot.connectionState) {
+              case ConnectionState.waiting:
+              default:
+                DocumentSnapshot ds = snapshot.data;
 
-            if (ds != null && ds.exists) {
-              defaultSource = ds['defaultSource'];
-              stripeCustId = ds['custId'];
+                if (ds != null && ds.exists) {
+                  defaultSource = ds['defaultSource'];
+                  stripeCustId = ds['custId'];
+                }
+
+                return StreamBuilder(
+                  stream: Firestore.instance
+                      .collection('users')
+                      .document(myUserID)
+                      .collection('sources')
+                      .snapshots(),
+                  builder: (BuildContext context,
+                      AsyncSnapshot<QuerySnapshot> snapshot) {
+                    if (snapshot.hasError) {
+                      return new Text('${snapshot.error}');
+                    }
+
+                    switch (snapshot.connectionState) {
+                      case ConnectionState.waiting:
+                        return Container();
+                      default:
+                        List documents = snapshot.data.documents;
+                        numCards = documents.length;
+
+                        return ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: documents.length + 1,
+                          itemBuilder: (context, index) {
+                            if (index == documents.length) {
+                              return Column(
+                                children: <Widget>[
+                                  Container(height: 10),
+                                  addCard(),
+                                  Container(height: 10),
+                                ],
+                              );
+                            } else {
+                              return Column(
+                                children: <Widget>[
+                                  Container(height: 10),
+                                  buildCard(documents[index]),
+                                ],
+                              );
+                            }
+                          },
+                        );
+                    }
+                  },
+                );
             }
-
-            return StreamBuilder(
-              stream: Firestore.instance
-                  .collection('users')
-                  .document(myUserID)
-                  .collection('sources')
-                  .snapshots(),
-              builder: (BuildContext context,
-                  AsyncSnapshot<QuerySnapshot> snapshot) {
-                if (snapshot.hasError) {
-                  return new Text('${snapshot.error}');
-                }
-
-                switch (snapshot.connectionState) {
-                  case ConnectionState.waiting:
-                    return Container();
-                  default:
-                    List documents = snapshot.data.documents;
-                    numCards = documents.length;
-
-                    return ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: documents.length + 1,
-                      itemBuilder: (context, index) {
-                        if (index == documents.length) {
-                          return Column(
-                            children: <Widget>[
-                              Container(height: 10),
-                              addCard(),
-                              Container(height: 10),
-                            ],
-                          );
-                        } else {
-                          return Column(
-                            children: <Widget>[
-                              Container(height: 10),
-                              Text("yeaahhhh")
-                            ],
-                          );
-                        }
-                      },
-                    );
-                }
-              },
-            );
-        }
-      },
-    );
+          },
+        ),
+       Align(
+         alignment: Alignment.bottomLeft,
+         child: Container(child: _image())), 
+      ],);
   }
 
   Widget showPayouts() {
@@ -450,8 +470,6 @@ class PayoutsPageState extends State<PayoutsPage> {
   }
 
   Widget buildChargesList() {
-   
-    double w = MediaQuery.of(context).size.width;
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
         stream: Firestore.instance
@@ -477,48 +495,14 @@ class PayoutsPageState extends State<PayoutsPage> {
                     itemBuilder: (context, index) {
                       DocumentSnapshot ds = docs[index];
                       double amount = ds['amount'] / 100;
-                      bool _isOwner(){
-                        //print("\n"+ds['rentalData']['idFrom'] + "\n" + myUserID + "\n=============\n");
-                        if (ds['rentalData']['idFrom'] == myUserID) return true;
-                        else return false;
-                      }
-                      EdgeInsets e = _isOwner() ? EdgeInsets.only(top: 8.0, bottom: 8.0, right: 30.0, left: 15.0) 
-                                                : EdgeInsets.only(top: 8.0, bottom: 8.0, left: 30.0, right: 15.0);
-                      Widget _paymentCard() {
-                        return Padding(
-                          padding: e,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              boxShadow: <BoxShadow>[
-                                CustomBoxShadow(
-                                    color: Colors.grey,
-                                    blurRadius: 5.0,
-                                    blurStyle: BlurStyle.outer),
-                              ],
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            height: 80.0,
-                            child: Container(
-                              padding: EdgeInsets.symmetric(horizontal: 10.0),
-                              child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: <Widget>[
-                                  Text("${ds['description']}", style: TextStyle(fontFamily: appFont, fontSize: w/31),),
-                                  Text("\$${amount.toStringAsFixed(0)}", style: TextStyle(fontWeight: FontWeight.bold, color: _isOwner() ? primaryColor.withOpacity(0.85) : Colors.red, fontSize: w/16, fontFamily: appFont),),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      }
 
-                      return _paymentCard();
-
-/*
                       return ListTile(
-                        title: Text( '\$${amount.toStringAsFixed(0)}', style: TextStyle(fontWeight: FontWeight.bold),),
+                        title: Text(
+                          '\$${amount.toStringAsFixed(0)}',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                         subtitle: Text('${ds['description']}'),
-                      );*/
+                      );
                     });
               } else {
                 return Container();
@@ -826,23 +810,29 @@ class PayoutsPageState extends State<PayoutsPage> {
     String lastName = 'Jones';
 
     String url = 'https://connect.stripe.com/express/oauth/authorize?'
-        'redirect_uri=https://share-app.web.app/'
-        'test&client_id=ca_G2aEpUUFBkF4B3U8tgcY0G5NWhCfOj2c&state={STATE_VALUE}'
+        'redirect_uri=https://share-app.web.app'
+        'test&client_id=ca_G2aEpUUFBkF4B3U8tgcY0G5NWhCfOj2c&state='
         '&stripe_user[country]=US'
         '&stripe_user[phone_number]=$phoneNum'
         '&stripe_user[business_type]=individual'
 //        '&stripe_user[email]=$email'
         '&stripe_user[first_name]=$firstName'
         '&stripe_user[last_name]=$lastName'
-        '&stripe_user[product_description]=do_not_edit';
+        '&stripe_user[product_description]=do_not_edit'
+;
 
     debugPrint('URL: $url');
+    debugPrint('------');
 
-    if (await canLaunch(url)) {
-      await launch(url);
+
+    if (await canLaunch("$url")) {
+      await launch("$url");
+    } else {
+      debugPrint("cannot launch");
     }
 
 
+/*
     HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
       functionName: 'createStripeAccount',
     );
@@ -852,7 +842,7 @@ class PayoutsPageState extends State<PayoutsPage> {
         '': '',
       },
     );
-
+*/
 
 
 

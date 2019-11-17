@@ -626,8 +626,8 @@ class RentalDetailState extends State<RentalDetail> {
           child: Divider(),
         ),
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
-          Align(alignment: Alignment.centerLeft, child: Text('Total:', textAlign: TextAlign.left, style:style)),
-          Text('\$${total.toStringAsFixed(2)}', textAlign: TextAlign.right, style:style),
+          Align(alignment: Alignment.centerLeft, child: Text('Total:', textAlign: TextAlign.left, style:TextStyle(fontFamily: appFont, color: primaryColor, fontSize: 13.5, fontWeight: FontWeight.bold))),
+          Text('\$${total.toStringAsFixed(2)}', textAlign: TextAlign.right, style:TextStyle(fontFamily: appFont, color: primaryColor, fontSize: 13.5, fontWeight: FontWeight.bold)),
         ],)
       ],))
     : Container(child: Column(children: <Widget>[
@@ -636,8 +636,8 @@ class RentalDetailState extends State<RentalDetail> {
           child: Divider(),
         ),        
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
-            Text('Payout:', textAlign: TextAlign.left, style:style),
-            Text('\$${itemRentalPrice.toStringAsFixed(2)}', textAlign: TextAlign.right, style:style)
+            Text('Total Payout To You:', textAlign: TextAlign.left, style: TextStyle(fontFamily: appFont, color: primaryColor, fontSize: 13.5, fontWeight: FontWeight.bold)),
+            Text('\$${itemRentalPrice.toStringAsFixed(2)}', textAlign: TextAlign.right, style:TextStyle(fontFamily: appFont, color: primaryColor, fontSize: 13.5, fontWeight: FontWeight.bold))
           ],),
       ],
     ));
