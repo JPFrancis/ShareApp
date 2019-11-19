@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:io';
-
+import 'package:date_range_picker/date_range_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -1922,7 +1922,7 @@ class HomePageState extends State<HomePage> {
     double h = MediaQuery.of(context).size.height;
 
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
             bottom: PreferredSize(
@@ -2003,6 +2003,11 @@ class HomePageState extends State<HomePage> {
                         ),
                     ),
                     ),
+                    Tab(
+                        child: Text(
+                      "Calendar",
+                      style: TextStyle(fontFamily: 'Quicksand'),
+                    )),
                   ],
                   labelColor: coolerWhite,
                   unselectedLabelColor: Colors.black54,
@@ -2060,6 +2065,7 @@ class HomePageState extends State<HomePage> {
                     buildTransactions(RentalPhase.past, "owner"),
                   ],
                 ),
+                Text('test'),
               ],
             ),
           ),
