@@ -48,7 +48,6 @@ class NewPickupState extends State<NewPickup> {
   Future<File> selectedImage;
   File imageFile;
   String message;
-  String note;
 
   TextEditingController noteController = TextEditingController();
   FocusNode focusNode;
@@ -73,7 +72,7 @@ class NewPickupState extends State<NewPickup> {
     // TODO: implement initState
     super.initState();
     focusNode = FocusNode();
-    note = '';
+    noteController.text = '';
 
     getMyUserID();
   }
@@ -430,11 +429,6 @@ class NewPickupState extends State<NewPickup> {
         maxLines: 3,
         controller: noteController,
         style: textStyle,
-        onChanged: (value) {
-          setState(() {
-            note = noteController.text;
-          });
-        },
         decoration: InputDecoration(
           labelText: 'Add note (optional)',
           filled: true,
@@ -477,7 +471,6 @@ class NewPickupState extends State<NewPickup> {
       'duration': duration,
       'price': dailyRate,
       'lastUpdateTime': DateTime.now(),
-      'note': note,
     }).then((_) {
       Future.delayed(Duration(seconds: 1)).then((_) {
         Firestore.instance.collection('notifications').add({
@@ -487,26 +480,25 @@ class NewPickupState extends State<NewPickup> {
           'rentalID': widget.rentalID,
           'timestamp': DateTime.now().millisecondsSinceEpoch,
         }).then((_) {
-          var messageReference = Firestore.instance
+          String text = message;
+
+          if (noteController.text.trim().isNotEmpty) {
+            text += '\n\nNote:\n${noteController.text.trim()}';
+          }
+
+          Firestore.instance
               .collection('messages')
               .document(groupChatId)
               .collection('messages')
-              .document(DateTime.now().millisecondsSinceEpoch.toString());
-
-          Firestore.instance.runTransaction((transaction) async {
-            await transaction.set(
-              messageReference,
-              {
-                'idFrom': myUserID,
-                'idTo': otherUserDS.documentID,
-                'timestamp': DateTime.now().millisecondsSinceEpoch,
-                'content': message,
-                'type': 0,
-                'pushToken': otherUserDS['pushToken'],
-                'nameFrom': myName,
-                'rental': rentalDS.reference,
-              },
-            );
+              .add({
+            'idFrom': myUserID,
+            'idTo': otherUserDS.documentID,
+            'timestamp': DateTime.now().millisecondsSinceEpoch,
+            'content': text,
+            'type': 0,
+            'pushToken': otherUserDS['pushToken'],
+            'nameFrom': myName,
+            'rental': rentalDS.reference,
           }).then((_) {
             Navigator.of(context).pop();
           });
@@ -521,17 +513,22 @@ class NewPickupState extends State<NewPickup> {
         theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
 
     String range = parseWindow(windows, window, amPm);
+    String note = noteController.text.trim();
 
     message = 'New pickup proposal\nPickup window: $range\n'
         'Date: ${DateFormat('EEE, MMM d yyyy').format(pickupTime)}\n'
         'Duration: ${duration > 1 ? '$duration days' : '$duration day'}\n'
         'Daily rate: \$${dailyRate.toStringAsFixed(2)}';
 
+    if (note.isNotEmpty) {
+      message += '\n\nAdditional note:\n$note';
+    }
+
     return await showDialog<bool>(
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              title: Text('Preview new pickup'),
+              title: Text('Preview'),
               content: Text(
                 message,
                 style: dialogTextStyle,

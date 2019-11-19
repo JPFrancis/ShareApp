@@ -4,8 +4,11 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:scoped_model/scoped_model.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/extras/quote_icons.dart';
+import 'package:shareapp/models/current_user.dart';
+import 'package:shareapp/models/user.dart';
 import 'package:shareapp/services/const.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -23,6 +26,7 @@ class ProfilePage extends StatefulWidget {
 
 class ProfilePageState extends State<ProfilePage>
     with SingleTickerProviderStateMixin {
+  CurrentUser currentUser;
   DocumentSnapshot userDS;
   List<DocumentSnapshot> searchList;
   TextEditingController searchController = TextEditingController();
@@ -42,6 +46,7 @@ class ProfilePageState extends State<ProfilePage>
     // TODO: implement initState
     super.initState();
 
+    currentUser = CurrentUser.getModel(context);
     tabController = TabController(vsync: this, length: myTabs.length);
     getSnapshots();
   }
@@ -268,7 +273,11 @@ class ProfilePageState extends State<ProfilePage>
                   itemBuilder: (context, index) {
                     DocumentSnapshot itemDS = itemSnaps[index];
                     return Container(
-                        width: w / 2.2, child: itemCard(itemDS, context));
+                        width: w / 2.2,
+                        child: ScopedModel<User>(
+                          model: currentUser,
+                          child: itemCard(itemDS, context),
+                        ));
                   },
                 );
               } else {

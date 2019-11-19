@@ -84,6 +84,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
         } else {
           try {
             userId = await widget.auth.createUser(email, password);
+
             await Future.delayed(Duration(seconds: 2));
             FirebaseUser createdUser = await widget.auth.getFirebaseUser();
 
@@ -370,15 +371,15 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
           Column(
             children: <Widget>[
               SizedBox(height: 60.0,),
-              Text("Rent out your hardly used items", style: TextStyle(fontSize: h / 45, fontFamily: appFont, color: Colors.white),),
+              Text("Create listings for items you hardly use", style: TextStyle(fontSize: h / 45, fontFamily: appFont, color: Colors.white),),
+              SizedBox(height: 10.0,),
               Container(
                 alignment: Alignment.center,
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20.0),
-                /*
                 child: ClipRRect(
-                  child: Image.asset('assets/request.png'),
+                  child: Image.asset('assets/drill_picture.png'),
                   borderRadius: BorderRadius.circular(40),
-                ),*/
+                ),
               ),
             ],
           )
@@ -403,15 +404,14 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
           Column(
             children: <Widget>[
               SizedBox(height: 60.0,),
-              Text("Upload your item for everyone to see", style: TextStyle(fontSize: h / 45, fontFamily: appFont, color: Colors.white),),
+              Text("Earn money renting out your unused items to people in your local area", style: TextStyle(fontSize: h / 45, fontFamily: appFont, color: Colors.white), textAlign: TextAlign.center,),
               Container(
                 alignment: Alignment.center,
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20.0),
-                /*
                 child: ClipRRect(
-                  child: Image.asset('assets/request.png'),
+                  child: Image.asset('assets/drill_listing.png'),
                   borderRadius: BorderRadius.circular(40),
-                ),*/
+                ),
               ),
             ],
           )

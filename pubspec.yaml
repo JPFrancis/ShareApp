@@ -45,6 +45,7 @@ dependencies:
   numberpicker: ^1.1.0
   path_provider: ^1.2.0
   permission_handler: ^3.2.2
+  scoped_model: ^1.0.1
   shared_preferences: ^0.5.3+4
   smooth_star_rating: ^1.0.3
   stripe_payment: ^0.1.1

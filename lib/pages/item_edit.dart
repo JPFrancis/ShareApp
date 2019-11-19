@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-import 'package:shareapp/services/functions.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
@@ -18,10 +17,15 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:multi_image_picker/multi_image_picker.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
+import 'package:shareapp/models/current_user.dart';
 import 'package:shareapp/models/item.dart';
 import 'package:shareapp/pages/item_detail.dart';
 import 'package:shareapp/services/const.dart';
+import 'package:shareapp/services/database.dart';
+import 'package:shareapp/services/functions.dart';
 import 'package:shareapp/services/select_location.dart';
+import 'package:uni_links/uni_links.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 enum DismissDialogAction {
   cancel,
@@ -45,7 +49,8 @@ class ItemEdit extends StatefulWidget {
 /// We initially assume we are in editing mode
 class ItemEditState extends State<ItemEdit> {
   final GlobalKey<FormState> formKey = new GlobalKey<FormState>();
-  FirebaseUser currentUser;
+  CurrentUser currentUser;
+  FirebaseUser firebaseUser;
   String itemId;
 
   String appBarText = "Edit"; // Either 'Edit' or 'Add'. Prepended to " Item"
@@ -79,6 +84,12 @@ class ItemEditState extends State<ItemEdit> {
   @override
   void initState() {
     super.initState();
+
+    currentUser = CurrentUser.getModel(context);
+
+    if (currentUser.connectedAcctId == null) {
+      initStream();
+    }
 
     isLoading = true;
     itemId = widget.itemId;
@@ -144,6 +155,35 @@ class ItemEditState extends State<ItemEdit> {
     super.dispose();
   }
 
+  void initStream() async {
+    getLinksStream().listen((link) async {
+      try {
+        var latestUri;
+        if (link != null) latestUri = Uri.parse(link);
+        qq('$latestUri');
+
+        dynamic value = await DB()
+            .addStripeConnectedAccount(
+                url: latestUri.toString(), userId: currentUser.id)
+            .catchError((e) {
+          setState(() {
+            isLoading = false;
+          });
+
+          showToast('An error occurred');
+        });
+
+        if (value != null && value is String && value.isNotEmpty) {
+          currentUser.addConnectedAcctId(value);
+          showToast('Success! Creating item now..');
+          saveItem();
+        }
+      } on FormatException {
+        showToast('An error occurred');
+      }
+    });
+  }
+
   void getLoc() async {
     if (isEdit) {
       setState(() {
@@ -151,10 +191,10 @@ class ItemEditState extends State<ItemEdit> {
       });
     } else {
       FirebaseAuth.instance.currentUser().then((user) {
-        currentUser = user;
+        firebaseUser = user;
       });
 
-      currentLocation = await getUserLocation();
+      currentLocation = currentUser.currentLocation;
 
       if (currentLocation != null) {
         setState(() {
@@ -619,10 +659,6 @@ class ItemEditState extends State<ItemEdit> {
   }
 
   void saveItem() async {
-    setState(() {
-      isLoading = true;
-    });
-
     // Trim spaces and capitlize first letter of item name
     itemCopy.name = (itemCopy.name.trim())[0].toUpperCase() +
         (itemCopy.name.trim()).substring(1);
@@ -676,8 +712,8 @@ class ItemEditState extends State<ItemEdit> {
             'searchKey': searchKeyList,
             'isVisible': true,
             'owner': {
-              'name': currentUser.displayName,
-              'avatar': currentUser.photoUrl,
+              'name': firebaseUser.displayName,
+              'avatar': firebaseUser.photoUrl,
             },
           },
         );
@@ -702,6 +738,7 @@ class ItemEditState extends State<ItemEdit> {
               ItemDetail.routeName,
               arguments: ItemDetailArgs(
                 ds,
+                context,
               ),
             );
           });
@@ -1000,10 +1037,21 @@ class ItemEditState extends State<ItemEdit> {
   }
 
   Future<bool> saveWarning() async {
-    if (itemCopy.location['geopoint'] != null &&
+    String message = 'Please add item name, description, images, and location';
+    bool addPayment = false;
+
+    if (currentUser.connectedAcctId == null) {
+      message = 'To receive payment from rentals, you must put in your '
+          'bank account info.\n\nNOTE: We do not use this to charge you';
+      addPayment = true;
+    } else if (itemCopy.location['geopoint'] != null &&
         totalImagesCount > 0 &&
         itemCopy.name.length > 0 &&
         itemCopy.description.length > 0) {
+      setState(() {
+        isLoading = true;
+      });
+
       saveItem();
       return true;
     }
@@ -1018,7 +1066,7 @@ class ItemEditState extends State<ItemEdit> {
             return AlertDialog(
               title: Text('Error!'),
               content: Text(
-                'Please add item name, description, images, and location',
+                message,
                 style: dialogTextStyle,
               ),
               actions: <Widget>[
@@ -1027,6 +1075,13 @@ class ItemEditState extends State<ItemEdit> {
                   onPressed: () {
                     Navigator.of(context).pop(
                         false); // Pops the confirmation dialog but not the page.
+
+                    if (addPayment) {
+                      setState(() {
+                        isLoading = true;
+                      });
+                      addConnectedAccount();
+                    }
                   },
                 ),
               ],
@@ -1034,6 +1089,35 @@ class ItemEditState extends State<ItemEdit> {
           },
         ) ??
         false;
+  }
+
+  void addConnectedAccount() async {
+    String name = currentUser.name;
+    List<String> list = name.split(' ');
+    String first = list[0];
+    String last = '';
+
+    if (list.length > 1) {
+      last = list[1];
+    }
+
+    String firstName = first ?? '';
+    String lastName = last ?? '';
+
+    String url = 'https://connect.stripe.com/express/oauth/authorize?'
+        'redirect_uri=https://share-app.web.app/'
+        '&client_id=ca_G2aEpUUFBkF4B3U8tgcY0G5NWhCfOj2c' /*&state={STATE_VALUE}'*/
+        '&stripe_user[country]=US'
+        '&stripe_user[phone_number]=${currentUser.phoneNum}'
+        '&stripe_user[business_type]=individual'
+        '&stripe_user[email]=${currentUser.email}'
+        '&stripe_user[first_name]=$firstName'
+        '&stripe_user[last_name]=$lastName'
+        '&stripe_user[product_description]=ShareApp';
+
+    if (await canLaunch(url)) {
+      await launch(url);
+    }
   }
 
   Future<bool> deleteItemDialog() async {

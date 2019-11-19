@@ -11,6 +11,7 @@ import 'package:flutter_picker/flutter_picker.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'package:shareapp/main.dart';
+import 'package:shareapp/models/user.dart';
 import 'package:shareapp/pages/item_detail.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:shareapp/services/custom_dialog.dart' as customDialog;
@@ -20,6 +21,11 @@ import 'package:smooth_star_rating/smooth_star_rating.dart';
 double closeButtonSize = 31;
 
 // Reusable Classes
+
+// testing only
+void qq(String message) {
+  debugPrint('========== $message');
+}
 
 class CustomBoxShadow extends BoxShadow {
   final BlurStyle blurStyle;
@@ -384,6 +390,7 @@ void navigateToDetail(DocumentSnapshot itemDS, context) async {
     ItemDetail.routeName,
     arguments: ItemDetailArgs(
       itemDS,
+      context,
     ),
   );
 }
@@ -433,7 +440,7 @@ String combineID(String myId, String otherId) {
   return groupChatId;
 }
 
-Widget searchTile(ds, context) {
+Widget searchTile(DocumentSnapshot ds, User user, context) {
   double h = MediaQuery.of(context).size.height;
   double w = MediaQuery.of(context).size.width;
   String milesAway = '';

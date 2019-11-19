@@ -13,8 +13,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/extras/quote_icons.dart';
-import 'package:shareapp/models/user.dart';
+import 'package:shareapp/models/current_user.dart';
+import 'package:shareapp/models/user_edit.dart';
 import 'package:shareapp/services/const.dart';
+import 'package:shareapp/services/functions.dart';
 
 enum DismissDialogAction {
   cancel,
@@ -24,7 +26,7 @@ enum DismissDialogAction {
 
 class ProfileEdit extends StatefulWidget {
   static const routeName = '/editProfile';
-  final User userEdit;
+  final UserEdit userEdit;
 
   ProfileEdit({Key key, this.userEdit}) : super(key: key);
 
@@ -40,6 +42,7 @@ class ProfileEditState extends State<ProfileEdit> {
   final UsNumberTextInputFormatter phoneNumberFormatter =
       UsNumberTextInputFormatter();
 
+  CurrentUser currentUser;
   TextEditingController nameController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
   TextEditingController phoneNumController = TextEditingController();
@@ -63,7 +66,7 @@ class ProfileEditState extends State<ProfileEdit> {
   double pageHeight;
   double pageWidth;
 
-  User userCopy;
+  UserEdit userCopy;
 
   @override
   void initState() {
@@ -71,7 +74,8 @@ class ProfileEditState extends State<ProfileEdit> {
     super.initState();
 
     getUserID();
-    userCopy = User.copy(widget.userEdit);
+    currentUser = CurrentUser.getModel(context);
+    userCopy = UserEdit.copy(widget.userEdit);
     nameController.text = userCopy.name;
     descriptionController.text = userCopy.description;
     phoneNumController.text = userCopy.phoneNum ?? '';
@@ -131,7 +135,11 @@ class ProfileEditState extends State<ProfileEdit> {
               ),
               color: Color(0xff007f6e),
               onPressed: () {
-                saveProfile();
+                if (nameController.text.trim().isEmpty) {
+                  showToast('Name can\'t be empty');
+                } else {
+                  saveProfile();
+                }
               },
             ),
     );
@@ -500,14 +508,23 @@ class ProfileEditState extends State<ProfileEdit> {
       isLoading = true;
     });
 
-    String name = nameController.text.trim();
-    String description = descriptionController.text.trim();
+    userCopy.name = nameController.text.trim();
+    userCopy.description = descriptionController.text.trim();
     String avatarURL;
     bool updateAvatar = false;
 
     if (userCopy.address.isEmpty) {
       userCopy.address = null;
     }
+
+    Map<String, dynamic> data = {
+      'name': userCopy.name,
+      'description': userCopy.description,
+      'gender': userCopy.gender,
+      'birthday': userCopy.birthday,
+      'phoneNum': userCopy.phoneNum,
+      'address': userCopy.address,
+    };
 
     if (imageFile != null) {
       updateAvatar = true;
@@ -517,28 +534,18 @@ class ProfileEditState extends State<ProfileEdit> {
         userCopy.avatar = avatarURL;
       }
 
-      Firestore.instance.collection('users').document(myUserID).updateData({
-        'avatar': userCopy.avatar,
-        'name': name,
-        'description': description,
-        'gender': userCopy.gender,
-        'birthday': userCopy.birthday,
-        'phoneNum': userCopy.phoneNum,
-        'address': userCopy.address,
-      });
-    } else {
-      Firestore.instance.collection('users').document(myUserID).updateData({
-        'name': name,
-        'description': description,
-        'gender': userCopy.gender,
-        'birthday': userCopy.birthday,
-        'phoneNum': userCopy.phoneNum,
-        'address': userCopy.address,
-      });
+      data.addAll({'avatar': userCopy.avatar});
     }
 
+    await Firestore.instance
+        .collection('users')
+        .document(myUserID)
+        .updateData(data);
+
+    currentUser.updateUser(userEdit: userCopy);
+
     UserUpdateInfo userUpdateInfo = UserUpdateInfo();
-    userUpdateInfo.displayName = name;
+    userUpdateInfo.displayName = userCopy.name;
 
     if (updateAvatar) {
       userUpdateInfo.photoUrl = avatarURL;
