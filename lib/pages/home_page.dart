@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:date_range_picker/date_range_picker.dart';
+
+import 'package:date_range_picker/date_range_picker.dart' as DateRagePicker;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -2145,47 +2146,33 @@ class HomePageState extends State<HomePage> {
                     buildTransactions(RentalPhase.past, "owner"),
                   ],
                 ),
-                Text('test'),
+                Column(
+                  children: <Widget>[
+//                    Text('not implemented yet'),
+                    MaterialButton(
+                        color: Colors.deepOrangeAccent,
+                        onPressed: () async {
+                          final List<DateTime> picked =
+                              await DateRagePicker.showDatePicker(
+                            context: context,
+                            initialFirstDate: new DateTime.now(),
+                            initialLastDate:
+                                (new DateTime.now()).add(new Duration(days: 1)),
+                            firstDate: new DateTime(2015),
+                            lastDate: new DateTime(2020),
+                            selectableDayPredicate: (DateTime val) =>
+                                val.weekday == 5 ? false : true,
+                          );
+                          if (picked != null && picked.length == 2) {
+                            print(picked);
+                          }
+                        },
+                        child: new Text("Pick date range")),
+                  ],
+                ),
               ],
             ),
           ),
-          /*
-          Align(
-            alignment: Alignment.bottomLeft,
-            child: Padding(
-              padding: EdgeInsets.only(bottom: 10.0),
-              child: Container(
-                height: 30.0,
-                decoration: new BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: new BorderRadius.all(
-                      Radius.circular(100.0),
-                    )),
-<<<<<<< HEAD
-                child: new TabBar(
-                  isScrollable: true,
-                  tabs: [
-                    Tab(
-                        child: Text(
-                      "All My Items",
-                      style: TextStyle(fontFamily: 'Quicksand'),
-                    )),
-                    Tab(
-                        child: Text(
-                      "Transactions",
-                      style: TextStyle(fontFamily: 'Quicksand'),
-                    )),
-                  ],
-                  labelColor: primaryColor,
-                  unselectedLabelColor: Colors.grey,
-                  indicatorColor: Colors.transparent,
-                ),
-=======
-                child: new
->>>>>>> 707e04d663dc7c8e83823a7d8002b505d85104bb
-              ),
-            ),
-          ),*/
         ]),
       ),
     );

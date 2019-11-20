@@ -59,7 +59,7 @@ class PayoutsPageState extends State<PayoutsPage> {
       try {
         var _latestUri;
         if (link != null) _latestUri = Uri.parse(link);
-        print("=== Link: ${_latestUri}");
+        print("App was opened with: ${_latestUri}");
       } on FormatException {
         print("--- A link got here but was invalid");
       }
@@ -828,6 +828,8 @@ class PayoutsPageState extends State<PayoutsPage> {
         '&stripe_user[first_name]=$firstName'
         '&stripe_user[last_name]=$lastName'
         '&stripe_user[product_description]=do_not_edit';
+
+        url = 'https://share-app.web.app';
 
 //    debugPrint('URL: $url');
 
