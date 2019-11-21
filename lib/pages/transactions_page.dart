@@ -26,11 +26,10 @@ class TransactionsPage extends StatefulWidget {
 
 class TransactionsPageState extends State<TransactionsPage> {
   CurrentUser currentUser;
-  String myUserID;
 
   Stream stream;
-  RentalPhase rentalPhase;
   String rentalStatus = '';
+  RentalPhase rentalPhase;
   String person;
 
   bool isLoading = true;
@@ -44,25 +43,17 @@ class TransactionsPageState extends State<TransactionsPage> {
     rentalPhase = widget.filter;
     person = widget.person;
 
-    getMyUserID();
-  }
-
-  void getMyUserID() async {
-    var user = await FirebaseAuth.instance.currentUser();
-
-    if (user != null) {
-      myUserID = user.uid;
-
-      getStream();
-    }
+    getStream();
   }
 
   void getStream() {
     setState(() {
       isLoading = true;
     });
+
     Query query = Firestore.instance.collection('rentals').where(person,
-        isEqualTo: Firestore.instance.collection('users').document(myUserID));
+        isEqualTo:
+            Firestore.instance.collection('users').document(currentUser.id));
 
     switch (rentalPhase) {
       case RentalPhase.requesting:
