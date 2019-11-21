@@ -42,7 +42,7 @@ class PayoutsPageState extends State<PayoutsPage> {
 
   bool isLoading = true;
   bool stripeInit = false;
-  bool showFAB = true;
+  bool showFAB = false;
 
   @override
   void initState() {
