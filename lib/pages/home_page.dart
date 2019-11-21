@@ -55,7 +55,6 @@ class HomePageState extends State<HomePage> {
   final FirebaseMessaging firebaseMessaging = FirebaseMessaging();
   String deviceToken;
 
-  SharedPreferences prefs;
   FirebaseUser firebaseUser;
 
   String myUserID;
@@ -138,7 +137,7 @@ class HomePageState extends State<HomePage> {
     } else {
       isAuthenticated = true;
       myUserID = firebaseUser.uid;
-      setPrefs();
+      updateLastActiveAndPushToken();
     }
 
     bottomNavBarTiles = <BottomNavigationBarItem>[
@@ -482,18 +481,6 @@ class HomePageState extends State<HomePage> {
       ),
     );
     */
-  }
-
-  void setPrefs() async {
-    prefs = await SharedPreferences.getInstance();
-
-    await prefs.remove('userID');
-
-    if (prefs != null) {
-      await prefs.setString('userID', myUserID);
-
-      updateLastActiveAndPushToken();
-    }
   }
 
   void updateLastActiveAndPushToken() async {
@@ -1118,8 +1105,6 @@ class HomePageState extends State<HomePage> {
 
     if (currentLocation != null) {
       currentUser.updateCurrentLocation(currentLocation);
-      await prefs.setDouble('lat', currentLocation.latitude);
-      await prefs.setDouble('long', currentLocation.longitude);
     } else {
       showToast('Could not get location');
     }
@@ -2304,79 +2289,48 @@ class HomePageState extends State<HomePage> {
             bottomLeft: const Radius.circular(50.0),
             bottomRight: const Radius.circular(50.0),
           )),*/
-      child: StreamBuilder<DocumentSnapshot>(
-        stream: Firestore.instance
-            .collection('users')
-            .document(myUserID)
-            .snapshots(),
-        builder:
-            (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
-          if (snapshot.hasError) {
-            return new Text('${snapshot.error}');
-          }
-          switch (snapshot.connectionState) {
-            case ConnectionState.waiting:
-            default:
-              if (snapshot.hasData) {
-                DocumentSnapshot ds = snapshot.data;
-                String name;
-
-                if (ds.exists) {
-                  name = ds['name'];
-                  prefs.setString('name', name);
-                } else {
-                  name = 'ERROR';
-                  prefs.setString('name', name);
-                }
-
-                return Stack(
-                  children: <Widget>[
-                    Container(
-                      height: MediaQuery.of(context).size.height - 90,
-                      child: ListView(
-                        shrinkWrap: true,
-                        padding: EdgeInsets.all(0),
-                        children: <Widget>[
-                          showPersonalInformation(),
-                          reusableCategory("ACCOUNT"),
-                          //reusableFlatButton("Personal information", Icons.person_outline, null),
-                          reusableFlatButton("Payments and Payouts",
-                              Icons.payment, navToPayouts),
-                          reusableFlatButton(
-                              "Reviews", Icons.rate_review, navToReviews),
-                          reusableCategory("SUPPORT"),
-                          reusableFlatButton("Get help", Icons.help_outline,
-                              () => navToSendEmail('Help')),
-                          reusableFlatButton("Give us feedback", Icons.feedback,
-                              () => navToSendEmail('Feedback')),
-                          reusableFlatButton("Log out", null, logout),
-                          //getProfileDetails()
-                        ],
-                      ),
-                    ),
-                    Align(
-                      alignment: Alignment.topRight,
-                      child: OutlineButton(
-                        color: Colors.white,
-                        textColor: primaryColor,
-                        onPressed: () {
-                          navToProfileEdit();
-                        },
-                        child: Text(
-                          "Edit Profile",
-                          style: TextStyle(
-                              fontFamily: 'Quicksand',
-                              fontWeight: FontWeight.normal),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              } else {
-                return Container();
-              }
-          }
-        },
+      child: Stack(
+        children: <Widget>[
+          Container(
+            height: MediaQuery.of(context).size.height - 90,
+            child: ListView(
+              shrinkWrap: true,
+              padding: EdgeInsets.all(0),
+              children: <Widget>[
+                showPersonalInformation(),
+                reusableCategory("ACCOUNT"),
+                //reusableFlatButton("Personal information", Icons.person_outline, null),
+                reusableFlatButton("Payments and Payouts",
+                    Icons.payment, navToPayouts),
+                reusableFlatButton(
+                    "Reviews", Icons.rate_review, navToReviews),
+                reusableCategory("SUPPORT"),
+                reusableFlatButton("Get help", Icons.help_outline,
+                        () => navToSendEmail('Help')),
+                reusableFlatButton("Give us feedback", Icons.feedback,
+                        () => navToSendEmail('Feedback')),
+                reusableFlatButton("Log out", null, logout),
+                //getProfileDetails()
+              ],
+            ),
+          ),
+          Align(
+            alignment: Alignment.topRight,
+            child: OutlineButton(
+              color: Colors.white,
+              textColor: primaryColor,
+              onPressed: () {
+                navToProfileEdit();
+              },
+              child: Text(
+                "Edit Profile",
+                style: TextStyle(
+                    fontFamily: 'Quicksand',
+                    fontWeight: FontWeight.normal),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -2837,8 +2791,6 @@ class HomePageState extends State<HomePage> {
   void logout() async {
     try {
       if (isAuthenticated) {
-        await prefs.remove('userID');
-
         Firestore.instance.collection('users').document(myUserID).updateData({
           'pushToken': FieldValue.arrayRemove([deviceToken]),
         });

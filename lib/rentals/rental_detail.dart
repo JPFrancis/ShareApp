@@ -45,9 +45,7 @@ class RentalDetail extends StatefulWidget {
 
 class RentalDetailState extends State<RentalDetail> {
   CurrentUser currentUser;
-  SharedPreferences prefs;
   String myUserId;
-  String myName;
   String url;
   String rentalCC;
   bool isLoading = true;
@@ -96,8 +94,6 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   void getMyUserID() async {
-    prefs = await SharedPreferences.getInstance();
-    myName = prefs.getString('name') ?? '';
     var user = await FirebaseAuth.instance.currentUser();
     if (user != null) {
       myUserId = user.uid;
@@ -480,7 +476,7 @@ class RentalDetailState extends State<RentalDetail> {
 
       if (otherUserDS != null && otherUserDS.exists) {
         await Firestore.instance.collection('notifications').add({
-          'title': '$myName rejected your rental request',
+          'title': '${currentUser.name} rejected your rental request',
           'body': 'Item: ${rentalDS['itemName']}',
           'pushToken': otherUserDS['pushToken'],
           'rentalID': rentalDS.documentID,
@@ -1261,7 +1257,7 @@ class RentalDetailState extends State<RentalDetail> {
     await Future.delayed(Duration(milliseconds: 500));
 
     Firestore.instance.collection('notifications').add({
-      'title': '$myName accepted your pickup window',
+      'title': '${currentUser.name} accepted your pickup window',
       'body': 'Item: ${rentalDS['itemName']}',
       'pushToken': otherUserDS['pushToken'],
       'rentalID': rentalDS.documentID,

@@ -34,7 +34,6 @@ class ChatState extends State<Chat> {
   CurrentUser currentUser;
   Map chatData;
   FirebaseUser firebaseUser;
-  SharedPreferences prefs;
   Map otherUser;
   List combinedId;
 
@@ -45,7 +44,6 @@ class ChatState extends State<Chat> {
   String imageUrl;
   String myUserID;
   String groupChatId;
-  String myName;
   String otherUserID;
 
   var listMessage;
@@ -86,9 +84,6 @@ class ChatState extends State<Chat> {
   }
 
   void getMyUserID() async {
-    prefs = await SharedPreferences.getInstance();
-    myName = prefs.getString('name') ?? '';
-
     var user = await FirebaseAuth.instance.currentUser();
 
     if (user != null) {
@@ -208,7 +203,7 @@ class ChatState extends State<Chat> {
         'content': content,
         'type': type,
         'pushToken': otherUser['pushToken'],
-        'nameFrom': myName,
+        'nameFrom': currentUser.name,
       });
 
       listScrollController.animateTo(0.0,
