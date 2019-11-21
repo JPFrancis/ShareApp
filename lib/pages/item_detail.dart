@@ -20,7 +20,6 @@ import 'package:shareapp/pages/profile_page.dart';
 import 'package:shareapp/rentals/chat.dart';
 import 'package:shareapp/rentals/rental_calendar.dart';
 import 'package:shareapp/services/const.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class ItemDetail extends StatefulWidget {
   static const routeName = '/itemDetail';
@@ -48,7 +47,6 @@ class ItemDetailState extends State<ItemDetail> {
   double padding = 5.0;
 
   DocumentSnapshot itemDS;
-  SharedPreferences prefs;
   String myUserID;
   String itemCreator;
   String itemOwnerID;

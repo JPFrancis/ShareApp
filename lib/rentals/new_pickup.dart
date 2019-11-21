@@ -10,7 +10,6 @@ import 'package:intl/intl.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/models/current_user.dart';
 import 'package:shareapp/services/picker_data.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 enum DismissDialogAction {
   cancel,
@@ -71,7 +70,7 @@ class NewPickupState extends State<NewPickup> {
   void initState() {
     super.initState();
 
-    currentUser=CurrentUser.getModel(context);
+    currentUser = CurrentUser.getModel(context);
     focusNode = FocusNode();
     noteController.text = '';
 

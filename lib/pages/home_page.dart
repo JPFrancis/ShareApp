@@ -31,7 +31,6 @@ import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/auth.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:shareapp/services/functions.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:url_launcher/url_launcher.dart';
 
@@ -2300,15 +2299,14 @@ class HomePageState extends State<HomePage> {
                 showPersonalInformation(),
                 reusableCategory("ACCOUNT"),
                 //reusableFlatButton("Personal information", Icons.person_outline, null),
-                reusableFlatButton("Payments and Payouts",
-                    Icons.payment, navToPayouts),
                 reusableFlatButton(
-                    "Reviews", Icons.rate_review, navToReviews),
+                    "Payments and Payouts", Icons.payment, navToPayouts),
+                reusableFlatButton("Reviews", Icons.rate_review, navToReviews),
                 reusableCategory("SUPPORT"),
                 reusableFlatButton("Get help", Icons.help_outline,
-                        () => navToSendEmail('Help')),
+                    () => navToSendEmail('Help')),
                 reusableFlatButton("Give us feedback", Icons.feedback,
-                        () => navToSendEmail('Feedback')),
+                    () => navToSendEmail('Feedback')),
                 reusableFlatButton("Log out", null, logout),
                 //getProfileDetails()
               ],
@@ -2325,8 +2323,7 @@ class HomePageState extends State<HomePage> {
               child: Text(
                 "Edit Profile",
                 style: TextStyle(
-                    fontFamily: 'Quicksand',
-                    fontWeight: FontWeight.normal),
+                    fontFamily: 'Quicksand', fontWeight: FontWeight.normal),
               ),
             ),
           ),

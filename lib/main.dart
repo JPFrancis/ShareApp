@@ -273,7 +273,7 @@ class NewPickupArgs {
   final bool isRenter;
   final User user;
 
-  NewPickupArgs(this.rentalID, this.isRenter,this.user);
+  NewPickupArgs(this.rentalID, this.isRenter, this.user);
 }
 
 class SearchPageArgs {

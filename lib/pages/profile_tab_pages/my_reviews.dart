@@ -5,8 +5,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:shareapp/extras/helpers.dart';
-import 'package:shareapp/main.dart';
-import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/const.dart';
 
 class MyReviews extends StatefulWidget {

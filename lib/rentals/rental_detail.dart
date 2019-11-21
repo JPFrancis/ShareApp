@@ -15,7 +15,6 @@ import 'package:shareapp/rentals/new_pickup.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:shareapp/services/functions.dart';
 import 'package:shareapp/services/payment_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smooth_star_rating/smooth_star_rating.dart';
 
 enum Status {
@@ -1588,7 +1587,7 @@ class RentalDetailState extends State<RentalDetail> {
     Navigator.pushNamed(
       context,
       NewPickup.routeName,
-      arguments: NewPickupArgs(rentalDS.documentID, isRenter,currentUser),
+      arguments: NewPickupArgs(rentalDS.documentID, isRenter, currentUser),
     );
   }
 

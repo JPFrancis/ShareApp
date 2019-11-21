@@ -18,7 +18,6 @@ import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:shareapp/services/functions.dart';
 import 'package:shareapp/services/picker_data.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 class RentalCalendar extends StatefulWidget {

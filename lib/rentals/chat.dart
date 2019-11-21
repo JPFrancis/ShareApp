@@ -16,7 +16,6 @@ import 'package:shareapp/models/current_user.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:shareapp/services/functions.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class Chat extends StatefulWidget {
   static const routeName = '/chat';

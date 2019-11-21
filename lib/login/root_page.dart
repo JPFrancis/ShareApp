@@ -4,11 +4,8 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:scoped_model/scoped_model.dart';
 import 'package:shareapp/login/login_page.dart';
-import 'package:shareapp/main.dart';
 import 'package:shareapp/models/current_user.dart';
 import 'package:shareapp/pages/home_page.dart';
-import 'package:shareapp/rentals/chat.dart';
-import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/auth.dart';
 import 'package:uni_links/uni_links.dart';
 
