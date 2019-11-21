@@ -782,9 +782,7 @@ class ItemDetailState extends State<ItemDetail> {
         Navigator.pushNamed(
           context,
           RentalCalendar.routeName,
-          arguments: RentalCalendarArgs(
-            itemDS,
-          ),
+          arguments: RentalCalendarArgs(itemDS, currentUser),
         );
       },
     );

@@ -12,6 +12,7 @@ zip
  */
 
 class User extends Model {
+  bool isAnon;
   DocumentSnapshot snap;
   String id;
   bool acceptedTOS;
@@ -32,7 +33,12 @@ class User extends Model {
   Position currentLocation;
 
   User(DocumentSnapshot snap) {
-    updateData(snap, constructor: true);
+    if (snap == null) {
+      this.isAnon = true;
+      this.currentLocation = null;
+    } else {
+      updateData(snap, constructor: true);
+    }
   }
 
   void updateData(DocumentSnapshot snap, {bool constructor}) {
@@ -40,6 +46,7 @@ class User extends Model {
     Timestamp bDay = data['birthday'];
     DateTime birthday = bDay?.toDate();
 
+    this.isAnon = false;
     this.snap = snap;
     this.id = snap.documentID;
     this.acceptedTOS = data['acceptedTOS'];

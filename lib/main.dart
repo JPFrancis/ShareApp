@@ -182,8 +182,11 @@ class MyApp extends StatelessWidget {
 
               return MaterialPageRoute(
                 builder: (context) {
-                  return RentalCalendar(
-                    itemDS: args.itemDS,
+                  return ScopedModel<CurrentUser>(
+                    model: args.user,
+                    child: RentalCalendar(
+                      itemDS: args.itemDS,
+                    ),
                   );
                 },
               );
@@ -280,8 +283,9 @@ class ProfilePageArgs {
 
 class RentalCalendarArgs {
   final DocumentSnapshot itemDS;
+  final User user;
 
-  RentalCalendarArgs(this.itemDS);
+  RentalCalendarArgs(this.itemDS, this.user);
 }
 
 class TransactionsPageArgs {

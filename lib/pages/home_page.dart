@@ -130,14 +130,14 @@ class HomePageState extends State<HomePage> {
         left: padding, right: padding, bottom: padding, top: 30);
 
     firebaseUser = widget.firebaseUser;
+    currentUser = CurrentUser.getModel(context);
 
     if (firebaseUser == null) {
       isAuthenticated = false;
-      setPrefs();
+//      setPrefs();
     } else {
       isAuthenticated = true;
       myUserID = firebaseUser.uid;
-      currentUser = CurrentUser.getModel(context);
       setPrefs();
     }
 

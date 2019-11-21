@@ -12,6 +12,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
+import 'package:shareapp/models/current_user.dart';
 import 'package:shareapp/pages/profile_tab_pages/payouts_page.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/const.dart';
@@ -34,13 +35,10 @@ class RentalCalendar extends StatefulWidget {
 
 class RentalCalendarState extends State<RentalCalendar>
     with TickerProviderStateMixin {
-  FirebaseUser currentUser;
-  SharedPreferences prefs;
   DocumentSnapshot itemDS;
-  String myUserID;
-  String myName;
   double dailyRate;
   List<DateTime> unavailableDays = [];
+  CurrentUser currentUser;
 
   DateTime selectedDay;
   DateTime visibleDay;
@@ -70,6 +68,7 @@ class RentalCalendarState extends State<RentalCalendar>
     super.initState();
     itemDS = widget.itemDS;
     List unavailable = itemDS['unavailable'];
+    currentUser = CurrentUser.getModel(context);
 
     if (unavailable != null) {
       for (var timestamp in unavailable) {
@@ -81,7 +80,6 @@ class RentalCalendarState extends State<RentalCalendar>
     visibleEvents = {};
     dailyRate = itemDS['price'].toDouble();
 
-    getMyUserID();
     checkAuthentication();
 
     DateTime now = DateTime.now();
@@ -110,19 +108,8 @@ class RentalCalendarState extends State<RentalCalendar>
   }
 
   void getMyUserID() async {
-    var user = await FirebaseAuth.instance.currentUser();
-
-    if (user != null) {
-      currentUser = user;
-      myUserID = user.uid;
-
-      DocumentReference ownerRef = itemDS['creator'];
-
-      isOwner = myUserID == ownerRef.documentID ? true : false;
-
-      prefs = await SharedPreferences.getInstance();
-      myName = prefs.getString('name') ?? '';
-    }
+    DocumentReference ownerRef = itemDS['creator'];
+    isOwner = currentUser.id == ownerRef.documentID ? true : false;
   }
 
   void checkAuthentication() async {
@@ -560,7 +547,7 @@ class RentalCalendarState extends State<RentalCalendar>
                 StreamBuilder(
                   stream: Firestore.instance
                       .collection('users')
-                      .document(myUserID)
+                      .document(currentUser.id)
                       .snapshots(),
                   builder: (context, AsyncSnapshot snapshot) {
                     switch (snapshot.connectionState) {
@@ -742,7 +729,7 @@ class RentalCalendarState extends State<RentalCalendar>
       } else {
         DocumentSnapshot myUserDS = await Firestore.instance
             .collection('users')
-            .document(myUserID)
+            .document(currentUser.id)
             .get();
 
         if (myUserDS != null && myUserDS.exists) {
@@ -1013,7 +1000,7 @@ class RentalCalendarState extends State<RentalCalendar>
     DocumentSnapshot itemOwnerDS = await itemCreatorDR.get();
 
     if (itemOwnerDS != null && itemOwnerDS.exists) {
-      Map data = getChatRoomData(myUserID, itemOwnerDS.documentID);
+      Map data = getChatRoomData(currentUser.id, itemOwnerDS.documentID);
 
       if (data != null) {
         groupChatId = data['combinedId'];
@@ -1037,10 +1024,10 @@ class RentalCalendarState extends State<RentalCalendar>
         'name': itemOwnerDS['name'],
         'avatar': itemOwnerDS['avatar'],
       },
-      'renter': Firestore.instance.collection('users').document(myUserID),
+      'renter': Firestore.instance.collection('users').document(currentUser.id),
       'renterData': {
-        'name': currentUser.displayName,
-        'avatar': currentUser.photoUrl,
+        'name': currentUser.name,
+        'avatar': currentUser.avatar,
       },
       'pickupStart': pickupTime,
       'pickupEnd': pickupTime.add(Duration(hours: 1)),
@@ -1050,7 +1037,7 @@ class RentalCalendarState extends State<RentalCalendar>
       'duration': duration,
       'users': [
         Firestore.instance.collection('users').document(itemOwnerDS.documentID),
-        Firestore.instance.collection('users').document(myUserID),
+        Firestore.instance.collection('users').document(currentUser.id),
       ],
       'renterCC': null,
       'ownerCC': null,
@@ -1059,7 +1046,7 @@ class RentalCalendarState extends State<RentalCalendar>
       'renterReview': null,
       'ownerReview': null,
       'initialPushNotif': {
-        'nameFrom': myName,
+        'nameFrom': currentUser.name,
         'pushToken': itemOwnerDS['pushToken'],
         'itemName': itemDS['name'],
       },
@@ -1077,9 +1064,9 @@ class RentalCalendarState extends State<RentalCalendar>
       if (ds != null) {
         if (!ds.exists) {
           Map map = setChatUserData({
-            'id': myUserID,
-            'name': currentUser.displayName,
-            'avatar': currentUser.photoUrl,
+            'id': currentUser.id,
+            'name': currentUser.name,
+            'avatar': currentUser.avatar,
           }, {
             'id': itemOwnerDS.documentID,
             'name': itemOwnerDS['name'],
@@ -1114,13 +1101,13 @@ class RentalCalendarState extends State<RentalCalendar>
           await transaction.set(
             messageReference,
             {
-              'idFrom': myUserID,
+              'idFrom': currentUser.id,
               'idTo': itemOwnerDS.documentID,
               'timestamp': DateTime.now().millisecondsSinceEpoch,
               'content': message,
               'type': 0,
               'pushToken': itemOwnerDS['pushToken'],
-              'nameFrom': myName,
+              'nameFrom': currentUser.name,
               'rental': rentalDR,
             },
           );
