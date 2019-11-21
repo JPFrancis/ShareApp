@@ -2195,6 +2195,7 @@ class HomePageState extends State<HomePage> {
         Widget _showCurrentProfilePic() {
           double height = MediaQuery.of(context).size.height;
           double width = MediaQuery.of(context).size.width;
+
           return Container(
             padding: EdgeInsets.only(left: width / 5, right: width / 5),
             height: height / 5,

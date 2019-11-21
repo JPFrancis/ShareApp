@@ -9,6 +9,7 @@ import 'package:flutter_picker/flutter_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/models/current_user.dart';
+import 'package:shareapp/services/functions.dart';
 import 'package:shareapp/services/picker_data.dart';
 
 enum DismissDialogAction {
@@ -302,24 +303,28 @@ class NewPickupState extends State<NewPickup> {
                           bottom: BorderSide(color: theme.dividerColor))),
                   child: InkWell(
                     onTap: () async {
-                      var value = await showDialog(
-                        barrierDismissible: true,
-                        context: context,
-                        builder: (BuildContext context) {
-                          return Container(
-                            child: DailyRateDialog(
-                              pageHeight: pageHeight,
-                              pageWidth: pageWidth,
-                              rate: dailyRate,
-                            ),
-                          );
-                        },
-                      );
+                      if (!widget.isRenter) {
+                        var value = await showDialog(
+                          barrierDismissible: true,
+                          context: context,
+                          builder: (BuildContext context) {
+                            return Container(
+                              child: DailyRateDialog(
+                                pageHeight: pageHeight,
+                                pageWidth: pageWidth,
+                                rate: dailyRate,
+                              ),
+                            );
+                          },
+                        );
 
-                      if (value != null && value is double) {
-                        setState(() {
-                          dailyRate = value;
-                        });
+                        if (value != null && value is double) {
+                          setState(() {
+                            dailyRate = value;
+                          });
+                        }
+                      } else {
+                        showToast('Only item owners can edit the daily rate');
                       }
                     },
                     child: Row(
