@@ -206,7 +206,7 @@ class RentalDetailState extends State<RentalDetail> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
             Text(
-              'This rental no longer exists!',
+              'This proposed rental pick-up time was rejected by the item owner',
               style: TextStyle(
                 fontSize: 20,
               ),
