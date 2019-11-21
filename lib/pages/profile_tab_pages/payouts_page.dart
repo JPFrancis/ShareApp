@@ -829,7 +829,7 @@ class PayoutsPageState extends State<PayoutsPage> {
         '&stripe_user[last_name]=$lastName'
         '&stripe_user[product_description]=do_not_edit';
 
-        url = 'https://share-app.web.app';
+    url = 'https://share-app.web.app';
 
 //    debugPrint('URL: $url');
 
