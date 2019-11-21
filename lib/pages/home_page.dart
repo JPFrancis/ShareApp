@@ -885,6 +885,7 @@ class HomePageState extends State<HomePage> {
                                 RentalDetail.routeName,
                                 arguments: RentalDetailArgs(
                                   rentalDS,
+                                  currentUser,
                                 ),
                               );
                             },
@@ -906,6 +907,7 @@ class HomePageState extends State<HomePage> {
                                 Chat.routeName,
                                 arguments: ChatArgs(
                                   rentalDS,
+                                  currentUser,
                                 ),
                               );
                             },
@@ -1537,7 +1539,7 @@ class HomePageState extends State<HomePage> {
 
   void navToTransactionsPage(RentalPhase filter, String person) {
     Navigator.pushNamed(context, TransactionsPage.routeName,
-        arguments: TransactionsPageArgs(filter, person));
+        arguments: TransactionsPageArgs(filter, person, currentUser));
   }
 
   Widget buildListingsList() {
@@ -1687,7 +1689,8 @@ class HomePageState extends State<HomePage> {
                                                 Navigator.pushNamed(context,
                                                     RentalDetail.routeName,
                                                     arguments: RentalDetailArgs(
-                                                        rentalDS.documentID));
+                                                        rentalDS.documentID,
+                                                        currentUser));
                                               },
                                               child: Row(
                                                 mainAxisAlignment:
@@ -1873,7 +1876,8 @@ class HomePageState extends State<HomePage> {
                       child: InkWell(
                         onTap: () => Navigator.pushNamed(
                             context, RentalDetail.routeName,
-                            arguments: RentalDetailArgs(rentalDS.documentID)),
+                            arguments: RentalDetailArgs(
+                                rentalDS.documentID, currentUser)),
                         child: Container(
                           width: MediaQuery.of(context).size.width / 2,
                           decoration: BoxDecoration(
@@ -2633,7 +2637,7 @@ class HomePageState extends State<HomePage> {
             Navigator.pushNamed(
               context,
               Chat.routeName,
-              arguments: ChatArgs(otherUserID),
+              arguments: ChatArgs(otherUserID, currentUser),
             );
           },
         ),
@@ -2673,7 +2677,7 @@ class HomePageState extends State<HomePage> {
     Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (BuildContext context) => ScopedModel<User>(
+          builder: (BuildContext context) => ScopedModel<CurrentUser>(
             model: currentUser,
             child: SearchPage(
               typeFilter: filter,
@@ -2796,11 +2800,14 @@ class HomePageState extends State<HomePage> {
   }
 
   void navToPayouts() {
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (BuildContext context) => PayoutsPage(),
-        ));
+    Navigator.push(context, MaterialPageRoute(
+      builder: (BuildContext context) {
+        return ScopedModel<CurrentUser>(
+          model: currentUser,
+          child: PayoutsPage(),
+        );
+      },
+    ));
   }
 
   // help=1, feedback=2

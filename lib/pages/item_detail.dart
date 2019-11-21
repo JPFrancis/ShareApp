@@ -305,7 +305,7 @@ class ItemDetailState extends State<ItemDetail> {
               onTap: () {
                 Navigator.of(context).pushNamed(
                   Chat.routeName,
-                  arguments: ChatArgs(itemOwnerID),
+                  arguments: ChatArgs(itemOwnerID, currentUser),
                 );
               },
               child: Row(

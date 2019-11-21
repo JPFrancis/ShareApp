@@ -9,6 +9,7 @@ import 'package:flutter/rendering.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
+import 'package:shareapp/models/current_user.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:shareapp/services/payment_service.dart';
@@ -33,6 +34,7 @@ class PayoutsPage extends StatefulWidget {
 }
 
 class PayoutsPageState extends State<PayoutsPage> {
+  CurrentUser currentUser;
   String appBarTitle = 'Payments and payouts';
   double padding = 5.0;
   String myUserID;
@@ -49,6 +51,7 @@ class PayoutsPageState extends State<PayoutsPage> {
     // TODO: implement initState
     super.initState();
 
+    currentUser = CurrentUser.getModel(context);
     initStream();
     getMyUserID();
     //delayPage();
@@ -598,7 +601,8 @@ class PayoutsPageState extends State<PayoutsPage> {
                                           onTap: () => Navigator.pushNamed(
                                               context, RentalDetail.routeName,
                                               arguments: RentalDetailArgs(
-                                                  rentalDS.documentID)),
+                                                  rentalDS.documentID,
+                                                  currentUser)),
                                           child: Container(
                                             decoration: BoxDecoration(
                                               boxShadow: <BoxShadow>[

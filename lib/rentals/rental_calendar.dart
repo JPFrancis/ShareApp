@@ -69,6 +69,8 @@ class RentalCalendarState extends State<RentalCalendar>
     itemDS = widget.itemDS;
     List unavailable = itemDS['unavailable'];
     currentUser = CurrentUser.getModel(context);
+    DocumentReference ownerRef = itemDS['creator'];
+    isOwner = currentUser.id == ownerRef.documentID ? true : false;
 
     if (unavailable != null) {
       for (var timestamp in unavailable) {
@@ -105,11 +107,6 @@ class RentalCalendarState extends State<RentalCalendar>
     );
 
     controller.forward();
-  }
-
-  void getMyUserID() async {
-    DocumentReference ownerRef = itemDS['creator'];
-    isOwner = currentUser.id == ownerRef.documentID ? true : false;
   }
 
   void checkAuthentication() async {
@@ -1123,6 +1120,7 @@ class RentalCalendarState extends State<RentalCalendar>
                 RentalDetail.routeName,
                 arguments: RentalDetailArgs(
                   ds.documentID,
+                  currentUser,
                 ),
               );
             }

@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
+import 'package:shareapp/models/current_user.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:timeago/timeago.dart' as timeago;
@@ -24,6 +25,7 @@ class TransactionsPage extends StatefulWidget {
 }
 
 class TransactionsPageState extends State<TransactionsPage> {
+  CurrentUser currentUser;
   String myUserID;
 
   Stream stream;
@@ -38,6 +40,7 @@ class TransactionsPageState extends State<TransactionsPage> {
   void initState() {
     super.initState();
 
+    currentUser = CurrentUser.getModel(context);
     rentalPhase = widget.filter;
     person = widget.person;
 
@@ -313,7 +316,8 @@ class TransactionsPageState extends State<TransactionsPage> {
                                                 Navigator.pushNamed(context,
                                                     RentalDetail.routeName,
                                                     arguments: RentalDetailArgs(
-                                                        rentalDS.documentID));
+                                                        rentalDS.documentID,
+                                                        currentUser));
                                               },
                                               child: Row(
                                                 mainAxisAlignment:

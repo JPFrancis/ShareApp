@@ -99,8 +99,11 @@ class MyApp extends StatelessWidget {
 
               return MaterialPageRoute(
                 builder: (context) {
-                  return RentalDetail(
-                    rentalID: args.rentalID,
+                  return ScopedModel<CurrentUser>(
+                    model: args.user,
+                    child: RentalDetail(
+                      rentalID: args.rentalID,
+                    ),
                   );
                 },
               );
@@ -112,8 +115,11 @@ class MyApp extends StatelessWidget {
 
               return MaterialPageRoute(
                 builder: (context) {
-                  return Chat(
-                    otherUserID: args.otherUserID,
+                  return ScopedModel<CurrentUser>(
+                    model: args.user,
+                    child: Chat(
+                      otherUserID: args.otherUserID,
+                    ),
                   );
                 },
               );
@@ -197,9 +203,12 @@ class MyApp extends StatelessWidget {
 
               return MaterialPageRoute(
                 builder: (context) {
-                  return TransactionsPage(
-                    filter: args.filter,
-                    person: args.person,
+                  return ScopedModel<CurrentUser>(
+                    model: args.user,
+                    child: TransactionsPage(
+                      filter: args.filter,
+                      person: args.person,
+                    ),
                   );
                 },
               );
@@ -244,14 +253,16 @@ class ItemRequestArgs {
 
 class RentalDetailArgs {
   final String rentalID;
+  final User user;
 
-  RentalDetailArgs(this.rentalID);
+  RentalDetailArgs(this.rentalID, this.user);
 }
 
 class ChatArgs {
   final String otherUserID;
+  final User user;
 
-  ChatArgs(this.otherUserID);
+  ChatArgs(this.otherUserID, this.user);
 }
 
 class NewPickupArgs {
@@ -291,6 +302,7 @@ class RentalCalendarArgs {
 class TransactionsPageArgs {
   final RentalPhase filter;
   final String person;
+  final User user;
 
-  TransactionsPageArgs(this.filter, this.person);
+  TransactionsPageArgs(this.filter, this.person, this.user);
 }

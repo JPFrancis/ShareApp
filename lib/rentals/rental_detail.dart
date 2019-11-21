@@ -9,6 +9,7 @@ import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
+import 'package:shareapp/models/current_user.dart';
 import 'package:shareapp/rentals/chat.dart';
 import 'package:shareapp/rentals/new_pickup.dart';
 import 'package:shareapp/services/const.dart';
@@ -43,6 +44,7 @@ class RentalDetail extends StatefulWidget {
 }
 
 class RentalDetailState extends State<RentalDetail> {
+  CurrentUser currentUser;
   SharedPreferences prefs;
   String myUserId;
   String myName;
@@ -73,6 +75,8 @@ class RentalDetailState extends State<RentalDetail> {
   @override
   void initState() {
     super.initState();
+
+    currentUser = CurrentUser.getModel(context);
     stripeInit = false;
     communicationRating = 0.0;
     itemQualityRating = 0.0;
@@ -169,8 +173,8 @@ class RentalDetailState extends State<RentalDetail> {
       padding: EdgeInsets.symmetric(horizontal: 1),
       child: GestureDetector(
           onTap: () {
-            Navigator.of(context)
-                .pushNamed(Chat.routeName, arguments: ChatArgs(otherUserId));
+            Navigator.of(context).pushNamed(Chat.routeName,
+                arguments: ChatArgs(otherUserId, currentUser));
           },
           child: Row(
             children: <Widget>[

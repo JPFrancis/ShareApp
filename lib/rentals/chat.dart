@@ -12,6 +12,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
+import 'package:shareapp/models/current_user.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:shareapp/services/functions.dart';
@@ -30,8 +31,9 @@ class Chat extends StatefulWidget {
 }
 
 class ChatState extends State<Chat> {
+  CurrentUser currentUser;
   Map chatData;
-  FirebaseUser currentUser;
+  FirebaseUser firebaseUser;
   SharedPreferences prefs;
   Map otherUser;
   List combinedId;
@@ -62,6 +64,7 @@ class ChatState extends State<Chat> {
   void initState() {
     super.initState();
 
+    currentUser = CurrentUser.getModel(context);
     otherUserID = widget.otherUserID;
     imageUrl = '';
     getMyUserID();
@@ -90,7 +93,7 @@ class ChatState extends State<Chat> {
 
     if (user != null) {
       myUserID = user.uid;
-      currentUser = user;
+      firebaseUser = user;
       idIsFirst = checkIdIsFirst(myUserID, otherUserID);
 
       Map data = getChatRoomData(myUserID, otherUserID);
@@ -118,8 +121,8 @@ class ChatState extends State<Chat> {
     if (!ds.exists) {
       Map map = setChatUserData({
         'id': myUserID,
-        'name': currentUser.displayName,
-        'avatar': currentUser.photoUrl,
+        'name': firebaseUser.displayName,
+        'avatar': firebaseUser.photoUrl,
       }, {
         'id': otherUserID,
         'name': otherUserDS['name'],
@@ -756,6 +759,7 @@ class ChatState extends State<Chat> {
     Navigator.of(context).pushNamed(RentalDetail.routeName,
         arguments: RentalDetailArgs(
           rentalDR.documentID,
+          currentUser,
         ));
   }
 }

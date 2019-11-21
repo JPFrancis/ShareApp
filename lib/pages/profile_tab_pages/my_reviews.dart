@@ -288,10 +288,12 @@ class MyReviewsState extends State<MyReviews> {
 
                                       return Container(
                                         child: InkWell(
-                                          onTap: () => Navigator.pushNamed(
-                                              context, RentalDetail.routeName,
-                                              arguments: RentalDetailArgs(
-                                                  rentalDS.documentID)),
+                                          onTap: () {
+//                                            Navigator.pushNamed(
+//                                                context, RentalDetail.routeName,
+//                                                arguments: RentalDetailArgs(
+//                                                    rentalDS.documentID))
+                                          },
                                           child: Container(
                                             decoration: BoxDecoration(
                                               boxShadow: <BoxShadow>[
