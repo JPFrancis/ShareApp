@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_picker/flutter_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:shareapp/extras/helpers.dart';
+import 'package:shareapp/models/current_user.dart';
 import 'package:shareapp/services/picker_data.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -32,12 +33,11 @@ class NewPickup extends StatefulWidget {
 
 class NewPickupState extends State<NewPickup> {
   final GlobalKey<FormState> formKey = new GlobalKey<FormState>();
-  SharedPreferences prefs;
+  CurrentUser currentUser;
 
   bool isUploading = false;
   bool isLoading = true;
   String myUserID;
-  String myName;
   String groupChatId;
   double dailyRate;
 
@@ -69,8 +69,9 @@ class NewPickupState extends State<NewPickup> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
+
+    currentUser=CurrentUser.getModel(context);
     focusNode = FocusNode();
     noteController.text = '';
 
@@ -85,8 +86,6 @@ class NewPickupState extends State<NewPickup> {
   }
 
   void getMyUserID() async {
-    prefs = await SharedPreferences.getInstance();
-    myName = prefs.getString('name') ?? '';
     var user = await FirebaseAuth.instance.currentUser();
     if (user != null) {
       myUserID = user.uid;
@@ -151,7 +150,7 @@ class NewPickupState extends State<NewPickup> {
             groupChatId = '${otherUserDS.documentID}-$myUserID';
           }
 
-          if (prefs != null && itemDS != null && otherUserDS != null) {
+          if (itemDS != null && otherUserDS != null) {
             setState(() {
               isLoading = false;
             });
@@ -475,7 +474,7 @@ class NewPickupState extends State<NewPickup> {
       Future.delayed(Duration(seconds: 1)).then((_) {
         Firestore.instance.collection('notifications').add({
           'title': 'New pickup window proposal',
-          'body': 'From: ${myName}',
+          'body': 'From: ${currentUser.name}',
           'pushToken': otherUserDS['pushToken'],
           'rentalID': widget.rentalID,
           'timestamp': DateTime.now().millisecondsSinceEpoch,
@@ -497,7 +496,7 @@ class NewPickupState extends State<NewPickup> {
             'content': text,
             'type': 0,
             'pushToken': otherUserDS['pushToken'],
-            'nameFrom': myName,
+            'nameFrom': currentUser.name,
             'rental': rentalDS.reference,
           }).then((_) {
             Navigator.of(context).pop();

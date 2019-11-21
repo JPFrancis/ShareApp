@@ -131,9 +131,12 @@ class MyApp extends StatelessWidget {
 
               return MaterialPageRoute(
                 builder: (context) {
-                  return NewPickup(
-                    rentalID: args.rentalID,
-                    isRenter: args.isRenter,
+                  return ScopedModel<CurrentUser>(
+                    model: args.user,
+                    child: NewPickup(
+                      rentalID: args.rentalID,
+                      isRenter: args.isRenter,
+                    ),
                   );
                 },
               );
@@ -268,8 +271,9 @@ class ChatArgs {
 class NewPickupArgs {
   final String rentalID;
   final bool isRenter;
+  final User user;
 
-  NewPickupArgs(this.rentalID, this.isRenter);
+  NewPickupArgs(this.rentalID, this.isRenter,this.user);
 }
 
 class SearchPageArgs {

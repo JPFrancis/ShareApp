@@ -1588,7 +1588,7 @@ class RentalDetailState extends State<RentalDetail> {
     Navigator.pushNamed(
       context,
       NewPickup.routeName,
-      arguments: NewPickupArgs(rentalDS.documentID, isRenter),
+      arguments: NewPickupArgs(rentalDS.documentID, isRenter,currentUser),
     );
   }
 
