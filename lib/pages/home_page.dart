@@ -31,6 +31,7 @@ import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/auth.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:shareapp/services/functions.dart';
+import 'package:table_calendar/table_calendar.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:url_launcher/url_launcher.dart';
 
@@ -49,7 +50,7 @@ class HomePage extends StatefulWidget {
   }
 }
 
-class HomePageState extends State<HomePage> {
+class HomePageState extends State<HomePage> with TickerProviderStateMixin {
   CurrentUser currentUser;
   final FirebaseMessaging firebaseMessaging = FirebaseMessaging();
   String deviceToken;
@@ -87,6 +88,12 @@ class HomePageState extends State<HomePage> {
   double padding;
   String font = 'Quicksand';
 
+  DateTime selectedDay;
+  DateTime visibleDay;
+  List selectedEvents;
+  Map<DateTime, List> visibleEvents;
+  AnimationController controller;
+
   FlutterLocalNotificationsPlugin localNotificationManager =
       FlutterLocalNotificationsPlugin();
   var initializationSettingsAndroid;
@@ -122,6 +129,20 @@ class HomePageState extends State<HomePage> {
     specs = NotificationDetails(androidSpecs, iosSpecs);
 
     currentTabIndex = 0;
+
+    DateTime now = DateTime.now();
+    DateTime first = DateTime(now.year, now.month, 1);
+    visibleDay = first;
+    selectedDay = DateTime(now.year, now.month, now.day);
+    selectedEvents = [];
+    visibleEvents = {};
+
+    controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+
+    controller.forward();
 
     padding = 18;
     edgeInset = EdgeInsets.only(
@@ -2132,9 +2153,10 @@ class HomePageState extends State<HomePage> {
                     buildTransactions(RentalPhase.past, "owner"),
                   ],
                 ),
-                Column(
+                ListView(
+                  padding: EdgeInsets.all(0),
                   children: <Widget>[
-                    Text('not implemented yet'),
+                    buildCalendar(),
                   ],
                 ),
               ],
@@ -2143,6 +2165,102 @@ class HomePageState extends State<HomePage> {
         ]),
       ),
     );
+  }
+
+  Widget buildCalendar() {
+    return TableCalendar(
+      startDay: DateTime.now().subtract(Duration(days: 1)),
+      selectedDay: selectedDay,
+      locale: 'en_US',
+      events: visibleEvents,
+      initialCalendarFormat: CalendarFormat.month,
+      formatAnimation: FormatAnimation.slide,
+      startingDayOfWeek: StartingDayOfWeek.sunday,
+      availableGestures: AvailableGestures.horizontalSwipe,
+      calendarStyle: CalendarStyle(
+        outsideDaysVisible: false,
+        weekendStyle: TextStyle().copyWith(color: Colors.black),
+      ),
+      daysOfWeekStyle: DaysOfWeekStyle(
+        weekendStyle: TextStyle().copyWith(color: Colors.black54),
+        weekdayStyle: TextStyle().copyWith(color: Colors.black54),
+      ),
+      headerStyle: HeaderStyle(
+        centerHeaderTitle: true,
+        formatButtonVisible: false,
+      ),
+      builders: CalendarBuilders(
+        selectedDayBuilder: (context, date, _) {
+          return Container(
+            margin: const EdgeInsets.all(4.0),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: primaryColor,
+            ),
+            child: Center(
+              child: Text(
+                '${date.day}',
+                style: TextStyle().copyWith(
+                  fontSize: 16.0,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          );
+        },
+        todayDayBuilder: (context, date, _) {
+          return Container(
+            margin: const EdgeInsets.all(4.0),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.lightBlue[200],
+            ),
+            child: Center(
+              child: Text(
+                '${date.day}',
+                style: TextStyle().copyWith(fontSize: 16.0),
+              ),
+            ),
+          );
+        },
+        markersBuilder: (context, date, events, _) {
+          final children = <Widget>[];
+
+          if (events.isNotEmpty) {
+            children.add(
+              Center(
+                child: Icon(
+                  Icons.close,
+                  color: Colors.red,
+                  size: 30,
+                ),
+              ),
+            );
+          }
+
+          return children;
+        },
+      ),
+      onDaySelected: (date, events) {
+        onDaySelected(date, events);
+        controller.forward(from: 0.0);
+      },
+      onVisibleDaysChanged: onVisibleDaysChanged,
+    );
+  }
+
+  void onDaySelected(DateTime day, List events) {
+    setState(() {
+      selectedDay = stripHourMin(day);
+      selectedEvents = events;
+    });
+  }
+
+  void onVisibleDaysChanged(
+      DateTime first, DateTime last, CalendarFormat format) {
+    setState(() {
+      visibleDay = first;
+    });
   }
 
   Widget messagesTabPage() {
