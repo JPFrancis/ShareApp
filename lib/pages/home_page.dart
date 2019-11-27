@@ -1069,7 +1069,8 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
       Stream<List<DocumentSnapshot>> stream = geo
           .collection(collectionRef: collectionReference)
-          .within(center: center, radius: radius, field: field);
+          .within(
+              center: center, radius: radius, field: field, strictMode: true);
 
       return Container(
         height: h,

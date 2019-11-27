@@ -627,9 +627,8 @@ class SearchPageState extends State<SearchPage> {
             latitude: currentLocation.latitude,
             longitude: currentLocation.longitude);
 
-        stream = geo
-            .collection(collectionRef: query)
-            .within(center: center, radius: radius, field: field);
+        stream = geo.collection(collectionRef: query).within(
+            center: center, radius: radius, field: field, strictMode: true);
       }
 
       return Expanded(
