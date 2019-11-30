@@ -209,8 +209,7 @@ Future<Position> getUserLocation() async {
     } else {
       if (geolocationStatus != GeolocationStatus.granted) {
         Map<PermissionGroup, PermissionStatus> permissions =
-            await PermissionHandler()
-                .requestPermissions([PermissionGroup.location]);
+            await PermissionHandler().requestPermissions([PermissionGroup.location]);
 
         if (permissions[PermissionGroup.location] == PermissionStatus.granted) {
           currentLocation = await getLoc();

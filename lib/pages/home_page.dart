@@ -1254,6 +1254,7 @@ class HomePageState extends State<HomePage> {
 
   Widget introImageAndSearch() {
     double h = MediaQuery.of(context).size.height;
+    double w = MediaQuery.of(context).size.width;
 
     RegExp regExp = RegExp(r'^' + searchController.text.toLowerCase() + r'.*$');
 
@@ -1285,7 +1286,7 @@ class HomePageState extends State<HomePage> {
           child: Row(
             children: <Widget>[
               SizedBox(
-                width: 20.0,
+                width: 30.0,
               ),
               Icon(Icons.search, color: primaryColor),
               SizedBox(
@@ -1294,7 +1295,7 @@ class HomePageState extends State<HomePage> {
               Text("Try \"Vacuum\"", style: TextStyle(fontFamily: 'Quicksand')),
             ],
           ),
-          height: h / 20,
+          height: h / 14,
         ),
       );
     }
