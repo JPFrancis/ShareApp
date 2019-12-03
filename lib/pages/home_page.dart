@@ -1251,21 +1251,6 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Widget introImageAndSearch() {
     double h = MediaQuery.of(context).size.height;
 
-    RegExp regExp = RegExp(r'^' + searchController.text.toLowerCase() + r'.*$');
-
-    if (searchController.text.isNotEmpty) {
-      List<String> temp = [];
-      for (int i = 0; i < filteredList.length; i++) {
-        if (regExp.hasMatch(filteredList[i])) {
-          temp.add(filteredList[i]);
-        }
-      }
-
-      filteredList = temp;
-    } else {
-      filteredList = searchList;
-    }
-
     Widget searchField() {
       return InkWell(
         onTap: () => navToSearchResults(),
@@ -2763,9 +2748,12 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
     Navigator.push(
         context,
         SlideUpRoute(
-          page: SearchPage(
-            typeFilter: 'All',
-            showSearch: true,
+          page: ScopedModel<CurrentUser>(
+            model: currentUser,
+            child: SearchPage(
+              typeFilter: 'All',
+              showSearch: true,
+            ),
           ),
         ));
   }

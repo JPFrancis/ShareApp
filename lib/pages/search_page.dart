@@ -77,13 +77,13 @@ class SearchPageState extends State<SearchPage> {
 
   void getMyUserID() async {
     FirebaseUser user = await FirebaseAuth.instance.currentUser();
-    currentLocation = Position(
-        latitude: currentUser.currentLocation.latitude,
-        longitude: currentUser.currentLocation.longitude);
 
     if (user != null) {
       isAuthenticated = true;
       myUserID = user.uid;
+      currentLocation = Position(
+          latitude: currentUser.currentLocation.latitude,
+          longitude: currentUser.currentLocation.longitude);
     } else {
       isAuthenticated = false;
     }
