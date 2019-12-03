@@ -10,6 +10,7 @@ import 'package:shareapp/extras/quote_icons.dart';
 import 'package:shareapp/models/current_user.dart';
 import 'package:shareapp/models/user.dart';
 import 'package:shareapp/services/const.dart';
+import 'package:shareapp/services/functions.dart';
 
 class ProfilePage extends StatefulWidget {
   static const routeName = '/profilePage';
@@ -213,31 +214,62 @@ class ProfilePageState extends State<ProfilePage>
   Widget showNameAndProfilePic() {
     double h = MediaQuery.of(context).size.height;
     double w = MediaQuery.of(context).size.width;
+    double statusBarHeight = MediaQuery.of(context).padding.top;
 
     String name = '${userDS['name']}'.trim();
     String firstName = name.split(' ')[0];
 
-    return Container(
-        decoration: new BoxDecoration(
-          image: DecorationImage(
-            image: CachedNetworkImageProvider(userDS['avatar']),
-            fit: BoxFit.fill,
-            colorFilter: new ColorFilter.mode(
-                Colors.black.withOpacity(0.35), BlendMode.srcATop),
-          ),
-        ),
-        height: w,
-        child: Align(
-          alignment: Alignment.bottomLeft,
-          child: Text(
-            firstName,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: h / 20,
-              fontFamily: 'Quicksand',
+    return Stack(
+      children: <Widget>[
+        Container(
+            decoration: new BoxDecoration(
+              image: DecorationImage(
+                image: CachedNetworkImageProvider(userDS['avatar']),
+                fit: BoxFit.fill,
+                colorFilter: new ColorFilter.mode(
+                    Colors.black.withOpacity(0.35), BlendMode.srcATop),
+              ),
             ),
+            height: w,
+            child: Align(
+              alignment: Alignment.bottomLeft,
+              child: Text(
+                firstName,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: h / 20,
+                  fontFamily: 'Quicksand',
+                ),
+              ),
+            )),
+        Positioned(
+          top: statusBarHeight,
+          right: 0,
+          child: PopupMenuButton<String>(
+            icon: Icon(
+              Icons.more_vert,
+              color: Colors.white,
+            ),
+            onSelected: (value) {
+              if (value == 'report') {
+                showReportUserDialog(
+                    context: context,
+                    myId: currentUser.id,
+                    myName: currentUser.name,
+                    offenderId: userDS.documentID,
+                    offenderName: userDS['name']);
+              }
+            },
+            itemBuilder: (BuildContext context) => <PopupMenuItem<String>>[
+              const PopupMenuItem<String>(
+                value: 'report',
+                child: Text('Report user'),
+              ),
+            ],
           ),
-        ));
+        )
+      ],
+    );
   }
 
   Widget showItems() {

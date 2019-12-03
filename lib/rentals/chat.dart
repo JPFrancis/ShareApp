@@ -497,25 +497,56 @@ class ChatState extends State<Chat> {
                           children: <Widget>[
                             SizedBox(height: 30.0),
                             Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: <Widget>[
-                                FlatButton(
-                                  child: BackButton(),
-                                  onPressed: () => Navigator.pop(context),
-                                ),
-                                Align(
-                                  alignment: Alignment.bottomCenter,
-                                  child: Text(
-                                    '${otherUser['name']}',
-                                    style: TextStyle(
-                                        fontSize: 20.0,
-                                        fontFamily: 'Quicksand'),
+                                Flexible(
+                                  flex: 1,
+                                  child: FlatButton(
+                                    padding: EdgeInsets.all(0),
+                                    child: BackButton(),
+                                    onPressed: () => Navigator.pop(context),
                                   ),
                                 ),
-                                FlatButton(
-                                  child: Icon(Icons.more_horiz),
-                                  onPressed: null,
-                                )
+                                Flexible(
+                                  flex: 3,
+                                  child: Align(
+                                    alignment: Alignment.bottomCenter,
+                                    child: Text(
+                                      '${otherUser['name']}',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                          fontSize: 20.0,
+                                          fontFamily: 'Quicksand'),
+                                    ),
+                                  ),
+                                ),
+                                Flexible(
+                                  flex: 1,
+                                  child: Container(
+                                    alignment: Alignment.center,
+                                    child: PopupMenuButton<String>(
+                                      icon: Icon(
+                                        Icons.more_horiz,
+                                      ),
+                                      onSelected: (value) {
+                                        if (value == 'report') {
+                                          showReportUserDialog(
+                                              context: context,
+                                              myId: currentUser.id,
+                                              myName: currentUser.name,
+                                              offenderId: otherUserID,
+                                              offenderName: otherUser['name']);
+                                        }
+                                      },
+                                      itemBuilder: (BuildContext context) =>
+                                          <PopupMenuItem<String>>[
+                                        const PopupMenuItem<String>(
+                                          value: 'report',
+                                          child: Text('Report user'),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                             Divider(

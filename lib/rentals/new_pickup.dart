@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:shareapp/services/dialogs.dart';
+
 import 'dart:convert';
 import 'dart:io';
 
@@ -310,7 +312,6 @@ class NewPickupState extends State<NewPickup> {
                           builder: (BuildContext context) {
                             return Container(
                               child: DailyRateDialog(
-                                pageHeight: pageHeight,
                                 pageWidth: pageWidth,
                                 rate: dailyRate,
                               ),

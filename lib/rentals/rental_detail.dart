@@ -437,20 +437,23 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   void cancelRental() async {
-    {
-      Navigator.of(context).pop(false);
+    Navigator.of(context).pop(false);
 
-      setState(() {
-        isLoading = true;
-      });
+    setState(() {
+      isLoading = true;
+    });
 
-      showToast('Feature not connected yet');
+//    DateTime now = DateTime();
 
-      await Future.delayed(Duration(seconds: 3));
-      setState(() {
-        isLoading = false;
-      });
-    }
+//    if ()
+
+    showToast('Feature not connected yet');
+
+    await Future.delayed(Duration(seconds: 3));
+
+    setState(() {
+      isLoading = false;
+    });
   }
 
   void rejectRental() async {

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:shareapp/services/dialogs.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
@@ -631,7 +632,6 @@ class RentalCalendarState extends State<RentalCalendar>
           builder: (BuildContext context) {
             return Container(
               child: DailyRateDialog(
-                pageHeight: pageHeight,
                 pageWidth: pageWidth,
                 rate: dailyRate,
               ),

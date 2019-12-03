@@ -17,6 +17,7 @@ import 'package:shareapp/models/current_user.dart';
 import 'package:shareapp/models/user_edit.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:shareapp/services/functions.dart';
+import 'package:shareapp/services/dialogs.dart';
 
 enum DismissDialogAction {
   cancel,
@@ -245,7 +246,6 @@ class ProfileEditState extends State<ProfileEdit> {
           builder: (BuildContext context) {
             return Container(
               child: PhoneNumberDialog(
-                pageHeight: pageHeight,
                 pageWidth: pageWidth,
                 phoneNumber: userCopy.phoneNum,
               ),
@@ -297,7 +297,6 @@ class ProfileEditState extends State<ProfileEdit> {
           builder: (BuildContext context) {
             return Container(
               child: AddressDialog(
-                pageHeight: pageHeight,
                 pageWidth: pageWidth,
                 address: userCopy.address,
               ),
@@ -343,7 +342,6 @@ class ProfileEditState extends State<ProfileEdit> {
           builder: (BuildContext context) {
             return Container(
               child: BirthdayDialog(
-                pageHeight: pageHeight,
                 pageWidth: pageWidth,
                 birthday: userCopy.birthday,
               ),
