@@ -12,6 +12,7 @@ import 'package:shareapp/main.dart';
 import 'package:shareapp/models/current_user.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/const.dart';
+import 'package:shareapp/services/functions.dart';
 import 'package:shareapp/services/payment_service.dart';
 import 'package:stripe_payment/stripe_payment.dart';
 import 'package:uni_links/uni_links.dart';
@@ -37,24 +38,18 @@ class PayoutsPageState extends State<PayoutsPage> {
   CurrentUser currentUser;
   String appBarTitle = 'Payments and payouts';
   double padding = 5.0;
-  String myUserID;
-  String defaultSource = '';
-  String stripeCustId = '';
   int numCards = 0;
 
-  bool isLoading = true;
+  bool isLoading = false;
   bool stripeInit = false;
   bool showFAB = false;
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
 
     currentUser = CurrentUser.getModel(context);
     initStream();
-    getMyUserID();
-    //delayPage();
   }
 
   void initStream() {
@@ -69,21 +64,6 @@ class PayoutsPageState extends State<PayoutsPage> {
     });
   }
 
-  void delayPage() async {
-    Future.delayed(Duration(milliseconds: 750)).then((_) {
-      setState(() {
-        isLoading = false;
-      });
-    });
-  }
-
-  void getMyUserID() async {
-    FirebaseAuth.instance.currentUser().then((user) {
-      myUserID = user.uid;
-      delayPage();
-    });
-  }
-
   void test() {
     String url =
         'https://share-app.web.app/?code=ac_GBarfU3LILI74qNnuSmRSvd2ivkrx6bG'
@@ -91,8 +71,6 @@ class PayoutsPageState extends State<PayoutsPage> {
 
     RegExp regExp = RegExp(r'code=(.*)');
     String parsed = regExp.firstMatch(url).group(1);
-
-    qq('$parsed');
   }
 
   @override
@@ -143,6 +121,10 @@ class PayoutsPageState extends State<PayoutsPage> {
 
     return InkWell(
       onTap: () async {
+        setState(() {
+          isLoading = true;
+        });
+
         if (!stripeInit) {
           var snap = await Firestore.instance
               .collection('keys')
@@ -156,14 +138,31 @@ class PayoutsPageState extends State<PayoutsPage> {
         }
 
         StripeSource.addSource().then((token) {
-          PaymentService().addCard(token);
-          Fluttertoast.showToast(
-              msg: 'Adding card...', toastLength: Toast.LENGTH_LONG);
-          setState(() {
-            isLoading = true;
-          });
+          final HttpsCallable callable =
+              CloudFunctions.instance.getHttpsCallable(
+            functionName: 'addStripeCard',
+          );
 
-          Future.delayed(Duration(seconds: 3)).then((_) {
+          callable.call(<String, dynamic>{
+            'tokenId': token,
+            'userId': currentUser.id,
+            'email': currentUser.email,
+            'customerId': currentUser.custId,
+          }).then((var resp) {
+            var response = resp.data;
+
+            if (response != null && response is Map) {
+              String custId = response['custId'];
+              String defaultSource = response['defaultSource'];
+
+              currentUser.updateCustomerId(custId);
+              currentUser.updateDefaultSource(defaultSource);
+
+              showToast('Success');
+            } else {
+              showToast('An error occurred');
+            }
+
             setState(() {
               isLoading = false;
             });
@@ -198,7 +197,8 @@ class PayoutsPageState extends State<PayoutsPage> {
     Map creditCard = creditCardDS['card'];
     String brand = creditCard['brand'];
     String fingerprint = creditCard['fingerprint'];
-    bool isDefault = defaultSource == creditCardDS['id'] ? true : false;
+    bool isDefault =
+        currentUser.defaultSource == creditCardDS['id'] ? true : false;
 
     var colors;
     var imageAsset;
@@ -406,61 +406,42 @@ class PayoutsPageState extends State<PayoutsPage> {
     double w = MediaQuery.of(context).size.width;
 
     return StreamBuilder(
-      stream:
-          Firestore.instance.collection('users').document(myUserID).snapshots(),
-      builder:
-          (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+      stream: Firestore.instance
+          .collection('users')
+          .document(currentUser.id)
+          .collection('sources')
+          .snapshots(),
+      builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+        if (snapshot.hasError) {
+          return new Text('${snapshot.error}');
+        }
+
         switch (snapshot.connectionState) {
           case ConnectionState.waiting:
+            return Container();
           default:
-            DocumentSnapshot ds = snapshot.data;
+            List documents = snapshot.data.documents;
+            numCards = documents.length;
 
-            if (ds != null && ds.exists) {
-              defaultSource = ds['defaultSource'];
-              stripeCustId = ds['custId'];
-            }
-
-            return StreamBuilder(
-              stream: Firestore.instance
-                  .collection('users')
-                  .document(myUserID)
-                  .collection('sources')
-                  .snapshots(),
-              builder: (BuildContext context,
-                  AsyncSnapshot<QuerySnapshot> snapshot) {
-                if (snapshot.hasError) {
-                  return new Text('${snapshot.error}');
-                }
-
-                switch (snapshot.connectionState) {
-                  case ConnectionState.waiting:
-                    return Container();
-                  default:
-                    List documents = snapshot.data.documents;
-                    numCards = documents.length;
-
-                    return ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: documents.length + 1,
-                      itemBuilder: (context, index) {
-                        if (index == documents.length) {
-                          return Column(
-                            children: <Widget>[
-                              Container(height: 10),
-                              addCard(),
-                              Container(height: 10),
-                            ],
-                          );
-                        } else {
-                          return Column(
-                            children: <Widget>[
-                              Container(height: 10),
-                              buildCard(documents[index])
-                            ],
-                          );
-                        }
-                      },
-                    );
+            return ListView.builder(
+              shrinkWrap: true,
+              itemCount: documents.length + 1,
+              itemBuilder: (context, index) {
+                if (index == documents.length) {
+                  return Column(
+                    children: <Widget>[
+                      Container(height: 10),
+                      addCard(),
+                      Container(height: 10),
+                    ],
+                  );
+                } else {
+                  return Column(
+                    children: <Widget>[
+                      Container(height: 10),
+                      buildCard(documents[index])
+                    ],
+                  );
                 }
               },
             );
@@ -541,7 +522,7 @@ class PayoutsPageState extends State<PayoutsPage> {
     Stream stream = collectionReference
         .where(person,
             isEqualTo:
-                Firestore.instance.collection('users').document(myUserID))
+                Firestore.instance.collection('users').document(currentUser.id))
         .snapshots();
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
@@ -680,17 +661,27 @@ class PayoutsPageState extends State<PayoutsPage> {
     );
 
     callable.call(<String, dynamic>{
-      'userId': myUserID,
-      'customerId': stripeCustId,
+      'userId': currentUser.id,
+      'customerId': currentUser.custId,
       'newSourceId': sourceDS['id'],
-    }).then((resp) {
-      String responseMessage = resp.data;
+    }).then((var resp) {
+      var response = resp.data;
 
-      setState(() {
-        isLoading = false;
-      });
+      if (response != null && response is String && response.isNotEmpty) {
+        currentUser.updateDefaultSource(response);
 
-      Fluttertoast.showToast(msg: responseMessage);
+        showToast('Success');
+
+        setState(() {
+          isLoading = false;
+        });
+      } else {
+        showToast('An error occurred');
+
+        setState(() {
+          isLoading = false;
+        });
+      }
     });
   }
 
@@ -703,9 +694,10 @@ class PayoutsPageState extends State<PayoutsPage> {
       var requestingRentals = await Firestore.instance
           .collection('rentals')
           .where('users',
-              arrayContains:
-                  Firestore.instance.collection('users').document(myUserID))
-          .where('status', isLessThan: 2)
+              arrayContains: Firestore.instance
+                  .collection('users')
+                  .document(currentUser.id))
+          .where('status', isLessThan: 3)
           .limit(1)
           .getDocuments();
 
@@ -718,7 +710,7 @@ class PayoutsPageState extends State<PayoutsPage> {
               builder: (BuildContext context) {
                 return AlertDialog(
                   content: Text(
-                    'You can\'t delete a card if you have rentals with status \"requesting\"',
+                    'You can\'t delete a card if you have active rentals',
                   ),
                   actions: <Widget>[
                     FlatButton(
@@ -733,33 +725,43 @@ class PayoutsPageState extends State<PayoutsPage> {
             ) ??
             false;
       }
-    }
+    } else {
+      final HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
+        functionName: 'deleteStripeSource',
+      );
 
-    final HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
-      functionName: 'deleteStripeSource',
-    );
+      Firestore.instance
+          .collection('users')
+          .document(currentUser.id)
+          .collection('sources')
+          .document(sourceDS['card']['fingerprint'])
+          .delete()
+          .then((_) {
+        callable.call(<String, dynamic>{
+          'userId': currentUser.id,
+          'customerId': currentUser.custId,
+          'source': sourceDS['id'],
+        }).then((resp) {
+          var response = resp.data;
 
-    Firestore.instance
-        .collection('users')
-        .document(myUserID)
-        .collection('sources')
-        .document(sourceDS['card']['fingerprint'])
-        .delete()
-        .then((_) {
-      callable.call(<String, dynamic>{
-        'userId': myUserID,
-        'customerId': stripeCustId,
-        'source': sourceDS['id'],
-      }).then((resp) {
-        String responseMessage = resp.data;
+          if (response != null && response is String && response.isNotEmpty) {
+            currentUser.updateDefaultSource(response);
 
-        setState(() {
-          isLoading = false;
+            showToast('Success');
+
+            setState(() {
+              isLoading = false;
+            });
+          } else {
+            showToast('An error occurred');
+
+            setState(() {
+              isLoading = false;
+            });
+          }
         });
-
-        Fluttertoast.showToast(msg: responseMessage);
       });
-    });
+    }
   }
 
   Future<bool> handleCardTap(actionEnum, sourceDS) async {

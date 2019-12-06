@@ -230,6 +230,75 @@ exports.pushNotifications = functions.firestore.document('notifications/{notific
         }
     })
 
+// add stripe source (through callable function)
+
+exports.addStripeCard = functions.https.onCall(async (data, context) => {
+    if (data === null) {
+        return null
+    }
+
+    var customer;
+    const token = data.tokenId;
+    const userId = data.userId;
+    const customerId = data.customerId;
+    const email = data.email;
+
+    if (customerId === 'new') {
+        console.log(`customerId: ${customerId}`);
+
+        customer = await stripe.customers.create({
+            email: email,
+            source: token,
+        });
+
+        const customerSource = customer.sources.data[0];
+        const customerSourceId = customerSource.id;
+        var map = {
+            custId: customer.id,
+            defaultSource: customerSourceId,
+        };
+
+        db.collection('users').doc(userId).update(map);
+
+        db.collection('users').doc(userId).collection('sources').
+            doc(customerSource.card.fingerprint).set(customerSource, {
+                merge: true
+            });
+
+        return map;
+    } else {
+        customer = await stripe.customers.retrieve(customerId);
+
+        var newSource = await stripe.customers.createSource(
+            customerId,
+            {
+                source: token,
+            },
+        );
+
+        var updatedCustomer = await stripe.customers.retrieve(
+            customerId,
+        );
+
+        var newDefaultSource = updatedCustomer.default_source;
+        console.log(`New default source: ${newDefaultSource}`);
+
+        await db.collection('users').doc(userId).update({
+            defaultSource: newDefaultSource,
+        });
+
+        await db.collection('users').doc(userId).collection('sources').
+            doc(newSource.card.fingerprint).set(newSource, {
+                merge: true
+            });
+
+        return {
+            custId: customerId,
+            defaultSource: newDefaultSource,
+        };
+    }
+});
+
 // add stripe source when new card added
 exports.addStripeSource = functions.firestore.document('users/{userId}/tokens/{tokenId}')
     .onWrite(async (tokenSnap, context) => {
@@ -291,15 +360,6 @@ exports.addStripeSource = functions.firestore.document('users/{userId}/tokens/{t
                     merge: true
                 });
         }
-
-        /*
-        const customerSource = customer.sources.data[0];
-        
-        return firestore.collection('users').doc(context.params.userId).collection('sources').
-            doc(customerSource.card.fingerprint).set(customerSource, {
-                merge: true
-            });
-        */
     })
 
 // delete credit card
@@ -325,9 +385,9 @@ exports.deleteStripeSource = functions.https.onCall(async (data, context) => {
     });
 
     if (resp === null) {
-        return 'Error';
+        return 1;
     } else {
-        return 'Card successfully deleted';
+        return `${newDefaultSource}`;
     }
 });
 
@@ -346,9 +406,9 @@ exports.setDefaultSource = functions.https.onCall(async (data, context) => {
     });
 
     if (resp === null) {
-        return 'Error';
+        return 1;
     } else {
-        return 'Updated default payment method';
+        return `${updatedCustomer.default_source}`;
     }
 });
 
