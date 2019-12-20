@@ -1,12 +1,16 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:scoped_model/scoped_model.dart';
 import 'package:shareapp/login/login_page.dart';
 import 'package:shareapp/main.dart';
+import 'package:shareapp/models/current_user.dart';
 import 'package:shareapp/pages/home_page.dart';
 import 'package:shareapp/rentals/chat.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/auth.dart';
+import 'package:uni_links/uni_links.dart';
 
 class RootPage extends StatefulWidget {
   static const routeName = '/rootPage';
@@ -31,7 +35,8 @@ class RootPageState extends State<RootPage> {
   initState() {
     super.initState();
 
-    configureFCM();
+//    configureFCM();
+    initPlatformState();
 
     widget.auth.getUserID().then((userId) {
       setState(() {
@@ -45,6 +50,18 @@ class RootPageState extends State<RootPage> {
     setState(() {
       authStatus = status;
     });
+  }
+
+  initPlatformState() async {
+    try {
+      String initialLink = await getInitialLink();
+//      qq('initial link: $initialLink');
+      if (initialLink != null) {
+//        String initialUri = Uri.parse(initialLink);
+      }
+    } catch (e) {
+      debugPrint('Error: $e');
+    }
   }
 
   void configureFCM() async {
@@ -103,10 +120,36 @@ class RootPageState extends State<RootPage> {
             if (snapshot.hasData) {
               FirebaseUser user = snapshot.data;
 
-              return HomePage(
-                auth: widget.auth,
-                firebaseUser: user,
-                onSignOut: () => _updateAuthStatus(AuthStatus.notSignedIn),
+              return FutureBuilder(
+                future: Firestore.instance
+                    .collection('users')
+                    .document(user.uid)
+                    .get(),
+                builder: (BuildContext context, AsyncSnapshot snapshot) {
+                  DocumentSnapshot snap = snapshot.data;
+
+                  if (snapshot.hasData && snap != null && snap.exists) {
+                    DocumentSnapshot userSnap = snapshot.data;
+
+                    return ScopedModel<CurrentUser>(
+                      model: CurrentUser(userSnap),
+                      child: HomePage(
+                        auth: widget.auth,
+                        firebaseUser: user,
+                        onSignOut: () =>
+                            _updateAuthStatus(AuthStatus.notSignedIn),
+                      ),
+                    );
+                  } else if (snap != null && !snap.exists) {
+                    return LoginPage(
+                      title: 'ShareApp Login',
+                      auth: widget.auth,
+                      onSignIn: () => _updateAuthStatus(AuthStatus.signedIn),
+                    );
+                  } else {
+                    return Container(color: Colors.white);
+                  }
+                },
               );
             } else {
               return Container(color: Colors.white);

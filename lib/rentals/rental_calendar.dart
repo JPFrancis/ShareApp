@@ -12,9 +12,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
-import 'package:shareapp/models/user.dart';
 import 'package:shareapp/pages/profile_tab_pages/payouts_page.dart';
-import 'package:shareapp/pages/profile_tab_pages/profile_edit.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:shareapp/services/functions.dart';
@@ -825,25 +823,25 @@ class RentalCalendarState extends State<RentalCalendar>
                         onPressed: () {
                           Navigator.of(context).pop(
                               false); // Pops the confirmation dialog but not the page.
-                          Timestamp timestampBirthday =
-                              userSnapshot['birthday'];
-                          DateTime birthday;
-
-                          if (timestampBirthday != null) {
-                            birthday = timestampBirthday.toDate();
-                          }
-
-                          User userEdit =
-                              User.fromMap(userSnapshot.data, birthday);
-
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (BuildContext context) => ProfileEdit(
-                                  userEdit: userEdit,
-                                ),
-                                fullscreenDialog: true,
-                              ));
+//                          Timestamp timestampBirthday =
+//                              userSnapshot['birthday'];na
+//                          DateTime birthday;
+//
+//                          if (timestampBirthday != null) {
+//                            birthday = timestampBirthday.toDate();
+//                          }
+//
+//                          UserEdit userEdit =
+//                              UserEdit.fromMap(userSnapshot.data, birthday);
+//
+//                          Navigator.push(
+//                              context,
+//                              MaterialPageRoute(
+//                                builder: (BuildContext context) => ProfileEdit(
+//                                  userEdit: userEdit,
+//                                ),
+//                                fullscreenDialog: true,
+//                              ));
                         },
                       )
                     : Container(),

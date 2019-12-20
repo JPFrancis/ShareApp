@@ -1,5 +1,3 @@
-import 'dart:ffi';
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
@@ -15,6 +13,7 @@ import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:shareapp/services/payment_service.dart';
 import 'package:stripe_payment/stripe_payment.dart';
+import 'package:uni_links/uni_links.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 enum CardTapAction {
@@ -43,13 +42,28 @@ class PayoutsPageState extends State<PayoutsPage> {
 
   bool isLoading = true;
   bool stripeInit = false;
+  bool showFAB = true;
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+
+    initStream();
     getMyUserID();
     //delayPage();
+  }
+
+  void initStream() {
+    getLinksStream().listen((link) {
+      try {
+        var _latestUri;
+        if (link != null) _latestUri = Uri.parse(link);
+        print("App was opened with: ${_latestUri}");
+      } on FormatException {
+        print("--- A link got here but was invalid");
+      }
+    });
   }
 
   void delayPage() async {
@@ -67,16 +81,29 @@ class PayoutsPageState extends State<PayoutsPage> {
     });
   }
 
+  void test() {
+    String url =
+        'https://share-app.web.app/?code=ac_GBarfU3LILI74qNnuSmRSvd2ivkrx6bG'
+            .trim();
+
+    RegExp regExp = RegExp(r'code=(.*)');
+    String parsed = regExp.firstMatch(url).group(1);
+
+    qq('$parsed');
+  }
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        floatingActionButton: FloatingActionButton(
-          onPressed: createStripeAccount,
-          child: Icon(Icons.attach_money),
-          tooltip: 'Create Stripe account',
-        ),
+        floatingActionButton: showFAB
+            ? FloatingActionButton(
+                onPressed: createStripeAccount,
+                child: Icon(Icons.attach_money),
+                tooltip: 'Create Stripe account',
+              )
+            : null,
         backgroundColor: coolerWhite,
         appBar: PreferredSize(
           preferredSize: Size.fromHeight(90),
@@ -804,26 +831,28 @@ class PayoutsPageState extends State<PayoutsPage> {
 
   void createStripeAccount() async {
     String phoneNum = '';
-    String random = 'jhjijihih'; /// CHANGE THIS ~~~~~~~~~~~~~~~~
+    String random = DateTime.now().microsecondsSinceEpoch.toString();
+
+    /// CHANGE THIS ~~~~~~~~~~~~~~~~
     String email = '$random@gmail.com';
     String firstName = 'Bob';
     String lastName = 'Jones';
 
     String url = 'https://connect.stripe.com/express/oauth/authorize?'
-        'redirect_uri=https://share-app.web.app'
-        'test&client_id=ca_G2aEpUUFBkF4B3U8tgcY0G5NWhCfOj2c&state='
+        'redirect_uri=https://share-app.web.app/'
+        '&client_id=ca_G2aEpUUFBkF4B3U8tgcY0G5NWhCfOj2c' /*&state={STATE_VALUE}'*/
         '&stripe_user[country]=US'
         '&stripe_user[phone_number]=$phoneNum'
         '&stripe_user[business_type]=individual'
-//        '&stripe_user[email]=$email'
+        '&stripe_user[email]=$email'
         '&stripe_user[first_name]=$firstName'
         '&stripe_user[last_name]=$lastName'
         '&stripe_user[product_description]=do_not_edit'
 ;
 
-    debugPrint('URL: $url');
-    debugPrint('------');
+        url = 'https://share-app.web.app';
 
+//    debugPrint('URL: $url');
 
     if (await canLaunch("$url")) {
       await launch("$url");
@@ -831,20 +860,26 @@ class PayoutsPageState extends State<PayoutsPage> {
       debugPrint("cannot launch");
     }
 
+//    HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
+//      functionName: 'createStripeAccount',
+//    );
+//
+//    final HttpsCallableResult result = await callable.call(
+//      <String, dynamic>{
+//        '': '',
+//      },
+//    );
+  }
 
-/*
-    HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
-      functionName: 'createStripeAccount',
-    );
-
-    final HttpsCallableResult result = await callable.call(
-      <String, dynamic>{
-        '': '',
-      },
-    );
-*/
-
-
-
+  initPlatformState() async {
+    try {
+      String initialLink = await getInitialLink();
+      print('initial link: $initialLink');
+      if (initialLink != null) {
+//        String initialUri = Uri.parse(initialLink);
+      }
+    } catch (e) {
+      debugPrint('Error: $e');
+    }
   }
 }

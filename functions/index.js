@@ -11,7 +11,6 @@ const storage = admin.storage();
 const bucket = storage.bucket();
 
 const stripe = require('stripe')(functions.config().stripe.token);
-
 const error_message = 'Invalid input. Make sure you\'re using the latest version of the app';
 
 // create new user document when account created
@@ -37,6 +36,7 @@ exports.createUser = functions.auth.user().onCreate(event => {
         name: name,
         lastActive: Date.now(),
         creationDate: creationDate,
+        connectedAcctId: null,
         custId: 'new',
         defaultSource: null,
         pushToken: '',
@@ -351,18 +351,6 @@ exports.setDefaultSource = functions.https.onCall(async (data, context) => {
         return 'Updated default payment method';
     }
 });
-
-/*
-exports.setDefaultSource = (userId, customerId, newSourceId) => {
-    var updatedCustomer = await stripe.customers.update(customerId, {
-        default_source: newSourceId
-    });
-
-    await firestore.collection('users').doc(userId).update({
-        defaultSource: updatedCustomer.default_source,
-    });
-};
-*/
 
 exports.createCharge = functions.firestore.document('charges/{chargeId}')
     .onCreate(async (chargeSnap, context) => {
