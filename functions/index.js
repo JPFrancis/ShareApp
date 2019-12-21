@@ -418,8 +418,6 @@ exports.createCharge = functions.firestore.document('charges/{chargeId}')
             const idFrom = chargeSnap.data().rentalData['idFrom'];
             const userSnap = await db.collection('users').doc(idFrom).get();
             const idTo = chargeSnap.data().rentalData['idTo'];
-            const itemOwner = await db.collection('users').doc(idTo).get();
-            const ownerCustId = userSnap.data().custId;
             const customer = userSnap.data().custId;
             const amount = chargeSnap.data().amount;
             const currency = chargeSnap.data().currency;
@@ -428,6 +426,7 @@ exports.createCharge = functions.firestore.document('charges/{chargeId}')
             const ourFee = transferDataMap['ourFee'];
             const ownerPayout = transferDataMap['ownerPayout'];
             const idempotentKey = context.params.chargeId;
+            const connectedAcctId = transferDataMap['connectedAcctId'];
 
             const response = await stripe.charges.create({
                 amount: amount,
@@ -437,12 +436,11 @@ exports.createCharge = functions.firestore.document('charges/{chargeId}')
                 application_fee_amount: ourFee,
                 transfer_data: {
                     amount: ownerPayout,
-                    destination: ownerCustId,
+                    destination: connectedAcctId,
                 },
                 description: description,
             }, { idempotency_key: idempotentKey });
             return chargeSnap.ref.set(response, { merge: true });
-
         } catch (error) {
             await chargeSnap.ref.set({ error: error.message }, { merge: true });
         }
@@ -474,6 +472,20 @@ exports.createStripeAccount = functions.https.onCall(async (data, context) => {
     } else {
         return 'Card successfully deleted';
     }
+});
+
+// finish oauth flow
+exports.finishOAuthFlow = functions.https.onCall(async (data, context) => {
+    var acctId = data.acctId;
+
+    return stripe.oauth.token({
+        grant_type: 'authorization_code',
+        code: acctId,
+    }).then(function (response) {
+        return response.stripe_user_id;
+    }).catch(err => {
+        console.log(err);
+    });
 });
 
 // update items and rentals when user edits their name and profile picture
@@ -982,6 +994,7 @@ exports.createRental = functions.https.onCall(async (data, context) => {
         var docRef = await db.collection('items').add({
             created: new Date(),
             status: status,
+            declined: null,
             creator: db.collection('users').doc(creator),
             name: name,
             description: description,

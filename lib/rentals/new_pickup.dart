@@ -193,6 +193,7 @@ class NewPickupState extends State<NewPickup> {
     var rentalBeforeCurrent = await Firestore.instance
         .collection('rentals')
         .where('item', isEqualTo: itemDR)
+    .where('declined',isNull: true)
         .where('pickupStart', isLessThanOrEqualTo: pickupTimeCopy)
         .orderBy('pickupStart', descending: false)
         .limit(1)
@@ -219,7 +220,7 @@ class NewPickupState extends State<NewPickup> {
     // get the rental that starts immediately after the current request pickup
     var rentalAfterCurrent = await Firestore.instance
         .collection('rentals')
-        .where('item', isEqualTo: itemDR)
+        .where('item', isEqualTo: itemDR).where('declined',isNull: true)
         .where('pickupStart', isGreaterThanOrEqualTo: pickupTimeCopy)
         .orderBy('pickupStart', descending: false)
         .limit(1)

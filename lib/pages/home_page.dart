@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:shareapp/services/database.dart';
 import 'package:shareapp/services/dialogs.dart';
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -220,7 +221,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
         // Update rental status to active
         await rentalsCollection
             .document(rentalDS.documentID)
-            .updateData({'status': 3});
+            .updateData({'status': 3,'lastUpdateTime':DateTime.now()});
       }
     }
 
@@ -241,7 +242,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
         // Update status of rental to 'past'
         await rentalsCollection
             .document(rentalDS.documentID)
-            .updateData({'status': 4});
+            .updateData({'status': 4, 'lastUpdateTime':DateTime.now()});
       }
     }
 
@@ -352,7 +353,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
         .where('creator',
             isEqualTo:
                 Firestore.instance.collection('users').document(myUserID))
-        .getDocuments();
+        .where('unavailable', isGreaterThan: []).getDocuments();
     List<DocumentSnapshot> docs = snaps.documents;
 
     if (snaps != null && docs.isNotEmpty) {
@@ -514,41 +515,6 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
 //      configureFCM();
     });
-  }
-
-  Future<Null> getAllItems() async {
-    searchList = [];
-    filteredList = [];
-
-    QuerySnapshot querySnapshot = await Firestore.instance
-        .collection('items')
-        .orderBy('name', descending: false)
-        .getDocuments();
-
-    if (querySnapshot != null) {
-      allItems = querySnapshot.documents;
-
-      allItems.forEach((DocumentSnapshot ds) {
-        String name = ds['name'].toLowerCase();
-        String description = ds['description'].toLowerCase();
-
-        searchList.addAll(name.split(' '));
-        searchList.addAll(description.split(' '));
-      });
-
-      searchList = searchList.toSet().toList();
-
-      for (int i = 0; i < searchList.length; i++) {
-        searchList[i] = searchList[i].replaceAll(RegExp(r"[^\w]"), '');
-      }
-
-      searchList = searchList.toSet().toList();
-      searchList.sort();
-      searchList.remove('');
-      filteredList = searchList;
-
-      //debugPrint('LIST: $searchList, LENGTH: ${searchList.length}');
-    }
   }
 
   @override
@@ -1819,8 +1785,12 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
             .limit(3);
         break;
       case RentalPhase.past:
+//        query = query
+//            .where('rentalEnd', isLessThan: DateTime.now())
+//            .orderBy('rentalEnd', descending: true)
+//            .limit(3);
         query = query
-            .where('rentalEnd', isLessThan: DateTime.now())
+            .where('status', isEqualTo: 4)
             .orderBy('rentalEnd', descending: true)
             .limit(3);
         break;
@@ -1828,138 +1798,170 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
     Stream stream = query.snapshots();
 
+    Widget card(DocumentSnapshot rentalDS) {
+      String itemName = rentalDS['itemName'];
+      String itemAvatar = rentalDS['itemAvatar'];
+
+      CachedNetworkImage image = CachedNetworkImage(
+        key: ValueKey<String>(itemAvatar),
+        imageUrl: itemAvatar,
+        placeholder: (context, url) => new CircularProgressIndicator(),
+        fit: BoxFit.cover,
+      );
+
+      return Container(
+        width: MediaQuery.of(context).size.width / 2,
+        padding: EdgeInsets.only(left: 10.0),
+        child: InkWell(
+          onTap: () => Navigator.pushNamed(context, RentalDetail.routeName,
+              arguments: RentalDetailArgs(rentalDS.documentID, currentUser)),
+          child: Container(
+            width: MediaQuery.of(context).size.width / 2,
+            decoration: BoxDecoration(
+              boxShadow: <BoxShadow>[
+                CustomBoxShadow(
+                    color: Colors.black45,
+                    blurRadius: 3.5,
+                    blurStyle: BlurStyle.outer),
+              ],
+            ),
+            child: Stack(
+              children: <Widget>[
+                SizedBox.expand(child: image),
+                SizedBox.expand(
+                  child: Container(
+                    color: Colors.black.withOpacity(0.4),
+                  ),
+                ),
+                Center(
+                  child: Column(
+                    children: <Widget>[
+                      Text(itemName, style: TextStyle(color: Colors.white)),
+                      StreamBuilder(
+                          stream:
+                              Stream.periodic(Duration(seconds: 30), (i) => i),
+                          builder: (BuildContext context,
+                              AsyncSnapshot<int> snapshot) {
+                            DateTime now = DateTime.now();
+                            DateTime pickupTime =
+                                rentalDS['pickupStart'].toDate();
+
+                            int days = pickupTime.difference(now).inDays;
+                            int hours = pickupTime
+                                .difference(now.add(Duration(days: days)))
+                                .inHours;
+                            int minutes = pickupTime
+                                .difference(
+                                    now.add(Duration(days: days, hours: hours)))
+                                .inMinutes;
+
+                            var dateString = '';
+
+                            if (days == 0) {
+                              dateString =
+                                  '$hours hours, $minutes min until pickup';
+                            } else {
+                              dateString =
+                                  '$days days, $hours hours, $minutes min until pickup';
+                            }
+
+                            return Container(
+                              child: Text(
+                                dateString,
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            );
+                          })
+                    ],
+                  ),
+                )
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
         stream: stream,
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
             return new Text('${snapshot.error}');
-          }
-          switch (snapshot.connectionState) {
-            case ConnectionState.waiting:
+          } else {
+            switch (snapshot.connectionState) {
+              case ConnectionState.waiting:
+              default:
+                if (snapshot.hasData) {
+                  var docs = snapshot.data.documents;
 
-            default:
-              if (snapshot.hasData) {
-                var updated = snapshot.data.documents;
+                  List<Widget> cards = [];
 
-                if (updated.length == 0) {
-                  return Text('Nothing to show');
+                  if (rentalStatus != RentalPhase.past) {
+                    if (docs.length == 0) {
+                      return Text('Nothing to show');
+                    }
+
+                    cards.addAll(docs.map((doc) => card(doc)).toList());
+
+                    return ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: cards,
+                    );
+                  }
+
+                  // RentalPhase.past - merge completed and declined/cancelled rentals
+                  return StreamBuilder(
+                    stream: Firestore.instance
+                        .collection('rentals')
+                        .where(person,
+                            isEqualTo: Firestore.instance
+                                .collection('users')
+                                .document(myUserID))
+                        .where('status', isEqualTo: 5)
+                    .where('x',)
+                        .orderBy('rentalEnd', descending: true)
+                        .limit(3)
+                        .snapshots(),
+                    builder: (BuildContext context,
+                        AsyncSnapshot<QuerySnapshot> newSnapshots) {
+                      if (newSnapshots.hasError) {
+                        return new Text('${newSnapshots.error}');
+                      }
+
+                      switch (newSnapshots.connectionState) {
+                        case ConnectionState.waiting:
+                        default:
+                          if (newSnapshots.hasData) {
+                            var newDocs = newSnapshots.data.documents;
+
+                            List<DocumentSnapshot> combinedDocs = [];
+
+                            combinedDocs.addAll(docs);
+                            combinedDocs.addAll(newDocs);
+                            combinedDocs.sort((a, b) =>
+                                b['rentalEnd'].compareTo(a['rentalEnd']));
+
+                            if (combinedDocs.length > 3) {
+                              combinedDocs.removeRange(3, combinedDocs.length);
+                            }
+
+                            cards.addAll(combinedDocs.map((doc) => card(doc)).toList());
+
+                            return ListView(
+                              scrollDirection: Axis.horizontal,
+                              children: cards,
+                            );
+                          } else {
+                            return Container();
+                          }
+                      }
+                    },
+                  );
+                } else {
+                  return Container();
                 }
-
-                return ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: updated.length,
-                  itemBuilder: (context, index) {
-                    DocumentSnapshot rentalDS = updated[index];
-                    String itemName = rentalDS['itemName'];
-                    String itemAvatar = rentalDS['itemAvatar'];
-
-                    CachedNetworkImage image = CachedNetworkImage(
-                      key: ValueKey<String>(itemAvatar),
-                      imageUrl: itemAvatar,
-                      placeholder: (context, url) =>
-                          new CircularProgressIndicator(),
-                      fit: BoxFit.cover,
-                    );
-
-                    return Container(
-                      width: MediaQuery.of(context).size.width / 2,
-                      padding: EdgeInsets.only(left: 10.0),
-                      child: InkWell(
-                        onTap: () => Navigator.pushNamed(
-                            context, RentalDetail.routeName,
-                            arguments: RentalDetailArgs(
-                                rentalDS.documentID, currentUser)),
-                        child: Container(
-                          width: MediaQuery.of(context).size.width / 2,
-                          decoration: BoxDecoration(
-                            boxShadow: <BoxShadow>[
-                              CustomBoxShadow(
-                                  color: Colors.black45,
-                                  blurRadius: 3.5,
-                                  blurStyle: BlurStyle.outer),
-                            ],
-                          ),
-                          child: Stack(
-                            children: <Widget>[
-                              SizedBox.expand(child: image),
-                              SizedBox.expand(
-                                  child: Container(
-                                color: Colors.black.withOpacity(0.4),
-                              )),
-                              Center(
-                                child: Column(
-                                  children: <Widget>[
-                                    Text(itemName,
-                                        style: TextStyle(color: Colors.white)),
-                                    // Text("Pickup Time: \n" + DateTime.fromMillisecondsSinceEpoch(rentalDS[ 'pickupStart'].millisecondsSinceEpoch).toString(), style: TextStyle(color:Colors.white)),
-                                    StreamBuilder(
-                                        stream: Stream.periodic(
-                                            Duration(seconds: 30), (i) => i),
-                                        builder: (BuildContext context,
-                                            AsyncSnapshot<int> snapshot) {
-                                          DateTime now = DateTime.now();
-                                          DateTime pickupTime =
-                                              rentalDS['pickupStart'].toDate();
-
-                                          int days =
-                                              pickupTime.difference(now).inDays;
-                                          int hours = pickupTime
-                                              .difference(
-                                                  now.add(Duration(days: days)))
-                                              .inHours;
-                                          int minutes = pickupTime
-                                              .difference(now.add(Duration(
-                                                  days: days, hours: hours)))
-                                              .inMinutes;
-
-                                          var dateString = '';
-
-                                          if (days == 0) {
-                                            dateString =
-                                                '$hours hours, $minutes min until pickup';
-                                          } else {
-                                            dateString =
-                                                '$days days, $hours hours, $minutes min until pickup';
-                                          }
-
-                                          /*
-                                          int now = DateTime.now()
-                                              .millisecondsSinceEpoch;
-                                          int pickupTime =
-                                              rentalDS['pickupStart']
-                                                  .millisecondsSinceEpoch;
-                                          Duration remaining = Duration(
-                                              milliseconds: (pickupTime - now));
-                                          var dateString;
-                                          remaining.inDays == 0
-                                              ? dateString =
-                                                  '${format.format(DateTime.fromMillisecondsSinceEpoch(remaining.inMilliseconds))}'
-                                              : dateString =
-                                                  '${remaining.inDays} days, ${format.format(DateTime.fromMillisecondsSinceEpoch(remaining.inMilliseconds))}';
-                                          */
-
-                                          return Container(
-                                            child: Text(
-                                              dateString,
-                                              style: TextStyle(
-                                                  color: Colors.white),
-                                            ),
-                                          );
-                                        })
-                                  ],
-                                ),
-                              )
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                );
-              } else {
-                return Container();
-              }
+            }
           }
         },
       ),

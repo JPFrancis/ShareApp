@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 class DB {
   final db = Firestore.instance;
@@ -10,12 +11,26 @@ class DB {
       RegExp regExp = RegExp(r'code=(.*)');
       acctId = regExp.firstMatch(url.trim()).group(1);
 
-      await db
-          .collection('users')
-          .document(userId)
-          .updateData({'connectedAcctId': acctId});
+      HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
+        functionName: 'finishOAuthFlow',
+      );
 
-      return acctId;
+      final HttpsCallableResult result = await callable.call(
+        <String, dynamic>{
+          'acctId': acctId,
+        },
+      );
+
+      if (result != null) {
+        await db
+            .collection('users')
+            .document(userId)
+            .updateData({'connectedAcctId': result.data});
+
+        return result.data;
+      } else {
+        throw 'An error occurred';
+      }
     } catch (e) {
       throw e.toString();
     }

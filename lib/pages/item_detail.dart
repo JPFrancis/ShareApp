@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:scoped_model/scoped_model.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/models/current_user.dart';
@@ -760,9 +761,12 @@ class ItemDetailState extends State<ItemDetail> {
     Item result = await Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (BuildContext context) => ItemEdit(
-            item: editItem,
-            itemId: itemDS.documentID,
+          builder: (BuildContext context) => ScopedModel<CurrentUser>(
+            model: currentUser,
+            child: ItemEdit(
+              item: editItem,
+              itemId: itemDS.documentID,
+            ),
           ),
           fullscreenDialog: true,
         ));

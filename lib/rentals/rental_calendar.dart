@@ -136,6 +136,7 @@ class RentalCalendarState extends State<RentalCalendar>
     var rentalQuerySnaps = await Firestore.instance
         .collection('rentals')
         .where('item', isEqualTo: itemDR)
+        .where('declined', isNull: true)
         .where('pickupStart', isGreaterThanOrEqualTo: lowerDateBound)
         .where('pickupStart', isLessThanOrEqualTo: upperDateBound)
         .getDocuments();
@@ -734,7 +735,8 @@ class RentalCalendarState extends State<RentalCalendar>
               myUserDS['gender'] == null ||
               myUserDS['phoneNum'] == null) {
             showRequestErrorDialog(4, userSnapshot: myUserDS);
-          } else if (myUserDS['defaultSource'] == null) {
+          } else if (currentUser.defaultSource == null ||
+              currentUser.defaultSource.isEmpty) {
             showRequestErrorDialog(7);
           } else {
             action();
@@ -859,6 +861,7 @@ class RentalCalendarState extends State<RentalCalendar>
     var rentalBeforeCurrent = await Firestore.instance
         .collection('rentals')
         .where('item', isEqualTo: itemDR)
+        .where('declined',isNull: true)
         .where('pickupStart', isLessThanOrEqualTo: pickupTimeCopy)
         .orderBy('pickupStart', descending: false)
         .limit(1)
@@ -885,6 +888,7 @@ class RentalCalendarState extends State<RentalCalendar>
     var rentalAfterCurrent = await Firestore.instance
         .collection('rentals')
         .where('item', isEqualTo: itemDR)
+        .where('declined',isNull: true)
         .where('pickupStart', isGreaterThanOrEqualTo: pickupTimeCopy)
         .orderBy('pickupStart', descending: false)
         .limit(1)
@@ -1007,6 +1011,7 @@ class RentalCalendarState extends State<RentalCalendar>
     // create rental in 'rentals' collection
     DocumentReference rentalDR =
         await Firestore.instance.collection("rentals").add({
+          'declined':null,
       'status': 0,
       'requesting': true,
       'item':

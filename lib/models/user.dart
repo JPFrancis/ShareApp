@@ -99,6 +99,18 @@ class User extends Model {
 
     notifyListeners();
   }
+
+  void updateDefaultSource(String id) {
+    this.defaultSource = id;
+
+    notifyListeners();
+  }
+
+  void updateCustomerId(String id) {
+    this.custId = id;
+
+    notifyListeners();
+  }
 }
 
 bool verifyUser(

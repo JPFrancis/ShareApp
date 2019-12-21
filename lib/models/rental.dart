@@ -1,13 +1,20 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 /*
+declined:
+true = declined
+false = cancelled
+null = neither
+ */
+
+/*
 int status
 1 = requested
 2 = accepted
-3 = active
+3 = active'
 4 = returned
-5 = completed
- */
+5 = cancelled
+*/
 
 /*
 0) renter has proposed time - burden of accept is on owner.
@@ -15,10 +22,11 @@ int status
 1) owner has proposed time - burden of accept is on renter
   Entered when owner proposes new time
 2) accepted - when the rental request is agreed upon, can be done by either
-  renter or owner
+  renter or owner. Before the pickup window starts
 3) active - the actual renting is taking place including pickup window.
   Occurs when rental pickup start is after current time.
-4) Rental is finished. Starts when current time hits rentalEnd
+4) Rental is finished. Starts when current time hits rentalEnd.
+5) Rental is cancelled
 */
 
 class Rental {
