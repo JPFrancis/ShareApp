@@ -116,7 +116,7 @@ class PayoutsPageState extends State<PayoutsPage> {
               indicatorColor: Colors.black,
               tabs: [
                 Tab(child: Text("Payment Methods")),
-                Tab(child: Text("Payout History")),
+                Tab(child: Text("Payouts")),
               ],
             ),
           ),
@@ -487,12 +487,32 @@ class PayoutsPageState extends State<PayoutsPage> {
   }
 
   Widget showPayouts() {
+    double w = MediaQuery.of(context).size.width;
+    Widget _image(){
+      return Container(
+        color: Colors.transparent,
+        height: 100.0,
+        child: Row(children: <Widget>[
+          SizedBox(width: 10.0,),
+          Align(alignment: Alignment.centerLeft, child: Text("Payments secured by", style: TextStyle(fontFamily: 'Quicksand', fontSize: w/25,))),
+          SizedBox(width: 0.0,),
+          Container(
+            height: w/7,
+            width: w/3, 
+            decoration: BoxDecoration(image: DecorationImage(image: AssetImage('assets/stripe_logo.png'), fit: BoxFit.fill),)
+          ),
+        ],),
+      );
+    }
     return Column(
       children: <Widget>[
         buildChargesList(),
         //buildTransactions("past", "renter"),
         //buildTransactions("past", "owner"),
-      ],
+        Align(
+          alignment: Alignment.bottomLeft,
+          child: Container(child: _image())),
+        ],
     );
   }
 
@@ -854,10 +874,8 @@ class PayoutsPageState extends State<PayoutsPage> {
 
 //    debugPrint('URL: $url');
 
-    if (await canLaunch("$url")) {
-      await launch("$url");
-    } else {
-      debugPrint("cannot launch");
+    if (await canLaunch(url)) {
+      await launch(url);
     }
 
 //    HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(

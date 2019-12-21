@@ -1,22 +1,25 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:shareapp/services/functions.dart';
+
+import 'package:date_range_picker/date_range_picker.dart' as DateRagePicker;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' as prefix0;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:scoped_model/scoped_model.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/extras/quote_icons.dart';
 import 'package:shareapp/main.dart';
+import 'package:shareapp/models/current_user.dart';
 import 'package:shareapp/models/item.dart';
 import 'package:shareapp/models/user.dart';
+import 'package:shareapp/models/user_edit.dart';
 import 'package:shareapp/pages/item_detail.dart';
 import 'package:shareapp/pages/item_edit.dart';
 import 'package:shareapp/pages/profile_tab_pages/help_page.dart';
@@ -29,6 +32,7 @@ import 'package:shareapp/rentals/chat.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/auth.dart';
 import 'package:shareapp/services/const.dart';
+import 'package:shareapp/services/functions.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:url_launcher/url_launcher.dart';
@@ -49,12 +53,13 @@ class HomePage extends StatefulWidget {
 }
 
 class HomePageState extends State<HomePage> {
+  CurrentUser currentUser;
   final FirebaseMessaging firebaseMessaging = FirebaseMessaging();
   String deviceToken;
 
   SharedPreferences prefs;
-  FirebaseUser currentUser;
-  DocumentSnapshot myUserDS;
+  FirebaseUser firebaseUser;
+
   String myUserID;
   List<Item> itemList;
   Future<File> selectedImage;
@@ -67,7 +72,6 @@ class HomePageState extends State<HomePage> {
 
   bool pageIsLoading = true;
   bool locIsLoading = false;
-  bool showTOS = true;
   bool isAuthenticated;
 
   TextEditingController searchController = TextEditingController();
@@ -128,14 +132,15 @@ class HomePageState extends State<HomePage> {
     edgeInset = EdgeInsets.only(
         left: padding, right: padding, bottom: padding, top: 30);
 
-    currentUser = widget.firebaseUser;
+    firebaseUser = widget.firebaseUser;
 
-    if (currentUser == null) {
+    if (firebaseUser == null) {
       isAuthenticated = false;
-      showTOS = false;
+      setPrefs();
     } else {
       isAuthenticated = true;
-      myUserID = currentUser.uid;
+      myUserID = firebaseUser.uid;
+      currentUser = CurrentUser.getModel(context);
       setPrefs();
     }
 
@@ -148,17 +153,16 @@ class HomePageState extends State<HomePage> {
     ];
 
     if (isAuthenticated) {
-      updateRentals();
+      initialize();
     } else {
+      getCurrentLoc();
       setState(() {
         pageIsLoading = false;
       });
     }
-
-    getCurrentLoc();
   }
 
-  void updateRentals() async {
+  void initialize() async {
     CollectionReference rentalsCollection =
         Firestore.instance.collection('rentals');
 
@@ -224,20 +228,17 @@ class HomePageState extends State<HomePage> {
       }
     }
 
-    scheduleNotifications();
-  }
-
-  void scheduleNotifications() async {
+    // schedule notifications
     await localNotificationManager.cancelAll();
 
     DocumentReference userDR =
         Firestore.instance.collection('users').document(myUserID);
-    var rentalQuerySnaps = await Firestore.instance
+    rentalQuerySnaps = await Firestore.instance
         .collection('rentals')
         .where('users', arrayContains: userDR)
         .where('status', isEqualTo: 2)
         .getDocuments();
-    List<DocumentSnapshot> rentalSnaps = rentalQuerySnaps.documents;
+    rentalSnaps = rentalQuerySnaps.documents;
 
     for (int i = 0; i < rentalSnaps.length; i++) {
       DocumentSnapshot rentalDS = rentalSnaps[i];
@@ -259,6 +260,17 @@ class HomePageState extends State<HomePage> {
       } else {
         int id = i * 10;
         int idCounter = 0;
+
+        id += idCounter;
+        await localNotificationManager.schedule(
+          id,
+          'Pickup window will begin in 1 day',
+          'Item: $itemName',
+          pickupStart.subtract(Duration(days: 1)),
+          specs,
+          payload: '$id',
+        );
+        idCounter++;
 
         id += idCounter;
         await localNotificationManager.schedule(
@@ -316,10 +328,7 @@ class HomePageState extends State<HomePage> {
       }
     }
 
-    removeUnavailableItemDays();
-  }
-
-  void removeUnavailableItemDays() async {
+    // remove unavailable item days
     CollectionReference itemRef = Firestore.instance.collection('items');
 
     QuerySnapshot snaps = await itemRef
@@ -351,15 +360,11 @@ class HomePageState extends State<HomePage> {
       }
     }
 
-    showReviewDialog();
-  }
-
-  void showReviewDialog() async {
-    CollectionReference rentalsCollection =
-        Firestore.instance.collection('rentals');
+    // show review dialogs
+    rentalsCollection = Firestore.instance.collection('rentals');
 
     // Check for rentals where you are the renter
-    var rentalQuerySnaps = await rentalsCollection
+    rentalQuerySnaps = await rentalsCollection
         .where('renter',
             isEqualTo:
                 Firestore.instance.collection('users').document(myUserID))
@@ -367,7 +372,7 @@ class HomePageState extends State<HomePage> {
         .where('ownerReviewSubmitted', isEqualTo: false)
         .getDocuments();
 
-    List<DocumentSnapshot> rentalSnaps = rentalQuerySnaps.documents;
+    rentalSnaps = rentalQuerySnaps.documents;
 
     if (rentalSnaps != null && rentalSnaps.length > 0) {
       reviewRentals = rentalSnaps;
@@ -392,9 +397,7 @@ class HomePageState extends State<HomePage> {
       showReviewDialogs();
     }
 
-    setState(() {
-      pageIsLoading = false;
-    });
+    getCurrentLoc();
   }
 
   /*
@@ -492,55 +495,7 @@ class HomePageState extends State<HomePage> {
     if (prefs != null) {
       await prefs.setString('userID', myUserID);
 
-      var stream =
-          Firestore.instance.collection('users').document(myUserID).snapshots();
-
-      stream.listen((ds) async {
-        if (ds != null && ds.exists) {
-          myUserDS = ds;
-          var acceptedTOS = myUserDS['acceptedTOS'];
-
-          if (acceptedTOS != null && acceptedTOS is bool) {
-            if (acceptedTOS) {
-              showTOS = false;
-            } else {
-              showTOS = true;
-            }
-          }
-
-          UserUpdateInfo userUpdateInfo = UserUpdateInfo();
-          userUpdateInfo.displayName = myUserDS['name'];
-          userUpdateInfo.photoUrl = myUserDS['avatar'];
-          await currentUser.updateProfile(userUpdateInfo);
-          await currentUser.reload();
-
-          setState(() {});
-        }
-      }, onDone: () {
-        print("Done");
-      }, onError: (error) {
-        print("Error");
-      });
-
       updateLastActiveAndPushToken();
-    }
-  }
-
-  void checkPrefs() async {
-    prefs = await SharedPreferences.getInstance();
-
-    if (prefs != null) {
-      String tempUserID = await prefs.get('userID');
-
-      if (tempUserID != null) {
-        if (myUserID != tempUserID) {
-          setPrefs();
-        } else {
-          setState(() {
-            pageIsLoading = false;
-          });
-        }
-      }
     }
   }
 
@@ -616,9 +571,8 @@ class HomePageState extends State<HomePage> {
   }
 
   Widget bottomNavBar() {
-    return showTOS
-        ? SizedBox(height: 0)
-        : SizedBox(
+    return !isAuthenticated || currentUser.acceptedTOS
+        ? SizedBox(
             //height: 90,
             child: BottomNavigationBar(
               backgroundColor: coolerWhite,
@@ -632,7 +586,8 @@ class HomePageState extends State<HomePage> {
                 });
               },
             ),
-          );
+          )
+        : SizedBox(height: 0);
   }
 
   Widget showTermsOfService() {
@@ -654,11 +609,7 @@ class HomePageState extends State<HomePage> {
                       .document(myUserID)
                       .updateData({'acceptedTOS': true});
 
-                  showTOS = false;
-                  myUserDS = await Firestore.instance
-                      .collection('users')
-                      .document(myUserID)
-                      .get();
+                  currentUser.acceptTOS();
 
                   setState(() {});
                 },
@@ -672,7 +623,7 @@ class HomePageState extends State<HomePage> {
   }
 
   Widget showBody() {
-    if (isAuthenticated && showTOS) {
+    if (isAuthenticated && !currentUser.acceptedTOS) {
       return showTermsOfService();
     }
 
@@ -716,57 +667,55 @@ class HomePageState extends State<HomePage> {
           color: Theme.of(context).primaryColor,
           textColor: Colors.white,
           onPressed: () {
-            if (myUserDS != null && myUserDS.exists) {
-              if (myUserDS['address'] == null ||
-                  myUserDS['birthday'] == null ||
-                  myUserDS['gender'] == null ||
-                  myUserDS['phoneNum'] == null) {
-                showDialog<bool>(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      title: Text('Error'),
-                      content: Text(
-                        'You must complete your profile before adding an item',
+            if (!verifyUser(
+                address: currentUser.address,
+                birthday: currentUser.birthday,
+                gender: currentUser.gender,
+                phoneNum: currentUser.phoneNum)) {
+              showDialog<bool>(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: Text('Error'),
+                    content: Text(
+                      'You must complete your profile before adding an item',
+                    ),
+                    actions: <Widget>[
+                      FlatButton(
+                        child: const Text('Cancel'),
+                        onPressed: () {
+                          Navigator.of(context).pop(
+                              false); // Pops the confirmation dialog but not the page.
+                        },
                       ),
-                      actions: <Widget>[
-                        FlatButton(
-                          child: const Text('Cancel'),
-                          onPressed: () {
-                            Navigator.of(context).pop(
-                                false); // Pops the confirmation dialog but not the page.
-                          },
-                        ),
-                        FlatButton(
-                          child: const Text('Edit profile'),
-                          onPressed: () {
-                            Navigator.of(context).pop(false);
-                            navToProfileEdit();
-                          },
-                        ),
-                      ],
-                    );
-                  },
-                );
-              } else {
-                navigateToEdit(
-                  Item(
-                    isVisible: true,
-                    creator: Firestore.instance
-                        .collection('users')
-                        .document(myUserID),
-                    name: '',
-                    description: '',
-                    type: null,
-                    condition: null,
-                    price: 0,
-                    numImages: 0,
-                    images: new List(),
-                    location: {'geopoint': null},
-                  ),
-                  false,
-                );
-              }
+                      FlatButton(
+                        child: const Text('Edit profile'),
+                        onPressed: () {
+                          Navigator.of(context).pop(false);
+                          navToProfileEdit();
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
+            } else {
+              navigateToEdit(
+                Item(
+                  isVisible: true,
+                  creator:
+                      Firestore.instance.collection('users').document(myUserID),
+                  name: '',
+                  description: '',
+                  type: null,
+                  condition: null,
+                  price: 0,
+                  numImages: 0,
+                  images: new List(),
+                  location: {'geopoint': null},
+                ),
+                false,
+              );
             }
           },
           child: Text("Add Item",
@@ -885,7 +834,7 @@ class HomePageState extends State<HomePage> {
               Container(
                   height: 1.9 * h / 3,
                   width: w,
-                  child: FittedBox(fit: BoxFit.cover, child: image)),
+                  child: Flexible(child: FittedBox(fit: BoxFit.cover, child: image, ))),
               SizedBox(
                 height: 10.0,
               ),
@@ -981,9 +930,10 @@ class HomePageState extends State<HomePage> {
     return Container(
       child: MediaQuery.removePadding(
         removeTop: true,
+        removeBottom: true,
         context: context,
         child: ListView(
-          //physics: const NeverScrollableScrollPhysics(),
+          physics: const ClampingScrollPhysics(),
           // shrinkWrap: true,
           children: <Widget>[
             introImageAndSearch(),
@@ -995,6 +945,17 @@ class HomePageState extends State<HomePage> {
               height: 10,
             ),
             nearby(),
+            SizedBox(height: 450,),
+            Container(
+              height: 60,
+              decoration: new BoxDecoration(
+                image: DecorationImage(image: AssetImage('assets/green_trans.png'))
+            )),
+            Container(
+              height: 200,
+              decoration: new BoxDecoration(
+              image: DecorationImage(image: AssetImage('assets/lines.png'), fit: BoxFit.fill)
+            )),
           ],
         ),
       ),
@@ -1008,12 +969,15 @@ class HomePageState extends State<HomePage> {
       padding: EdgeInsets.symmetric(horizontal: h / 55),
       child: Column(
         children: <Widget>[
-          Text(
-            'Nearby Items',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              fontFamily: font,
+          Align(
+            alignment: Alignment.bottomLeft,
+            child: Text(
+              'Nearby Items',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                fontFamily: font,
+              ),
             ),
           ),
           Row(
@@ -1142,9 +1106,12 @@ class HomePageState extends State<HomePage> {
 
                       return myUserID == creatorRef.documentID
                           ? Container()
-                          : Container(
-                              width: w / 2.2,
-                              child: itemCard(itemDS, context),
+                          : ScopedModel<User>(
+                              model: currentUser,
+                              child: Container(
+                                width: w / 2.2,
+                                child: itemCard(itemDS, context),
+                              ),
                             );
                     },
                   );
@@ -1158,7 +1125,7 @@ class HomePageState extends State<HomePage> {
     }
   }
 
-  getCurrentLoc() async {
+  void getCurrentLoc() async {
     setState(() {
       locIsLoading = true;
     });
@@ -1166,6 +1133,7 @@ class HomePageState extends State<HomePage> {
     currentLocation = await getUserLocation();
 
     if (currentLocation != null) {
+      currentUser.updateCurrentLocation(currentLocation);
       await prefs.setDouble('lat', currentLocation.latitude);
       await prefs.setDouble('long', currentLocation.longitude);
     } else {
@@ -1174,6 +1142,10 @@ class HomePageState extends State<HomePage> {
 
     setState(() {
       locIsLoading = false;
+
+      if (isAuthenticated) {
+        pageIsLoading = false;
+      }
     });
   }
 
@@ -1327,7 +1299,7 @@ class HomePageState extends State<HomePage> {
               Text("Try \"Vacuum\"", style: TextStyle(fontFamily: 'Quicksand')),
             ],
           ),
-          height: h / 20,
+          height: h / 13,
         ),
       );
     }
@@ -1355,17 +1327,30 @@ class HomePageState extends State<HomePage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                Container(
-                    padding: EdgeInsets.only(left: 80.0),
-                    alignment: Alignment.bottomLeft,
-                    child: Text(
-                      "make it happen",
-                      style: TextStyle(
-                          color: Colors.black,
-                          fontFamily: appFont,
-                          fontSize: 20.0,
-                          fontWeight: FontWeight.w300),
-                    )),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  mainAxisSize:  MainAxisSize.max,
+                  children: <Widget>[
+                    SizedBox(width: 15.0,),
+                    Container( 
+                      alignment: Alignment.bottomLeft,
+                      height: 40,
+                      width: 40,
+                      decoration: new BoxDecoration(
+                      image: DecorationImage(image: AssetImage('assets/black_logo.png'), fit: BoxFit.fill)
+                    )), 
+                    SizedBox(width: 20.0,),
+                    Container(
+                        alignment: Alignment.bottomLeft,
+                        child: Text(
+                          "make it happen",
+                          style: TextStyle(
+                              color: Colors.black,
+                              fontFamily: appFont,
+                              fontSize: 20.0,
+                              fontWeight: FontWeight.w300),
+                        )),
+                ],),
                 searchField(),
               ],
             ),
@@ -1457,6 +1442,7 @@ class HomePageState extends State<HomePage> {
 
   Widget categories() {
     double h = MediaQuery.of(context).size.height;
+    double w = MediaQuery.of(context).size.width;
 
     Widget _categoryTile(category, image) {
       return ClipRRect(
@@ -1488,7 +1474,7 @@ class HomePageState extends State<HomePage> {
     }
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: h / 55),
+      padding: EdgeInsets.symmetric(horizontal: w / 30),
       child: Column(
         children: <Widget>[
           Row(
@@ -1508,9 +1494,7 @@ class HomePageState extends State<HomePage> {
               ),
             ],
           ),
-          SizedBox(
-            height: 15.0,
-          ),
+          SizedBox(height: w/50),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
@@ -1588,6 +1572,8 @@ class HomePageState extends State<HomePage> {
 
   Widget buildListingsList() {
     int tilerows = MediaQuery.of(context).size.width > 500 ? 3 : 2;
+    BuildContext homeContext = context;
+
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
         stream: Firestore.instance
@@ -1614,7 +1600,7 @@ class HomePageState extends State<HomePage> {
                     padding: const EdgeInsets.all(15.0),
                     crossAxisSpacing: MediaQuery.of(context).size.width / 25,
                     children: snapshots
-                        .map((snapshot) => itemCard(snapshot, context))
+                        .map((snapshot) => itemCard(snapshot, homeContext))
                         .toList());
               } else {
                 return Container();
@@ -2029,7 +2015,7 @@ class HomePageState extends State<HomePage> {
     double h = MediaQuery.of(context).size.height;
 
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
             bottom: PreferredSize(
@@ -2117,6 +2103,11 @@ class HomePageState extends State<HomePage> {
                         ],
                       ),
                     ),
+                    Tab(
+                        child: Text(
+                      "Calendar",
+                      style: TextStyle(fontFamily: 'Quicksand'),
+                    )),
                   ],
                   labelColor: coolerWhite,
                   unselectedLabelColor: Colors.black54,
@@ -2183,25 +2174,33 @@ class HomePageState extends State<HomePage> {
                     buildTransactions(RentalPhase.past, "owner"),
                   ],
                 ),
+                Column(
+                  children: <Widget>[
+//                    Text('not implemented yet'),
+                    MaterialButton(
+                        color: Colors.deepOrangeAccent,
+                        onPressed: () async {
+                          final List<DateTime> picked =
+                              await DateRagePicker.showDatePicker(
+                            context: context,
+                            initialFirstDate: new DateTime.now(),
+                            initialLastDate:
+                                (new DateTime.now()).add(new Duration(days: 1)),
+                            firstDate: new DateTime(2015),
+                            lastDate: new DateTime(2020),
+                            selectableDayPredicate: (DateTime val) =>
+                                val.weekday == 5 ? false : true,
+                          );
+                          if (picked != null && picked.length == 2) {
+                            print(picked);
+                          }
+                        },
+                        child: new Text("Pick date range")),
+                  ],
+                ),
               ],
             ),
           ),
-          /*
-          Align(
-            alignment: Alignment.bottomLeft,
-            child: Padding(
-              padding: EdgeInsets.only(bottom: 10.0),
-              child: Container(
-                height: 30.0,
-                decoration: new BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: new BorderRadius.all(
-                      Radius.circular(100.0),
-                    )),
-                child: new
-              ),
-            ),
-          ),*/
         ]),
       ),
     );
@@ -2254,12 +2253,6 @@ class HomePageState extends State<HomePage> {
       double width = MediaQuery.of(context).size.width;
 
       Widget _userImage() {
-        void onImageButtonPressed(ImageSource source) {
-          setState(() {
-            selectedImage = ImagePicker.pickImage(source: source);
-          });
-        }
-
         Widget _showCurrentProfilePic() {
           double height = MediaQuery.of(context).size.height;
           double width = MediaQuery.of(context).size.width;
@@ -2269,8 +2262,10 @@ class HomePageState extends State<HomePage> {
             child: FittedBox(
               fit: BoxFit.cover,
               child: CachedNetworkImage(
+                height: height/5,
+                width: width,
                 //key: ValueKey(DateTime.now().millisecondsSinceEpoch),
-                imageUrl: myUserDS['avatar'],
+                imageUrl: currentUser.avatar,
                 placeholder: (context, url) => CircularProgressIndicator(),
               ),
             ),
@@ -2278,25 +2273,7 @@ class HomePageState extends State<HomePage> {
         }
 
         return Center(
-          child: InkWell(
-            //onTap: () => onImageButtonPressed(ImageSource.gallery),
-            child: FutureBuilder<File>(
-                future: selectedImage,
-                builder: (BuildContext context, AsyncSnapshot<File> snapshot) {
-                  if (snapshot.connectionState == ConnectionState.done &&
-                      snapshot.data != null) {
-                    imageFile = snapshot.data;
-                    return Image.file(imageFile);
-                  } else if (snapshot.error != null) {
-                    return const Text(
-                      'Error',
-                      textAlign: TextAlign.center,
-                    );
-                  } else {
-                    return _showCurrentProfilePic();
-                  }
-                }),
-          ),
+          child: _showCurrentProfilePic(),
           // Icon(Icons.edit)
         );
       }
@@ -2308,10 +2285,10 @@ class HomePageState extends State<HomePage> {
             height: 10.0,
           ),
           Center(
-              child: Text("${myUserDS['name']}",
+              child: Text(currentUser.name,
                   style: TextStyle(fontFamily: font, fontSize: width / 15))),
           Center(
-              child: Text('${myUserDS['email']}',
+              child: Text(currentUser.email,
                   style: TextStyle(
                       color: Colors.black,
                       fontSize: width / 27,
@@ -2328,9 +2305,9 @@ class HomePageState extends State<HomePage> {
                   size: width / 22,
                 )),
             Text(
-              myUserDS['description'].toString().isEmpty
+              currentUser.description.isEmpty
                   ? "The user hasn't added a description yet!"
-                  : myUserDS['description'],
+                  : currentUser.description,
               style: TextStyle(fontFamily: font, fontSize: width / 22),
             ),
             Align(
@@ -2717,7 +2694,7 @@ class HomePageState extends State<HomePage> {
   }
 
   void navigateToEdit(Item newItem, bool isEdit) async {
-    if (!isAuthenticated || !myUserDS['acceptedTOS']) {
+    if (!isAuthenticated || !currentUser.acceptedTOS) {
       return;
     }
 
@@ -2727,7 +2704,7 @@ class HomePageState extends State<HomePage> {
       arguments: ItemEditArgs(
         newItem,
         null,
-        null,
+        currentUser,
       ),
     );
   }
@@ -2738,7 +2715,7 @@ class HomePageState extends State<HomePage> {
       ItemDetail.routeName,
       arguments: ItemDetailArgs(
         itemDS,
-        context
+        context,
       ),
     );
   }
@@ -2747,9 +2724,12 @@ class HomePageState extends State<HomePage> {
     Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (BuildContext context) => SearchPage(
-            typeFilter: filter,
-            showSearch: false,
+          builder: (BuildContext context) => ScopedModel<User>(
+            model: currentUser,
+            child: SearchPage(
+              typeFilter: filter,
+              showSearch: false,
+            ),
           ),
         ));
   }
@@ -2766,24 +2746,19 @@ class HomePageState extends State<HomePage> {
   }
 
   void navToProfileEdit() async {
-    if (myUserDS != null && myUserDS.exists) {
-      Timestamp timestampBirthday = myUserDS['birthday'];
-      DateTime birthday;
+    UserEdit userEdit = UserEdit.fromUser(currentUser);
 
-      if (timestampBirthday != null) {
-        birthday = timestampBirthday.toDate();
-      }
-
-      //User userEdit = User.fromMap(myUserDS.data, birthday);
-
-      Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (BuildContext context) => ProfileEdit(
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (BuildContext context) => ScopedModel<CurrentUser>(
+            model: currentUser,
+            child: ProfileEdit(
+              userEdit: userEdit,
             ),
-            fullscreenDialog: true,
-          ));
-    }
+          ),
+          fullscreenDialog: true,
+        ));
   }
 
   Future<bool> deleteItemError() async {

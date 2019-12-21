@@ -553,8 +553,7 @@ class ItemDetailState extends State<ItemDetail> {
     return imagesList.length > 0
         ? Hero(
             tag: "${itemDS.documentID}",
-            child: Container(
-                height: w, width: w, child: getImagesListView(context)))
+            child: Container(height: w, width: w, child: getImagesListView(context)))
         : Text('No images yet\n');
   }
 
