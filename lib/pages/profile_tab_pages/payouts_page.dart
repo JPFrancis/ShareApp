@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
@@ -867,15 +868,16 @@ class PayoutsPageState extends State<PayoutsPage> {
         '&stripe_user[email]=$email'
         '&stripe_user[first_name]=$firstName'
         '&stripe_user[last_name]=$lastName'
-        '&stripe_user[product_description]=do_not_edit'
-;
+        '&stripe_user[product_description]=do_not_edit';
 
         url = 'https://share-app.web.app';
 
 //    debugPrint('URL: $url');
 
-    if (await canLaunch(url)) {
-      await launch(url);
+    if (await canLaunch("$url")) {
+      await launch("$url", forceSafariVC: true);
+    } else {
+      debugPrint("cannot launch");
     }
 
 //    HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
