@@ -2739,9 +2739,12 @@ class HomePageState extends State<HomePage> {
     Navigator.push(
         context,
         SlideUpRoute(
-          page: SearchPage(
-            typeFilter: 'All',
-            showSearch: true,
+          page: ScopedModel<CurrentUser>(
+            model: currentUser,
+            child: SearchPage(
+              typeFilter: 'All',
+              showSearch: true,
+            ),
           ),
         ));
   }

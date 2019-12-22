@@ -544,12 +544,23 @@ class PayoutsPageState extends State<PayoutsPage> {
                       DocumentSnapshot ds = docs[index];
                       double amount = ds['amount'] / 100;
 
+                      String desc = ds['description']; 
+                      bool amOwner  = ds['rentalData']['idFrom'] == myUserID ? false : true;
+
+                      int payingIndex = desc.indexOf("paying");
+                      int forIndex = desc.indexOf("for");
+
+                      String owner = desc.substring(payingIndex + 6, forIndex);
+                      String renter = desc.substring(0, payingIndex);
+
                       return ListTile(
+                        leading: CircleAvatar(backgroundImage: AssetImage("assets/circle1.png"), backgroundColor: Colors.white),
                         title: Text(
                           '\$${amount.toStringAsFixed(0)}',
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        subtitle: Text('${ds['description']}'),
+                        //subtitle: Text('${ds['description']}'),
+                        subtitle: Text(renter + "paying" + owner),
                       );
                     });
               } else {
