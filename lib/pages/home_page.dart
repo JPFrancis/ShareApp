@@ -1321,6 +1321,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Widget iconCategories() {
     double h = MediaQuery.of(context).size.height;
+    double w = MediaQuery.of(context).size.width;
 
     Widget _categoryTile(category, icon) {
       return ClipRRect(
@@ -1354,7 +1355,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: h / 55),
+      padding: EdgeInsets.symmetric(horizontal: w / 10),
       child: Column(
         children: <Widget>[
           Row(
@@ -1374,9 +1375,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
               ),
             ],
           ),
-          SizedBox(
-            height: 15.0,
-          ),
+          SizedBox(height: w/20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
@@ -1407,8 +1406,8 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
       return ClipRRect(
         borderRadius: new BorderRadius.circular(5.0),
         child: Container(
-          height: h / 7.5,
-          width: h / 7.5,
+          height: w / 3.3, 
+          width: w / 3.3,
           child: Stack(
             children: <Widget>[
               SizedBox.expand(
@@ -1433,7 +1432,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: w / 30),
+      padding: EdgeInsets.symmetric(horizontal: w / 35),
       child: Column(
         children: <Widget>[
           Row(
@@ -1453,7 +1452,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
               ),
             ],
           ),
-          SizedBox(height: w/50),
+          SizedBox(height: w/55),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
@@ -2324,128 +2323,71 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Widget profileIntroStream() {
+    double width = MediaQuery.of(context).size.width;
     Widget showPersonalInformation() {
-      double width = MediaQuery.of(context).size.width;
-
       Widget _userImage() {
-        Widget _showCurrentProfilePic() {
-          double height = MediaQuery.of(context).size.height;
-          double width = MediaQuery.of(context).size.width;
-
-          return Container(
-            padding: EdgeInsets.only(left: width / 5, right: width / 5),
-            height: height / 5,
-            child: FittedBox(
-              fit: BoxFit.cover,
-              child: CachedNetworkImage(
-                height: height/5,
-                width: width,
-                //key: ValueKey(DateTime.now().millisecondsSinceEpoch),
-                imageUrl: currentUser.avatar,
-                placeholder: (context, url) => CircularProgressIndicator(),
-              ),
-            ),
-          );
-        }
-
-        return Center(
-          child: _showCurrentProfilePic(),
-          // Icon(Icons.edit)
+        return ClipOval(
+          child: CachedNetworkImage(
+            width: width/5,
+            imageUrl: currentUser.avatar,
+            placeholder: (context, url) => CircularProgressIndicator(),
+          ),
         );
       }
 
-      return Column(
-        children: <Widget>[
-          _userImage(),
-          SizedBox(
-            height: 10.0,
-          ),
-          Center(
-              child: Text(currentUser.name,
-                  style: TextStyle(fontFamily: font, fontSize: width / 15))),
-          Center(
-              child: Text(currentUser.email,
-                  style: TextStyle(
-                      color: Colors.black,
-                      fontSize: width / 27,
-                      fontFamily: 'Quicksand'))),
-          SizedBox(
-            height: 5.0,
-          ),
-          Center(
-              child: Column(children: <Widget>[
-            Align(
-                alignment: Alignment.topLeft,
-                child: Icon(
-                  QuoteIcons.quote_left,
-                  size: width / 22,
-                )),
-            Text(
-              currentUser.description.isEmpty
-                  ? "The user hasn't added a description yet!"
-                  : currentUser.description,
-              style: TextStyle(fontFamily: font, fontSize: width / 22),
-            ),
-            Align(
-                alignment: Alignment.bottomRight,
-                child: Icon(
-                  QuoteIcons.quote_right,
-                  size: width / 22,
-                )),
-          ])),
-          SizedBox(
-            height: 10.0,
-          ),
-          Container(
-              color: Colors.white,
-              child: Column(
-                children: <Widget>[]
-                    .map((Widget child) => Container(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 10.0, vertical: 10.0),
-                          child: Column(
-                            children: <Widget>[child, Divider()],
-                          ),
-                        ))
-                    .toList(),
-              )),
-        ],
+      return Container(
+        padding: EdgeInsets.only(left: 15.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: <Widget>[
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+              Text(currentUser.name, style: TextStyle(fontFamily: font, fontSize: width / 15, fontWeight: FontWeight.bold)),
+              Text(currentUser.email, style: TextStyle(color: Colors.black, fontSize: width / 27, fontFamily: 'Quicksand')),
+            ],),
+            _userImage(),
+          ],
+        ),
+      );
+    
+    }
+
+    Widget aboutMe() {
+      return Container(
+        padding: EdgeInsets.only(left: 15, right: 15, top: 10.0),
+        child: Column(children: <Widget>[
+          Align(alignment: Alignment.topLeft, child: Icon(QuoteIcons.quote_left, size: width / 22, color: primaryColor.withAlpha(100),)),
+          SizedBox(height: 5.0),
+          Text(currentUser.description.isEmpty
+            ? "The user hasn't added a description yet!"
+            : currentUser.description, style: TextStyle(fontFamily: appFont, fontSize: width / 22), textAlign: TextAlign.center,),
+          SizedBox(height: 5.0),
+          Align(alignment: Alignment.bottomRight, child: Icon(QuoteIcons.quote_right, size: width / 22, color: primaryColor.withAlpha(100),))
+        ]),
       );
     }
 
     return Container(
-      padding: EdgeInsets.only(left: 10.0, right: 10.0, top: 40.0),
-      /* decoration: new BoxDecoration(
-          boxShadow: <BoxShadow>[
-            CustomBoxShadow(
-                color: Colors.black,
-                blurRadius: 2.0,
-                blurStyle: BlurStyle.outer),
-          ],
-          color: primaryColor,
-          borderRadius: new BorderRadius.only(
-            bottomLeft: const Radius.circular(50.0),
-            bottomRight: const Radius.circular(50.0),
-          )),*/
+      padding: EdgeInsets.only(left: 10.0, right: 10.0, top: 30.0),
       child: Stack(
         children: <Widget>[
           Container(
             height: MediaQuery.of(context).size.height - 90,
             child: ListView(
               shrinkWrap: true,
-              padding: EdgeInsets.all(0),
+              padding: EdgeInsets.only(top: 50.0),
               children: <Widget>[
                 showPersonalInformation(),
+                reusableCategory("ABOUT"),
+                aboutMe(), 
+                divider(),
                 reusableCategory("ACCOUNT"),
-                //reusableFlatButton("Personal information", Icons.person_outline, null),
-                reusableFlatButton(
-                    "Payments and Payouts", Icons.payment, navToPayouts),
+                reusableFlatButton( "Payments and Payouts", Icons.payment, navToPayouts),
                 reusableFlatButton("Reviews", Icons.rate_review, navToReviews),
                 reusableCategory("SUPPORT"),
-                reusableFlatButton("Get help", Icons.help_outline,
-                    () => navToSendEmail('Help')),
-                reusableFlatButton("Give us feedback", Icons.feedback,
-                    () => navToSendEmail('Feedback')),
+                reusableFlatButton("Get help", Icons.help_outline, () => navToSendEmail('Help')),
+                reusableFlatButton("Give us feedback", Icons.feedback, () => navToSendEmail('Feedback')),
                 reusableFlatButton("Log out", null, logout),
                 //getProfileDetails()
               ],

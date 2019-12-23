@@ -328,7 +328,9 @@ class ItemDetailState extends State<ItemDetail> {
           renter['name'],
           customerReview['overall'].toDouble(),
           customerReview['reviewNote'],
-          snap['lastUpdateTime'].toDate()));
+          snap['lastUpdateTime'].toDate(),
+          context
+          ));
     });
 
     double rating = itemDS['rating'].toDouble();

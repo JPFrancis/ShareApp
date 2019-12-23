@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_picker/flutter_picker.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
+import 'package:path/path.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/models/user.dart';
 import 'package:shareapp/pages/item_detail.dart';
@@ -605,53 +606,48 @@ class RemoveScrollGlow extends ScrollBehavior {
   }
 }
 
-Widget reviewTile(String avatar, String name, double starRating, String reviewNote, DateTime date) {
+Widget reviewTile(String avatar, String name, double starRating, String reviewNote, DateTime date, BuildContext context) {
   final dateFormat = new DateFormat('MMM dd, yyyy');
+  double w= MediaQuery.of(context).size.width;
 
-  return Container(
-     decoration: new BoxDecoration(
-        boxShadow: <BoxShadow>[
-          CustomBoxShadow(
-              color: Colors.black45,
-              blurRadius: 3.0,
-              blurStyle: BlurStyle.outer),
-        ],
-      ),
-    padding: EdgeInsets.symmetric(horizontal: 50.0),
-    child: Column(
-      children: <Widget>[
-        Row(
-          children: <Widget>[
-            Container(
-              height: 40.0,
-              child: ClipOval(
-                child: CachedNetworkImage(
-                  imageUrl: avatar,
-                  placeholder: (context, url) => CircularProgressIndicator(),
+  return Column(
+    children: <Widget>[
+      Container(
+         decoration: new BoxDecoration(
+            boxShadow: <BoxShadow>[
+              CustomBoxShadow(
+                  color: Colors.black45,
+                  blurRadius: 3.0,
+                  blurStyle: BlurStyle.outer),
+            ],
+          ),
+        padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 10.0),
+        child: Container(
+          child: Row(
+            children: <Widget>[
+              Container(
+                height: w/7,
+                child: ClipOval(
+                  child: CachedNetworkImage(
+                    imageUrl: avatar,
+                    placeholder: (context, url) => CircularProgressIndicator(),
+                  ),
                 ),
               ),
-            ),
-            Column(children: <Widget>[
-              Text(
-                name,
-                style: TextStyle(
-                    fontFamily: 'Quicksand', fontWeight: FontWeight.bold),
-              ),
-              Container(width: 5),
-              StarRating(rating: starRating),
-              Container(
-                width: 80.0,
-                alignment: Alignment.centerLeft,
-                child: Text("askjdhsakd aksjhkjsah kdsahk dkh kk hk kh jkhs", style: TextStyle(fontFamily: 'Quicksand'))),
-              Container(
-                  alignment: Alignment.centerLeft,
-                  child: Text('${dateFormat.format(date)}', style: TextStyle(fontFamily: 'Quicksand'))),
-            ],),
-          ],
+              SizedBox(width: w/30),
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
+                Text(name, style: TextStyle(fontFamily: appFont, fontWeight: FontWeight.bold),),
+                StarRating(rating: starRating),
+                Text('——${dateFormat.format(date)}——', style: TextStyle(fontFamily: appFont, fontStyle: FontStyle.italic)),
+                SizedBox(height: 2.5,),
+                Container(width: w/1.5, child: Text(reviewNote.replaceAll("\n", ""), style: TextStyle(fontFamily: appFont), textAlign: TextAlign.start,)),
+              ],),
+            ],
+          ),
         ),
-        Container(height: 10),
-      ],
-    ),
+      ),
+      SizedBox(height: 15.0,)
+    ],
   );
 }
 
@@ -704,7 +700,8 @@ Widget reviewsList(String userId, ReviewType type) {
                       ? customerReview['overall'].toDouble()
                       : customerReview['rating'].toDouble(),
                   customerReview['reviewNote'],
-                  snap['lastUpdateTime'].toDate()));
+                  snap['lastUpdateTime'].toDate(),
+                  context));
             });
 
             return reviews.isNotEmpty

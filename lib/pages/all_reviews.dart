@@ -166,7 +166,8 @@ class AllReviewsState extends State<AllReviews> {
                       renter['name'],
                       customerReview['overall'].toDouble(),
                       customerReview['reviewNote'],
-                      snap['lastUpdateTime'].toDate()));
+                      snap['lastUpdateTime'].toDate(),
+                      context));
                 });
 
                 return reviews.isNotEmpty
