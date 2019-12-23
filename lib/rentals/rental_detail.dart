@@ -9,12 +9,12 @@ import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
+import 'package:shareapp/models/current_user.dart';
 import 'package:shareapp/rentals/chat.dart';
 import 'package:shareapp/rentals/new_pickup.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:shareapp/services/functions.dart';
 import 'package:shareapp/services/payment_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smooth_star_rating/smooth_star_rating.dart';
 
 enum Status {
@@ -25,9 +25,9 @@ enum Status {
   completed,
 }
 
-enum RentalWarning {
+enum EndRentalType {
   cancel,
-  reject,
+  decline,
 }
 
 class RentalDetail extends StatefulWidget {
@@ -43,9 +43,8 @@ class RentalDetail extends StatefulWidget {
 }
 
 class RentalDetailState extends State<RentalDetail> {
-  SharedPreferences prefs;
+  CurrentUser currentUser;
   String myUserId;
-  String myName;
   String url;
   String rentalCC;
   bool isLoading = true;
@@ -73,6 +72,8 @@ class RentalDetailState extends State<RentalDetail> {
   @override
   void initState() {
     super.initState();
+
+    currentUser = CurrentUser.getModel(context);
     stripeInit = false;
     communicationRating = 0.0;
     itemQualityRating = 0.0;
@@ -92,8 +93,6 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   void getMyUserID() async {
-    prefs = await SharedPreferences.getInstance();
-    myName = prefs.getString('name') ?? '';
     var user = await FirebaseAuth.instance.currentUser();
     if (user != null) {
       myUserId = user.uid;
@@ -169,8 +168,8 @@ class RentalDetailState extends State<RentalDetail> {
       padding: EdgeInsets.symmetric(horizontal: 1),
       child: GestureDetector(
           onTap: () {
-            Navigator.of(context)
-                .pushNamed(Chat.routeName, arguments: ChatArgs(otherUserId));
+            Navigator.of(context).pushNamed(Chat.routeName,
+                arguments: ChatArgs(otherUserId, currentUser));
           },
           child: Row(
             children: <Widget>[
@@ -207,7 +206,7 @@ class RentalDetailState extends State<RentalDetail> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
             Text(
-              'This rental no longer exists!',
+              'This proposed rental pick-up time was declined by the item owner',
               style: TextStyle(
                 fontSize: 20,
               ),
@@ -354,7 +353,8 @@ class RentalDetailState extends State<RentalDetail> {
               ),
             ),
           ),
-          status >= 0
+          status < 3 &&
+                  DateTime.now().isBefore(rentalDS['pickupStart'].toDate())
               ? Positioned(
                   top: statusBarHeight,
                   right: 0,
@@ -365,7 +365,7 @@ class RentalDetailState extends State<RentalDetail> {
                     ),
                     onSelected: (value) {
                       if (value == 'cancel') {
-                        removeRentalWarning(RentalWarning.cancel);
+                        removeRentalWarning(EndRentalType.cancel);
                       }
                     },
                     itemBuilder: (BuildContext context) =>
@@ -391,7 +391,7 @@ class RentalDetailState extends State<RentalDetail> {
         : Text('No images yet\n');
   }
 
-  Future<bool> removeRentalWarning(RentalWarning warning) async {
+  Future<bool> removeRentalWarning(EndRentalType warning) async {
     final ThemeData theme = Theme.of(context);
     final TextStyle dialogTextStyle =
         theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
@@ -400,14 +400,14 @@ class RentalDetailState extends State<RentalDetail> {
     var action;
 
     switch (warning) {
-      case RentalWarning.reject:
-        text = 'Reject rental?';
-        action = () => rejectRental();
+      case EndRentalType.decline:
+        text = 'Decline rental?';
+        action = () => endRental(EndRentalType.decline);
 
         break;
-      case RentalWarning.cancel:
+      case EndRentalType.cancel:
         text = 'Cancel rental?';
-        action = () => cancelRental();
+        action = () => endRental(EndRentalType.cancel);
 
         break;
     }
@@ -440,62 +440,86 @@ class RentalDetailState extends State<RentalDetail> {
         false;
   }
 
-  void cancelRental() async {
-    {
-      Navigator.of(context).pop(false);
-
-      setState(() {
-        isLoading = true;
-      });
-
-      showToast('Feature not connected yet');
-
-      await Future.delayed(Duration(seconds: 3));
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  void rejectRental() async {
-    // close the dialog
+  void endRental(EndRentalType type) async {
     Navigator.of(context).pop(false);
 
     setState(() {
       isLoading = true;
     });
 
-    Map copy = rentalDS.data;
-    copy['lastUpdateTime'] = DateTime.now();
+    if (status < 2) {
+      endAndSendNotification(type);
+      return;
+    }
 
-    var addToDeclinedRentals =
-        await Firestore.instance.collection('declined_rentals').add(copy);
+    Timestamp timestamp = rentalDS['pickupStart'];
+    DateTime startTime = timestamp.toDate();
+    DateTime now = DateTime.now();
+    DateTime twoDaysFromNow = now.add(Duration(days: 2));
 
-    if (addToDeclinedRentals != null) {
-      DocumentSnapshot otherUserDS = await Firestore.instance
-          .collection('users')
-          .document(otherUserId)
-          .get();
+    // refund, but can cancel for free - no charge needed
+    if (status == 3 && twoDaysFromNow.isBefore(startTime)) {
+      return;
+    }
 
-      if (otherUserDS != null && otherUserDS.exists) {
-        await Firestore.instance.collection('notifications').add({
-          'title': '$myName rejected your rental request',
-          'body': 'Item: ${rentalDS['itemName']}',
-          'pushToken': otherUserDS['pushToken'],
-          'rentalID': rentalDS.documentID,
-          'timestamp': DateTime.now().millisecondsSinceEpoch,
-        });
-      }
 
-      Firestore.instance
-          .collection('rentals')
-          .document(rentalDS.documentID)
-          .delete()
-          .then((_) {
-        showToast('Request successfully declined');
-        Navigator.of(context).pop();
+
+    setState(() {
+      isLoading = false;
+    });
+
+    showToast('An error occurred');
+
+    Navigator.of(context).pop();
+  }
+
+  void endAndSendNotification(EndRentalType type) async {
+    bool declinedStatus;
+    String declinedText;
+
+    switch (type) {
+      case EndRentalType.cancel:
+        declinedStatus = false;
+        declinedText = 'cancelled';
+        break;
+      case EndRentalType.decline:
+        declinedStatus = true;
+        declinedText = 'declined';
+        break;
+    }
+
+    await Firestore.instance
+        .collection('rentals')
+        .document(rentalDS.documentID)
+        .updateData({
+      'status': 5,
+      'requesting': false,
+      'declined': declinedStatus,
+      'lastUpdateTime': DateTime.now()
+    });
+
+    DocumentSnapshot otherUserDS = await Firestore.instance
+        .collection('users')
+        .document(otherUserId)
+        .get();
+
+    if (otherUserDS != null && otherUserDS.exists) {
+      await Firestore.instance.collection('notifications').add({
+        'title': '${currentUser.name} has $declinedText rental',
+        'body': 'Item: ${rentalDS['itemName']}',
+        'pushToken': otherUserDS['pushToken'],
+        'rentalID': rentalDS.documentID,
+        'timestamp': DateTime.now(),
       });
     }
+
+    setState(() {
+      isLoading = false;
+    });
+
+    showToast('Rental successfully $declinedText');
+
+    Navigator.of(context).pop();
   }
 
   Widget showItemCreator() {
@@ -724,7 +748,7 @@ class RentalDetailState extends State<RentalDetail> {
               );
         break;
 
-      case 1: // requested, renter need to accept/reject pickup window
+      case 1: // requested, renter need to accept/decline pickup window
         info = isRenter
             ? Column(
                 children: <Widget>[
@@ -1035,6 +1059,26 @@ class RentalDetailState extends State<RentalDetail> {
               );
         break;
 
+      case 5: // declined or cancelled
+        var declined = rentalDS['declined'];
+        String declinedText = '';
+
+        if (declined != null) {
+          declinedText = rentalDS['declined']
+              ? 'This rental was declined'
+              : 'This rental was cancelled';
+        }
+
+        info = Column(
+          children: <Widget>[
+            Text(
+              declinedText,
+              style: TextStyle(fontFamily: appFont, color: Colors.white),
+            ),
+          ],
+        );
+        break;
+
       default:
         info = Container();
         break;
@@ -1119,6 +1163,10 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   void handleAcceptedRental() async {
+    setState(() {
+      isLoading=true;
+    });
+
     updateStatus(2);
 
     DocumentSnapshot otherUserDS = await Firestore.instance
@@ -1129,7 +1177,7 @@ class RentalDetailState extends State<RentalDetail> {
     await Future.delayed(Duration(milliseconds: 500));
 
     Firestore.instance.collection('notifications').add({
-      'title': '$myName accepted your pickup window',
+      'title': '${currentUser.name} accepted your pickup window',
       'body': 'Item: ${rentalDS['itemName']}',
       'pushToken': otherUserDS['pushToken'],
       'rentalID': rentalDS.documentID,
@@ -1143,9 +1191,12 @@ class RentalDetailState extends State<RentalDetail> {
       double baseChargeAmount = (itemPrice + tax + ourFee) * 1.029 + 0.3;
       int finalCharge = (baseChargeAmount * 100).round();
 
+      var snap = await Firestore.instance.collection('users').document(ownerId).get();
+
       Map transferData = {
         'ourFee': ourFee * 100,
         'ownerPayout': itemPrice * 100,
+        'connectedAcctId': snap['connectedAcctId'],
       };
 
       PaymentService().chargeRental(
@@ -1160,6 +1211,10 @@ class RentalDetailState extends State<RentalDetail> {
         '${rentalDS['renterData']['name']} paying ${rentalDS['ownerData']['name']} '
         'for renting ${rentalDS['itemName']}',
       );
+
+      setState(() {
+        isLoading=false;
+      });
     });
   }
 
@@ -1188,8 +1243,8 @@ class RentalDetailState extends State<RentalDetail> {
                       width: 10,
                     ),
                     Expanded(
-                      child: reusableButton('Reject', Colors.red[800],
-                          () => removeRentalWarning(RentalWarning.reject)),
+                      child: reusableButton('Decline', Colors.red[800],
+                          () => removeRentalWarning(EndRentalType.decline)),
                     ),
                   ],
                 ),
@@ -1460,7 +1515,7 @@ class RentalDetailState extends State<RentalDetail> {
     Navigator.pushNamed(
       context,
       NewPickup.routeName,
-      arguments: NewPickupArgs(rentalDS.documentID, isRenter),
+      arguments: NewPickupArgs(rentalDS.documentID, isRenter, currentUser),
     );
   }
 

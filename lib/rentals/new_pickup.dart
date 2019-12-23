@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:shareapp/services/dialogs.dart';
+
 import 'dart:convert';
 import 'dart:io';
 
@@ -8,8 +10,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_picker/flutter_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:shareapp/extras/helpers.dart';
+import 'package:shareapp/models/current_user.dart';
+import 'package:shareapp/services/functions.dart';
 import 'package:shareapp/services/picker_data.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 enum DismissDialogAction {
   cancel,
@@ -32,12 +35,11 @@ class NewPickup extends StatefulWidget {
 
 class NewPickupState extends State<NewPickup> {
   final GlobalKey<FormState> formKey = new GlobalKey<FormState>();
-  SharedPreferences prefs;
+  CurrentUser currentUser;
 
   bool isUploading = false;
   bool isLoading = true;
   String myUserID;
-  String myName;
   String groupChatId;
   double dailyRate;
 
@@ -69,8 +71,9 @@ class NewPickupState extends State<NewPickup> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
+
+    currentUser = CurrentUser.getModel(context);
     focusNode = FocusNode();
     noteController.text = '';
 
@@ -85,8 +88,6 @@ class NewPickupState extends State<NewPickup> {
   }
 
   void getMyUserID() async {
-    prefs = await SharedPreferences.getInstance();
-    myName = prefs.getString('name') ?? '';
     var user = await FirebaseAuth.instance.currentUser();
     if (user != null) {
       myUserID = user.uid;
@@ -151,7 +152,7 @@ class NewPickupState extends State<NewPickup> {
             groupChatId = '${otherUserDS.documentID}-$myUserID';
           }
 
-          if (prefs != null && itemDS != null && otherUserDS != null) {
+          if (itemDS != null && otherUserDS != null) {
             setState(() {
               isLoading = false;
             });
@@ -192,6 +193,7 @@ class NewPickupState extends State<NewPickup> {
     var rentalBeforeCurrent = await Firestore.instance
         .collection('rentals')
         .where('item', isEqualTo: itemDR)
+    .where('declined',isNull: true)
         .where('pickupStart', isLessThanOrEqualTo: pickupTimeCopy)
         .orderBy('pickupStart', descending: false)
         .limit(1)
@@ -218,7 +220,7 @@ class NewPickupState extends State<NewPickup> {
     // get the rental that starts immediately after the current request pickup
     var rentalAfterCurrent = await Firestore.instance
         .collection('rentals')
-        .where('item', isEqualTo: itemDR)
+        .where('item', isEqualTo: itemDR).where('declined',isNull: true)
         .where('pickupStart', isGreaterThanOrEqualTo: pickupTimeCopy)
         .orderBy('pickupStart', descending: false)
         .limit(1)
@@ -304,24 +306,27 @@ class NewPickupState extends State<NewPickup> {
                           bottom: BorderSide(color: theme.dividerColor))),
                   child: InkWell(
                     onTap: () async {
-                      var value = await showDialog(
-                        barrierDismissible: true,
-                        context: context,
-                        builder: (BuildContext context) {
-                          return Container(
-                            child: DailyRateDialog(
-                              pageHeight: pageHeight,
-                              pageWidth: pageWidth,
-                              rate: dailyRate,
-                            ),
-                          );
-                        },
-                      );
+                      if (!widget.isRenter) {
+                        var value = await showDialog(
+                          barrierDismissible: true,
+                          context: context,
+                          builder: (BuildContext context) {
+                            return Container(
+                              child: DailyRateDialog(
+                                pageWidth: pageWidth,
+                                rate: dailyRate,
+                              ),
+                            );
+                          },
+                        );
 
-                      if (value != null && value is double) {
-                        setState(() {
-                          dailyRate = value;
-                        });
+                        if (value != null && value is double) {
+                          setState(() {
+                            dailyRate = value;
+                          });
+                        }
+                      } else {
+                        showToast('Only item owners can edit the daily rate');
                       }
                     },
                     child: Row(
@@ -475,7 +480,7 @@ class NewPickupState extends State<NewPickup> {
       Future.delayed(Duration(seconds: 1)).then((_) {
         Firestore.instance.collection('notifications').add({
           'title': 'New pickup window proposal',
-          'body': 'From: ${myName}',
+          'body': 'From: ${currentUser.name}',
           'pushToken': otherUserDS['pushToken'],
           'rentalID': widget.rentalID,
           'timestamp': DateTime.now().millisecondsSinceEpoch,
@@ -497,7 +502,7 @@ class NewPickupState extends State<NewPickup> {
             'content': text,
             'type': 0,
             'pushToken': otherUserDS['pushToken'],
-            'nameFrom': myName,
+            'nameFrom': currentUser.name,
             'rental': rentalDS.reference,
           }).then((_) {
             Navigator.of(context).pop();

@@ -12,10 +12,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
+import 'package:shareapp/models/current_user.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:shareapp/services/functions.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class Chat extends StatefulWidget {
   static const routeName = '/chat';
@@ -30,9 +30,9 @@ class Chat extends StatefulWidget {
 }
 
 class ChatState extends State<Chat> {
+  CurrentUser currentUser;
   Map chatData;
-  FirebaseUser currentUser;
-  SharedPreferences prefs;
+  FirebaseUser firebaseUser;
   Map otherUser;
   List combinedId;
 
@@ -43,7 +43,6 @@ class ChatState extends State<Chat> {
   String imageUrl;
   String myUserID;
   String groupChatId;
-  String myName;
   String otherUserID;
 
   var listMessage;
@@ -62,6 +61,7 @@ class ChatState extends State<Chat> {
   void initState() {
     super.initState();
 
+    currentUser = CurrentUser.getModel(context);
     otherUserID = widget.otherUserID;
     imageUrl = '';
     getMyUserID();
@@ -83,14 +83,11 @@ class ChatState extends State<Chat> {
   }
 
   void getMyUserID() async {
-    prefs = await SharedPreferences.getInstance();
-    myName = prefs.getString('name') ?? '';
-
     var user = await FirebaseAuth.instance.currentUser();
 
     if (user != null) {
       myUserID = user.uid;
-      currentUser = user;
+      firebaseUser = user;
       idIsFirst = checkIdIsFirst(myUserID, otherUserID);
 
       Map data = getChatRoomData(myUserID, otherUserID);
@@ -118,8 +115,8 @@ class ChatState extends State<Chat> {
     if (!ds.exists) {
       Map map = setChatUserData({
         'id': myUserID,
-        'name': currentUser.displayName,
-        'avatar': currentUser.photoUrl,
+        'name': firebaseUser.displayName,
+        'avatar': firebaseUser.photoUrl,
       }, {
         'id': otherUserID,
         'name': otherUserDS['name'],
@@ -205,7 +202,7 @@ class ChatState extends State<Chat> {
         'content': content,
         'type': type,
         'pushToken': otherUser['pushToken'],
-        'nameFrom': myName,
+        'nameFrom': currentUser.name,
       });
 
       listScrollController.animateTo(0.0,
@@ -500,25 +497,56 @@ class ChatState extends State<Chat> {
                           children: <Widget>[
                             SizedBox(height: 30.0),
                             Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: <Widget>[
-                                FlatButton(
-                                  child: BackButton(),
-                                  onPressed: () => Navigator.pop(context),
-                                ),
-                                Align(
-                                  alignment: Alignment.bottomCenter,
-                                  child: Text(
-                                    '${otherUser['name']}',
-                                    style: TextStyle(
-                                        fontSize: 20.0,
-                                        fontFamily: 'Quicksand'),
+                                Flexible(
+                                  flex: 1,
+                                  child: FlatButton(
+                                    padding: EdgeInsets.all(0),
+                                    child: BackButton(),
+                                    onPressed: () => Navigator.pop(context),
                                   ),
                                 ),
-                                FlatButton(
-                                  child: Icon(Icons.more_horiz),
-                                  onPressed: null,
-                                )
+                                Flexible(
+                                  flex: 3,
+                                  child: Align(
+                                    alignment: Alignment.bottomCenter,
+                                    child: Text(
+                                      '${otherUser['name']}',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                          fontSize: 20.0,
+                                          fontFamily: 'Quicksand'),
+                                    ),
+                                  ),
+                                ),
+                                Flexible(
+                                  flex: 1,
+                                  child: Container(
+                                    alignment: Alignment.center,
+                                    child: PopupMenuButton<String>(
+                                      icon: Icon(
+                                        Icons.more_horiz,
+                                      ),
+                                      onSelected: (value) {
+                                        if (value == 'report') {
+                                          showReportUserDialog(
+                                              context: context,
+                                              myId: currentUser.id,
+                                              myName: currentUser.name,
+                                              offenderId: otherUserID,
+                                              offenderName: otherUser['name']);
+                                        }
+                                      },
+                                      itemBuilder: (BuildContext context) =>
+                                          <PopupMenuItem<String>>[
+                                        const PopupMenuItem<String>(
+                                          value: 'report',
+                                          child: Text('Report user'),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                             Divider(
@@ -756,6 +784,7 @@ class ChatState extends State<Chat> {
     Navigator.of(context).pushNamed(RentalDetail.routeName,
         arguments: RentalDetailArgs(
           rentalDR.documentID,
+          currentUser,
         ));
   }
 }

@@ -230,6 +230,75 @@ exports.pushNotifications = functions.firestore.document('notifications/{notific
         }
     })
 
+// add stripe source (through callable function)
+
+exports.addStripeCard = functions.https.onCall(async (data, context) => {
+    if (data === null) {
+        return null
+    }
+
+    var customer;
+    const token = data.tokenId;
+    const userId = data.userId;
+    const customerId = data.customerId;
+    const email = data.email;
+
+    if (customerId === 'new') {
+        console.log(`customerId: ${customerId}`);
+
+        customer = await stripe.customers.create({
+            email: email,
+            source: token,
+        });
+
+        const customerSource = customer.sources.data[0];
+        const customerSourceId = customerSource.id;
+        var map = {
+            custId: customer.id,
+            defaultSource: customerSourceId,
+        };
+
+        db.collection('users').doc(userId).update(map);
+
+        db.collection('users').doc(userId).collection('sources').
+            doc(customerSource.card.fingerprint).set(customerSource, {
+                merge: true
+            });
+
+        return map;
+    } else {
+        customer = await stripe.customers.retrieve(customerId);
+
+        var newSource = await stripe.customers.createSource(
+            customerId,
+            {
+                source: token,
+            },
+        );
+
+        var updatedCustomer = await stripe.customers.retrieve(
+            customerId,
+        );
+
+        var newDefaultSource = updatedCustomer.default_source;
+        console.log(`New default source: ${newDefaultSource}`);
+
+        await db.collection('users').doc(userId).update({
+            defaultSource: newDefaultSource,
+        });
+
+        await db.collection('users').doc(userId).collection('sources').
+            doc(newSource.card.fingerprint).set(newSource, {
+                merge: true
+            });
+
+        return {
+            custId: customerId,
+            defaultSource: newDefaultSource,
+        };
+    }
+});
+
 // add stripe source when new card added
 exports.addStripeSource = functions.firestore.document('users/{userId}/tokens/{tokenId}')
     .onWrite(async (tokenSnap, context) => {
@@ -291,15 +360,6 @@ exports.addStripeSource = functions.firestore.document('users/{userId}/tokens/{t
                     merge: true
                 });
         }
-
-        /*
-        const customerSource = customer.sources.data[0];
-        
-        return firestore.collection('users').doc(context.params.userId).collection('sources').
-            doc(customerSource.card.fingerprint).set(customerSource, {
-                merge: true
-            });
-        */
     })
 
 // delete credit card
@@ -325,9 +385,9 @@ exports.deleteStripeSource = functions.https.onCall(async (data, context) => {
     });
 
     if (resp === null) {
-        return 'Error';
+        return 1;
     } else {
-        return 'Card successfully deleted';
+        return `${newDefaultSource}`;
     }
 });
 
@@ -346,9 +406,9 @@ exports.setDefaultSource = functions.https.onCall(async (data, context) => {
     });
 
     if (resp === null) {
-        return 'Error';
+        return 1;
     } else {
-        return 'Updated default payment method';
+        return `${updatedCustomer.default_source}`;
     }
 });
 
@@ -358,8 +418,6 @@ exports.createCharge = functions.firestore.document('charges/{chargeId}')
             const idFrom = chargeSnap.data().rentalData['idFrom'];
             const userSnap = await db.collection('users').doc(idFrom).get();
             const idTo = chargeSnap.data().rentalData['idTo'];
-            const itemOwner = await db.collection('users').doc(idTo).get();
-            const ownerCustId = userSnap.data().custId;
             const customer = userSnap.data().custId;
             const amount = chargeSnap.data().amount;
             const currency = chargeSnap.data().currency;
@@ -368,6 +426,7 @@ exports.createCharge = functions.firestore.document('charges/{chargeId}')
             const ourFee = transferDataMap['ourFee'];
             const ownerPayout = transferDataMap['ownerPayout'];
             const idempotentKey = context.params.chargeId;
+            const connectedAcctId = transferDataMap['connectedAcctId'];
 
             const response = await stripe.charges.create({
                 amount: amount,
@@ -377,12 +436,11 @@ exports.createCharge = functions.firestore.document('charges/{chargeId}')
                 application_fee_amount: ourFee,
                 transfer_data: {
                     amount: ownerPayout,
-                    destination: ownerCustId,
+                    destination: connectedAcctId,
                 },
                 description: description,
             }, { idempotency_key: idempotentKey });
             return chargeSnap.ref.set(response, { merge: true });
-
         } catch (error) {
             await chargeSnap.ref.set({ error: error.message }, { merge: true });
         }
@@ -414,6 +472,20 @@ exports.createStripeAccount = functions.https.onCall(async (data, context) => {
     } else {
         return 'Card successfully deleted';
     }
+});
+
+// finish oauth flow
+exports.finishOAuthFlow = functions.https.onCall(async (data, context) => {
+    var acctId = data.acctId;
+
+    return stripe.oauth.token({
+        grant_type: 'authorization_code',
+        code: acctId,
+    }).then(function (response) {
+        return response.stripe_user_id;
+    }).catch(err => {
+        console.log(err);
+    });
 });
 
 // update items and rentals when user edits their name and profile picture
@@ -922,6 +994,7 @@ exports.createRental = functions.https.onCall(async (data, context) => {
         var docRef = await db.collection('items').add({
             created: new Date(),
             status: status,
+            declined: null,
             creator: db.collection('users').doc(creator),
             name: name,
             description: description,

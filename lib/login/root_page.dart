@@ -4,11 +4,8 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:scoped_model/scoped_model.dart';
 import 'package:shareapp/login/login_page.dart';
-import 'package:shareapp/main.dart';
 import 'package:shareapp/models/current_user.dart';
 import 'package:shareapp/pages/home_page.dart';
-import 'package:shareapp/rentals/chat.dart';
-import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/auth.dart';
 import 'package:uni_links/uni_links.dart';
 
@@ -64,52 +61,51 @@ class RootPageState extends State<RootPage> {
     }
   }
 
-  void configureFCM() async {
-    firebaseMessaging.configure(
-      /// called if app is closed but running in background
-      onResume: (Map<String, dynamic> message) async {
-        handleNotifications(message);
-      },
+//  void configureFCM() async {
+//    firebaseMessaging.configure(
+//      /// called if app is closed but running in background
+//      onResume: (Map<String, dynamic> message) async {
+//        handleNotifications(message);
+//      },
+//
+//      /// called if app is fully closed
+//      onLaunch: (Map<String, dynamic> message) async {
+//        handleNotifications(message);
+//      },
+//
+//      /// called when app is running in foreground
+//      onMessage: (Map<String, dynamic> message) async {},
+//    );
+//  }
 
-      /// called if app is fully closed
-      onLaunch: (Map<String, dynamic> message) async {
-        handleNotifications(message);
-      },
-
-      /// called when app is running in foreground
-      onMessage: (Map<String, dynamic> message) async {},
-    );
-  }
-
-  void handleNotifications(Map<String, dynamic> message) async {
-    var data = message['data'];
-    var rentalID = data['rentalID'];
-    String otherUserID = data['idFrom'];
-
-    switch (data['type']) {
-      case 'rental':
-        Navigator.of(context).popUntil(ModalRoute.withName('/'));
-        Navigator.of(context).pushNamed(
-          RentalDetail.routeName,
-          arguments: RentalDetailArgs(
-            rentalID,
-          ),
-        );
-
-        break;
-
-      case 'chat':
+//  void handleNotifications(Map<String, dynamic> message) async {
+//    var data = message['data'];
+//    var rentalID = data['rentalID'];
+//    String otherUserID = data['idFrom'];
+//
+//    switch (data['type']) {
+//      case 'rental':
 //        Navigator.of(context).popUntil(ModalRoute.withName('/'));
-        Navigator.of(context).pushNamed(
-          Chat.routeName,
-          arguments: ChatArgs(
-            otherUserID,
-          ),
-        );
-
-        break;
-    }
-  }
+//        Navigator.of(context).pushNamed(
+//          RentalDetail.routeName,
+//          arguments: RentalDetailArgs(
+//            rentalID,
+//          ),
+//        );
+//
+//        break;
+//
+//      case 'chat':
+//        Navigator.of(context).pushNamed(
+//          Chat.routeName,
+//          arguments: ChatArgs(
+//            otherUserID,
+//          ),
+//        );
+//
+//        break;
+//    }
+//  }
 
   @override
   Widget build(BuildContext context) {

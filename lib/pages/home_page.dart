@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:shareapp/services/database.dart';
+import 'package:shareapp/services/dialogs.dart';
 
-import 'package:date_range_picker/date_range_picker.dart' as DateRagePicker;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -33,7 +34,7 @@ import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/auth.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:shareapp/services/functions.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:table_calendar/table_calendar.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:url_launcher/url_launcher.dart';
 
@@ -52,12 +53,11 @@ class HomePage extends StatefulWidget {
   }
 }
 
-class HomePageState extends State<HomePage> {
+class HomePageState extends State<HomePage> with TickerProviderStateMixin {
   CurrentUser currentUser;
   final FirebaseMessaging firebaseMessaging = FirebaseMessaging();
   String deviceToken;
 
-  SharedPreferences prefs;
   FirebaseUser firebaseUser;
 
   String myUserID;
@@ -91,6 +91,12 @@ class HomePageState extends State<HomePage> {
   double padding;
   String font = 'Quicksand';
 
+  DateTime selectedDay;
+  DateTime visibleDay;
+  List selectedEvents;
+  Map<DateTime, List> visibleEvents;
+  AnimationController controller;
+
   FlutterLocalNotificationsPlugin localNotificationManager =
       FlutterLocalNotificationsPlugin();
   var initializationSettingsAndroid;
@@ -107,7 +113,6 @@ class HomePageState extends State<HomePage> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
 
     geo = Geoflutterfire();
@@ -128,20 +133,34 @@ class HomePageState extends State<HomePage> {
 
     currentTabIndex = 0;
 
+    DateTime now = DateTime.now();
+    DateTime first = DateTime(now.year, now.month, 1);
+    visibleDay = first;
+    selectedDay = DateTime(now.year, now.month, now.day);
+    selectedEvents = [];
+    visibleEvents = {};
+
+    controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+
+    controller.forward();
+
     padding = 18;
     edgeInset = EdgeInsets.only(
         left: padding, right: padding, bottom: padding, top: 30);
 
     firebaseUser = widget.firebaseUser;
+    currentUser = CurrentUser.getModel(context);
 
     if (firebaseUser == null) {
       isAuthenticated = false;
-      setPrefs();
+//      setPrefs();
     } else {
       isAuthenticated = true;
       myUserID = firebaseUser.uid;
-      currentUser = CurrentUser.getModel(context);
-      setPrefs();
+      updateLastActiveAndPushToken();
     }
 
     bottomNavBarTiles = <BottomNavigationBarItem>[
@@ -203,7 +222,7 @@ class HomePageState extends State<HomePage> {
         // Update rental status to active
         await rentalsCollection
             .document(rentalDS.documentID)
-            .updateData({'status': 3});
+            .updateData({'status': 3,'lastUpdateTime':DateTime.now()});
       }
     }
 
@@ -224,7 +243,7 @@ class HomePageState extends State<HomePage> {
         // Update status of rental to 'past'
         await rentalsCollection
             .document(rentalDS.documentID)
-            .updateData({'status': 4});
+            .updateData({'status': 4, 'lastUpdateTime':DateTime.now()});
       }
     }
 
@@ -335,7 +354,7 @@ class HomePageState extends State<HomePage> {
         .where('creator',
             isEqualTo:
                 Firestore.instance.collection('users').document(myUserID))
-        .getDocuments();
+        .where('unavailable', isGreaterThan: []).getDocuments();
     List<DocumentSnapshot> docs = snaps.documents;
 
     if (snaps != null && docs.isNotEmpty) {
@@ -487,18 +506,6 @@ class HomePageState extends State<HomePage> {
     */
   }
 
-  void setPrefs() async {
-    prefs = await SharedPreferences.getInstance();
-
-    await prefs.remove('userID');
-
-    if (prefs != null) {
-      await prefs.setString('userID', myUserID);
-
-      updateLastActiveAndPushToken();
-    }
-  }
-
   void updateLastActiveAndPushToken() async {
     firebaseMessaging.getToken().then((token) {
       deviceToken = token;
@@ -509,41 +516,6 @@ class HomePageState extends State<HomePage> {
 
 //      configureFCM();
     });
-  }
-
-  Future<Null> getAllItems() async {
-    searchList = [];
-    filteredList = [];
-
-    QuerySnapshot querySnapshot = await Firestore.instance
-        .collection('items')
-        .orderBy('name', descending: false)
-        .getDocuments();
-
-    if (querySnapshot != null) {
-      allItems = querySnapshot.documents;
-
-      allItems.forEach((DocumentSnapshot ds) {
-        String name = ds['name'].toLowerCase();
-        String description = ds['description'].toLowerCase();
-
-        searchList.addAll(name.split(' '));
-        searchList.addAll(description.split(' '));
-      });
-
-      searchList = searchList.toSet().toList();
-
-      for (int i = 0; i < searchList.length; i++) {
-        searchList[i] = searchList[i].replaceAll(RegExp(r"[^\w]"), '');
-      }
-
-      searchList = searchList.toSet().toList();
-      searchList.sort();
-      searchList.remove('');
-      filteredList = searchList;
-
-      //debugPrint('LIST: $searchList, LENGTH: ${searchList.length}');
-    }
   }
 
   @override
@@ -888,6 +860,7 @@ class HomePageState extends State<HomePage> {
                                 RentalDetail.routeName,
                                 arguments: RentalDetailArgs(
                                   rentalDS,
+                                  currentUser,
                                 ),
                               );
                             },
@@ -909,6 +882,7 @@ class HomePageState extends State<HomePage> {
                                 Chat.routeName,
                                 arguments: ChatArgs(
                                   rentalDS,
+                                  currentUser,
                                 ),
                               );
                             },
@@ -1078,7 +1052,8 @@ class HomePageState extends State<HomePage> {
 
       Stream<List<DocumentSnapshot>> stream = geo
           .collection(collectionRef: collectionReference)
-          .within(center: center, radius: radius, field: field);
+          .within(
+              center: center, radius: radius, field: field, strictMode: true);
 
       return Container(
         height: h,
@@ -1134,8 +1109,6 @@ class HomePageState extends State<HomePage> {
 
     if (currentLocation != null) {
       currentUser.updateCurrentLocation(currentLocation);
-      await prefs.setDouble('lat', currentLocation.latitude);
-      await prefs.setDouble('long', currentLocation.longitude);
     } else {
       showToast('Could not get location');
     }
@@ -1260,21 +1233,6 @@ class HomePageState extends State<HomePage> {
   Widget introImageAndSearch() {
     double h = MediaQuery.of(context).size.height;
     double w = MediaQuery.of(context).size.width;
-
-    RegExp regExp = RegExp(r'^' + searchController.text.toLowerCase() + r'.*$');
-
-    if (searchController.text.isNotEmpty) {
-      List<String> temp = [];
-      for (int i = 0; i < filteredList.length; i++) {
-        if (regExp.hasMatch(filteredList[i])) {
-          temp.add(filteredList[i]);
-        }
-      }
-
-      filteredList = temp;
-    } else {
-      filteredList = searchList;
-    }
 
     Widget searchField() {
       return InkWell(
@@ -1568,7 +1526,7 @@ class HomePageState extends State<HomePage> {
 
   void navToTransactionsPage(RentalPhase filter, String person) {
     Navigator.pushNamed(context, TransactionsPage.routeName,
-        arguments: TransactionsPageArgs(filter, person));
+        arguments: TransactionsPageArgs(filter, person, currentUser));
   }
 
   Widget buildListingsList() {
@@ -1718,7 +1676,8 @@ class HomePageState extends State<HomePage> {
                                                 Navigator.pushNamed(context,
                                                     RentalDetail.routeName,
                                                     arguments: RentalDetailArgs(
-                                                        rentalDS.documentID));
+                                                        rentalDS.documentID,
+                                                        currentUser));
                                               },
                                               child: Row(
                                                 mainAxisAlignment:
@@ -1855,8 +1814,12 @@ class HomePageState extends State<HomePage> {
             .limit(3);
         break;
       case RentalPhase.past:
+//        query = query
+//            .where('rentalEnd', isLessThan: DateTime.now())
+//            .orderBy('rentalEnd', descending: true)
+//            .limit(3);
         query = query
-            .where('rentalEnd', isLessThan: DateTime.now())
+            .where('status', isEqualTo: 4)
             .orderBy('rentalEnd', descending: true)
             .limit(3);
         break;
@@ -1864,137 +1827,170 @@ class HomePageState extends State<HomePage> {
 
     Stream stream = query.snapshots();
 
+    Widget card(DocumentSnapshot rentalDS) {
+      String itemName = rentalDS['itemName'];
+      String itemAvatar = rentalDS['itemAvatar'];
+
+      CachedNetworkImage image = CachedNetworkImage(
+        key: ValueKey<String>(itemAvatar),
+        imageUrl: itemAvatar,
+        placeholder: (context, url) => new CircularProgressIndicator(),
+        fit: BoxFit.cover,
+      );
+
+      return Container(
+        width: MediaQuery.of(context).size.width / 2,
+        padding: EdgeInsets.only(left: 10.0),
+        child: InkWell(
+          onTap: () => Navigator.pushNamed(context, RentalDetail.routeName,
+              arguments: RentalDetailArgs(rentalDS.documentID, currentUser)),
+          child: Container(
+            width: MediaQuery.of(context).size.width / 2,
+            decoration: BoxDecoration(
+              boxShadow: <BoxShadow>[
+                CustomBoxShadow(
+                    color: Colors.black45,
+                    blurRadius: 3.5,
+                    blurStyle: BlurStyle.outer),
+              ],
+            ),
+            child: Stack(
+              children: <Widget>[
+                SizedBox.expand(child: image),
+                SizedBox.expand(
+                  child: Container(
+                    color: Colors.black.withOpacity(0.4),
+                  ),
+                ),
+                Center(
+                  child: Column(
+                    children: <Widget>[
+                      Text(itemName, style: TextStyle(color: Colors.white)),
+                      StreamBuilder(
+                          stream:
+                              Stream.periodic(Duration(seconds: 30), (i) => i),
+                          builder: (BuildContext context,
+                              AsyncSnapshot<int> snapshot) {
+                            DateTime now = DateTime.now();
+                            DateTime pickupTime =
+                                rentalDS['pickupStart'].toDate();
+
+                            int days = pickupTime.difference(now).inDays;
+                            int hours = pickupTime
+                                .difference(now.add(Duration(days: days)))
+                                .inHours;
+                            int minutes = pickupTime
+                                .difference(
+                                    now.add(Duration(days: days, hours: hours)))
+                                .inMinutes;
+
+                            var dateString = '';
+
+                            if (days == 0) {
+                              dateString =
+                                  '$hours hours, $minutes min until pickup';
+                            } else {
+                              dateString =
+                                  '$days days, $hours hours, $minutes min until pickup';
+                            }
+
+                            return Container(
+                              child: Text(
+                                dateString,
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            );
+                          })
+                    ],
+                  ),
+                )
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
         stream: stream,
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
             return new Text('${snapshot.error}');
-          }
-          switch (snapshot.connectionState) {
-            case ConnectionState.waiting:
+          } else {
+            switch (snapshot.connectionState) {
+              case ConnectionState.waiting:
+              default:
+                if (snapshot.hasData) {
+                  var docs = snapshot.data.documents;
 
-            default:
-              if (snapshot.hasData) {
-                var updated = snapshot.data.documents;
+                  List<Widget> cards = [];
 
-                if (updated.length == 0) {
-                  return Text('Nothing to show');
+                  if (rentalStatus != RentalPhase.past) {
+                    if (docs.length == 0) {
+                      return Text('Nothing to show');
+                    }
+
+                    cards.addAll(docs.map((doc) => card(doc)).toList());
+
+                    return ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: cards,
+                    );
+                  }
+
+                  // RentalPhase.past - merge completed and declined/cancelled rentals
+                  return StreamBuilder(
+                    stream: Firestore.instance
+                        .collection('rentals')
+                        .where(person,
+                            isEqualTo: Firestore.instance
+                                .collection('users')
+                                .document(myUserID))
+                        .where('status', isEqualTo: 5)
+                    .where('x',)
+                        .orderBy('rentalEnd', descending: true)
+                        .limit(3)
+                        .snapshots(),
+                    builder: (BuildContext context,
+                        AsyncSnapshot<QuerySnapshot> newSnapshots) {
+                      if (newSnapshots.hasError) {
+                        return new Text('${newSnapshots.error}');
+                      }
+
+                      switch (newSnapshots.connectionState) {
+                        case ConnectionState.waiting:
+                        default:
+                          if (newSnapshots.hasData) {
+                            var newDocs = newSnapshots.data.documents;
+
+                            List<DocumentSnapshot> combinedDocs = [];
+
+                            combinedDocs.addAll(docs);
+                            combinedDocs.addAll(newDocs);
+                            combinedDocs.sort((a, b) =>
+                                b['rentalEnd'].compareTo(a['rentalEnd']));
+
+                            if (combinedDocs.length > 3) {
+                              combinedDocs.removeRange(3, combinedDocs.length);
+                            }
+
+                            cards.addAll(combinedDocs.map((doc) => card(doc)).toList());
+
+                            return ListView(
+                              scrollDirection: Axis.horizontal,
+                              children: cards,
+                            );
+                          } else {
+                            return Container();
+                          }
+                      }
+                    },
+                  );
+                } else {
+                  return Container();
                 }
-
-                return ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: updated.length,
-                  itemBuilder: (context, index) {
-                    DocumentSnapshot rentalDS = updated[index];
-                    String itemName = rentalDS['itemName'];
-                    String itemAvatar = rentalDS['itemAvatar'];
-
-                    CachedNetworkImage image = CachedNetworkImage(
-                      key: ValueKey<String>(itemAvatar),
-                      imageUrl: itemAvatar,
-                      placeholder: (context, url) =>
-                          new CircularProgressIndicator(),
-                      fit: BoxFit.cover,
-                    );
-
-                    return Container(
-                      width: MediaQuery.of(context).size.width / 2,
-                      padding: EdgeInsets.only(left: 10.0),
-                      child: InkWell(
-                        onTap: () => Navigator.pushNamed(
-                            context, RentalDetail.routeName,
-                            arguments: RentalDetailArgs(rentalDS.documentID)),
-                        child: Container(
-                          width: MediaQuery.of(context).size.width / 2,
-                          decoration: BoxDecoration(
-                            boxShadow: <BoxShadow>[
-                              CustomBoxShadow(
-                                  color: Colors.black45,
-                                  blurRadius: 3.5,
-                                  blurStyle: BlurStyle.outer),
-                            ],
-                          ),
-                          child: Stack(
-                            children: <Widget>[
-                              SizedBox.expand(child: image),
-                              SizedBox.expand(
-                                  child: Container(
-                                color: Colors.black.withOpacity(0.4),
-                              )),
-                              Center(
-                                child: Column(
-                                  children: <Widget>[
-                                    Text(itemName,
-                                        style: TextStyle(color: Colors.white)),
-                                    // Text("Pickup Time: \n" + DateTime.fromMillisecondsSinceEpoch(rentalDS[ 'pickupStart'].millisecondsSinceEpoch).toString(), style: TextStyle(color:Colors.white)),
-                                    StreamBuilder(
-                                        stream: Stream.periodic(
-                                            Duration(seconds: 30), (i) => i),
-                                        builder: (BuildContext context,
-                                            AsyncSnapshot<int> snapshot) {
-                                          DateTime now = DateTime.now();
-                                          DateTime pickupTime =
-                                              rentalDS['pickupStart'].toDate();
-
-                                          int days =
-                                              pickupTime.difference(now).inDays;
-                                          int hours = pickupTime
-                                              .difference(
-                                                  now.add(Duration(days: days)))
-                                              .inHours;
-                                          int minutes = pickupTime
-                                              .difference(now.add(Duration(
-                                                  days: days, hours: hours)))
-                                              .inMinutes;
-
-                                          var dateString = '';
-
-                                          if (days == 0) {
-                                            dateString =
-                                                '$hours hours, $minutes min until pickup';
-                                          } else {
-                                            dateString =
-                                                '$days days, $hours hours, $minutes min until pickup';
-                                          }
-
-                                          /*
-                                          int now = DateTime.now()
-                                              .millisecondsSinceEpoch;
-                                          int pickupTime =
-                                              rentalDS['pickupStart']
-                                                  .millisecondsSinceEpoch;
-                                          Duration remaining = Duration(
-                                              milliseconds: (pickupTime - now));
-                                          var dateString;
-                                          remaining.inDays == 0
-                                              ? dateString =
-                                                  '${format.format(DateTime.fromMillisecondsSinceEpoch(remaining.inMilliseconds))}'
-                                              : dateString =
-                                                  '${remaining.inDays} days, ${format.format(DateTime.fromMillisecondsSinceEpoch(remaining.inMilliseconds))}';
-                                          */
-
-                                          return Container(
-                                            child: Text(
-                                              dateString,
-                                              style: TextStyle(
-                                                  color: Colors.white),
-                                            ),
-                                          );
-                                        })
-                                  ],
-                                ),
-                              )
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                );
-              } else {
-                return Container();
-              }
+            }
           }
         },
       ),
@@ -2175,28 +2171,10 @@ class HomePageState extends State<HomePage> {
                     buildTransactions(RentalPhase.past, "owner"),
                   ],
                 ),
-                Column(
+                ListView(
+                  padding: EdgeInsets.all(0),
                   children: <Widget>[
-//                    Text('not implemented yet'),
-                    MaterialButton(
-                        color: Colors.deepOrangeAccent,
-                        onPressed: () async {
-                          final List<DateTime> picked =
-                              await DateRagePicker.showDatePicker(
-                            context: context,
-                            initialFirstDate: new DateTime.now(),
-                            initialLastDate:
-                                (new DateTime.now()).add(new Duration(days: 1)),
-                            firstDate: new DateTime(2015),
-                            lastDate: new DateTime(2020),
-                            selectableDayPredicate: (DateTime val) =>
-                                val.weekday == 5 ? false : true,
-                          );
-                          if (picked != null && picked.length == 2) {
-                            print(picked);
-                          }
-                        },
-                        child: new Text("Pick date range")),
+                    buildCalendar(),
                   ],
                 ),
               ],
@@ -2205,6 +2183,102 @@ class HomePageState extends State<HomePage> {
         ]),
       ),
     );
+  }
+
+  Widget buildCalendar() {
+    return TableCalendar(
+      startDay: DateTime.now().subtract(Duration(days: 1)),
+      selectedDay: selectedDay,
+      locale: 'en_US',
+      events: visibleEvents,
+      initialCalendarFormat: CalendarFormat.month,
+      formatAnimation: FormatAnimation.slide,
+      startingDayOfWeek: StartingDayOfWeek.sunday,
+      availableGestures: AvailableGestures.horizontalSwipe,
+      calendarStyle: CalendarStyle(
+        outsideDaysVisible: false,
+        weekendStyle: TextStyle().copyWith(color: Colors.black),
+      ),
+      daysOfWeekStyle: DaysOfWeekStyle(
+        weekendStyle: TextStyle().copyWith(color: Colors.black54),
+        weekdayStyle: TextStyle().copyWith(color: Colors.black54),
+      ),
+      headerStyle: HeaderStyle(
+        centerHeaderTitle: true,
+        formatButtonVisible: false,
+      ),
+      builders: CalendarBuilders(
+        selectedDayBuilder: (context, date, _) {
+          return Container(
+            margin: const EdgeInsets.all(4.0),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: primaryColor,
+            ),
+            child: Center(
+              child: Text(
+                '${date.day}',
+                style: TextStyle().copyWith(
+                  fontSize: 16.0,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          );
+        },
+        todayDayBuilder: (context, date, _) {
+          return Container(
+            margin: const EdgeInsets.all(4.0),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.lightBlue[200],
+            ),
+            child: Center(
+              child: Text(
+                '${date.day}',
+                style: TextStyle().copyWith(fontSize: 16.0),
+              ),
+            ),
+          );
+        },
+        markersBuilder: (context, date, events, _) {
+          final children = <Widget>[];
+
+          if (events.isNotEmpty) {
+            children.add(
+              Center(
+                child: Icon(
+                  Icons.close,
+                  color: Colors.red,
+                  size: 30,
+                ),
+              ),
+            );
+          }
+
+          return children;
+        },
+      ),
+      onDaySelected: (date, events) {
+        onDaySelected(date, events);
+        controller.forward(from: 0.0);
+      },
+      onVisibleDaysChanged: onVisibleDaysChanged,
+    );
+  }
+
+  void onDaySelected(DateTime day, List events) {
+    setState(() {
+      selectedDay = stripHourMin(day);
+      selectedEvents = events;
+    });
+  }
+
+  void onVisibleDaysChanged(
+      DateTime first, DateTime last, CalendarFormat format) {
+    setState(() {
+      visibleDay = first;
+    });
   }
 
   Widget messagesTabPage() {
@@ -2257,6 +2331,7 @@ class HomePageState extends State<HomePage> {
         Widget _showCurrentProfilePic() {
           double height = MediaQuery.of(context).size.height;
           double width = MediaQuery.of(context).size.width;
+
           return Container(
             padding: EdgeInsets.only(left: width / 5, right: width / 5),
             height: height / 5,
@@ -2352,79 +2427,46 @@ class HomePageState extends State<HomePage> {
             bottomLeft: const Radius.circular(50.0),
             bottomRight: const Radius.circular(50.0),
           )),*/
-      child: StreamBuilder<DocumentSnapshot>(
-        stream: Firestore.instance
-            .collection('users')
-            .document(myUserID)
-            .snapshots(),
-        builder:
-            (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
-          if (snapshot.hasError) {
-            return new Text('${snapshot.error}');
-          }
-          switch (snapshot.connectionState) {
-            case ConnectionState.waiting:
-            default:
-              if (snapshot.hasData) {
-                DocumentSnapshot ds = snapshot.data;
-                String name;
-
-                if (ds.exists) {
-                  name = ds['name'];
-                  prefs.setString('name', name);
-                } else {
-                  name = 'ERROR';
-                  prefs.setString('name', name);
-                }
-
-                return Stack(
-                  children: <Widget>[
-                    Container(
-                      height: MediaQuery.of(context).size.height - 90,
-                      child: ListView(
-                        shrinkWrap: true,
-                        padding: EdgeInsets.all(0),
-                        children: <Widget>[
-                          showPersonalInformation(),
-                          reusableCategory("ACCOUNT"),
-                          //reusableFlatButton("Personal information", Icons.person_outline, null),
-                          reusableFlatButton("Payments and Payouts",
-                              Icons.payment, navToPayouts),
-                          reusableFlatButton(
-                              "Reviews", Icons.rate_review, navToReviews),
-                          reusableCategory("SUPPORT"),
-                          reusableFlatButton("Get help", Icons.help_outline,
-                              () => navToSendEmail('Help')),
-                          reusableFlatButton("Give us feedback", Icons.feedback,
-                              () => navToSendEmail('Feedback')),
-                          reusableFlatButton("Log out", null, logout),
-                          //getProfileDetails()
-                        ],
-                      ),
-                    ),
-                    Align(
-                      alignment: Alignment.topRight,
-                      child: OutlineButton(
-                        color: Colors.white,
-                        textColor: primaryColor,
-                        onPressed: () {
-                          navToProfileEdit();
-                        },
-                        child: Text(
-                          "Edit Profile",
-                          style: TextStyle(
-                              fontFamily: 'Quicksand',
-                              fontWeight: FontWeight.normal),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              } else {
-                return Container();
-              }
-          }
-        },
+      child: Stack(
+        children: <Widget>[
+          Container(
+            height: MediaQuery.of(context).size.height - 90,
+            child: ListView(
+              shrinkWrap: true,
+              padding: EdgeInsets.all(0),
+              children: <Widget>[
+                showPersonalInformation(),
+                reusableCategory("ACCOUNT"),
+                //reusableFlatButton("Personal information", Icons.person_outline, null),
+                reusableFlatButton(
+                    "Payments and Payouts", Icons.payment, navToPayouts),
+                reusableFlatButton("Reviews", Icons.rate_review, navToReviews),
+                reusableCategory("SUPPORT"),
+                reusableFlatButton("Get help", Icons.help_outline,
+                    () => navToSendEmail('Help')),
+                reusableFlatButton("Give us feedback", Icons.feedback,
+                    () => navToSendEmail('Feedback')),
+                reusableFlatButton("Log out", null, logout),
+                //getProfileDetails()
+              ],
+            ),
+          ),
+          Align(
+            alignment: Alignment.topRight,
+            child: OutlineButton(
+              color: Colors.white,
+              textColor: primaryColor,
+              onPressed: () {
+                navToProfileEdit();
+              },
+              child: Text(
+                "Edit Profile",
+                style: TextStyle(
+                    fontFamily: 'Quicksand', fontWeight: FontWeight.normal),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -2685,7 +2727,7 @@ class HomePageState extends State<HomePage> {
             Navigator.pushNamed(
               context,
               Chat.routeName,
-              arguments: ChatArgs(otherUserID),
+              arguments: ChatArgs(otherUserID, currentUser),
             );
           },
         ),
@@ -2725,7 +2767,7 @@ class HomePageState extends State<HomePage> {
     Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (BuildContext context) => ScopedModel<User>(
+          builder: (BuildContext context) => ScopedModel<CurrentUser>(
             model: currentUser,
             child: SearchPage(
               typeFilter: filter,
@@ -2851,11 +2893,14 @@ class HomePageState extends State<HomePage> {
   }
 
   void navToPayouts() {
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (BuildContext context) => PayoutsPage(),
-        ));
+    Navigator.push(context, MaterialPageRoute(
+      builder: (BuildContext context) {
+        return ScopedModel<CurrentUser>(
+          model: currentUser,
+          child: PayoutsPage(),
+        );
+      },
+    ));
   }
 
   // help=1, feedback=2
@@ -2885,8 +2930,6 @@ class HomePageState extends State<HomePage> {
   void logout() async {
     try {
       if (isAuthenticated) {
-        await prefs.remove('userID');
-
         Firestore.instance.collection('users').document(myUserID).updateData({
           'pushToken': FieldValue.arrayRemove([deviceToken]),
         });

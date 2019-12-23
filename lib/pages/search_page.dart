@@ -10,7 +10,6 @@ import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/models/current_user.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:shareapp/services/functions.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class SearchPage extends StatefulWidget {
   static const routeName = '/searchPage';
@@ -27,7 +26,6 @@ class SearchPage extends StatefulWidget {
 
 class SearchPageState extends State<SearchPage> {
   CurrentUser currentUser;
-  SharedPreferences prefs;
   Geoflutterfire geo = Geoflutterfire();
   Position currentLocation;
 
@@ -83,14 +81,11 @@ class SearchPageState extends State<SearchPage> {
 
   void getMyUserID() async {
     FirebaseUser user = await FirebaseAuth.instance.currentUser();
-    prefs = await SharedPreferences.getInstance();
-    double lat = prefs.getDouble('lat');
-    double long = prefs.getDouble('long');
-    currentLocation = Position(latitude: lat, longitude: long);
 
     if (user != null) {
       isAuthenticated = true;
       myUserID = user.uid;
+      currentLocation = currentUser.currentLocation;
     } else {
       isAuthenticated = false;
     }
@@ -104,13 +99,9 @@ class SearchPageState extends State<SearchPage> {
     currentLocation = await getUserLocation();
 
     if (currentLocation != null) {
-      await prefs.setDouble('lat', currentLocation.latitude);
-      await prefs.setDouble('long', currentLocation.longitude);
+      currentUser.updateCurrentLocation(currentLocation);
     } else {
-      double lat = prefs.getDouble('lat');
-      double long = prefs.getDouble('long');
-
-      currentLocation = Position(latitude: lat, longitude: long);
+      currentLocation = currentUser.currentLocation;
 
       showToast('Could not get location. Using last known location.');
     }
@@ -644,9 +635,8 @@ class SearchPageState extends State<SearchPage> {
             latitude: currentLocation.latitude,
             longitude: currentLocation.longitude);
 
-        stream = geo
-            .collection(collectionRef: query)
-            .within(center: center, radius: radius, field: field);
+        stream = geo.collection(collectionRef: query).within(
+            center: center, radius: radius, field: field, strictMode: true);
       }
 
       return Expanded(

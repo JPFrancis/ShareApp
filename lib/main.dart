@@ -99,8 +99,11 @@ class MyApp extends StatelessWidget {
 
               return MaterialPageRoute(
                 builder: (context) {
-                  return RentalDetail(
-                    rentalID: args.rentalID,
+                  return ScopedModel<CurrentUser>(
+                    model: args.user,
+                    child: RentalDetail(
+                      rentalID: args.rentalID,
+                    ),
                   );
                 },
               );
@@ -112,8 +115,11 @@ class MyApp extends StatelessWidget {
 
               return MaterialPageRoute(
                 builder: (context) {
-                  return Chat(
-                    otherUserID: args.otherUserID,
+                  return ScopedModel<CurrentUser>(
+                    model: args.user,
+                    child: Chat(
+                      otherUserID: args.otherUserID,
+                    ),
                   );
                 },
               );
@@ -125,9 +131,12 @@ class MyApp extends StatelessWidget {
 
               return MaterialPageRoute(
                 builder: (context) {
-                  return NewPickup(
-                    rentalID: args.rentalID,
-                    isRenter: args.isRenter,
+                  return ScopedModel<CurrentUser>(
+                    model: args.user,
+                    child: NewPickup(
+                      rentalID: args.rentalID,
+                      isRenter: args.isRenter,
+                    ),
                   );
                 },
               );
@@ -182,8 +191,11 @@ class MyApp extends StatelessWidget {
 
               return MaterialPageRoute(
                 builder: (context) {
-                  return RentalCalendar(
-                    itemDS: args.itemDS,
+                  return ScopedModel<CurrentUser>(
+                    model: args.user,
+                    child: RentalCalendar(
+                      itemDS: args.itemDS,
+                    ),
                   );
                 },
               );
@@ -194,9 +206,12 @@ class MyApp extends StatelessWidget {
 
               return MaterialPageRoute(
                 builder: (context) {
-                  return TransactionsPage(
-                    filter: args.filter,
-                    person: args.person,
+                  return ScopedModel<CurrentUser>(
+                    model: args.user,
+                    child: TransactionsPage(
+                      filter: args.filter,
+                      person: args.person,
+                    ),
                   );
                 },
               );
@@ -241,21 +256,24 @@ class ItemRequestArgs {
 
 class RentalDetailArgs {
   final String rentalID;
+  final User user;
 
-  RentalDetailArgs(this.rentalID);
+  RentalDetailArgs(this.rentalID, this.user);
 }
 
 class ChatArgs {
   final String otherUserID;
+  final User user;
 
-  ChatArgs(this.otherUserID);
+  ChatArgs(this.otherUserID, this.user);
 }
 
 class NewPickupArgs {
   final String rentalID;
   final bool isRenter;
+  final User user;
 
-  NewPickupArgs(this.rentalID, this.isRenter);
+  NewPickupArgs(this.rentalID, this.isRenter, this.user);
 }
 
 class SearchPageArgs {
@@ -280,13 +298,15 @@ class ProfilePageArgs {
 
 class RentalCalendarArgs {
   final DocumentSnapshot itemDS;
+  final User user;
 
-  RentalCalendarArgs(this.itemDS);
+  RentalCalendarArgs(this.itemDS, this.user);
 }
 
 class TransactionsPageArgs {
   final RentalPhase filter;
   final String person;
+  final User user;
 
-  TransactionsPageArgs(this.filter, this.person);
+  TransactionsPageArgs(this.filter, this.person, this.user);
 }

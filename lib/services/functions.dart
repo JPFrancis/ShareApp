@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shareapp/services/dialogs.dart';
 
 void showToast(String message) {
   Fluttertoast.showToast(
@@ -221,4 +222,33 @@ Future<Position> getUserLocation() async {
   }
 
   return currentLocation;
+}
+
+void showReportUserDialog(
+    {BuildContext context,
+    String myId,
+    String myName,
+    String offenderId,
+    String offenderName}) async {
+  double pageWidth = MediaQuery.of(context).size.width;
+
+  var value = await showDialog(
+    barrierDismissible: true,
+    context: context,
+    builder: (BuildContext context) {
+      return Container(
+        child: ReportUserDialog(
+          pageWidth: pageWidth,
+          myId: myId,
+          myName: myName,
+          offenderId: offenderId,
+          offenderName: offenderName,
+        ),
+      );
+    },
+  );
+
+  if (value != null && value is int && value == 0) {
+    showToast('Report sent!');
+  }
 }

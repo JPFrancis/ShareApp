@@ -2,8 +2,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' show timeDilation;
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:scoped_model/scoped_model.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
+import 'package:shareapp/models/current_user.dart';
 import 'package:shareapp/pages/home_page.dart';
 import 'package:shareapp/services/auth.dart';
 import 'package:shareapp/services/const.dart';
@@ -536,6 +538,17 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   }
 
   void navToAnonHomePage() async {
+    Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+      return ScopedModel<CurrentUser>(
+        model: CurrentUser(null),
+        child: HomePage(
+          auth: null,
+          firebaseUser: null,
+          onSignOut: () => Navigator.of(context).pop(),
+        ),
+      );
+    }));
+    return;
     Navigator.pushNamed(
       context,
       HomePage.routeName,

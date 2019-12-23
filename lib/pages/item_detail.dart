@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:scoped_model/scoped_model.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/models/current_user.dart';
@@ -20,7 +21,6 @@ import 'package:shareapp/pages/profile_page.dart';
 import 'package:shareapp/rentals/chat.dart';
 import 'package:shareapp/rentals/rental_calendar.dart';
 import 'package:shareapp/services/const.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class ItemDetail extends StatefulWidget {
   static const routeName = '/itemDetail';
@@ -48,7 +48,6 @@ class ItemDetailState extends State<ItemDetail> {
   double padding = 5.0;
 
   DocumentSnapshot itemDS;
-  SharedPreferences prefs;
   String myUserID;
   String itemCreator;
   String itemOwnerID;
@@ -300,7 +299,7 @@ class ItemDetailState extends State<ItemDetail> {
               onTap: () {
                 Navigator.of(context).pushNamed(
                   Chat.routeName,
-                  arguments: ChatArgs(itemOwnerID),
+                  arguments: ChatArgs(itemOwnerID, currentUser),
                 );
               },
               child: Row(
@@ -753,9 +752,12 @@ class ItemDetailState extends State<ItemDetail> {
     Item result = await Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (BuildContext context) => ItemEdit(
-            item: editItem,
-            itemId: itemDS.documentID,
+          builder: (BuildContext context) => ScopedModel<CurrentUser>(
+            model: currentUser,
+            child: ItemEdit(
+              item: editItem,
+              itemId: itemDS.documentID,
+            ),
           ),
           fullscreenDialog: true,
         ));
@@ -773,9 +775,7 @@ class ItemDetailState extends State<ItemDetail> {
         Navigator.pushNamed(
           context,
           RentalCalendar.routeName,
-          arguments: RentalCalendarArgs(
-            itemDS,
-          ),
+          arguments: RentalCalendarArgs(itemDS, currentUser),
         );
       },
     );

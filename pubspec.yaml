@@ -17,7 +17,6 @@ dependencies:
   cached_network_image: ^1.1.1
   cloud_firestore: ^0.12.9+3
   cloud_functions: ^0.4.0+2
-  date_range_picker: ^1.0.6
   dotted_border: ^1.0.2
   firebase_auth: ^0.14.0+5
   firebase_core: ^0.4.0+8
@@ -46,7 +45,7 @@ dependencies:
   path_provider: ^1.2.0
   permission_handler: ^3.2.2
   scoped_model: ^1.0.1
-  shared_preferences: ^0.5.3+4
+#  shared_preferences: ^0.5.3+4
   smooth_star_rating: ^1.0.3
   stripe_payment: ^0.1.1
   table_calendar: ^1.2.3
