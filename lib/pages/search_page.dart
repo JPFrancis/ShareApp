@@ -81,9 +81,7 @@ class SearchPageState extends State<SearchPage> {
     if (user != null) {
       isAuthenticated = true;
       myUserID = user.uid;
-      currentLocation = Position(
-          latitude: currentUser.currentLocation.latitude,
-          longitude: currentUser.currentLocation.longitude);
+      currentLocation = currentUser.currentLocation;
     } else {
       isAuthenticated = false;
     }
