@@ -861,7 +861,7 @@ class RentalCalendarState extends State<RentalCalendar>
     var rentalBeforeCurrent = await Firestore.instance
         .collection('rentals')
         .where('item', isEqualTo: itemDR)
-        .where('declined',isNull: true)
+        .where('declined', isNull: true)
         .where('pickupStart', isLessThanOrEqualTo: pickupTimeCopy)
         .orderBy('pickupStart', descending: false)
         .limit(1)
@@ -888,7 +888,7 @@ class RentalCalendarState extends State<RentalCalendar>
     var rentalAfterCurrent = await Firestore.instance
         .collection('rentals')
         .where('item', isEqualTo: itemDR)
-        .where('declined',isNull: true)
+        .where('declined', isNull: true)
         .where('pickupStart', isGreaterThanOrEqualTo: pickupTimeCopy)
         .orderBy('pickupStart', descending: false)
         .limit(1)
@@ -1011,7 +1011,7 @@ class RentalCalendarState extends State<RentalCalendar>
     // create rental in 'rentals' collection
     DocumentReference rentalDR =
         await Firestore.instance.collection("rentals").add({
-          'declined':null,
+      'declined': null,
       'status': 0,
       'requesting': true,
       'item':

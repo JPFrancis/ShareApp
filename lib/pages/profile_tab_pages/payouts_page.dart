@@ -16,6 +16,7 @@ import 'package:shareapp/services/functions.dart';
 import 'package:shareapp/services/payment_service.dart';
 import 'package:stripe_payment/stripe_payment.dart';
 import 'package:uni_links/uni_links.dart';
+import 'dart:io' show Platform;
 import 'package:url_launcher/url_launcher.dart';
 
 enum CardTapAction {
@@ -42,7 +43,7 @@ class PayoutsPageState extends State<PayoutsPage> {
 
   bool isLoading = false;
   bool stripeInit = false;
-  bool showFAB = false;
+  bool showFAB = true;
 
   @override
   void initState() {
@@ -62,15 +63,6 @@ class PayoutsPageState extends State<PayoutsPage> {
         print("--- A link got here but was invalid");
       }
     });
-  }
-
-  void test() {
-    String url =
-        'https://share-app.web.app/?code=ac_GBarfU3LILI74qNnuSmRSvd2ivkrx6bG'
-            .trim();
-
-    RegExp regExp = RegExp(r'code=(.*)');
-    String parsed = regExp.firstMatch(url).group(1);
   }
 
   @override
@@ -823,8 +815,14 @@ class PayoutsPageState extends State<PayoutsPage> {
     String email = '$random@gmail.com';
     String firstName = 'Bob';
     String lastName = 'Jones';
+    String url = '';
 
-    String url = 'https://connect.stripe.com/express/oauth/authorize?'
+    if (Platform.isAndroid) {
+      url = 'https://';
+    }
+
+    /*
+    url += 'connect.stripe.com/express/oauth/authorize?'
         'redirect_uri=https://share-app.web.app/'
         '&client_id=ca_G2aEpUUFBkF4B3U8tgcY0G5NWhCfOj2c' /*&state={STATE_VALUE}'*/
         '&stripe_user[country]=US'
@@ -834,8 +832,9 @@ class PayoutsPageState extends State<PayoutsPage> {
         '&stripe_user[first_name]=$firstName'
         '&stripe_user[last_name]=$lastName'
         '&stripe_user[product_description]=do_not_edit';
+    */
 
-    url = 'https://share-app.web.app';
+    url += 'share-app.web.app';
 
 //    debugPrint('URL: $url');
 

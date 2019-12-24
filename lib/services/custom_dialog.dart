@@ -126,6 +126,9 @@ class AlertDialog extends StatelessWidget {
         case TargetPlatform.fuchsia:
           label = semanticLabel ??
               MaterialLocalizations.of(context)?.alertDialogLabel;
+          break;
+        default:
+          break;
       }
     }
 
@@ -244,6 +247,9 @@ class SimpleDialog extends StatelessWidget {
         case TargetPlatform.fuchsia:
           label =
               semanticLabel ?? MaterialLocalizations.of(context)?.dialogLabel;
+          break;
+        default:
+          break;
       }
     }
 

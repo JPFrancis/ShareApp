@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:flutter_app_badger/flutter_app_badger.dart';
 import 'package:shareapp/services/database.dart';
 import 'package:shareapp/services/dialogs.dart';
 
@@ -109,6 +110,8 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   double pageHeight;
   double pageWidth;
+
+  bool appBadgeSupported;
 
   @override
   void initState() {
@@ -221,7 +224,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
         // Update rental status to active
         await rentalsCollection
             .document(rentalDS.documentID)
-            .updateData({'status': 3,'lastUpdateTime':DateTime.now()});
+            .updateData({'status': 3, 'lastUpdateTime': DateTime.now()});
       }
     }
 
@@ -242,7 +245,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
         // Update status of rental to 'past'
         await rentalsCollection
             .document(rentalDS.documentID)
-            .updateData({'status': 4, 'lastUpdateTime':DateTime.now()});
+            .updateData({'status': 4, 'lastUpdateTime': DateTime.now()});
       }
     }
 
@@ -413,6 +416,14 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
     if (reviewRentals.isNotEmpty) {
       showReviewDialogs();
+    }
+
+    bool res = await FlutterAppBadger.isAppBadgeSupported();
+
+    if (res) {
+      appBadgeSupported = true;
+    } else {
+      appBadgeSupported = false;
     }
 
     getCurrentLoc();
@@ -724,6 +735,11 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       default:
                         if (snapshot.hasData) {
                           var updated = snapshot.data.documents.toList().length;
+                          if (updated == 0) {
+                            FlutterAppBadger.removeBadge();
+                          } else {
+                            FlutterAppBadger.updateBadgeCount(updated);
+                          }
 
                           return updated == 0
                               ? Container(
@@ -1919,7 +1935,9 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 .collection('users')
                                 .document(myUserID))
                         .where('status', isEqualTo: 5)
-                    .where('x',)
+                        .where(
+                          'x',
+                        )
                         .orderBy('rentalEnd', descending: true)
                         .limit(3)
                         .snapshots(),
@@ -1946,7 +1964,8 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               combinedDocs.removeRange(3, combinedDocs.length);
                             }
 
-                            cards.addAll(combinedDocs.map((doc) => card(doc)).toList());
+                            cards.addAll(
+                                combinedDocs.map((doc) => card(doc)).toList());
 
                             return ListView(
                               scrollDirection: Axis.horizontal,
