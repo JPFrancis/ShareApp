@@ -435,7 +435,6 @@ exports.createCharge = functions.firestore.document('charges/{chargeId}')
                 source: "tok_visa",
                 application_fee_amount: ourFee,
                 transfer_data: {
-                    amount: ownerPayout,
                     destination: connectedAcctId,
                 },
                 description: description,
