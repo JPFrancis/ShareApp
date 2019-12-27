@@ -871,7 +871,7 @@ class PayoutsPageState extends State<PayoutsPage> {
     String lastName = 'Jones';
 
     String url = 'https://connect.stripe.com/express/oauth/authorize?'
-        'redirect_uri=share-app.web.app/'
+        'redirect_uri=share-app.web.app://'
         '&client_id=ca_G2aEpUUFBkF4B3U8tgcY0G5NWhCfOj2c' /*&state={STATE_VALUE}'*/
         '&stripe_user[country]=US'
         '&stripe_user[phone_number]=$phoneNum'
@@ -881,8 +881,8 @@ class PayoutsPageState extends State<PayoutsPage> {
         '&stripe_user[last_name]=$lastName'
         '&stripe_user[product_description]=do_not_edit';
 
-//    debugPrint('URL: $url');
-
+   url = 'share-app.web.app://';
+       
     if (await canLaunch("$url")) {
       await launch("$url", forceSafariVC: false);
     } else {

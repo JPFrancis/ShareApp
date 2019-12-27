@@ -124,8 +124,11 @@ class AlertDialog extends StatelessWidget {
           break;
         case TargetPlatform.android:
         case TargetPlatform.fuchsia:
-          label = semanticLabel ??
-              MaterialLocalizations.of(context)?.alertDialogLabel;
+          label =
+              semanticLabel ?? MaterialLocalizations.of(context)?.dialogLabel;
+          break;
+        default:
+          break;
       }
     }
 
