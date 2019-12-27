@@ -21,6 +21,14 @@
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>share-app.web.app</string>
+			</array>
+			<key>CFBundleURLName</key>
+			<string>com.rohithv.shareapp</string>
+		</dict>
+		<dict>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
@@ -55,6 +63,10 @@
 	<string>This app needs access to location when open and in the background.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Can I use the mic please?</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>rohithvshareapp</string>
+	</array>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Can I use the PhotoLibrary please?</string>
 	<key>UILaunchStoryboardName</key>
