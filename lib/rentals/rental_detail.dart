@@ -462,8 +462,6 @@ class RentalDetailState extends State<RentalDetail> {
       return;
     }
 
-
-
     setState(() {
       isLoading = false;
     });
@@ -1164,7 +1162,7 @@ class RentalDetailState extends State<RentalDetail> {
 
   void handleAcceptedRental() async {
     setState(() {
-      isLoading=true;
+      isLoading = true;
     });
 
     updateStatus(2);
@@ -1191,7 +1189,8 @@ class RentalDetailState extends State<RentalDetail> {
       double baseChargeAmount = (itemPrice + tax + ourFee) * 1.029 + 0.3;
       int finalCharge = (baseChargeAmount * 100).round();
 
-      var snap = await Firestore.instance.collection('users').document(ownerId).get();
+      var snap =
+          await Firestore.instance.collection('users').document(ownerId).get();
 
       Map transferData = {
         'ourFee': ourFee * 100,
@@ -1213,7 +1212,7 @@ class RentalDetailState extends State<RentalDetail> {
       );
 
       setState(() {
-        isLoading=false;
+        isLoading = false;
       });
     });
   }

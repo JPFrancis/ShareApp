@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:typed_data';
+import 'dart:io' show Platform;
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -1103,9 +1104,16 @@ class ItemEditState extends State<ItemEdit> {
 
     String firstName = first ?? '';
     String lastName = last ?? '';
+    String redirectUri = '';
+
+    if (Platform.isAndroid) {
+      redirectUri += 'https://';
+    }
+
+    redirectUri += 'share-app.web.app/';
 
     String url = 'https://connect.stripe.com/express/oauth/authorize?'
-        'redirect_uri=https://share-app.web.app/'
+        'redirect_uri=$redirectUri'
         '&client_id=ca_G2aEpUUFBkF4B3U8tgcY0G5NWhCfOj2c' /*&state={STATE_VALUE}'*/
         '&stripe_user[country]=US'
         '&stripe_user[phone_number]=${currentUser.phoneNum}'
