@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter_app_badger/flutter_app_badger.dart';
+import 'package:shareapp/models/rental.dart';
 import 'package:shareapp/services/database.dart';
 import 'package:shareapp/services/dialogs.dart';
 
@@ -626,13 +627,15 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
         var value = await showDialog(
           barrierDismissible: true,
           context: context,
-          builder: (BuildContext context) {
-            return ReviewDialog(
-              rentalDS: rentalDS,
-              myUserId: myUserID,
-              isRenter: isRenter,
-              pageHeight: pageHeight,
-              pageWidth: pageWidth,
+          builder: (BuildContext dialogContext) {
+            return ScopedModel<Rental>(
+              model: Rental(rentalDS),
+              child: ReviewDialog(
+                myUserId: myUserID,
+                isRenter: isRenter,
+                pageHeight: pageHeight,
+                pageWidth: pageWidth,
+              ),
             );
           },
         );
@@ -874,7 +877,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 context,
                                 RentalDetail.routeName,
                                 arguments: RentalDetailArgs(
-                                  rentalDS,
+                                  Rental(rentalDS),
                                   currentUser,
                                 ),
                               );
@@ -1663,7 +1666,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                                 Navigator.pushNamed(context,
                                                     RentalDetail.routeName,
                                                     arguments: RentalDetailArgs(
-                                                        rentalDS.documentID,
+                                                        Rental(rentalDS),
                                                         currentUser));
                                               },
                                               child: Row(
@@ -1830,7 +1833,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
         padding: EdgeInsets.only(left: 10.0),
         child: InkWell(
           onTap: () => Navigator.pushNamed(context, RentalDetail.routeName,
-              arguments: RentalDetailArgs(rentalDS.documentID, currentUser)),
+              arguments: RentalDetailArgs(Rental(rentalDS), currentUser)),
           child: Container(
             width: MediaQuery.of(context).size.width / 2,
             decoration: BoxDecoration(

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shareapp/models/rental.dart';
 import 'package:shareapp/services/dialogs.dart';
 
 void showToast(String message) {
@@ -82,7 +83,7 @@ Map setChatUserData(Map user0, Map user1) {
 Future<void> submitReview(
   bool isRenter,
   String myUserId,
-  DocumentSnapshot rentalDS,
+  Rental rental,
   String reviewNote,
   double communicationRating,
   double itemQualityRating,
@@ -90,7 +91,7 @@ Future<void> submitReview(
   double renterRating,
 ) async {
   String otherUserId =
-      isRenter ? rentalDS['owner'].documentID : rentalDS['renter'].documentID;
+      isRenter ? rental.ownerRef.documentID : rental.renterRef.documentID;
 
   if (isRenter) {
     if (communicationRating > 0 &&
@@ -109,7 +110,7 @@ Future<void> submitReview(
 
       return await Firestore.instance
           .collection('rentals')
-          .document(rentalDS.documentID)
+          .document(rental.id)
           .updateData({
         'lastUpdateTime': DateTime.now(),
         'ownerReview': review,
@@ -150,7 +151,7 @@ Future<void> submitReview(
     if (renterRating > 0) {
       return await Firestore.instance
           .collection('rentals')
-          .document(rentalDS.documentID)
+          .document(rental.id)
           .updateData({
         'lastUpdateTime': DateTime.now(),
         'renterReview': {

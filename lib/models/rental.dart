@@ -32,6 +32,7 @@ int status
 */
 
 class Rental extends Model {
+  String id;
   DateTime created;
   DateTime lastUpdateTime;
   DateTime pickupStart;
@@ -39,7 +40,7 @@ class Rental extends Model {
   DateTime rentalEnd;
 
   int status;
-  int price;
+  double price;
   int duration;
 
   bool requesting;
@@ -80,6 +81,7 @@ class Rental extends Model {
   void updateData(DocumentSnapshot snap, {bool constructor}) {
     Map data = snap.data;
 
+    this.id = snap.documentID;
     this.created = (data['created'] as Timestamp).toDate();
     this.lastUpdateTime = (data['lastUpdateTime'] as Timestamp).toDate();
     this.pickupStart = (data['pickupStart'] as Timestamp).toDate();
@@ -103,11 +105,15 @@ class Rental extends Model {
     this.ownerName = ownerData['name'];
 
     Map ownerReview = data['ownerReview'];
-    this.ownerReviewAverage = ownerReview['average'];
-    this.ownerReviewCommunication = ownerReview['communication'];
-    this.ownerReviewItemQuality = ownerReview['itemQuality'];
-    this.ownerReviewOverall = ownerReview['overall'];
-    this.ownerReviewNote = ownerReview['reviewNote'];
+
+    if (ownerReview != null) {
+      this.ownerReviewAverage = ownerReview['average'];
+      this.ownerReviewCommunication = ownerReview['communication'];
+      this.ownerReviewItemQuality = ownerReview['itemQuality'];
+      this.ownerReviewOverall = ownerReview['overall'];
+      this.ownerReviewNote = ownerReview['reviewNote'];
+    }
+
     this.ownerReviewSubmitted = data['ownerReviewSubmitted'];
 
     this.renterRef = data['renter'];
@@ -116,8 +122,12 @@ class Rental extends Model {
     this.renterName = renterData['name'];
 
     Map renterReview = data['renterReview'];
-    this.renterReviewRating = renterReview['rating'];
-    this.renterReviewNote = renterReview['reviewNote'];
+
+    if (renterReview != null) {
+      this.renterReviewRating = renterReview['rating'];
+      this.renterReviewNote = renterReview['reviewNote'];
+    }
+    
     this.renterReviewSubmitted = data['renterReviewSubmitted'];
 
     this.users = []..addAll(data['users']);

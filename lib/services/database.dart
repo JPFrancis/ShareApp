@@ -35,4 +35,8 @@ class DB {
       throw e.toString();
     }
   }
+
+  Stream<DocumentSnapshot> getRentalStream(String rentalId) {
+    return db.collection('rentals').document(rentalId).snapshots();
+  }
 }

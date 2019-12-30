@@ -20,6 +20,7 @@ import 'package:shareapp/services/auth.dart';
 import 'package:shareapp/services/const.dart';
 
 import 'models/current_user.dart';
+import 'models/rental.dart';
 import 'models/user.dart';
 
 //void main() => runApp(MyApp());
@@ -101,8 +102,9 @@ class MyApp extends StatelessWidget {
                 builder: (context) {
                   return ScopedModel<CurrentUser>(
                     model: args.user,
-                    child: RentalDetail(
-                      rentalID: args.rentalID,
+                    child: ScopedModel<Rental>(
+                      model: args.rental,
+                      child: RentalDetail(),
                     ),
                   );
                 },
@@ -255,10 +257,10 @@ class ItemRequestArgs {
 }
 
 class RentalDetailArgs {
-  final String rentalID;
+  final Rental rental;
   final User user;
 
-  RentalDetailArgs(this.rentalID, this.user);
+  RentalDetailArgs(this.rental, this.user);
 }
 
 class ChatArgs {

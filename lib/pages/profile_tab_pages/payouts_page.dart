@@ -10,6 +10,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/models/current_user.dart';
+import 'package:shareapp/models/rental.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:shareapp/services/functions.dart';
@@ -574,7 +575,7 @@ class PayoutsPageState extends State<PayoutsPage> {
                                           onTap: () => Navigator.pushNamed(
                                               context, RentalDetail.routeName,
                                               arguments: RentalDetailArgs(
-                                                  rentalDS.documentID,
+                                                  Rental(rentalDS),
                                                   currentUser)),
                                           child: Container(
                                             decoration: BoxDecoration(
