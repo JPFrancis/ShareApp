@@ -1106,15 +1106,11 @@ class ItemEditState extends State<ItemEdit> {
     String lastName = last ?? '';
     String redirectUri = '';
 
-    if (Platform.isAndroid) {
-      redirectUri += 'https://';
-    }
-
     redirectUri += 'share-app.web.app/';
 
     String url = 'https://connect.stripe.com/express/oauth/authorize?'
         'redirect_uri=$redirectUri'
-        '&client_id=ca_G2aEpUUFBkF4B3U8tgcY0G5NWhCfOj2c' /*&state={STATE_VALUE}'*/
+        '&client_id=ca_G2aEpUUFBkF4B3U8tgcY0G5NWhCfOj2c'
         '&stripe_user[country]=US'
         '&stripe_user[phone_number]=${currentUser.phoneNum}'
         '&stripe_user[business_type]=individual'
