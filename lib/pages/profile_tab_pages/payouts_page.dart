@@ -866,9 +866,8 @@ class PayoutsPageState extends State<PayoutsPage> {
     if (Platform.isAndroid) {
       url = 'https://';
     }
-
-    /*
-    url += 'connect.stripe.com/express/oauth/authorize?'
+   
+    url += 'https://connect.stripe.com/express/oauth/authorize?'
         'redirect_uri=https://share-app.web.app/'
         '&client_id=ca_G2aEpUUFBkF4B3U8tgcY0G5NWhCfOj2c' /*&state={STATE_VALUE}'*/
         '&stripe_user[country]=US'
@@ -878,14 +877,16 @@ class PayoutsPageState extends State<PayoutsPage> {
         '&stripe_user[first_name]=$firstName'
         '&stripe_user[last_name]=$lastName'
         '&stripe_user[product_description]=do_not_edit';
-    */
 
-    url += 'share-app.web.app';
+    //url += 'https://share-app.web.app';
 
 //    debugPrint('URL: $url');
 
     if (await canLaunch(url)) {
-      await launch(url);
+      debugPrint("eee");
+      await launch(url, forceSafariVC: false, universalLinksOnly: false);
+    }else{
+      debugPrint("nooo");
     }
 
 //    HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
