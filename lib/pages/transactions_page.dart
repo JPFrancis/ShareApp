@@ -106,38 +106,30 @@ class TransactionsPageState extends State<TransactionsPage> {
   Widget showBody() {
     return Container(
       padding: EdgeInsets.all(15),
-      child: Column(
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          Text('Showing rentals where you are the item $person'),
-          Container(height: 15),
-          Text('Showing rentals with status $rentalStatus'),
-          Container(height: 15),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          //Text('Showing rentals where you are the item $person'),
+          //Text('Showing rentals with status $rentalStatus'),
+          Column(
             children: <Widget>[
-              ownerRenterSelector(),
-              rentalStatusSelector(),
+              Container(alignment: Alignment.topLeft, child: ownerRenterSelector()),
+              Container(alignment: Alignment.bottomRight, child: rentalStatusSelector()),
             ],
           ),
           Container(height: 15),
-          Expanded(
-            child: buildRentals(),
-          )
+          Expanded(child: buildRentals(),)
         ],
       ),
     );
   }
 
   Widget ownerRenterSelector() {
-    String hint = 'Role: $person';
+    String hint = 'You are the: $person';
 
     return DropdownButtonHideUnderline(
       child: DropdownButton<String>(
           isDense: true,
-          hint: Text(
-            hint,
-            style: TextStyle(fontFamily: font, fontWeight: FontWeight.w500),
-          ),
+          hint: Text(hint, style: TextStyle(fontFamily: font, fontWeight: FontWeight.w500)),
           onChanged: (value) {
             switch (value) {
               case 'Owner':
@@ -147,23 +139,14 @@ class TransactionsPageState extends State<TransactionsPage> {
                 person = 'renter';
                 break;
             }
-
             getStream();
           },
-          items: [
-            'Owner',
-            'Renter',
-          ]
-              .map(
-                (selection) => DropdownMenuItem<String>(
-                  value: selection,
-                  child: Text(
-                    selection,
-                    style: TextStyle(fontFamily: font),
-                  ),
-                ),
-              )
-              .toList()),
+          items: ['Owner', 'Renter',].map(
+            (selection) => DropdownMenuItem<String>(
+              value: selection,
+              child: Text(selection, style: TextStyle(fontFamily: font),),
+            ),
+          ).toList()),
     );
   }
 

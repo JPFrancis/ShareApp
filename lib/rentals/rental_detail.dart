@@ -199,49 +199,8 @@ class RentalDetailState extends State<RentalDetail> {
                 children: <Widget>[
                   showItemImage(),
                   showItemCreator(),
-//                  Container(
-//                    padding: EdgeInsets.symmetric(horizontal: 15),
-//                    child: RaisedButton(
-//                      onPressed: () async {
-//                        var duration = rentalDS['duration'].toInt();
-//                        var price = rentalDS['price'].toInt();
-//                        double itemPrice = (duration * price).toDouble();
-//                        double tax = itemPrice * 0.06;
-//                        double ourFee = itemPrice * 0.07;
-//                        double baseChargeAmount =
-//                            (itemPrice + tax + ourFee) * 1.029 + 0.3;
-//                        int finalCharge = (baseChargeAmount * 100).round();
-//
-//                        Map transferData = {
-//                          'ourFee': ourFee * 100,
-//                          'ownerPayout': itemPrice * 100,
-//                        };
-//
-//                        PaymentService().createSubscription(
-//                          rentalDS.documentID,
-//                          rentalDS['duration'],
-//                          rentalDS['pickupStart'],
-//                          rentalDS['rentalEnd'],
-//                          renterId,
-//                          ownerId,
-//                          finalCharge,
-//                          transferData,
-//                          '${rentalDS['renterData']['name']} paying ${rentalDS['ownerData']['name']} '
-//                          'for renting ${rentalDS['itemName']}',
-//                        );
-//                      },
-//                      textColor: Colors.white,
-//                      color: Colors.green,
-//                      child: Text('Charge'),
-//                    ),
-//                  ),
-                  SizedBox(
-                    height: 20.0,
-                  ),
-                  Container(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: MediaQuery.of(context).size.width / 25),
-                      child: showItemRequestStatus()),
+                  SizedBox(height: 20.0,),
+                  Container(padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width / 25), child: showItemRequestStatus()),
                   divider(),
                   showRequestButtons(),
                   //showReceiveItemButton(),
@@ -1153,34 +1112,18 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   Widget showRequestButtons() {
-    return (isRenter && rental.status == 1) || (!isRenter && rental.status == 0)
+    return !(isRenter && rental.status == 1) || (!isRenter && rental.status == 0)
         ? Container(
-            padding: EdgeInsets.all(15),
+            padding: EdgeInsets.symmetric(horizontal: 15),
             child: Column(
               children: <Widget>[
-                Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: reusableButton('Accept', Colors.green, () {
-                        handleAcceptedRental();
-                      }),
-                    ),
-                    Container(
-                      width: 10,
-                    ),
-                    Expanded(
-                      child: reusableButton('Propose new time',
-                          Colors.orange[700], newPickupProposal),
-                    ),
-                    Container(
-                      width: 10,
-                    ),
-                    Expanded(
-                      child: reusableButton('Decline', Colors.red[800],
-                          () => removeRentalWarning(EndRentalType.decline)),
-                    ),
-                  ],
-                ),
+                Row(children: <Widget>[
+                  Expanded(child: reusableButton('Accept', primaryColor, () {handleAcceptedRental(); }),),
+                  Container(width: 10,),
+                  Expanded(child: reusableButton('Propose new time', Color(0xfffa9200),  newPickupProposal),),
+                  Container(width: 10,),
+                  Expanded(child: reusableButton('Decline', Color(0xffff6961), () => removeRentalWarning(EndRentalType.decline)),),
+                ],),
                 /*
                 Container(
                   padding: EdgeInsets.only(top: 15),
@@ -1204,7 +1147,7 @@ class RentalDetailState extends State<RentalDetail> {
       height: 60,
       child: RaisedButton(
         shape: new RoundedRectangleBorder(
-            borderRadius: new BorderRadius.circular(5.0)),
+            borderRadius: new BorderRadius.circular(10.0)),
         color: color,
         textColor: Colors.white,
         child: Text(
@@ -1267,9 +1210,9 @@ class RentalDetailState extends State<RentalDetail> {
         return showCompletedReview();
       } else {
         return Container(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
+              reusableCategory("REVIEW"),
+              SizedBox(height: 5.0,),
               starRating('How was the communication?', 1),
               starRating('How was the quality of the item?', 2),
               starRating('How was your overall experience?', 3),
@@ -1349,44 +1292,43 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   Widget starRating(String text, int indicator) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Text(
-          text,
-          style: TextStyle(fontSize: 18),
-        ),
-        SmoothStarRating(
-          allowHalfRating: false,
-          onRatingChanged: (double value) {
-            switch (indicator) {
-              case 1:
-                communicationRating = value;
-                debugPrint('Communication: $communicationRating');
-                break;
-              case 2:
-                itemQualityRating = value;
-                debugPrint('item quality: $itemQualityRating');
-                break;
-              case 3:
-                overallExpRating = value;
-                debugPrint('overal exp: $overallExpRating');
-                break;
-              case 4:
-                renterRating = value;
-                debugPrint('renter rating: $renterRating');
-                break;
-            }
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 15.0),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
+          Text(text, style: TextStyle(fontSize: 18, fontFamily: appFont,)),
+          SmoothStarRating(
+            allowHalfRating: false,
+            onRatingChanged: (double value) {
+              switch (indicator) {
+                case 1:
+                  communicationRating = value;
+                  debugPrint('Communication: $communicationRating');
+                  break;
+                case 2:
+                  itemQualityRating = value;
+                  debugPrint('item quality: $itemQualityRating');
+                  break;
+                case 3:
+                  overallExpRating = value;
+                  debugPrint('overal exp: $overallExpRating');
+                  break;
+                case 4:
+                  renterRating = value;
+                  debugPrint('renter rating: $renterRating');
+                  break;
+              }
 
-            setState(() {});
-          },
-          starCount: 5,
-          rating: getRating(indicator),
-          size: 35.0,
-          color: Colors.yellow[800],
-          borderColor: Colors.black,
-        )
-      ],
+              setState(() {});
+            },
+            starCount: 5,
+            rating: getRating(indicator),
+            size: 35.0,
+            color: Colors.yellow[800],
+            borderColor: Colors.black,
+            spacing: 1,
+          )
+        ],
+      ),
     );
   }
 
@@ -1409,13 +1351,9 @@ class RentalDetailState extends State<RentalDetail> {
     return RaisedButton(
       shape: new RoundedRectangleBorder(
           borderRadius: new BorderRadius.circular(5.0)),
-      color: Colors.green,
+      color: primaryColor,
       textColor: Colors.white,
-      child: Text(
-        'Submit Review',
-        //addButton + " Images",
-        textScaleFactor: 1.25,
-      ),
+      child: Text('Submit Review', textScaleFactor: 1.25, style: TextStyle(fontFamily: appFont),),
       onPressed: () {
         updateReview();
       },
