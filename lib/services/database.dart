@@ -41,8 +41,24 @@ class DB {
     return db.collection('rentals').document(rentalId).snapshots();
   }
 
-  Future<dynamic> checkAcceptRental(Rental rental) {
-    try {} catch (e) {
+  Future<dynamic> checkAcceptRental(Rental rental) async {
+    try {
+      List rentalDays = []..addAll(rental.rentalDays);
+
+      var snaps = await db
+          .collection('rentals')
+          .where('item', isEqualTo: rental.itemRef)
+          .where('rentalDays', arrayContainsAny: rentalDays)
+          .where('status', isGreaterThanOrEqualTo: 2)
+          .limit(1)
+          .getDocuments();
+
+      if (snaps != null && snaps.documents.isNotEmpty) {
+        throw 'Someone else accepted a rental during this time!';
+      } else {
+        return 0;
+      }
+    } catch (e) {
       throw e.toString();
     }
   }

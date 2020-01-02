@@ -1224,58 +1224,67 @@ class RentalDetailState extends State<RentalDetail> {
       isLoading = true;
     });
 
-    updateStatus(2);
-
-    DocumentSnapshot otherUserDS = await Firestore.instance
-        .collection('users')
-        .document(otherUserId)
-        .get();
-
-    await Future.delayed(Duration(milliseconds: 500));
-
-    Firestore.instance.collection('notifications').add({
-      'title': '${currentUser.name} accepted your pickup window',
-      'body': 'Item: ${rental.itemName}',
-      'pushToken': otherUserDS['pushToken'],
-      'rentalID': rental.id,
-      'timestamp': DateTime.now().millisecondsSinceEpoch,
-    }).then((_) async {
-      var duration = rental.duration;
-      var price = rental.price;
-      double itemPrice = (duration * price).toDouble();
-      double tax = itemPrice * 0.06;
-      double ourFee = itemPrice * 0.07;
-      double baseChargeAmount = (itemPrice + tax + ourFee) * 1.029 + 0.3;
-      int finalCharge = (baseChargeAmount * 100).round();
-
-      var snap = await Firestore.instance
-          .collection('users')
-          .document(rental.ownerRef.documentID)
-          .get();
-
-      Map transferData = {
-        'ourFee': ourFee * 100,
-        'ownerPayout': itemPrice * 100,
-        'connectedAcctId': snap['connectedAcctId'],
-      };
-
-      PaymentService().chargeRental(
-        rental.id,
-        rental.duration,
-        Timestamp.fromDate(rental.pickupStart),
-        Timestamp.fromDate(rental.rentalEnd),
-        rental.renterRef.documentID,
-        rental.ownerRef.documentID,
-        finalCharge,
-        transferData,
-        '${rental.renterName} paying ${rental.ownerName} '
-        'for renting ${rental.itemName}',
-      );
-
+    dynamic value = await DB().checkAcceptRental(rental).catchError((e) {
       setState(() {
+        showToast(e.toString());
         isLoading = false;
       });
     });
+
+    if (value != null && value is int && value == 0) {
+      updateStatus(2);
+
+      DocumentSnapshot otherUserDS = await Firestore.instance
+          .collection('users')
+          .document(otherUserId)
+          .get();
+
+      await Future.delayed(Duration(milliseconds: 500));
+
+      Firestore.instance.collection('notifications').add({
+        'title': '${currentUser.name} accepted your pickup window',
+        'body': 'Item: ${rental.itemName}',
+        'pushToken': otherUserDS['pushToken'],
+        'rentalID': rental.id,
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+      }).then((_) async {
+        var duration = rental.duration;
+        var price = rental.price;
+        double itemPrice = (duration * price).toDouble();
+        double tax = itemPrice * 0.06;
+        double ourFee = itemPrice * 0.07;
+        double baseChargeAmount = (itemPrice + tax + ourFee) * 1.029 + 0.3;
+        int finalCharge = (baseChargeAmount * 100).round();
+
+        var snap = await Firestore.instance
+            .collection('users')
+            .document(rental.ownerRef.documentID)
+            .get();
+
+        Map transferData = {
+          'ourFee': ourFee * 100,
+          'ownerPayout': itemPrice * 100,
+          'connectedAcctId': snap['connectedAcctId'],
+        };
+
+        PaymentService().chargeRental(
+          rental.id,
+          rental.duration,
+          Timestamp.fromDate(rental.pickupStart),
+          Timestamp.fromDate(rental.rentalEnd),
+          rental.renterRef.documentID,
+          rental.ownerRef.documentID,
+          finalCharge,
+          transferData,
+          '${rental.renterName} paying ${rental.ownerName} '
+          'for renting ${rental.itemName}',
+        );
+
+        setState(() {
+          isLoading = false;
+        });
+      });
+    }
   }
 
   Widget showRequestButtons() {
