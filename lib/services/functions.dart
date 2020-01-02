@@ -256,7 +256,7 @@ void showReportUserDialog(
   }
 }
 
-List<DateTime> getDatesInRange(DateTime start, DateTime end) {
+List getDatesInRange(DateTime start, DateTime end) {
   List rentalDays = [];
 
   DateTime parsedStart = stripHourMin(start);
@@ -267,6 +267,8 @@ List<DateTime> getDatesInRange(DateTime start, DateTime end) {
       curr = curr.add(Duration(days: 1))) {
     rentalDays.add(curr);
   }
+
+  rentalDays.sort();
 
   return rentalDays;
 }
