@@ -127,7 +127,7 @@ class Rental extends Model {
       this.renterReviewRating = renterReview['rating'];
       this.renterReviewNote = renterReview['reviewNote'];
     }
-    
+
     this.renterReviewSubmitted = data['renterReviewSubmitted'];
 
     this.users = []..addAll(data['users']);

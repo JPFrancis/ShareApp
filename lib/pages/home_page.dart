@@ -61,7 +61,6 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   FirebaseUser firebaseUser;
 
-  String myUserID;
   List<Item> itemList;
   Future<File> selectedImage;
   File imageFile;
@@ -162,7 +161,6 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
 //      setPrefs();
     } else {
       isAuthenticated = true;
-      myUserID = firebaseUser.uid;
       updateLastActiveAndPushToken();
     }
 
@@ -192,7 +190,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
     var rentalQuerySnaps = await rentalsCollection
         .where('users',
             arrayContains:
-                Firestore.instance.collection('users').document(myUserID))
+                Firestore.instance.collection('users').document(currentUser.id))
         .where('requesting', isEqualTo: true)
         .where('lastUpdateTime',
             isLessThan: DateTime.now().subtract(Duration(days: 1)))
@@ -212,7 +210,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
     rentalQuerySnaps = await rentalsCollection
         .where('users',
             arrayContains:
-                Firestore.instance.collection('users').document(myUserID))
+                Firestore.instance.collection('users').document(currentUser.id))
         .where('status', isEqualTo: 2)
         .where('pickupStart', isLessThanOrEqualTo: DateTime.now())
         .getDocuments();
@@ -233,7 +231,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
     rentalQuerySnaps = await rentalsCollection
         .where('users',
             arrayContains:
-                Firestore.instance.collection('users').document(myUserID))
+                Firestore.instance.collection('users').document(currentUser.id))
         .where('status', isEqualTo: 3)
         .where('rentalEnd', isLessThanOrEqualTo: DateTime.now())
         .getDocuments();
@@ -254,7 +252,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
     await localNotificationManager.cancelAll();
 
     DocumentReference userDR =
-        Firestore.instance.collection('users').document(myUserID);
+        Firestore.instance.collection('users').document(currentUser.id);
     rentalQuerySnaps = await Firestore.instance
         .collection('rentals')
         .where('users', arrayContains: userDR)
@@ -356,7 +354,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
     QuerySnapshot snaps = await itemRef
         .where('creator',
             isEqualTo:
-                Firestore.instance.collection('users').document(myUserID))
+                Firestore.instance.collection('users').document(currentUser.id))
         .where('unavailable', isGreaterThan: []).getDocuments();
     List<DocumentSnapshot> docs = snaps.documents;
 
@@ -389,7 +387,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
     rentalQuerySnaps = await rentalsCollection
         .where('renter',
             isEqualTo:
-                Firestore.instance.collection('users').document(myUserID))
+                Firestore.instance.collection('users').document(currentUser.id))
         .where('status', isEqualTo: 4)
         .where('ownerReviewSubmitted', isEqualTo: false)
         .getDocuments();
@@ -404,7 +402,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
     rentalQuerySnaps = await rentalsCollection
         .where('owner',
             isEqualTo:
-                Firestore.instance.collection('users').document(myUserID))
+                Firestore.instance.collection('users').document(currentUser.id))
         .where('status', isEqualTo: 4)
         .where('renterReviewSubmitted', isEqualTo: false)
         .getDocuments();
@@ -520,7 +518,10 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
   void updateLastActiveAndPushToken() async {
     firebaseMessaging.getToken().then((token) {
       deviceToken = token;
-      Firestore.instance.collection('users').document(myUserID).updateData({
+      Firestore.instance
+          .collection('users')
+          .document(currentUser.id)
+          .updateData({
         'lastActive': DateTime.now().millisecondsSinceEpoch,
         'pushToken': token,
       });
@@ -589,7 +590,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 onPressed: () async {
                   await Firestore.instance
                       .collection('users')
-                      .document(myUserID)
+                      .document(currentUser.id)
                       .updateData({'acceptedTOS': true});
 
                   currentUser.acceptTOS();
@@ -621,7 +622,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
       for (int i = 0; i < reviewRentals.length; i++) {
         DocumentSnapshot rentalDS = reviewRentals[i];
         DocumentReference userRef =
-            Firestore.instance.collection('users').document(myUserID);
+            Firestore.instance.collection('users').document(currentUser.id);
         bool isRenter = rentalDS['renter'] == userRef ? true : false;
 
         var value = await showDialog(
@@ -631,7 +632,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
             return ScopedModel<Rental>(
               model: Rental(rentalDS),
               child: ReviewDialog(
-                myUserId: myUserID,
+                myUserId: currentUser.id,
                 isRenter: isRenter,
                 pageHeight: pageHeight,
                 pageWidth: pageWidth,
@@ -686,19 +687,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
               );
             } else {
               navigateToEdit(
-                Item(
-                  isVisible: true,
-                  creator:
-                      Firestore.instance.collection('users').document(myUserID),
-                  name: '',
-                  description: '',
-                  type: null,
-                  condition: null,
-                  price: 0,
-                  numImages: 0,
-                  images: new List(),
-                  location: {'geopoint': null},
-                ),
+                Item(userId: currentUser.id),
                 false,
               );
             }
@@ -724,7 +713,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       .where('owner',
                           isEqualTo: Firestore.instance
                               .collection('users')
-                              .document(myUserID))
+                              .document(currentUser.id))
                       .where('requesting', isEqualTo: true)
                       .snapshots(),
                   builder: (BuildContext context,
@@ -1082,7 +1071,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       DocumentSnapshot itemDS = items[index];
                       DocumentReference creatorRef = itemDS['creator'];
 
-                      return myUserID == creatorRef.documentID
+                      return currentUser.id == creatorRef.documentID
                           ? Container()
                           : ScopedModel<User>(
                               model: currentUser,
@@ -1528,8 +1517,9 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
         stream: Firestore.instance
             .collection('items')
             .where('creator',
-                isEqualTo:
-                    Firestore.instance.collection('users').document(myUserID))
+                isEqualTo: Firestore.instance
+                    .collection('users')
+                    .document(currentUser.id))
             .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
@@ -1565,7 +1555,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
         .collection('rentals')
         .where(person,
             isEqualTo:
-                Firestore.instance.collection('users').document(myUserID))
+                Firestore.instance.collection('users').document(currentUser.id))
         .where('requesting', isEqualTo: true)
         .snapshots();
     var status;
@@ -1785,7 +1775,8 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Widget buildTransactions(RentalPhase rentalStatus, person) {
     Query query = Firestore.instance.collection('rentals').where(person,
-        isEqualTo: Firestore.instance.collection('users').document(myUserID));
+        isEqualTo:
+            Firestore.instance.collection('users').document(currentUser.id));
 
     switch (rentalStatus) {
       case RentalPhase.requesting:
@@ -1936,7 +1927,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         .where(person,
                             isEqualTo: Firestore.instance
                                 .collection('users')
-                                .document(myUserID))
+                                .document(currentUser.id))
                         .where('status', isEqualTo: 5)
                         .where(
                           'x',
@@ -2038,7 +2029,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 .where('owner',
                                     isEqualTo: Firestore.instance
                                         .collection('users')
-                                        .document(myUserID))
+                                        .document(currentUser.id))
                                 .where('requesting', isEqualTo: true)
                                 .snapshots(),
                             builder: (BuildContext context,
@@ -2464,7 +2455,8 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Widget getProfileDetails() {
     return FutureBuilder(
-      future: Firestore.instance.collection('users').document(myUserID).get(),
+      future:
+          Firestore.instance.collection('users').document(currentUser.id).get(),
       builder: (BuildContext context, AsyncSnapshot snapshot) {
         if (snapshot.hasData) {
           DocumentSnapshot ds = snapshot.data;
@@ -2522,8 +2514,9 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
         stream: Firestore.instance
             .collection('rentals')
             .where('renter',
-                isEqualTo:
-                    Firestore.instance.collection('users').document(myUserID))
+                isEqualTo: Firestore.instance
+                    .collection('users')
+                    .document(currentUser.id))
             .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
@@ -2617,7 +2610,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
       child: StreamBuilder<QuerySnapshot>(
         stream: Firestore.instance
             .collection('messages')
-            .where('users', arrayContains: myUserID)
+            .where('users', arrayContains: currentUser.id)
             .orderBy('lastSent.timestamp', descending: true)
             .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
@@ -2638,10 +2631,10 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     var timestamp = chatDS['lastSent']['timestamp'];
 
                     if (combinedID.length == 2) {
-                      if (myUserID == combinedID[0]) {
+                      if (currentUser.id == combinedID[0]) {
                         otherUser = chatDS['user1'];
                         otherUserId = combinedID[1];
-                      } else if (myUserID == combinedID[1]) {
+                      } else if (currentUser.id == combinedID[1]) {
                         otherUser = chatDS['user0'];
                         otherUserId = combinedID[0];
                       }
@@ -2921,7 +2914,10 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
   void logout() async {
     try {
       if (isAuthenticated) {
-        Firestore.instance.collection('users').document(myUserID).updateData({
+        Firestore.instance
+            .collection('users')
+            .document(currentUser.id)
+            .updateData({
           'pushToken': FieldValue.arrayRemove([deviceToken]),
         });
 

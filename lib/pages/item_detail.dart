@@ -756,7 +756,7 @@ class ItemDetailState extends State<ItemDetail> {
   }
 
   void navigateToEdit() async {
-    Item editItem = Item.fromMap(itemDS.data);
+    Item editItem = Item(snap: itemDS);
 
     Item result = await Navigator.push(
         context,
