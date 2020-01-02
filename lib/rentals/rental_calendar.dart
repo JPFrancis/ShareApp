@@ -1016,6 +1016,10 @@ class RentalCalendarState extends State<RentalCalendar>
       }
     }
 
+    DateTime rentalEnd = pickupTime.add(Duration(days: duration, hours: 1));
+    List rentalDays =
+        getDatesInRange(pickupTime, rentalEnd.add(Duration(hours: 1)));
+
     // create rental in 'rentals' collection
     DocumentReference rentalDR =
         await Firestore.instance.collection("rentals").add({
@@ -1040,7 +1044,7 @@ class RentalCalendarState extends State<RentalCalendar>
       },
       'pickupStart': pickupTime,
       'pickupEnd': pickupTime.add(Duration(hours: 1)),
-      'rentalEnd': pickupTime.add(Duration(days: duration, hours: 1)),
+      'rentalEnd': rentalEnd,
       'created': DateTime.now(),
       'lastUpdateTime': DateTime.now(),
       'duration': duration,
@@ -1060,6 +1064,7 @@ class RentalCalendarState extends State<RentalCalendar>
         'itemName': itemDS['name'],
       },
       'price': dailyRate,
+      'rentalDays': rentalDays,
     });
 
     if (rentalDR != null) {

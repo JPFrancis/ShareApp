@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:shareapp/models/rental.dart';
 
 class DB {
   final db = Firestore.instance;
@@ -38,5 +39,27 @@ class DB {
 
   Stream<DocumentSnapshot> getRentalStream(String rentalId) {
     return db.collection('rentals').document(rentalId).snapshots();
+  }
+
+  Future<dynamic> checkAcceptRental(Rental rental) async {
+    try {
+      List rentalDays = []..addAll(rental.rentalDays);
+
+      var snaps = await db
+          .collection('rentals')
+          .where('item', isEqualTo: rental.itemRef)
+          .where('rentalDays', arrayContainsAny: rentalDays)
+          .where('status', isGreaterThanOrEqualTo: 2)
+          .limit(1)
+          .getDocuments();
+
+      if (snaps != null && snaps.documents.isNotEmpty) {
+        throw 'Someone else accepted a rental during this time!';
+      } else {
+        return 0;
+      }
+    } catch (e) {
+      throw e.toString();
+    }
   }
 }

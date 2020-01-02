@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+import 'package:scoped_model/scoped_model.dart';
 
 /*
 'Tool',
@@ -22,7 +24,7 @@ true = active
 false = inactive
  */
 
-class Item {
+class Item extends Model {
   bool isVisible;
   DocumentReference creator; // user ID of user who created the item
   String name;
@@ -38,55 +40,62 @@ class Item {
   Map<dynamic, dynamic> location;
   List unavailable;
 
-  Item({
-    this.isVisible,
-    this.creator,
-    this.name,
-    this.description,
-    this.type,
-    this.condition,
-    this.rating,
-    this.numRatings,
-    this.price,
-    this.numImages,
-    this.images,
-    this.location,
-    this.unavailable,
-  });
+  static Item getModel(BuildContext context) => ScopedModel.of<Item>(context);
 
-  Item.fromMap(Map<String, dynamic> data)
-      : this(
-          isVisible: data['status'],
-          creator: data['creator'],
-          name: data['name'],
-          description: data['description'],
-          type: data['type'],
-          condition: data['condition'],
-          rating: data['rating'].toDouble(),
-          numRatings: data['numRatings'].toDouble(),
-          price: data['price'],
-          numImages: data['numImages'],
-          images: data['images'],
-          location: data['location'],
-          unavailable: data['unavailable'],
-        );
+  Item({DocumentSnapshot snap, String userId}) {
+    if (userId != null) {
+      this.isVisible = true;
+      this.creator = Firestore.instance.collection('users').document(userId);
+      this.name = '';
+      this.description = '';
+      this.type = null;
+      this.condition = null;
+      this.price = 0;
+      this.numImages = 0;
+      this.images = [];
+      this.location = {'geopoint': null};
+    } else if (snap != null) {
+      updateData(snap, constructor: true);
+    }
+  }
 
-  Item.copy(Item other)
-      : this(
-          isVisible: other.isVisible,
-          creator: other.creator,
-          name: other.name,
-          description: other.description,
-          type: other.type,
-          condition: other.condition,
-          rating: other.rating,
-          numRatings: other.numRatings,
-          price: other.price,
-          numImages: other.numImages,
-          images: other.images.toList(),
-          location: other.location,
-          unavailable: other.unavailable,
-        );
+  void updateData(DocumentSnapshot snap, {bool constructor}) {
+    Map data = snap.data;
+
+    this.isVisible = data['status'];
+    this.creator = data['creator'];
+    this.name = data['name'];
+    this.description = data['description'];
+    this.type = data['type'];
+    this.condition = data['condition'];
+    this.rating = data['rating'].toDouble();
+    this.numRatings = data['numRatings'].toDouble();
+    this.price = data['price'];
+    this.numImages = data['numImages'];
+    this.images = data['images'];
+    this.location = data['location'];
+    this.unavailable = data['unavailable'];
+
+    if (constructor == null) {
+      notifyListeners();
+    }
+  }
+
+  Item.copy(Item other) {
+    this.isVisible = other.isVisible;
+    this.creator = other.creator;
+    this.name = other.name;
+    this.description = other.description;
+    this.type = other.type;
+    this.condition = other.condition;
+    this.rating = other.rating;
+    this.numRatings = other.numRatings;
+    this.price = other.price;
+    this.numImages = other.numImages;
+    this.images = other.images.toList();
+    this.location = other.location;
+    this.unavailable = other.unavailable;
+  }
 
   bool compare(Item other) {
     return this.name == other.name &&
@@ -95,23 +104,5 @@ class Item {
         this.condition == other.condition &&
         this.price == other.price &&
         this.location == other.location;
-  }
-
-  Item fromItem(Item other) {
-    return Item(
-      isVisible: other.isVisible,
-      creator: other.creator,
-      name: other.name,
-      description: other.description,
-      type: other.type,
-      condition: other.condition,
-      rating: other.rating,
-      numRatings: other.numRatings,
-      price: other.price,
-      numImages: other.numImages,
-      images: other.images.toList(),
-      location: other.location,
-      unavailable: other.unavailable,
-    );
   }
 }

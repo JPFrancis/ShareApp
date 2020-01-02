@@ -465,6 +465,10 @@ class NewPickupState extends State<NewPickup> {
     });
 
     int newStatus = widget.isRenter ? 0 : 1;
+    DateTime rentalEnd = pickupTime.add(Duration(days: duration, hours: 1));
+
+    List rentalDays =
+        getDatesInRange(pickupTime, rentalEnd.add(Duration(hours: 1)));
 
     Firestore.instance
         .collection('rentals')
@@ -473,10 +477,11 @@ class NewPickupState extends State<NewPickup> {
       'status': newStatus,
       'pickupStart': pickupTime,
       'pickupEnd': pickupTime.add(Duration(hours: 1)),
-      'rentalEnd': pickupTime.add(Duration(days: duration, hours: 1)),
+      'rentalEnd': rentalEnd,
       'duration': duration,
       'price': dailyRate,
       'lastUpdateTime': DateTime.now(),
+      'rentalDays': rentalDays,
     }).then((_) {
       Future.delayed(Duration(seconds: 1)).then((_) {
         Firestore.instance.collection('notifications').add({
