@@ -104,24 +104,10 @@ class ProfilePageState extends State<ProfilePage>
       padding: EdgeInsets.all(0),
       children: <Widget>[
         showNameAndProfilePic(),
-        SizedBox(height: 20.0),
-        showUserDescription(),
+        userDS['description'].toString().isEmpty ? Container() : showUserDescription(),
+        reusableCategory("RATINGS"),
         showUserRating(),
-        Container(
-          padding: EdgeInsets.only(
-            left: pageWidth * 0.04,
-            top: pageHeight * 0.02,
-          ),
-          child: Text(
-            'Reviews',
-            style: TextStyle(
-              fontFamily: appFont,
-              fontSize: 20,
-              fontWeight: FontWeight.w500,
-              color: Colors.black87,
-            ),
-          ),
-        ),
+        reusableCategory("REVIEWS"),
         Container(
           height: 50,
           padding: EdgeInsets.symmetric(horizontal: pageWidth * 0.04),
@@ -172,42 +158,35 @@ class ProfilePageState extends State<ProfilePage>
     }
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10),
+      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 5.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text('Renter rating'),
-          StarRating(
-            rating: renterRating,
-          ),
-          Text('Owner rating'),
-          StarRating(
-            rating: ownerRating,
-          ),
+          Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+            Text('Renter rating', style: TextStyle(fontFamily: appFont, fontSize: 15),),
+            StarRating(rating: renterRating,),
+          ],),
+          Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+            Text('Owner rating', style: TextStyle(fontFamily: appFont, fontSize: 15),),
+            StarRating(rating: ownerRating,),
+          ],),
         ],
       ),
     );
   }
 
   Widget showUserDescription() {
-    bool empty = userDS['description'].toString().isEmpty ? true : false;
-    String desc = userDS['description'].toString().isEmpty
-        ? "The user hasn't added a description yet!"
-        : userDS['description'];
-    return Column(
-      children: <Widget>[
-        Align(alignment: Alignment.topLeft, child: Icon(QuoteIcons.quote_left)),
-        SizedBox(height: 10.0),
-        Text("$desc",
-            style: TextStyle(
-                fontSize: MediaQuery.of(context).size.width / 25,
-                fontFamily: appFont,
-                color: empty ? Colors.grey : Colors.black54)),
-        SizedBox(height: 10.0),
-        Align(
-            alignment: Alignment.bottomRight,
-            child: Icon(QuoteIcons.quote_right)),
-      ],
+    String desc = userDS['description'];
+    return Padding(
+      padding: const EdgeInsets.only(left: 15.0, right: 15.0, bottom: 5.0, top: 10.0),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+        Text("Joined in 2020", style: TextStyle(fontSize: MediaQuery.of(context).size.width / 25, fontFamily: appFont, fontWeight: FontWeight.bold)),
+        SizedBox(height: 5.0),
+        Text("$desc", style: TextStyle(fontSize: MediaQuery.of(context).size.width / 25, fontFamily: appFont)),
+      ],),
     );
   }
 

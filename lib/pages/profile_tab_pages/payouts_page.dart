@@ -11,6 +11,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/models/current_user.dart';
+import 'package:shareapp/models/rental.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:shareapp/services/functions.dart';
@@ -620,7 +621,7 @@ class PayoutsPageState extends State<PayoutsPage> {
                                           onTap: () => Navigator.pushNamed(
                                               context, RentalDetail.routeName,
                                               arguments: RentalDetailArgs(
-                                                  rentalDS.documentID,
+                                                  Rental(rentalDS),
                                                   currentUser)),
                                           child: Container(
                                             decoration: BoxDecoration(
@@ -863,13 +864,12 @@ class PayoutsPageState extends State<PayoutsPage> {
     String lastName = 'Jones';
     String url = '';
 
-    if (Platform.isAndroid) {
-      url = 'https://';
-    }
-   
+    String redirectUrl = 'share-app.web.app/';
+//    String redirectUrl = 'https://share-app.web.app/';
+
     url += 'https://connect.stripe.com/express/oauth/authorize?'
-        'redirect_uri=https://share-app.web.app/'
-        '&client_id=ca_G2aEpUUFBkF4B3U8tgcY0G5NWhCfOj2c' /*&state={STATE_VALUE}'*/
+        'redirect_uri=$redirectUrl'
+        '&client_id=ca_G2aEpUUFBkF4B3U8tgcY0G5NWhCfOj2c'
         '&stripe_user[country]=US'
         '&stripe_user[phone_number]=$phoneNum'
         '&stripe_user[business_type]=individual'
@@ -878,26 +878,12 @@ class PayoutsPageState extends State<PayoutsPage> {
         '&stripe_user[last_name]=$lastName'
         '&stripe_user[product_description]=do_not_edit';
 
-    //url += 'https://share-app.web.app';
-
-//    debugPrint('URL: $url');
-
     if (await canLaunch(url)) {
       debugPrint("eee");
       await launch(url, forceSafariVC: false, universalLinksOnly: false);
     }else{
       debugPrint("nooo");
     }
-
-//    HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
-//      functionName: 'createStripeAccount',
-//    );
-//
-//    final HttpsCallableResult result = await callable.call(
-//      <String, dynamic>{
-//        '': '',
-//      },
-//    );
   }
 
   initPlatformState() async {

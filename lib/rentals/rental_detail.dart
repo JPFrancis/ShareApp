@@ -10,9 +10,11 @@ import 'package:intl/intl.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/models/current_user.dart';
+import 'package:shareapp/models/rental.dart';
 import 'package:shareapp/rentals/chat.dart';
 import 'package:shareapp/rentals/new_pickup.dart';
 import 'package:shareapp/services/const.dart';
+import 'package:shareapp/services/database.dart';
 import 'package:shareapp/services/functions.dart';
 import 'package:shareapp/services/payment_service.dart';
 import 'package:smooth_star_rating/smooth_star_rating.dart';
@@ -32,9 +34,8 @@ enum EndRentalType {
 
 class RentalDetail extends StatefulWidget {
   static const routeName = '/itemRental';
-  final String rentalID;
 
-  RentalDetail({Key key, this.rentalID}) : super(key: key);
+  RentalDetail({Key key}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
@@ -44,22 +45,14 @@ class RentalDetail extends StatefulWidget {
 
 class RentalDetailState extends State<RentalDetail> {
   CurrentUser currentUser;
-  String myUserId;
-  String url;
-  String rentalCC;
-  bool isLoading = true;
+  Rental rental;
+  bool isLoading = false;
   bool rentalExists = true;
   bool isRenter;
+  String otherUserId;
   bool stripeInit;
 
-  DocumentSnapshot rentalDS;
-  String itemId;
-  String ownerId;
-  String renterId;
-  String otherUserId;
-  int status = -1;
-
-  TextStyle textStyle;
+  TextStyle style;
   double padding = 5.0;
 
   TextEditingController reviewController = TextEditingController();
@@ -74,70 +67,22 @@ class RentalDetailState extends State<RentalDetail> {
     super.initState();
 
     currentUser = CurrentUser.getModel(context);
+    rental = Rental.getModel(context);
     stripeInit = false;
     communicationRating = 0.0;
     itemQualityRating = 0.0;
     overallExpRating = 0.0;
     renterRating = 0.0;
 
-    getMyUserID();
-    //delayPage();
-  }
-
-  void delayPage() async {
-    Future.delayed(Duration(milliseconds: 750)).then((_) {
-      setState(() {
-        isLoading = false;
-      });
-    });
-  }
-
-  void getMyUserID() async {
-    var user = await FirebaseAuth.instance.currentUser();
-    if (user != null) {
-      myUserId = user.uid;
-
-      getSnapshots();
-    }
-  }
-
-  void getSnapshots() async {
-    DocumentReference dr;
-    DocumentSnapshot ds = await Firestore.instance
-        .collection('rentals')
-        .document(widget.rentalID)
-        .get();
-
-    if (!ds.exists) {
-      setState(() {
-        rentalExists = false;
-        isLoading = false;
-      });
-
-      return;
-    }
-
-    if (ds != null) {
-      rentalDS = ds;
-
-      DocumentReference itemRef = rentalDS['item'];
-      DocumentReference ownerRef = rentalDS['owner'];
-      DocumentReference renterRef = rentalDS['renter'];
-
-      itemId = itemRef.documentID;
-      ownerId = ownerRef.documentID;
-      renterId = renterRef.documentID;
-
-      isRenter = myUserId == renterId ? true : false;
-      otherUserId = isRenter ? ownerId : renterId;
-
-      delayPage();
-    }
+    String ownerId = rental.ownerRef.documentID;
+    String renterId = rental.renterRef.documentID;
+    isRenter = currentUser.id == renterId;
+    otherUserId = isRenter ? ownerId : renterId;
   }
 
   @override
   Widget build(BuildContext context) {
-    textStyle = Theme.of(context).textTheme.title;
+    style = new TextStyle(fontFamily: appFont, color: primaryColor, fontSize: 13.5);
 
     return isLoading
         ? Scaffold(
@@ -187,15 +132,6 @@ class RentalDetailState extends State<RentalDetail> {
     );
   }
 
-  Future<DocumentSnapshot> getRentalFromFirestore() async {
-    DocumentSnapshot ds = await Firestore.instance
-        .collection('rentals')
-        .document(rentalDS.documentID)
-        .get();
-
-    return ds;
-  }
-
   Widget showBody() {
     if (rentalExists) {
       return buildRentalDetails();
@@ -223,35 +159,38 @@ class RentalDetailState extends State<RentalDetail> {
 
   Widget buildRentalDetails() {
     return StreamBuilder<DocumentSnapshot>(
-      stream: rentalDS.reference.snapshots(),
+      stream: DB().getRentalStream(rental.id),
       builder:
           (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
         if (snapshot.hasError) {
-          return new Text('${snapshot.error}');
+          setState(() {
+            rentalExists = false;
+          });
+
+          return Text('${snapshot.error}');
         }
         switch (snapshot.connectionState) {
           case ConnectionState.waiting:
           default:
             if (snapshot.hasData) {
               if (!snapshot.data.exists) {
+                setState(() {
+                  rentalExists = false;
+                });
+
                 return Container();
               }
 
-              rentalDS = snapshot.data;
-              status = rentalDS['status'];
+              rental.updateData(snapshot.data);
 
               DateTime now = DateTime.now();
-              //DateTime now = DateTime(2019, 7, 16, 6,30);
-              DateTime pickupStart = rentalDS['pickupStart'].toDate();
-              DateTime pickupEnd = rentalDS['pickupEnd'].toDate();
-              DateTime rentalEnd = rentalDS['rentalEnd'].toDate();
-              DateTime created = rentalDS['created'].toDate();
 
-              if (now.isAfter(pickupStart) && now.isBefore(rentalEnd)) {
+              if (now.isAfter(rental.pickupStart) &&
+                  now.isBefore(rental.rentalEnd)) {
                 updateStatus(3);
               }
 
-              if (now.isAfter(rentalEnd)) {
+              if (now.isAfter(rental.rentalEnd)) {
                 updateStatus(4);
               }
 
@@ -337,7 +276,6 @@ class RentalDetailState extends State<RentalDetail> {
     double statusBarHeight = MediaQuery.of(context).padding.top;
     double height = MediaQuery.of(context).size.height - statusBarHeight;
     double width = MediaQuery.of(context).size.width;
-    String imageUrl = rentalDS['itemAvatar'];
 
     _getItemImage(BuildContext context) {
       return Stack(
@@ -348,13 +286,12 @@ class RentalDetailState extends State<RentalDetail> {
             child: FittedBox(
               fit: BoxFit.cover,
               child: CachedNetworkImage(
-                imageUrl: imageUrl,
+                imageUrl: rental.itemAvatar,
                 placeholder: (context, url) => CircularProgressIndicator(),
               ),
             ),
           ),
-          status < 3 &&
-                  DateTime.now().isBefore(rentalDS['pickupStart'].toDate())
+          rental.status < 3 && DateTime.now().isBefore(rental.pickupStart)
               ? Positioned(
                   top: statusBarHeight,
                   right: 0,
@@ -382,7 +319,7 @@ class RentalDetailState extends State<RentalDetail> {
       );
     }
 
-    return imageUrl != null
+    return rental.itemAvatar != null
         ? Container(
             height: width / 1,
             width: width / 1,
@@ -447,18 +384,16 @@ class RentalDetailState extends State<RentalDetail> {
       isLoading = true;
     });
 
-    if (status < 2) {
+    if (rental.status < 2) {
       endAndSendNotification(type);
       return;
     }
 
-    Timestamp timestamp = rentalDS['pickupStart'];
-    DateTime startTime = timestamp.toDate();
     DateTime now = DateTime.now();
     DateTime twoDaysFromNow = now.add(Duration(days: 2));
 
     // refund, but can cancel for free - no charge needed
-    if (status == 3 && twoDaysFromNow.isBefore(startTime)) {
+    if (rental.status == 3 && twoDaysFromNow.isBefore(rental.pickupStart)) {
       return;
     }
 
@@ -488,7 +423,7 @@ class RentalDetailState extends State<RentalDetail> {
 
     await Firestore.instance
         .collection('rentals')
-        .document(rentalDS.documentID)
+        .document(rental.id)
         .updateData({
       'status': 5,
       'requesting': false,
@@ -504,9 +439,9 @@ class RentalDetailState extends State<RentalDetail> {
     if (otherUserDS != null && otherUserDS.exists) {
       await Firestore.instance.collection('notifications').add({
         'title': '${currentUser.name} has $declinedText rental',
-        'body': 'Item: ${rentalDS['itemName']}',
+        'body': 'Item: ${rental.itemName}',
         'pushToken': otherUserDS['pushToken'],
-        'rentalID': rentalDS.documentID,
+        'rentalID': rental.id,
         'timestamp': DateTime.now(),
       });
     }
@@ -527,7 +462,7 @@ class RentalDetailState extends State<RentalDetail> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
           Text(
-            rentalDS['itemName'],
+            rental.itemName,
             style: TextStyle(
                 fontFamily: 'Quicksand',
                 fontSize: 25.0,
@@ -540,14 +475,14 @@ class RentalDetailState extends State<RentalDetail> {
                 height: 50.0,
                 child: ClipOval(
                   child: CachedNetworkImage(
-                    imageUrl: rentalDS['ownerData']['avatar'],
+                    imageUrl: rental.ownerAvatar,
                     placeholder: (context, url) =>
                         new CircularProgressIndicator(),
                   ),
                 ),
               ),
               Text(
-                '${rentalDS['ownerData']['name']}',
+                '${rental.ownerName}',
                 style: TextStyle(
                     color: Colors.black,
                     fontSize: 15.0,
@@ -563,15 +498,15 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   Widget showItemName() {
-    String itemOwner = 'Item owner: ${rentalDS['ownerData']['name']}';
-    String itemRenter = 'Item renter: ${rentalDS['renterData']['name']}';
+    String itemOwner = 'Item owner: ${rental.ownerName}';
+    String itemRenter = 'Item renter: ${rental.renterName}';
     String you = ' (You)';
 
     isRenter ? itemRenter += you : itemOwner += you;
 
     return Container(
       child: Text(
-        'Item name: ${rentalDS['itemName']}\n'
+        'Item name: ${rental.itemName}\n'
         '$itemOwner\n'
         '$itemRenter',
         style: TextStyle(
@@ -585,7 +520,7 @@ class RentalDetailState extends State<RentalDetail> {
     return Row(
       children: <Widget>[
         Text(
-          'Item owner:\n${rentalDS['ownerData']['name']}',
+          'Item owner:\n${rental.ownerName}',
           style: TextStyle(color: Colors.black, fontSize: 20.0),
           textAlign: TextAlign.left,
         ),
@@ -594,7 +529,7 @@ class RentalDetailState extends State<RentalDetail> {
             height: 50,
             child: CachedNetworkImage(
               //key: ValueKey(DateTime.now().millisecondsSinceEpoch),
-              imageUrl: rentalDS['ownerData']['avatar'],
+              imageUrl: rental.ownerAvatar,
               placeholder: (context, url) => new CircularProgressIndicator(),
             ),
           ),
@@ -604,17 +539,15 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   Widget showItemRequestStatus() {
-   int itemStatus = rentalDS['status'];
-    //int itemStatus = 4;
-    TextStyle style = new TextStyle(fontFamily: appFont, color: primaryColor, fontSize: 13.5);
-    String start = DateFormat('h:mm a on d MMM yyyy').format(rentalDS['pickupStart'].toDate());
-    String end = DateFormat('h:mm a on d MMM yyyy').format(rentalDS['rentalEnd'].toDate());
-    int durationDays = rentalDS['duration'];
-    //double price = rentalDS['price'].toDouble() * durationDays.toDouble();
-    String duration = '${durationDays > 1 ? '$durationDays days' : '$durationDays day'}';
+    String start =
+        DateFormat('h:mm a on d MMM yyyy').format(rental.pickupStart);
+    String end = DateFormat('h:mm a on d MMM yyyy').format(rental.rentalEnd);
+    double price = rental.price * rental.duration.toDouble();
+    String duration =
+        '${rental.duration > 1 ? '${rental.duration} days' : '${rental.duration} day'}';
 
-    double itemPrice = rentalDS['price'].toDouble();
-    double itemRentalPrice = itemPrice * durationDays;
+    double itemPrice = rental.price.toDouble();
+    double itemRentalPrice = itemPrice * rental.duration;
     double taxPrice = itemRentalPrice * 0.06;
     double ourFeePrice = itemRentalPrice * 0.07;
     double subtotal = itemRentalPrice + taxPrice + ourFeePrice;
@@ -662,14 +595,14 @@ class RentalDetailState extends State<RentalDetail> {
 
     Widget info;
 
-    switch (itemStatus) {
+    switch (rental.status) {
       case 0: //requested, renter has sent request
         info = isRenter
             ? Column(
                 children: <Widget>[
                   Text(
-                    "Waiting for response from ${rentalDS['ownerData']['name']}",
-                    style: style,
+                    "Waiting for response from ${rental.ownerName}",
+                    style: TextStyle(fontFamily: appFont, color: Colors.white),
                   ),
                   Text(
                     "The Receipt",
@@ -708,8 +641,8 @@ class RentalDetailState extends State<RentalDetail> {
             : Column(
                 children: <Widget>[
                   Text(
-                    "${rentalDS['ownerData']['name']} has proposed a pickup!",
-                    style: style,
+                    "${rental.ownerName} has proposed a pickup!",
+                    style: TextStyle(fontFamily: appFont, color: Colors.white),
                   ),
                   Text(
                     "Proposal",
@@ -751,8 +684,8 @@ class RentalDetailState extends State<RentalDetail> {
             ? Column(
                 children: <Widget>[
                   Text(
-                    "${rentalDS['ownerData']['name']} has proposed a new pickup!",
-                    style: style,
+                    "${rental.ownerName} has proposed a new pickup!",
+                    style: TextStyle(fontFamily: appFont, color: Colors.white),
                   ),
                   Text(
                     "New proposal",
@@ -790,8 +723,8 @@ class RentalDetailState extends State<RentalDetail> {
             : Column(
                 children: <Widget>[
                   Text(
-                    "Waiting from response from ${rentalDS['renterData']['name']}",
-                    style: style,
+                    "Waiting from response from ${rental.renterName}",
+                    style: TextStyle(fontFamily: appFont, color: Colors.white),
                   ),
                   Text(
                     "Proposal",
@@ -833,8 +766,8 @@ class RentalDetailState extends State<RentalDetail> {
             ? Column(
                 children: <Widget>[
                   Text(
-                    "${rentalDS['ownerData']['name']} has accepted your request! Make sure to pick it up on time!",
-                    style: style,
+                    "${rental.ownerName} has accepted your request! Make sure to pick it up on time!",
+                    style: TextStyle(fontFamily: appFont, color: Colors.white),
                   ),
                   Text(
                     "Transaction Details",
@@ -873,8 +806,8 @@ class RentalDetailState extends State<RentalDetail> {
             : Column(
                 children: <Widget>[
                   Text(
-                    "You have accepted ${rentalDS['renterData']['name']}'s request! Be prepared for their pickup!",
-                    style: style,
+                    "You have accepted ${rental.renterName}'s request! Be prepared for their pickup!",
+                    style: TextStyle(fontFamily: appFont, color: Colors.white),
                   ),
                   Text(
                     "Transaction Details",
@@ -957,8 +890,8 @@ class RentalDetailState extends State<RentalDetail> {
             : Column(
                 children: <Widget>[
                   Text(
-                    "${rentalDS['renterData']['name']} has your item!",
-                    style: style,
+                    "${rental.renterName} has your item!",
+                    style: TextStyle(fontFamily: appFont, color: Colors.white),
                   ),
                   Text(
                     "Transaction Details",
@@ -1058,11 +991,11 @@ class RentalDetailState extends State<RentalDetail> {
         break;
 
       case 5: // declined or cancelled
-        var declined = rentalDS['declined'];
+        var declined = rental.declined;
         String declinedText = '';
 
         if (declined != null) {
-          declinedText = rentalDS['declined']
+          declinedText = rental.declined
               ? 'This rental was declined'
               : 'This rental was cancelled';
         }
@@ -1082,8 +1015,8 @@ class RentalDetailState extends State<RentalDetail> {
         break;
     }
 
-    if ((isRenter && rentalDS['rentalReview'] != null) && 
-        (!isRenter && rentalDS['ownerReview'] != null)) {
+    if ((isRenter && rental.renterReviewSubmitted) ||
+        (!isRenter && rental.ownerReviewSubmitted)) {
       info = Column(
         children: <Widget>[
           Text(
@@ -1176,21 +1109,23 @@ class RentalDetailState extends State<RentalDetail> {
 
     Firestore.instance.collection('notifications').add({
       'title': '${currentUser.name} accepted your pickup window',
-      'body': 'Item: ${rentalDS['itemName']}',
+      'body': 'Item: ${rental.itemName}',
       'pushToken': otherUserDS['pushToken'],
-      'rentalID': rentalDS.documentID,
+      'rentalID': rental.id,
       'timestamp': DateTime.now().millisecondsSinceEpoch,
     }).then((_) async {
-      var duration = rentalDS['duration'].toInt();
-      var price = rentalDS['price'].toInt();
+      var duration = rental.duration;
+      var price = rental.price;
       double itemPrice = (duration * price).toDouble();
       double tax = itemPrice * 0.06;
       double ourFee = itemPrice * 0.07;
       double baseChargeAmount = (itemPrice + tax + ourFee) * 1.029 + 0.3;
       int finalCharge = (baseChargeAmount * 100).round();
 
-      var snap =
-          await Firestore.instance.collection('users').document(ownerId).get();
+      var snap = await Firestore.instance
+          .collection('users')
+          .document(rental.ownerRef.documentID)
+          .get();
 
       Map transferData = {
         'ourFee': ourFee * 100,
@@ -1199,16 +1134,16 @@ class RentalDetailState extends State<RentalDetail> {
       };
 
       PaymentService().chargeRental(
-        rentalDS.documentID,
-        rentalDS['duration'],
-        rentalDS['pickupStart'],
-        rentalDS['rentalEnd'],
-        renterId,
-        ownerId,
+        rental.id,
+        rental.duration,
+        Timestamp.fromDate(rental.pickupStart),
+        Timestamp.fromDate(rental.rentalEnd),
+        rental.renterRef.documentID,
+        rental.ownerRef.documentID,
         finalCharge,
         transferData,
-        '${rentalDS['renterData']['name']} paying ${rentalDS['ownerData']['name']} '
-        'for renting ${rentalDS['itemName']}',
+        '${rental.renterName} paying ${rental.ownerName} '
+        'for renting ${rental.itemName}',
       );
 
       setState(() {
@@ -1218,8 +1153,7 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   Widget showRequestButtons() {
-    return (isRenter && rentalDS['status'] == 1) ||
-            (!isRenter && rentalDS['status'] == 0)
+    return (isRenter && rental.status == 1) || (!isRenter && rental.status == 0)
         ? Container(
             padding: EdgeInsets.all(15),
             child: Column(
@@ -1288,7 +1222,7 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   Widget showReceiveItemButton() {
-    return rentalDS['status'] == 2
+    return rental.status == 2
         ? Container(
             child: RaisedButton(
               shape: new RoundedRectangleBorder(
@@ -1309,7 +1243,7 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   Widget showReturnedItemButton() {
-    return rentalDS['status'] == 3
+    return rental.status == 3
         ? Container(
             child: RaisedButton(
               shape: new RoundedRectangleBorder(
@@ -1328,8 +1262,8 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   Widget showReview() {
-    if (isRenter && rentalDS['status'] == 4) {
-      if (rentalDS['ownerReview'] != null) {
+    if (isRenter && rental.status == 4) {
+      if (rental.ownerReviewSubmitted) {
         return showCompletedReview();
       } else {
         return Container(
@@ -1348,8 +1282,8 @@ class RentalDetailState extends State<RentalDetail> {
           ),
         );
       }
-    } else if (!isRenter && rentalDS['status'] == 4) {
-      if (rentalDS['renterReview'] != null) {
+    } else if (!isRenter && rental.status == 4) {
+      if (rental.renterReviewSubmitted != null) {
         return showCompletedReview();
       } else {
         return Column(
@@ -1370,31 +1304,24 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   Widget showCompletedReview() {
-    Map review = !isRenter ? rentalDS['renterReview'] : rentalDS['ownerReview'];
-
-    if (review == null) {
+    if (isRenter && !rental.renterReviewSubmitted ||
+        !isRenter && !rental.ownerReviewSubmitted) {
       return Container();
     }
-
-    var renterRating = review['rating'];
-    var communication = review['communication'];
-    var itemQuality = review['itemQuality'];
-    var overall = review['overall'];
-    var reviewNote = review['reviewNote'];
 
     return Container(
       child: Column(
         children: <Widget>[
           isRenter
               ? Text(
-                  'Communication: $communication\n'
-                  'Item quality: $itemQuality\n'
-                  'Overall experience: $overall\n'
-                  'Review note: $reviewNote',
+                  'Communication: ${rental.ownerReviewCommunication}\n'
+                  'Item quality: ${rental.ownerReviewItemQuality}\n'
+                  'Overall experience: ${rental.ownerReviewOverall}\n'
+                  'Review note: ${rental.ownerReviewNote}',
                 )
               : Text(
                   'Rating: $renterRating\n'
-                  'Review note: $reviewNote',
+                  'Review note: ${rental.renterReviewNote}',
                 ),
         ],
       ),
@@ -1469,7 +1396,7 @@ class RentalDetailState extends State<RentalDetail> {
       child: TextField(
         maxLines: 3,
         controller: reviewController,
-        style: textStyle,
+        style: style,
         decoration: InputDecoration(
           labelText: 'Write review',
           filled: true,
@@ -1496,14 +1423,10 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   void updateStatus(int status) async {
-    bool requesting = status == 2 ? false : rentalDS['requesting'];
-    var lastUpdateTime =
-        status == 2 ? DateTime.now() : rentalDS['lastUpdateTime'];
+    bool requesting = status == 2 ? false : rental.requesting;
+    var lastUpdateTime = status == 2 ? DateTime.now() : rental.lastUpdateTime;
 
-    Firestore.instance
-        .collection('rentals')
-        .document(rentalDS.documentID)
-        .updateData({
+    Firestore.instance.collection('rentals').document(rental.id).updateData({
       'status': status,
       'requesting': requesting,
       'lastUpdateTime': lastUpdateTime,
@@ -1514,7 +1437,7 @@ class RentalDetailState extends State<RentalDetail> {
     Navigator.pushNamed(
       context,
       NewPickup.routeName,
-      arguments: NewPickupArgs(rentalDS.documentID, isRenter, currentUser),
+      arguments: NewPickupArgs(rental.id, isRenter, currentUser),
     );
   }
 
@@ -1530,8 +1453,8 @@ class RentalDetailState extends State<RentalDetail> {
         (!isRenter && renterRating > 0)) {
       submitReview(
           isRenter,
-          myUserId,
-          rentalDS,
+          currentUser.id,
+          rental,
           reviewController.text,
           communicationRating,
           itemQualityRating,
@@ -1597,16 +1520,13 @@ class RentalDetailState extends State<RentalDetail> {
 
     await new Future.delayed(Duration(milliseconds: delay));
 
-    Firestore.instance
-        .collection('rentals')
-        .document(rentalDS.documentID)
-        .delete();
+    Firestore.instance.collection('rentals').document(rental.id).delete();
 
     await new Future.delayed(Duration(milliseconds: delay));
 
     Firestore.instance
         .collection('items')
-        .document(rentalDS['item'].documentID)
+        .document(rental.itemRef.documentID)
         .updateData({'rental': null});
 
     goToLastScreen();

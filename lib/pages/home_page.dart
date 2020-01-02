@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter_app_badger/flutter_app_badger.dart';
+import 'package:shareapp/models/rental.dart';
 import 'package:shareapp/services/database.dart';
 import 'package:shareapp/services/dialogs.dart';
 
@@ -627,13 +628,15 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
         var value = await showDialog(
           barrierDismissible: true,
           context: context,
-          builder: (BuildContext context) {
-            return ReviewDialog(
-              rentalDS: rentalDS,
-              myUserId: myUserID,
-              isRenter: isRenter,
-              pageHeight: pageHeight,
-              pageWidth: pageWidth,
+          builder: (BuildContext dialogContext) {
+            return ScopedModel<Rental>(
+              model: Rental(rentalDS),
+              child: ReviewDialog(
+                myUserId: myUserID,
+                isRenter: isRenter,
+                pageHeight: pageHeight,
+                pageWidth: pageWidth,
+              ),
             );
           },
         );
@@ -875,7 +878,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 context,
                                 RentalDetail.routeName,
                                 arguments: RentalDetailArgs(
-                                  rentalDS,
+                                  Rental(rentalDS),
                                   currentUser,
                                 ),
                               );
@@ -1691,7 +1694,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                                 Navigator.pushNamed(context,
                                                     RentalDetail.routeName,
                                                     arguments: RentalDetailArgs(
-                                                        rentalDS.documentID,
+                                                        Rental(rentalDS),
                                                         currentUser));
                                               },
                                               child: Row(
@@ -1858,7 +1861,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
         padding: EdgeInsets.only(left: 10.0),
         child: InkWell(
           onTap: () => Navigator.pushNamed(context, RentalDetail.routeName,
-              arguments: RentalDetailArgs(rentalDS.documentID, currentUser)),
+              arguments: RentalDetailArgs(Rental(rentalDS), currentUser)),
           child: Container(
             width: MediaQuery.of(context).size.width / 2,
             decoration: BoxDecoration(
@@ -2375,15 +2378,9 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
     Widget aboutMe() {
       return Container(
         padding: EdgeInsets.only(left: 15, right: 15, top: 10.0),
-        child: Column(children: <Widget>[
-          Align(alignment: Alignment.topLeft, child: Icon(QuoteIcons.quote_left, size: width / 22, color: primaryColor.withAlpha(100),)),
-          SizedBox(height: 5.0),
-          Text(currentUser.description.isEmpty
-            ? "The user hasn't added a description yet!"
-            : currentUser.description, style: TextStyle(fontFamily: appFont, fontSize: width / 22), textAlign: TextAlign.center,),
-          SizedBox(height: 5.0),
-          Align(alignment: Alignment.bottomRight, child: Icon(QuoteIcons.quote_right, size: width / 22, color: primaryColor.withAlpha(100),))
-        ]),
+        child: currentUser.description.isEmpty 
+          ? Text("enter a description in the edit page", style: TextStyle(fontFamily: appFont, fontSize: width / 30, color: Colors.grey), textAlign: TextAlign.start)
+          : Text(currentUser.description, style: TextStyle(fontFamily: appFont, fontSize: width / 22), textAlign: TextAlign.center)
       );
     }
 
@@ -2398,8 +2395,8 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
               padding: EdgeInsets.only(top: 50.0),
               children: <Widget>[
                 showPersonalInformation(),
-                reusableCategory("ABOUT"),
-                aboutMe(), 
+                reusableCategory("ABOUT"), 
+                aboutMe(),
                 divider(),
                 reusableCategory("ACCOUNT"),
                 reusableFlatButton( "Payments and Payouts", Icons.payment, navToPayouts),

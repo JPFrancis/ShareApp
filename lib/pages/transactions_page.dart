@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/models/current_user.dart';
+import 'package:shareapp/models/rental.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:timeago/timeago.dart' as timeago;
@@ -306,7 +307,7 @@ class TransactionsPageState extends State<TransactionsPage> {
                                                 Navigator.pushNamed(context,
                                                     RentalDetail.routeName,
                                                     arguments: RentalDetailArgs(
-                                                        rentalDS.documentID,
+                                                        Rental(rentalDS),
                                                         currentUser));
                                               },
                                               child: Row(

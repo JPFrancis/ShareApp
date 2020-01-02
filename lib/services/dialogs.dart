@@ -12,6 +12,7 @@ import 'package:flutter_picker/flutter_picker.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'package:shareapp/main.dart';
+import 'package:shareapp/models/rental.dart';
 import 'package:shareapp/models/user.dart';
 import 'package:shareapp/pages/item_detail.dart';
 import 'package:shareapp/services/const.dart';
@@ -704,14 +705,12 @@ class DailyRateDialogState extends State<DailyRateDialog> {
 }
 
 class ReviewDialog extends StatefulWidget {
-  final DocumentSnapshot rentalDS;
   final String myUserId;
   final bool isRenter;
   final double pageHeight;
   final double pageWidth;
 
   ReviewDialog({
-    @required this.rentalDS,
     @required this.myUserId,
     @required this.isRenter,
     @required this.pageHeight,
@@ -723,7 +722,7 @@ class ReviewDialog extends StatefulWidget {
 }
 
 class ReviewDialogState extends State<ReviewDialog> {
-  DocumentSnapshot rentalDS;
+  Rental rental;
   String myUserId;
   bool isRenter;
   double pageHeight;
@@ -743,7 +742,7 @@ class ReviewDialogState extends State<ReviewDialog> {
   void initState() {
     super.initState();
 
-    rentalDS = widget.rentalDS;
+    rental = Rental.getModel(context);
     myUserId = widget.myUserId;
     isRenter = widget.isRenter;
     pageHeight = widget.pageHeight;
@@ -751,7 +750,7 @@ class ReviewDialogState extends State<ReviewDialog> {
 
     reviewController.text = '';
     reviewControllerHintText = 'Optional';
-    DateTime dateTime = rentalDS['pickupStart'].toDate();
+    DateTime dateTime = rental.pickupStart;
     var dateFormat = DateFormat('E, LLL d');
     date = dateFormat.format(dateTime);
 
@@ -903,7 +902,7 @@ class ReviewDialogState extends State<ReviewDialog> {
                             ClipRRect(
                               borderRadius: BorderRadius.circular(10),
                               child: CachedNetworkImage(
-                                imageUrl: rentalDS['itemAvatar'],
+                                imageUrl: rental.itemAvatar,
                                 height: avatarSize,
                                 width: avatarSize,
                                 fit: BoxFit.cover,
@@ -921,7 +920,7 @@ class ReviewDialogState extends State<ReviewDialog> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: <Widget>[
                                   Text(
-                                    rentalDS['itemName'],
+                                    rental.itemName,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       fontFamily: appFont,
@@ -930,7 +929,7 @@ class ReviewDialogState extends State<ReviewDialog> {
                                     ),
                                   ),
                                   Text(
-                                    rentalDS['ownerData']['name'],
+                                    rental.ownerName,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       fontFamily: appFont,
@@ -1026,7 +1025,7 @@ class ReviewDialogState extends State<ReviewDialog> {
                                         submitReview(
                                                 isRenter,
                                                 myUserId,
-                                                rentalDS,
+                                                rental,
                                                 reviewController.text,
                                                 communicationRating,
                                                 itemQualityRating,

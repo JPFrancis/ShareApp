@@ -65,15 +65,13 @@ class MyReviewsState extends State<MyReviews> {
               icon: Icon(Icons.close),
               onPressed: () => Navigator.pop(context),
             ),
-            title: Text(
-              'My Reviews',
-            ),
+            title: Text('My Reviews', style: TextStyle(fontFamily: appFont),),
             centerTitle: true,
             bottom: TabBar(
               indicatorColor: Colors.black,
               tabs: [
-                Tab(child: Text(fromRentersTabText)),
-                Tab(child: Text(fromOwnersTabText)),
+                Tab(child: Text(fromRentersTabText, style: TextStyle(fontFamily: appFont),)),
+                Tab(child: Text(fromOwnersTabText, style: TextStyle(fontFamily: appFont),)),
               ],
             ),
           ),

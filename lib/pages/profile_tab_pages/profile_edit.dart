@@ -395,24 +395,18 @@ class ProfileEditState extends State<ProfileEdit> {
   Widget showAboutMe() {
     double width = MediaQuery.of(context).size.width;
     return Center(
-      child: Column(children: <Widget>[
-        Align(alignment: Alignment.topLeft, child: Icon(QuoteIcons.quote_left)),
-        TextField(
-          maxLines: null,
-          keyboardType: TextInputType.multiline,
-          textAlign: TextAlign.center,
-          controller: descriptionController,
-          cursorColor: Colors.blueAccent,
-          style: TextStyle(fontFamily: font, fontSize: width / 20),
-          decoration: InputDecoration(
-            border: InputBorder.none,
-            hintText: "Where ya from? What do ya do for fun?",
-          ),
+      child: TextField(
+        maxLines: null,
+        keyboardType: TextInputType.multiline,
+        textAlign: TextAlign.center,
+        controller: descriptionController,
+        cursorColor: Colors.blueAccent,
+        style: TextStyle(fontFamily: font, fontSize: width / 20),
+        decoration: InputDecoration(
+          border: InputBorder.none,
+          hintText: "enter a description",
         ),
-        Align(
-            alignment: Alignment.bottomRight,
-            child: Icon(QuoteIcons.quote_right)),
-      ]),
+      ),
     );
   }
 

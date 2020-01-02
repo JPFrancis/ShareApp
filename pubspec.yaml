@@ -19,10 +19,10 @@ dependencies:
   cloud_firestore: ^0.13.0+1
   cloud_functions: ^0.4.0+2
   dotted_border: ^1.0.2
-  firebase_auth: ^0.14.0+5
-  firebase_core: ^0.4.0+8
-  firebase_messaging: ^5.1.4
-  firebase_storage: ^3.0.4
+  firebase_auth: ^0.15.3
+  firebase_core: ^0.4.3+1
+  firebase_messaging: ^6.0.9
+  firebase_storage: ^3.1.0
   flutter_app_badger: ^1.1.2
   flutter_datetime_picker: ^1.2.6
   flutter_google_places: ^0.2.2

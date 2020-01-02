@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+import 'package:scoped_model/scoped_model.dart';
 
 /*
 declined:
@@ -29,30 +31,119 @@ int status
 5) Rental is cancelled
 */
 
-class Rental {
-  int status; // true if item is still in request mode, false otherwise
-  DocumentReference item; // user ID of user who created the item
-  DocumentReference owner;
-  DocumentReference renter;
-  DateTime start;
-  DateTime end;
+class Rental extends Model {
+  String id;
+  DateTime created;
+  DateTime lastUpdateTime;
+  DateTime pickupStart;
+  DateTime pickupEnd;
+  DateTime rentalEnd;
 
-  Rental({
-    this.status,
-    this.item,
-    this.owner,
-    this.renter,
-    this.start,
-    this.end,
-  });
+  int status;
+  double price;
+  int duration;
 
-  Rental.fromMap(Map<String, dynamic> data)
-      : this(
-          status: data['status'],
-          item: data['item'],
-          owner: data['owner'],
-          renter: data['renter'],
-          start: data['start'],
-          end: data['end'],
-        );
+  bool requesting;
+  bool declined;
+
+  DocumentReference itemRef;
+  String itemAvatar;
+  String itemName;
+
+  DocumentReference ownerRef;
+  String ownerAvatar;
+  String ownerName;
+
+  double ownerReviewAverage;
+  int ownerReviewCommunication;
+  int ownerReviewItemQuality;
+  int ownerReviewOverall;
+  String ownerReviewNote;
+  bool ownerReviewSubmitted;
+
+  DocumentReference renterRef;
+  String renterAvatar;
+  String renterName;
+
+  int renterReviewRating;
+  String renterReviewNote;
+  bool renterReviewSubmitted;
+
+  List users;
+
+  static Rental getModel(BuildContext context) =>
+      ScopedModel.of<Rental>(context);
+
+  Rental(DocumentSnapshot snap) {
+    updateData(snap, constructor: true);
+  }
+
+  void updateData(DocumentSnapshot snap, {bool constructor}) {
+    Map data = snap.data;
+
+    this.id = snap.documentID;
+    this.created = (data['created'] as Timestamp).toDate();
+    this.lastUpdateTime = (data['lastUpdateTime'] as Timestamp).toDate();
+    this.pickupStart = (data['pickupStart'] as Timestamp).toDate();
+    this.pickupEnd = (data['pickupEnd'] as Timestamp).toDate();
+    this.rentalEnd = (data['rentalEnd'] as Timestamp).toDate();
+
+    this.status = data['status'];
+    this.price = data['price'];
+    this.duration = data['duration'];
+
+    this.requesting = data['requesting'];
+    this.declined = data['declined'];
+
+    this.itemRef = data['item'];
+    this.itemAvatar = data['itemAvatar'];
+    this.itemName = data['itemName'];
+
+    this.ownerRef = data['owner'];
+    Map ownerData = data['ownerData'];
+    this.ownerAvatar = ownerData['avatar'];
+    this.ownerName = ownerData['name'];
+
+    Map ownerReview = data['ownerReview'];
+
+    if (ownerReview != null) {
+      this.ownerReviewAverage = ownerReview['average'];
+      this.ownerReviewCommunication = ownerReview['communication'];
+      this.ownerReviewItemQuality = ownerReview['itemQuality'];
+      this.ownerReviewOverall = ownerReview['overall'];
+      this.ownerReviewNote = ownerReview['reviewNote'];
+    }
+
+    this.ownerReviewSubmitted = data['ownerReviewSubmitted'];
+
+    this.renterRef = data['renter'];
+    Map renterData = data['renterData'];
+    this.renterAvatar = renterData['avatar'];
+    this.renterName = renterData['name'];
+
+    Map renterReview = data['renterReview'];
+
+    if (renterReview != null) {
+      this.renterReviewRating = renterReview['rating'];
+      this.renterReviewNote = renterReview['reviewNote'];
+    }
+    
+    this.renterReviewSubmitted = data['renterReviewSubmitted'];
+
+    this.users = []..addAll(data['users']);
+
+    if (constructor == null) {
+      notifyListeners();
+    }
+  }
+
+//  Rental.fromMap(Map<String, dynamic> data)
+//      : this(
+//          status: data['status'],
+//          item: data['item'],
+//          owner: data['owner'],
+//          renter: data['renter'],
+//          start: data['start'],
+//          end: data['end'],
+//        );
 }

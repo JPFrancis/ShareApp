@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:shareapp/models/rental.dart';
 import 'package:shareapp/services/dialogs.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -1130,7 +1131,7 @@ class RentalCalendarState extends State<RentalCalendar>
                 context,
                 RentalDetail.routeName,
                 arguments: RentalDetailArgs(
-                  ds.documentID,
+                  Rental(ds),
                   currentUser,
                 ),
               );
