@@ -382,8 +382,7 @@ class RentalDetailState extends State<RentalDetail> {
     });
 
     if (rental.status < 2) {
-      endAndSendNotification(type);
-      return;
+      return endAndSendNotification(type);
     }
 
     DateTime now = DateTime.now();
