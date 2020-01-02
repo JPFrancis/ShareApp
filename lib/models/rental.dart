@@ -55,9 +55,9 @@ class Rental extends Model {
   String ownerName;
 
   double ownerReviewAverage;
-  int ownerReviewCommunication;
-  int ownerReviewItemQuality;
-  int ownerReviewOverall;
+  double ownerReviewCommunication;
+  double ownerReviewItemQuality;
+  double ownerReviewOverall;
   String ownerReviewNote;
   bool ownerReviewSubmitted;
 
@@ -65,11 +65,12 @@ class Rental extends Model {
   String renterAvatar;
   String renterName;
 
-  int renterReviewRating;
+  double renterReviewRating;
   String renterReviewNote;
   bool renterReviewSubmitted;
 
   List users;
+  List rentalDays;
 
   static Rental getModel(BuildContext context) =>
       ScopedModel.of<Rental>(context);
@@ -107,10 +108,10 @@ class Rental extends Model {
     Map ownerReview = data['ownerReview'];
 
     if (ownerReview != null) {
-      this.ownerReviewAverage = ownerReview['average'];
-      this.ownerReviewCommunication = ownerReview['communication'];
-      this.ownerReviewItemQuality = ownerReview['itemQuality'];
-      this.ownerReviewOverall = ownerReview['overall'];
+      this.ownerReviewAverage = ownerReview['average'].toDouble();
+      this.ownerReviewCommunication = ownerReview['communication'].toDouble();
+      this.ownerReviewItemQuality = ownerReview['itemQuality'].toDouble();
+      this.ownerReviewOverall = ownerReview['overall'].toDouble();
       this.ownerReviewNote = ownerReview['reviewNote'];
     }
 
@@ -124,13 +125,14 @@ class Rental extends Model {
     Map renterReview = data['renterReview'];
 
     if (renterReview != null) {
-      this.renterReviewRating = renterReview['rating'];
+      this.renterReviewRating = renterReview['rating'].toDouble();
       this.renterReviewNote = renterReview['reviewNote'];
     }
 
     this.renterReviewSubmitted = data['renterReviewSubmitted'];
 
     this.users = []..addAll(data['users']);
+    this.rentalDays = []..addAll(data['rentalDays']);
 
     if (constructor == null) {
       notifyListeners();
