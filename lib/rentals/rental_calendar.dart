@@ -1010,16 +1010,8 @@ class RentalCalendarState extends State<RentalCalendar>
     }
 
     DateTime rentalEnd = pickupTime.add(Duration(days: duration, hours: 1));
-    List rentalDays = [];
-
-    DateTime start = stripHourMin(pickupTime);
-    DateTime end = stripHourMin(rentalEnd).add(Duration(hours: 1));
-
-    for (DateTime curr = start;
-        curr.isBefore(end);
-        curr = curr.add(Duration(days: 1))) {
-      rentalDays.add(curr);
-    }
+    List rentalDays =
+        getDatesInRange(pickupTime, rentalEnd.add(Duration(hours: 1)));
 
     // create rental in 'rentals' collection
     DocumentReference rentalDR =

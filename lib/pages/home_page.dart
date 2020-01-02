@@ -182,7 +182,39 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
+  /// remove this later
+  void updateAll() async {
+    CollectionReference collectionReference =
+        Firestore.instance.collection('rentals');
+    Query query = collectionReference;
+
+    QuerySnapshot querySnapshot = await query.getDocuments();
+    List<DocumentSnapshot> docs = querySnapshot.documents;
+
+    if (docs != null && docs.isNotEmpty) {
+      for (DocumentSnapshot doc in docs) {
+        DateTime start =
+            stripHourMin((doc['pickupStart'] as Timestamp).toDate());
+        DateTime end = stripHourMin((doc['rentalEnd'] as Timestamp).toDate())
+            .add(Duration(hours: 1));
+        List rentalDays = [];
+
+        for (DateTime curr = start;
+            curr.isBefore(end);
+            curr = curr.add(Duration(days: 1))) {
+          rentalDays.add(curr);
+        }
+
+        await collectionReference.document(doc.documentID).updateData({
+          'rentalDays': rentalDays,
+        });
+      }
+    }
+  }
+
   void initialize() async {
+//    updateAll();
+
     CollectionReference rentalsCollection =
         Firestore.instance.collection('rentals');
 

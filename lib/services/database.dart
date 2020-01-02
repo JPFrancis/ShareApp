@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:shareapp/models/rental.dart';
 
 class DB {
   final db = Firestore.instance;
@@ -38,5 +39,11 @@ class DB {
 
   Stream<DocumentSnapshot> getRentalStream(String rentalId) {
     return db.collection('rentals').document(rentalId).snapshots();
+  }
+
+  Future<dynamic> checkAcceptRental(Rental rental) {
+    try {} catch (e) {
+      throw e.toString();
+    }
   }
 }

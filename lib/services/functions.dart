@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/models/rental.dart';
 import 'package:shareapp/services/dialogs.dart';
 
@@ -253,4 +254,19 @@ void showReportUserDialog(
   if (value != null && value is int && value == 0) {
     showToast('Report sent!');
   }
+}
+
+List<DateTime> getDatesInRange(DateTime start, DateTime end) {
+  List rentalDays = [];
+
+  DateTime parsedStart = stripHourMin(start);
+  DateTime parsedEnd = stripHourMin(end).add(Duration(hours: 1));
+
+  for (DateTime curr = parsedStart;
+      curr.isBefore(parsedEnd);
+      curr = curr.add(Duration(days: 1))) {
+    rentalDays.add(curr);
+  }
+
+  return rentalDays;
 }
