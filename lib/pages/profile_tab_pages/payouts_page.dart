@@ -527,11 +527,21 @@ class PayoutsPageState extends State<PayoutsPage> {
                       String owner = desc.substring(payingIndex + 6, forIndex);
                       String renter = desc.substring(0, payingIndex);
 
+                      /// @rohith get user data like this
+                      Map userData = ds['userData'];
+                      if (userData == null) return Container();
+                      Map ownerDS = userData['owner'];
+                      Map renterDS = userData['renter'];
+                      String ownerName = ownerDS['name'];
+                      String ownerAvatar = ownerDS['avatar'];
+                      String renterName = renterDS['name'];
+                      String renterAvatar = renterDS['avatar'];
+
                       return ListTile(
-                        leading: CircleAvatar(backgroundImage: AssetImage("assets/circle1.png"), backgroundColor: Colors.white),
-                        title: Text('\$${amount.toStringAsFixed(0)}', style: TextStyle(fontWeight: FontWeight.bold),),
-                        subtitle: Text(renter + "paying" + owner),
-                        trailing: Text('\$${amount.toStringAsFixed(0)}', style: TextStyle(fontWeight: FontWeight.bold),),
+                        leading: CircleAvatar(backgroundImage: NetworkImage(ownerAvatar), backgroundColor: Colors.white),
+                        title: Text(renter + "paying" + owner, style: TextStyle(fontFamily: appFont),),
+                        subtitle: Text("insert subtitle"),
+                        trailing: Text('\$${amount.toStringAsFixed(0)}', style: TextStyle(fontWeight: FontWeight.bold, fontFamily: appFont),),
                       );
                     });
               } else {
