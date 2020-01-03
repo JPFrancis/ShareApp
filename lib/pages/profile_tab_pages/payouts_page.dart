@@ -480,6 +480,17 @@ class PayoutsPageState extends State<PayoutsPage> {
                       DocumentSnapshot ds = docs[index];
                       double amount = ds['amount'] / 100;
 
+                      /// @rohith get user data like this
+
+                      Map userData = ds['userData'];
+                      Map owner = userData['owner'];
+                      Map renter = userData['renter'];
+
+                      String ownerName = owner['name'];
+                      String ownerAvatar = owner['avatar'];
+                      String renterName = renter['name'];
+                      String renterAvatar = renter['avatar'];
+
                       return ListTile(
                         title: Text(
                           '\$${amount.toStringAsFixed(0)}',

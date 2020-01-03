@@ -1267,18 +1267,54 @@ class RentalDetailState extends State<RentalDetail> {
           'connectedAcctId': snap['connectedAcctId'],
         };
 
+        DocumentReference ref;
+
+        if (isRenter) {
+          ref = rental.ownerRef;
+        } else {
+          ref = rental.renterRef;
+        }
+
+        snap = await ref.get();
+
+        Map myData = {
+          'name': currentUser.name,
+          'avatar': currentUser.avatar,
+        };
+
+        Map otherUserData = {
+          'name': snap['name'],
+          'avatar': snap['avatar'],
+        };
+
+        Map owner = {};
+        Map renter = {};
+
+        if (isRenter) {
+          owner = {}..addAll(otherUserData);
+          renter = {}..addAll(myData);
+        } else {
+          owner = {}..addAll(myData);
+          renter = {}..addAll(otherUserData);
+        }
+
+        Map userData = {
+          'owner': {}..addAll(owner),
+          'renter': {}..addAll(renter),
+        };
+
         PaymentService().chargeRental(
-          rental.id,
-          rental.duration,
-          Timestamp.fromDate(rental.pickupStart),
-          Timestamp.fromDate(rental.rentalEnd),
-          rental.renterRef.documentID,
-          rental.ownerRef.documentID,
-          finalCharge,
-          transferData,
-          '${rental.renterName} paying ${rental.ownerName} '
-          'for renting ${rental.itemName}',
-        );
+            rental.id,
+            rental.duration,
+            Timestamp.fromDate(rental.pickupStart),
+            Timestamp.fromDate(rental.rentalEnd),
+            rental.renterRef.documentID,
+            rental.ownerRef.documentID,
+            finalCharge,
+            transferData,
+            '${rental.renterName} paying ${rental.ownerName} '
+            'for renting ${rental.itemName}',
+            userData);
 
         setState(() {
           isLoading = false;

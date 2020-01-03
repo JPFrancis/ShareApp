@@ -24,7 +24,8 @@ class PaymentService {
       String idTo,
       int amount,
       Map transferData,
-      String description) {
+      String description,
+      Map userData) {
     Firestore.instance.collection('charges').add({
       'currency': 'usd',
       'amount': amount,
@@ -39,6 +40,7 @@ class PaymentService {
         'rentalEnd': rentalEnd,
       },
       'transferData': transferData,
+      'userData': userData,
     });
   }
 
