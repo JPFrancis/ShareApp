@@ -1324,7 +1324,9 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   Widget showRequestButtons() {
-    return (isRenter && rental.status == 1) || (!isRenter && rental.status == 0)
+    return ((isRenter && rental.status == 1) ||
+                (!isRenter && rental.status == 0)) &&
+            DateTime.now().isBefore(rental.pickupStart)
         ? Container(
             padding: EdgeInsets.all(15),
             child: Column(

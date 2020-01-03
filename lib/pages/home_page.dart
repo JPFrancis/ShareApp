@@ -212,8 +212,27 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
+  /// remove this later
+  void deleteAll() async {
+    CollectionReference collectionReference =
+        Firestore.instance.collection('charges');
+    Query query = collectionReference;
+
+    QuerySnapshot querySnapshot = await query.getDocuments();
+    List<DocumentSnapshot> docs = querySnapshot.documents;
+
+    if (docs != null && docs.isNotEmpty) {
+      for (DocumentSnapshot doc in docs) {
+        if (doc.documentID != 'Kl3TaUBlgk2CiaDkAXo8') {
+          await collectionReference.document(doc.documentID).delete();
+        }
+      }
+    }
+  }
+
   void initialize() async {
 //    updateAll();
+//  deleteAll();
 
     CollectionReference rentalsCollection =
         Firestore.instance.collection('rentals');
@@ -2027,6 +2046,35 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
     double h = MediaQuery.of(context).size.height;
 
+    Stream stream;
+
+//    Query query = Firestore.instance
+//        .collection('rentals')
+//        .where('filled', isEqualTo: filled)
+//        .where('users', arrayContains: currentUser.id)
+//        .where('date_query.month', isEqualTo: month)
+//        .where('date_query.year', isEqualTo: year);
+
+    /*List<DocumentSnapshot> snaps = snapshot.data.documents;
+
+    if (scheduleTabIndex == 0) {
+      if (calendarTodaySelected) {
+        filledScheduleDayShifts =
+            snaps.map((snap) => Shift(snap)).toList();
+      } else {
+        filledScheduleMonthShifts =
+            snaps.map((snap) => Shift(snap)).toList();
+      }
+    } else {
+      if (!isInstructor && scheduleTabIndex == 1) {
+        unfilledMonthShifts =
+            snaps.map((snap) => Shift(snap)).toList();
+      } else {
+        filledMonthShifts =
+            snaps.map((snap) => Shift(snap)).toList();
+      }
+    }*/
+
     return DefaultTabController(
       length: 3,
       child: Scaffold(
@@ -2191,6 +2239,16 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   padding: EdgeInsets.all(0),
                   children: <Widget>[
                     buildCalendar(),
+//                    StreamBuilder<QuerySnapshot>(
+//                      stream: stream,
+//                      builder: (context, snapshot) {
+//                        if (snapshot.hasData) {
+//                          return buildCalendar();
+//                        } else {
+//                          return SizedBox();
+//                        }
+//                      },
+//                    ),
                   ],
                 ),
               ],
@@ -2275,26 +2333,17 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
           return children;
         },
       ),
-      onDaySelected: (date, events) {
-        onDaySelected(date, events);
-        controller.forward(from: 0.0);
+      onDaySelected: (DateTime day, List events) {
+        selectedDay = stripHourMin(day);
+        selectedEvents = events;
+        setState(() {});
       },
-      onVisibleDaysChanged: onVisibleDaysChanged,
+      onVisibleDaysChanged:
+          (DateTime first, DateTime last, CalendarFormat format) {
+        visibleDay = first;
+        setState(() {});
+      },
     );
-  }
-
-  void onDaySelected(DateTime day, List events) {
-    setState(() {
-      selectedDay = stripHourMin(day);
-      selectedEvents = events;
-    });
-  }
-
-  void onVisibleDaysChanged(
-      DateTime first, DateTime last, CalendarFormat format) {
-    setState(() {
-      visibleDay = first;
-    });
   }
 
   Widget messagesTabPage() {
