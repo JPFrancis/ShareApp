@@ -560,7 +560,7 @@ class RentalDetailState extends State<RentalDetail> {
                 children: <Widget>[
                   Text(
                     "Waiting for response from ${rental.ownerName}",
-                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                    style: TextStyle(fontFamily: appFont, color: primaryColor),
                   ),
                   Text(
                     "The Receipt",
@@ -599,8 +599,8 @@ class RentalDetailState extends State<RentalDetail> {
             : Column(
                 children: <Widget>[
                   Text(
-                    "${rental.ownerName} has proposed a pickup!",
-                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                    "${rental.renterName} has proposed a pickup!",
+                    style: TextStyle(fontFamily: appFont, color: primaryColor),
                   ),
                   Text(
                     "Proposal",
@@ -643,7 +643,7 @@ class RentalDetailState extends State<RentalDetail> {
                 children: <Widget>[
                   Text(
                     "${rental.ownerName} has proposed a new pickup!",
-                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                    style: TextStyle(fontFamily: appFont, color: primaryColor),
                   ),
                   Text(
                     "New proposal",
@@ -681,8 +681,8 @@ class RentalDetailState extends State<RentalDetail> {
             : Column(
                 children: <Widget>[
                   Text(
-                    "Waiting from response from ${rental.renterName}",
-                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                    "Waiting for response from ${rental.renterName}",
+                    style: TextStyle(fontFamily: appFont, color: primaryColor),
                   ),
                   Text(
                     "Proposal",
@@ -725,7 +725,7 @@ class RentalDetailState extends State<RentalDetail> {
                 children: <Widget>[
                   Text(
                     "${rental.ownerName} has accepted your request! Make sure to pick it up on time!",
-                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                    style: TextStyle(fontFamily: appFont, color: primaryColor),
                   ),
                   Text(
                     "Transaction Details",
@@ -765,7 +765,7 @@ class RentalDetailState extends State<RentalDetail> {
                 children: <Widget>[
                   Text(
                     "You have accepted ${rental.renterName}'s request! Be prepared for their pickup!",
-                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                    style: TextStyle(fontFamily: appFont, color: primaryColor),
                   ),
                   Text(
                     "Transaction Details",
@@ -849,7 +849,7 @@ class RentalDetailState extends State<RentalDetail> {
                 children: <Widget>[
                   Text(
                     "${rental.renterName} has your item!",
-                    style: TextStyle(fontFamily: appFont, color: Colors.white),
+                    style: TextStyle(fontFamily: appFont, color: primaryColor),
                   ),
                   Text(
                     "Transaction Details",
@@ -962,7 +962,7 @@ class RentalDetailState extends State<RentalDetail> {
           children: <Widget>[
             Text(
               declinedText,
-              style: TextStyle(fontFamily: appFont, color: Colors.white),
+              style: TextStyle(fontFamily: appFont, color: primaryColor),
             ),
           ],
         );
@@ -1156,7 +1156,7 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   Widget showRequestButtons() {
-    return !(isRenter && rental.status == 1) || (!isRenter && rental.status == 0)
+    return (isRenter && rental.status == 1) || (!isRenter && rental.status == 0)
         ? Container(
             padding: EdgeInsets.symmetric(horizontal: 15),
             child: Column(
@@ -1168,18 +1168,6 @@ class RentalDetailState extends State<RentalDetail> {
                   Container(width: 10,),
                   Expanded(child: reusableButton('Decline', Color(0xffff6961), () => removeRentalWarning(EndRentalType.decline)),),
                 ],),
-                /*
-                Container(
-                  padding: EdgeInsets.only(top: 15),
-                  child: Text(
-                    'Pickup note: ${rentalDS['note']}',
-                    textAlign: TextAlign.left,
-                    style: TextStyle(
-                      fontSize: 20,
-                    ),
-                  ),
-                ),
-                */
               ],
             ),
           )
@@ -1251,7 +1239,7 @@ class RentalDetailState extends State<RentalDetail> {
   Widget showReview() {
     if (isRenter && rental.status == 4) {
       if (rental.ownerReviewSubmitted) {
-        return showCompletedReview();
+        return Container(padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width / 25), child: showCompletedReview());
       } else {
         return Container(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
@@ -1271,7 +1259,7 @@ class RentalDetailState extends State<RentalDetail> {
       }
     } else if (!isRenter && rental.status == 4) {
       if (rental.renterReviewSubmitted != null) {
-        return showCompletedReview();
+        return Container(padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width / 25), child: showCompletedReview());
       } else {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1291,28 +1279,60 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   Widget showCompletedReview() {
-    if (isRenter && !rental.renterReviewSubmitted ||
-        !isRenter && !rental.ownerReviewSubmitted) {
+    if (isRenter && !rental.renterReviewSubmitted || !isRenter && !rental.ownerReviewSubmitted) {
       return Container();
     }
+    Widget info = isRenter
+    ? new Column(children: <Widget>[
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
+          Text("Communication:", style: TextStyle(color: primaryColor, fontFamily: appFont),),
+          Text((rental.ownerReviewCommunication).toInt().toString(), style: TextStyle(color: primaryColor, fontFamily: appFont),),
+        ],),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
+          Text("Item Quality:", style: TextStyle(color: primaryColor, fontFamily: appFont),),
+          Text((rental.ownerReviewItemQuality).toInt().toString(), style: TextStyle(color: primaryColor, fontFamily: appFont),),
+        ],),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
+          Text("Overall Experience:", style: TextStyle(color: primaryColor, fontFamily: appFont),),
+          Text((rental.ownerReviewOverall).toInt().toString(), style: TextStyle(color: primaryColor, fontFamily: appFont),),
+        ],),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
+          Text("Review Note:", style: TextStyle(color: primaryColor, fontFamily: appFont),),
+            Flexible(child: Text("${rental.ownerReviewNote}", style: TextStyle(color: primaryColor, fontFamily: appFont), textAlign: TextAlign.end,)),        ],),
+      ])
+    : new Column(children: <Widget>[
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
+          Text("Rating:", style: TextStyle(color: primaryColor, fontFamily: appFont),),
+          Text((renterRating).toInt().toString(), style: TextStyle(color: primaryColor, fontFamily: appFont),),
+        ],),
+        Divider(),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
+          Text("Review Note:", style: TextStyle(color: primaryColor, fontFamily: appFont),),
+          Flexible(child: Text("${rental.renterReviewNote}", style: TextStyle(color: primaryColor, fontFamily: appFont), textAlign: TextAlign.end,)),
+        ],),
+      ]);
 
     return Container(
-      child: Column(
-        children: <Widget>[
-          isRenter
-              ? Text(
-                  'Communication: ${rental.ownerReviewCommunication}\n'
-                  'Item quality: ${rental.ownerReviewItemQuality}\n'
-                  'Overall experience: ${rental.ownerReviewOverall}\n'
-                  'Review note: ${rental.ownerReviewNote}',
-                )
-              : Text(
-                  'Rating: $renterRating\n'
-                  'Review note: ${rental.renterReviewNote}',
-                ),
-        ],
-      ),
-    );
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.all(Radius.circular(12.0)),
+          border: Border.all(
+            color: primaryColor,
+            width: 0.5,
+          ),
+          boxShadow: <BoxShadow>[
+            CustomBoxShadow(
+                color: Colors.grey,
+                blurRadius: 0.5,
+                blurStyle: BlurStyle.outer),
+          ],
+        ),
+        child: Container(
+          width: 300.0,
+          padding: EdgeInsets.all(10), 
+          child: info,)
+        //Text(statusMessage, style: TextStyle(fontSize: 18, color: Colors.white, fontFamily: appFont)),
+        );
   }
 
   double getRating(int indicator) {

@@ -481,6 +481,7 @@ class PayoutsPageState extends State<PayoutsPage> {
     }
     return Column(
       children: <Widget>[
+        SizedBox(height: 10.0,),
         buildChargesList(),
         //buildTransactions("past", "renter"),
         //buildTransactions("past", "owner"),
@@ -518,15 +519,6 @@ class PayoutsPageState extends State<PayoutsPage> {
                       DocumentSnapshot ds = docs[index];
                       double amount = ds['amount'] / 100;
 
-                      String desc = ds['description']; 
-                      //bool amOwner  = ds['rentalData']['idFrom'] == myUserID ? false : true;
-
-                      int payingIndex = desc.indexOf("paying");
-                      int forIndex = desc.indexOf("for");
-
-                      String owner = desc.substring(payingIndex + 6, forIndex);
-                      String renter = desc.substring(0, payingIndex);
-
                       /// @rohith get user data like this
                       Map userData = ds['userData'];
                       if (userData == null) return Container();
@@ -541,19 +533,18 @@ class PayoutsPageState extends State<PayoutsPage> {
                       String idFrom = rentalData['idFrom']; // renter
                       String idTo = rentalData['idTo']; // owner
 
-                      bool isRenter;
-
-                      if (currentUser.id == idFrom) {
-                        isRenter = true;
-                      } else {
-                        isRenter = false;
-                      }
+                      bool amOwner = currentUser.id == idTo ? true : false;
+                      String otherPerson = amOwner ? renterName : ownerName;
+                      String otherPersonAvatar = amOwner ? renterAvatar : ownerAvatar;
+                      String amt = amOwner ? "+\$${amount.toStringAsFixed(0)}" : "-\$${amount.toStringAsFixed(0)}";
+                      String item = ds['description'].substring(ds['description'].indexOf("renting")+"renting".length+1, ds['description'].length);
 
                       return ListTile(
-                        leading: CircleAvatar(backgroundImage: NetworkImage(ownerAvatar), backgroundColor: Colors.white),
-                        title: Text(renter + "paying" + owner, style: TextStyle(fontFamily: appFont),),
-                        subtitle: Text("insert subtitle"),
-                        trailing: Text('\$${amount.toStringAsFixed(0)}', style: TextStyle(fontWeight: FontWeight.bold, fontFamily: appFont),),
+                        leading: CircleAvatar(backgroundImage: NetworkImage(otherPersonAvatar), backgroundColor: Colors.white),
+                        title: Text(otherPerson, style: TextStyle(fontFamily: appFont),),
+                        subtitle: Text(item),
+                        trailing: Text(amt, style: TextStyle(fontWeight: FontWeight.bold, fontFamily: appFont, color: amOwner?primaryColor:Color(0xffff6961), fontSize: 18.0),
+                      )
                       );
                     });
               } else {
