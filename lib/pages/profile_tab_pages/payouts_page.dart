@@ -537,6 +537,18 @@ class PayoutsPageState extends State<PayoutsPage> {
                       String renterName = renterDS['name'];
                       String renterAvatar = renterDS['avatar'];
 
+                      Map rentalData = ds['rentalData'];
+                      String idFrom = rentalData['idFrom']; // renter
+                      String idTo = rentalData['idTo']; // owner
+
+                      bool isRenter;
+
+                      if (currentUser.id == idFrom) {
+                        isRenter = true;
+                      } else {
+                        isRenter = false;
+                      }
+
                       return ListTile(
                         leading: CircleAvatar(backgroundImage: NetworkImage(ownerAvatar), backgroundColor: Colors.white),
                         title: Text(renter + "paying" + owner, style: TextStyle(fontFamily: appFont),),
