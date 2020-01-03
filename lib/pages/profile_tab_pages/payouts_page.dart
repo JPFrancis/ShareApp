@@ -491,6 +491,18 @@ class PayoutsPageState extends State<PayoutsPage> {
                       String renterName = renter['name'];
                       String renterAvatar = renter['avatar'];
 
+                      Map rentalData = ds['rentalData'];
+                      String idFrom = rentalData['idFrom']; // renter
+                      String idTo = rentalData['idTo']; // owner
+
+                      bool isRenter;
+
+                      if (currentUser.id == idFrom) {
+                        isRenter = true;
+                      } else {
+                        isRenter = false;
+                      }
+
                       return ListTile(
                         title: Text(
                           '\$${amount.toStringAsFixed(0)}',
