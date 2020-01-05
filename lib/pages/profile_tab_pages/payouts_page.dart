@@ -524,9 +524,9 @@ class PayoutsPageState extends State<PayoutsPage> {
                       if (userData == null) return Container();
                       Map ownerDS = userData['owner'];
                       Map renterDS = userData['renter'];
-                      String ownerName = ownerDS['name'];
+                      String ownerName = ownerDS['name'].trim().split(' ')[0];
                       String ownerAvatar = ownerDS['avatar'];
-                      String renterName = renterDS['name'];
+                      String renterName = renterDS['name'].trim().split(' ')[0];
                       String renterAvatar = renterDS['avatar'];
 
                       Map rentalData = ds['rentalData'];

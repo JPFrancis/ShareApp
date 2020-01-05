@@ -378,6 +378,9 @@ class ItemDetailState extends State<ItemDetail> {
   }
 
   Widget showItemCreator() {
+    String name = '${owner['name']}'.trim();
+    String firstName = name.split(' ')[0];
+
     return Column(
       children: <Widget>[
         InkWell(
@@ -388,21 +391,11 @@ class ItemDetailState extends State<ItemDetail> {
               mainAxisSize: MainAxisSize.max,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
-                Text(
-                  'Shared by ${owner['name']}',
-                  style: TextStyle(
-                      color: Colors.black, fontSize: 15.0, fontFamily: 'Quicksand'),
-                  textAlign: TextAlign.left,
-                ),
+                Text('Shared by $firstName', style: TextStyle(color: Colors.black, fontSize: 15.0, fontFamily: 'Quicksand'), textAlign: TextAlign.left,),
                 Container(
                   height: 50.0,
                   child: ClipOval(
-                    child: CachedNetworkImage(
-                      //key: ValueKey(DateTime.now().millisecondsSinceEpoch),
-                      imageUrl: owner['avatar'],
-                      placeholder: (context, url) =>
-                          new CircularProgressIndicator(),
-                    ),
+                    child: CachedNetworkImage(imageUrl: owner['avatar'], placeholder: (context, url) => new CircularProgressIndicator(),),
                   ),
                 ),
               ],

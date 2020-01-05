@@ -414,6 +414,9 @@ class RentalDetailState extends State<RentalDetail> {
   }
 
   Widget showItemCreator() {
+    String name = '${rental.ownerName}'.trim();
+    String firstName = name.split(' ')[0];
+
     return Padding(
       padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 10.0),
       child: Row(
@@ -439,14 +442,7 @@ class RentalDetailState extends State<RentalDetail> {
                   ),
                 ),
               ),
-              Text(
-                '${rental.ownerName}',
-                style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 15.0,
-                    fontFamily: 'Quicksand'),
-                textAlign: TextAlign.left,
-              ),
+              Text(firstName, style: TextStyle(color: Colors.black, fontSize: 15.0, fontFamily: 'Quicksand'), textAlign: TextAlign.left,),
               chatButton(),
             ],
           ),

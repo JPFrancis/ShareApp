@@ -2676,6 +2676,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     Map otherUser;
                     String otherUserId;
                     String lastMessage = chatDS['lastSent']['content'];
+
                     var timestamp = chatDS['lastSent']['timestamp'];
 
                     if (combinedID.length == 2) {
@@ -2688,7 +2689,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       }
                     }
                     Text title = Text(
-                      otherUser['name'],
+                      otherUser['name'].trim().split(' ')[0],
                       style: TextStyle(
                           fontWeight: FontWeight.bold, fontFamily: 'Quicksand'),
                     );
