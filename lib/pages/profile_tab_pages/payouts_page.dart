@@ -121,11 +121,11 @@ class PayoutsPageState extends State<PayoutsPage> {
         if (!stripeInit) {
           var snap = await Firestore.instance
               .collection('keys')
-              .document('stripe_pk')
+              .document('stripe_payment')
               .get();
 
           if (snap != null && snap.exists) {
-            StripeSource.setPublishableKey(snap['key']);
+            StripeSource.setPublishableKey(snap['current']);
             stripeInit = true;
           }
         }
@@ -835,6 +835,17 @@ class PayoutsPageState extends State<PayoutsPage> {
     String phoneNum = '';
     String random = DateTime.now().microsecondsSinceEpoch.toString();
 
+    String key = '';
+
+    var snap = await Firestore.instance
+        .collection('keys')
+        .document('stripe_onboarding')
+        .get();
+
+    if (snap != null && snap.exists) {
+      key = snap['current'];
+    }
+
     /// CHANGE THIS ~~~~~~~~~~~~~~~~
     String email = '$random@gmail.com';
     String firstName = 'Bob';
@@ -846,7 +857,7 @@ class PayoutsPageState extends State<PayoutsPage> {
 
     url += 'https://connect.stripe.com/express/oauth/authorize?'
         'redirect_uri=$redirectUrl'
-        '&client_id=ca_G2aEpUUFBkF4B3U8tgcY0G5NWhCfOj2c'
+        '&client_id=$key'
         '&stripe_user[country]=US'
         '&stripe_user[phone_number]=$phoneNum'
         '&stripe_user[business_type]=individual'

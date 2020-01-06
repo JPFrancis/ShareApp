@@ -1108,9 +1108,20 @@ class ItemEditState extends State<ItemEdit> {
 
     redirectUri += 'share-app.web.app/';
 
+    String key = '';
+
+    var snap = await Firestore.instance
+        .collection('keys')
+        .document('stripe_onboarding')
+        .get();
+
+    if (snap != null && snap.exists) {
+      key = snap['current'];
+    }
+
     String url = 'https://connect.stripe.com/express/oauth/authorize?'
         'redirect_uri=$redirectUri'
-        '&client_id=ca_G2aEpUUFBkF4B3U8tgcY0G5NWhCfOj2c'
+        '&client_id=$key'
         '&stripe_user[country]=US'
         '&stripe_user[phone_number]=${currentUser.phoneNum}'
         '&stripe_user[business_type]=individual'
