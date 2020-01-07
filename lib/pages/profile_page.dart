@@ -15,9 +15,7 @@ import 'package:shareapp/services/functions.dart';
 class ProfilePage extends StatefulWidget {
   static const routeName = '/profilePage';
 
-  final String userID;
-
-  ProfilePage({Key key, this.userID}) : super(key: key);
+  ProfilePage({Key key}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
@@ -28,10 +26,10 @@ class ProfilePage extends StatefulWidget {
 class ProfilePageState extends State<ProfilePage>
     with SingleTickerProviderStateMixin {
   CurrentUser currentUser;
-  DocumentSnapshot userDS;
+  User user;
   List<DocumentSnapshot> searchList;
   TextEditingController searchController = TextEditingController();
-  bool isLoading = true;
+  bool isLoading = false;
   TabController tabController;
 
   final List<Tab> myTabs = <Tab>[
@@ -48,29 +46,19 @@ class ProfilePageState extends State<ProfilePage>
     super.initState();
 
     currentUser = CurrentUser.getModel(context);
+    user = User.getModel(context);
     tabController = TabController(vsync: this, length: myTabs.length);
-    getSnapshots();
   }
 
   Future<Null> getSnapshots() async {
-    DocumentSnapshot ds = await Firestore.instance
-        .collection('users')
-        .document(widget.userID)
-        .get();
+    DocumentSnapshot snap =
+        await Firestore.instance.collection('users').document(user.id).get();
 
-    if (ds != null) {
-      userDS = ds;
-
-      delayPage();
-    }
-  }
-
-  void delayPage() async {
-    Future.delayed(Duration(milliseconds: 750)).then((_) {
+    if (snap != null) {
       setState(() {
-        isLoading = false;
+        user = User(snap);
       });
-    });
+    }
   }
 
   @override
@@ -144,8 +132,8 @@ class ProfilePageState extends State<ProfilePage>
           child: TabBarView(
             controller: tabController,
             children: <Widget>[
-              reviewsList(widget.userID, ReviewType.fromRenters),
-              reviewsList(widget.userID, ReviewType.fromOwners),
+              reviewsList(user.id, ReviewType.fromRenters),
+              reviewsList(user.id, ReviewType.fromOwners),
             ],
           ),
         ),
@@ -160,8 +148,8 @@ class ProfilePageState extends State<ProfilePage>
   Widget showUserRating() {
     double renterRating = 0;
     double ownerRating = 0;
-    Map renterRatingMap = userDS['renterRating'];
-    Map ownerRatingMap = userDS['ownerRating'];
+    Map renterRatingMap = {}..addAll(user.renterRating);
+    Map ownerRatingMap = {}..addAll(user.ownerRating);
 
     if (renterRatingMap['count'] > 0) {
       renterRating = renterRatingMap['total'] / renterRatingMap['count'];
@@ -190,10 +178,10 @@ class ProfilePageState extends State<ProfilePage>
   }
 
   Widget showUserDescription() {
-    bool empty = userDS['description'].toString().isEmpty ? true : false;
-    String desc = userDS['description'].toString().isEmpty
+    bool empty = user.description.isEmpty ? true : false;
+    String desc = user.description.isEmpty
         ? "The user hasn't added a description yet!"
-        : userDS['description'];
+        : user.description;
     return Column(
       children: <Widget>[
         Align(alignment: Alignment.topLeft, child: Icon(QuoteIcons.quote_left)),
@@ -216,7 +204,7 @@ class ProfilePageState extends State<ProfilePage>
     double w = MediaQuery.of(context).size.width;
     double statusBarHeight = MediaQuery.of(context).padding.top;
 
-    String name = '${userDS['name']}'.trim();
+    String name = user.name.trim();
     String firstName = name.split(' ')[0];
 
     return Stack(
@@ -224,7 +212,7 @@ class ProfilePageState extends State<ProfilePage>
         Container(
             decoration: new BoxDecoration(
               image: DecorationImage(
-                image: CachedNetworkImageProvider(userDS['avatar']),
+                image: CachedNetworkImageProvider(user.avatar),
                 fit: BoxFit.fill,
                 colorFilter: new ColorFilter.mode(
                     Colors.black.withOpacity(0.35), BlendMode.srcATop),
@@ -248,16 +236,16 @@ class ProfilePageState extends State<ProfilePage>
           child: PopupMenuButton<String>(
             icon: Icon(
               Icons.more_vert,
+              size: 28,
               color: Colors.white,
             ),
             onSelected: (value) {
               if (value == 'report') {
                 showReportUserDialog(
-                    context: context,
-                    myId: currentUser.id,
-                    myName: currentUser.name,
-                    offenderId: userDS.documentID,
-                    offenderName: userDS['name']);
+                  context: context,
+                  reporter: currentUser,
+                  offender: user,
+                );
               }
             },
             itemBuilder: (BuildContext context) => <PopupMenuItem<String>>[
@@ -267,7 +255,7 @@ class ProfilePageState extends State<ProfilePage>
               ),
             ],
           ),
-        )
+        ),
       ],
     );
   }
@@ -282,9 +270,8 @@ class ProfilePageState extends State<ProfilePage>
         stream: Firestore.instance
             .collection('items')
             .where('creator',
-                isEqualTo: Firestore.instance
-                    .collection('users')
-                    .document(userDS.documentID))
+                isEqualTo:
+                    Firestore.instance.collection('users').document(user.id))
             .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {

@@ -1080,18 +1080,14 @@ class ReviewDialogState extends State<ReviewDialog> {
 }
 
 class ReportUserDialog extends StatefulWidget {
-  final double pageWidth;
-  final String myId;
-  final String myName;
-  final String offenderId;
-  final String offenderName;
+  final BuildContext context;
+  final User reporter;
+  final User offender;
 
   ReportUserDialog({
-    @required this.pageWidth,
-    @required this.myId,
-    @required this.myName,
-    @required this.offenderId,
-    @required this.offenderName,
+    @required this.context,
+    @required this.reporter,
+    @required this.offender,
   });
 
   @override
@@ -1106,7 +1102,8 @@ class ReportUserDialogState extends State<ReportUserDialog> {
   void initState() {
     super.initState();
 
-    pageWidth = widget.pageWidth;
+    List screenSizes = getScreenSize(widget.context);
+    pageWidth = screenSizes[2];
   }
 
   @override
@@ -1193,10 +1190,10 @@ class ReportUserDialogState extends State<ReportUserDialog> {
                           } else {
                             await Firestore.instance.collection('reports').add({
                               'timestamp': DateTime.now(),
-                              'offenderId': widget.offenderId,
-                              'offenderName': widget.offenderName,
-                              'reporterId': widget.myId,
-                              'reporterName': widget.myName,
+                              'offenderId': widget.offender.id,
+                              'offenderName': widget.offender.name,
+                              'reporterId': widget.reporter.id,
+                              'reporterName': widget.reporter.name,
                               'note': note,
                             });
 

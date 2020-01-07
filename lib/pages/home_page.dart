@@ -834,130 +834,6 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget cardItemRentals(ds, ownerDS, rentalDS) {
-    CachedNetworkImage image = CachedNetworkImage(
-      //key: ValueKey(DateTime.now().millisecondsSinceEpoch),
-      imageUrl: ds['images'][0],
-      placeholder: (context, url) => new CircularProgressIndicator(),
-    );
-
-    return new Container(child: new LayoutBuilder(
-        builder: (BuildContext context, BoxConstraints constraints) {
-      double h = constraints.maxHeight;
-      double w = constraints.maxWidth;
-
-      return InkWell(
-        onTap: () {
-          navigateToDetail(ds);
-        },
-        child: Container(
-          decoration: new BoxDecoration(
-            boxShadow: <BoxShadow>[
-              CustomBoxShadow(
-                  color: Colors.black45,
-                  blurRadius: 3.0,
-                  blurStyle: BlurStyle.outer),
-            ],
-          ),
-          child: Column(
-            children: <Widget>[
-              Container(
-                  height: 1.9 * h / 3,
-                  width: w,
-                  child: FittedBox(fit: BoxFit.cover, child: image)),
-              SizedBox(
-                height: 10.0,
-              ),
-              Container(
-                padding: EdgeInsets.only(left: 5.0, right: 5.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: <Widget>[
-                        ds['type'] != null
-                            ? Text(
-                                '${ds['type']}'.toUpperCase(),
-                                style: TextStyle(
-                                    fontSize: h / 25,
-                                    fontFamily: 'Quicksand',
-                                    fontWeight: FontWeight.bold),
-                              )
-                            : Text(''),
-                        Text('${ownerDS['name']}',
-                            style: TextStyle(
-                                fontSize: h / 24, fontFamily: 'Quicksand')),
-                      ],
-                    ),
-                    Text('${ds['name']}',
-                        style: TextStyle(
-                            fontSize: h / 21,
-                            fontFamily: 'Quicksand',
-                            fontWeight: FontWeight.bold)),
-                    Text("\$${ds['price']} per day",
-                        style: TextStyle(
-                            fontSize: h / 22, fontFamily: 'Quicksand')),
-                    Divider(height: 15),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: <Widget>[
-                        ButtonTheme(
-                          minWidth: w / 5,
-                          height: h / 13,
-                          child: FlatButton(
-                            materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap,
-                            child: Icon(
-                              Icons.add_shopping_cart,
-                              size: h / 13,
-                            ),
-                            onPressed: () {
-                              Navigator.pushNamed(
-                                context,
-                                RentalDetail.routeName,
-                                arguments: RentalDetailArgs(
-                                  Rental(rentalDS),
-                                  currentUser,
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                        ButtonTheme(
-                          minWidth: w / 5,
-                          height: h / 13,
-                          child: FlatButton(
-                            materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap,
-                            child: Icon(
-                              Icons.chat_bubble_outline,
-                              size: h / 13,
-                            ),
-                            onPressed: () {
-                              Navigator.pushNamed(
-                                context,
-                                Chat.routeName,
-                                arguments: ChatArgs(
-                                  rentalDS,
-                                  currentUser,
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    )
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }));
-  }
-
   Widget searchPage() {
     return Container(
       child: MediaQuery.removePadding(
@@ -2587,105 +2463,6 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget buildRentalsList(bool requesting) {
-    int tileRows = MediaQuery.of(context).size.width > 500 ? 3 : 2;
-
-    return Expanded(
-      child: StreamBuilder<QuerySnapshot>(
-        stream: Firestore.instance
-            .collection('rentals')
-            .where('renter',
-                isEqualTo: Firestore.instance
-                    .collection('users')
-                    .document(currentUser.id))
-            .snapshots(),
-        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.hasError) {
-            return new Text('${snapshot.error}');
-          }
-          switch (snapshot.connectionState) {
-            case ConnectionState.waiting:
-
-            default:
-              if (snapshot.hasData) {
-                List<DocumentSnapshot> items = snapshot.data.documents
-                    .where((d) =>
-                        requesting ^ (d['status'] == 0 || d['status'] == 1))
-                    .toList();
-                return GridView.count(
-                    padding: EdgeInsets.all(20.0),
-                    mainAxisSpacing: 15,
-                    shrinkWrap: true,
-                    crossAxisCount: tileRows,
-                    childAspectRatio: (2 / 3),
-                    crossAxisSpacing: MediaQuery.of(context).size.width / 20,
-                    children: items.map((DocumentSnapshot rentalDS) {
-                      if (snapshot.hasData) {
-                        DocumentReference itemDR = rentalDS['item'];
-
-                        return StreamBuilder<DocumentSnapshot>(
-                          stream: itemDR.snapshots(),
-                          builder: (BuildContext context,
-                              AsyncSnapshot<DocumentSnapshot> snapshot) {
-                            if (snapshot.hasError) {
-                              return new Text('${snapshot.error}');
-                            }
-                            switch (snapshot.connectionState) {
-                              case ConnectionState.waiting:
-
-                              default:
-                                if (snapshot.hasData) {
-                                  DocumentSnapshot itemDS = snapshot.data;
-                                  DocumentReference ownerDR = rentalDS['owner'];
-
-                                  return StreamBuilder<DocumentSnapshot>(
-                                    stream: ownerDR.snapshots(),
-                                    builder: (BuildContext context,
-                                        AsyncSnapshot<DocumentSnapshot>
-                                            snapshot) {
-                                      if (snapshot.hasError) {
-                                        return new Text('${snapshot.error}');
-                                      }
-                                      switch (snapshot.connectionState) {
-                                        case ConnectionState.waiting:
-
-                                        default:
-                                          if (snapshot.hasData) {
-                                            DocumentSnapshot ownerDS =
-                                                snapshot.data;
-
-                                            String created = 'Created: ' +
-                                                timeago.format(
-                                                    rentalDS['created']
-                                                        .toDate());
-
-                                            return cardItemRentals(
-                                                itemDS, ownerDS, rentalDS);
-                                          } else {
-                                            return Container();
-                                          }
-                                      }
-                                    },
-                                  );
-                                } else {
-                                  return Container();
-                                }
-                            }
-                          },
-                        );
-                      } else {
-                        return Container();
-                      }
-                    }).toList());
-              } else {
-                return Container();
-              }
-          }
-        },
-      ),
-    );
-  }
-
   Widget buildMessagesList() {
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
@@ -2788,11 +2565,16 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ),
           ),
           //subtitle: Text( '$lastActive\n$itemName\n$lastMessageCrop'),
-          onTap: () {
+          onTap: () async {
+            DocumentSnapshot snap = await Firestore.instance
+                .collection('users')
+                .document(otherUserID)
+                .get();
+
             Navigator.pushNamed(
               context,
               Chat.routeName,
-              arguments: ChatArgs(otherUserID, currentUser),
+              arguments: ChatArgs(currentUser, User(snap)),
             );
           },
         ),
@@ -2999,7 +2781,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
             .collection('users')
             .document(currentUser.id)
             .updateData({
-          'pushToken': FieldValue.arrayRemove([deviceToken]),
+          'pushToken': '',
         });
 
         widget.auth.signOut().then((_) {

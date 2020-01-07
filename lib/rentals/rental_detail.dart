@@ -11,6 +11,7 @@ import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/models/current_user.dart';
 import 'package:shareapp/models/rental.dart';
+import 'package:shareapp/models/user.dart';
 import 'package:shareapp/rentals/chat.dart';
 import 'package:shareapp/rentals/new_pickup.dart';
 import 'package:shareapp/services/const.dart';
@@ -112,9 +113,14 @@ class RentalDetailState extends State<RentalDetail> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 1),
       child: GestureDetector(
-          onTap: () {
+          onTap: () async {
+            DocumentSnapshot snap = await Firestore.instance
+                .collection('users')
+                .document(otherUserId)
+                .get();
+
             Navigator.of(context).pushNamed(Chat.routeName,
-                arguments: ChatArgs(otherUserId, currentUser));
+                arguments: ChatArgs(currentUser, User(snap)));
           },
           child: Row(
             children: <Widget>[
@@ -296,11 +302,23 @@ class RentalDetailState extends State<RentalDetail> {
                   child: PopupMenuButton<String>(
                     icon: Icon(
                       Icons.more_vert,
+                      size: 28,
                       color: primaryColor,
                     ),
-                    onSelected: (value) {
+                    onSelected: (value) async {
                       if (value == 'cancel') {
                         removeRentalWarning(EndRentalType.cancel);
+                      } else if (value == 'report') {
+                        DocumentSnapshot snap = await Firestore.instance
+                            .collection('users')
+                            .document(otherUserId)
+                            .get();
+
+                        showReportUserDialog(
+                          context: context,
+                          reporter: currentUser,
+                          offender: User(snap),
+                        );
                       }
                     },
                     itemBuilder: (BuildContext context) =>
@@ -308,6 +326,10 @@ class RentalDetailState extends State<RentalDetail> {
                       const PopupMenuItem<String>(
                         value: 'cancel',
                         child: Text('Cancel Rental'),
+                      ),
+                      const PopupMenuItem<String>(
+                        value: 'report',
+                        child: Text('Report user'),
                       ),
                     ],
                   ),

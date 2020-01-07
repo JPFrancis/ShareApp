@@ -5,7 +5,16 @@ import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/models/rental.dart';
+import 'package:shareapp/models/user.dart';
 import 'package:shareapp/services/dialogs.dart';
+
+List getScreenSize(BuildContext context) {
+  double statusBarHeight = MediaQuery.of(context).padding.top;
+  double pageHeight = MediaQuery.of(context).size.height - statusBarHeight;
+  double pageWidth = MediaQuery.of(context).size.width;
+
+  return [statusBarHeight, pageHeight, pageWidth];
+}
 
 void showToast(String message) {
   Fluttertoast.showToast(
@@ -227,25 +236,20 @@ Future<Position> getUserLocation() async {
   return currentLocation;
 }
 
-void showReportUserDialog(
-    {BuildContext context,
-    String myId,
-    String myName,
-    String offenderId,
-    String offenderName}) async {
-  double pageWidth = MediaQuery.of(context).size.width;
-
+void showReportUserDialog({
+  BuildContext context,
+  User reporter,
+  User offender,
+}) async {
   var value = await showDialog(
     barrierDismissible: true,
     context: context,
-    builder: (BuildContext context) {
+    builder: (BuildContext dialogContext) {
       return Container(
         child: ReportUserDialog(
-          pageWidth: pageWidth,
-          myId: myId,
-          myName: myName,
-          offenderId: offenderId,
-          offenderName: offenderName,
+          context: context,
+          reporter: reporter,
+          offender: offender,
         ),
       );
     },

@@ -14,15 +14,15 @@ import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/models/current_user.dart';
 import 'package:shareapp/models/rental.dart';
+import 'package:shareapp/models/user.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/const.dart';
 import 'package:shareapp/services/functions.dart';
 
 class Chat extends StatefulWidget {
   static const routeName = '/chat';
-  final String otherUserID;
 
-  Chat({Key key, this.otherUserID}) : super(key: key);
+  Chat({Key key}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
@@ -32,9 +32,8 @@ class Chat extends StatefulWidget {
 
 class ChatState extends State<Chat> {
   CurrentUser currentUser;
+  User peerUser;
   Map chatData;
-  FirebaseUser firebaseUser;
-  Map otherUser;
   List combinedId;
 
   File imageFile;
@@ -42,9 +41,7 @@ class ChatState extends State<Chat> {
   bool idIsFirst;
 
   String imageUrl;
-  String myUserID;
   String groupChatId;
-  String otherUserID;
 
   var listMessage;
 
@@ -63,9 +60,9 @@ class ChatState extends State<Chat> {
     super.initState();
 
     currentUser = CurrentUser.getModel(context);
-    otherUserID = widget.otherUserID;
+    peerUser = User.getModel(context);
     imageUrl = '';
-    getMyUserID();
+    getSnapshots();
   }
 
   @override
@@ -74,35 +71,14 @@ class ChatState extends State<Chat> {
     super.dispose();
   }
 
-  void delayPage() async {
-    isLoading = true;
-    Future.delayed(Duration(milliseconds: 750)).then((_) {
-      setState(() {
-        isLoading = false;
-      });
-    });
-  }
-
-  void getMyUserID() async {
-    var user = await FirebaseAuth.instance.currentUser();
-
-    if (user != null) {
-      myUserID = user.uid;
-      firebaseUser = user;
-      idIsFirst = checkIdIsFirst(myUserID, otherUserID);
-
-      Map data = getChatRoomData(myUserID, otherUserID);
-
-      if (data != null) {
-        groupChatId = data['combinedId'];
-        combinedId = data['users'];
-
-        getSnapshots();
-      }
-    }
-  }
-
   void getSnapshots() async {
+    idIsFirst = checkIdIsFirst(currentUser.id, peerUser.id);
+
+    Map data = getChatRoomData(currentUser.id, peerUser.id);
+
+    groupChatId = data['combinedId'];
+    combinedId = data['users'];
+
     DocumentSnapshot ds = await Firestore.instance
         .collection('messages')
         .document(groupChatId)
@@ -110,16 +86,16 @@ class ChatState extends State<Chat> {
 
     DocumentSnapshot otherUserDS = await Firestore.instance
         .collection('users')
-        .document(otherUserID)
+        .document(peerUser.id)
         .get();
 
     if (!ds.exists) {
       Map map = setChatUserData({
-        'id': myUserID,
-        'name': firebaseUser.displayName,
-        'avatar': firebaseUser.photoUrl,
+        'id': currentUser.id,
+        'name': currentUser.name,
+        'avatar': currentUser.avatar,
       }, {
-        'id': otherUserID,
+        'id': peerUser.id,
         'name': otherUserDS['name'],
         'avatar': otherUserDS['avatar'],
       });
@@ -141,7 +117,6 @@ class ChatState extends State<Chat> {
         chatData = result.data;
 
         setState(() {
-          otherUser = otherUserDS.data;
           isLoading = false;
         });
       } on CloudFunctionsException catch (e) {
@@ -151,7 +126,6 @@ class ChatState extends State<Chat> {
       chatData = ds.data;
 
       setState(() {
-        otherUser = otherUserDS.data;
         isLoading = false;
       });
     }
@@ -197,12 +171,12 @@ class ChatState extends State<Chat> {
           .document(groupChatId)
           .collection('messages')
           .add({
-        'idFrom': myUserID,
-        'idTo': otherUserID,
+        'idFrom': currentUser.id,
+        'idTo': peerUser.id,
         'timestamp': DateTime.now().millisecondsSinceEpoch,
         'content': content,
         'type': type,
-        'pushToken': otherUser['pushToken'],
+        'pushToken': peerUser.pushToken,
         'nameFrom': currentUser.name,
       });
 
@@ -231,7 +205,7 @@ class ChatState extends State<Chat> {
       );
     }
 
-    if (ds['idFrom'] == myUserID) {
+    if (ds['idFrom'] == currentUser.id) {
       // Right (my message)
       return Row(
         children: <Widget>[
@@ -343,7 +317,7 @@ class ChatState extends State<Chat> {
                             height: 35.0,
                             padding: EdgeInsets.all(10.0),
                           ),
-                          imageUrl: otherUser['avatar'],
+                          imageUrl: peerUser.avatar,
                           width: 35.0,
                           height: 35.0,
                           fit: BoxFit.cover,
@@ -462,7 +436,7 @@ class ChatState extends State<Chat> {
   bool isLastMessageLeft(int index) {
     if ((index > 0 &&
             listMessage != null &&
-            listMessage[index - 1]['idFrom'] == myUserID) ||
+            listMessage[index - 1]['idFrom'] == currentUser.id) ||
         index == 0) {
       return true;
     } else {
@@ -473,7 +447,7 @@ class ChatState extends State<Chat> {
   bool isLastMessageRight(int index) {
     if ((index > 0 &&
             listMessage != null &&
-            listMessage[index - 1]['idFrom'] != myUserID) ||
+            listMessage[index - 1]['idFrom'] != currentUser.id) ||
         index == 0) {
       return true;
     } else {
@@ -488,7 +462,7 @@ class ChatState extends State<Chat> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: myUserID != otherUserID
+      body: currentUser.id != peerUser.id
           ? WillPopScope(
               child: isLoading
                   ? Container()
@@ -512,7 +486,7 @@ class ChatState extends State<Chat> {
                                   child: Align(
                                     alignment: Alignment.bottomCenter,
                                     child: Text(
-                                      '${otherUser['name']}',
+                                      peerUser.name,
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
                                           fontSize: 20.0,
@@ -531,11 +505,10 @@ class ChatState extends State<Chat> {
                                       onSelected: (value) {
                                         if (value == 'report') {
                                           showReportUserDialog(
-                                              context: context,
-                                              myId: currentUser.id,
-                                              myName: currentUser.name,
-                                              offenderId: otherUserID,
-                                              offenderName: otherUser['name']);
+                                            context: context,
+                                            reporter: currentUser,
+                                            offender: peerUser,
+                                          );
                                         }
                                       },
                                       itemBuilder: (BuildContext context) =>
