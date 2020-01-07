@@ -69,6 +69,13 @@ class User extends Model {
     this.phoneNum = data['phoneNum'];
     this.ownerRating = {}..addAll(data['ownerRating']);
     this.renterRating = {}..addAll(data['renterRating']);
+
+    var pushToken = data['pushToken'];
+
+    if (pushToken is List && pushToken.isNotEmpty) {
+      this.pushToken = pushToken[0];
+    }
+
     this.pushToken = data['pushToken'];
 
     // current user only
