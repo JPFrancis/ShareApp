@@ -13,6 +13,7 @@ import 'package:shareapp/models/current_user.dart';
 import 'package:shareapp/models/rental.dart';
 import 'package:shareapp/rentals/rental_detail.dart';
 import 'package:shareapp/services/const.dart';
+import 'package:shareapp/services/database.dart';
 import 'package:shareapp/services/functions.dart';
 import 'package:shareapp/services/payment_service.dart';
 import 'package:stripe_payment/stripe_payment.dart';
@@ -130,37 +131,27 @@ class PayoutsPageState extends State<PayoutsPage> {
           }
         }
 
-        StripeSource.addSource().then((token) {
-          final HttpsCallable callable =
-              CloudFunctions.instance.getHttpsCallable(
-            functionName: 'addStripeCard',
-          );
+        if (stripeInit) {
+          StripeSource.addSource().then((token) async {
+            dynamic value = await DB()
+                .addSource(currentUser: currentUser, token: token)
+                .catchError((e) {
+              showToast('Error adding card');
 
-          callable.call(<String, dynamic>{
-            'tokenId': token,
-            'userId': currentUser.id,
-            'email': currentUser.email,
-            'customerId': currentUser.custId,
-          }).then((var resp) {
-            var response = resp.data;
-
-            if (response != null && response is Map) {
-              String custId = response['custId'];
-              String defaultSource = response['defaultSource'];
-
-              currentUser.updateCustomerId(custId);
-              currentUser.updateDefaultSource(defaultSource);
-
-              showToast('Success');
-            } else {
-              showToast('An error occurred');
-            }
-
-            setState(() {
-              isLoading = false;
+              setState(() {
+                isLoading = false;
+              });
             });
+
+            if (value != null && value is int && value == 0) {
+              showToast('Profile successfully updated');
+
+              setState(() {
+                isLoading = false;
+              });
+            }
           });
-        });
+        }
       },
       child: Container(
           padding: EdgeInsets.symmetric(horizontal: 15.0),

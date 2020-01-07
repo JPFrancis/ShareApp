@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:shareapp/models/current_user.dart';
 import 'package:shareapp/models/rental.dart';
 
 class DB {
@@ -58,6 +59,44 @@ class DB {
       } else {
         return 0;
       }
+    } catch (e) {
+      throw e.toString();
+    }
+  }
+
+  Future<dynamic> addSource({
+    CurrentUser currentUser,
+    String token,
+  }) async {
+    try {
+      if (currentUser != null && token != null) {
+        final HttpsCallable callable = CloudFunctions.instance
+            .getHttpsCallable(functionName: 'addStripeCard');
+
+        final HttpsCallableResult result =
+            await callable.call(<String, dynamic>{
+          'tokenId': token,
+          'userId': currentUser.id,
+          'email': currentUser.email,
+          'customerId': currentUser.custId,
+        });
+
+        final response = result.data;
+
+        if (response != null && response is Map) {
+          String custId = response['custId'];
+          String defaultSource = response['defaultSource'];
+
+          currentUser.updateCustomerId(custId);
+          currentUser.updateDefaultSource(defaultSource);
+
+          return 0;
+        } else {
+          throw 'An error occurred';
+        }
+      }
+    } on CloudFunctionsException catch (e) {
+      throw e.message;
     } catch (e) {
       throw e.toString();
     }

@@ -11,6 +11,7 @@ const storage = admin.storage();
 const bucket = storage.bucket();
 
 const stripe = require('stripe')(functions.config().stripe.token);
+// const stripe = require('stripe')('sk_test_...');
 const error_message = 'Invalid input. Make sure you\'re using the latest version of the app';
 
 // create new user document when account created

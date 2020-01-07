@@ -126,7 +126,8 @@ class ItemEditState extends State<ItemEdit> {
     ];
 
     dropDownItemType = itemType
-        .map((String value) => DropdownMenuItem<String>(
+        .map((String value) =>
+        DropdownMenuItem<String>(
             value: value,
             child: Text(value, style: TextStyle(fontFamily: 'Quicksand'))))
         .toList();
@@ -139,7 +140,8 @@ class ItemEditState extends State<ItemEdit> {
     ];
 
     dropDownItemCondition = itemCondition
-        .map((String value) => DropdownMenuItem<String>(
+        .map((String value) =>
+        DropdownMenuItem<String>(
             value: value,
             child: Text(value, style: TextStyle(fontFamily: 'Quicksand'))))
         .toList();
@@ -165,7 +167,7 @@ class ItemEditState extends State<ItemEdit> {
 
         dynamic value = await DB()
             .addStripeConnectedAccount(
-                url: latestUri.toString(), userId: currentUser.id)
+            url: latestUri.toString(), userId: currentUser.id)
             .catchError((e) {
           setState(() {
             isLoading = false;
@@ -216,8 +218,15 @@ class ItemEditState extends State<ItemEdit> {
   Widget build(BuildContext context) {
     theme = Theme.of(context);
     textStyle =
-        Theme.of(context).textTheme.headline.merge(TextStyle(fontSize: 20));
-    inputTextStyle = Theme.of(context).textTheme.subtitle;
+        Theme
+            .of(context)
+            .textTheme
+            .headline
+            .merge(TextStyle(fontSize: 20));
+    inputTextStyle = Theme
+        .of(context)
+        .textTheme
+        .subtitle;
 
     return Scaffold(
       resizeToAvoidBottomPadding: true,
@@ -225,9 +234,9 @@ class ItemEditState extends State<ItemEdit> {
         children: <Widget>[
           isLoading
               ? Container(
-                  decoration:
-                      new BoxDecoration(color: Colors.white.withOpacity(0.0)),
-                )
+            decoration:
+            new BoxDecoration(color: Colors.white.withOpacity(0.0)),
+          )
               : showBody(),
           showCircularProgress(),
         ],
@@ -235,19 +244,22 @@ class ItemEditState extends State<ItemEdit> {
       floatingActionButton: isLoading
           ? Container()
           : RaisedButton(
-              child: Text('Next ＞',
-                  style:
-                      TextStyle(color: Colors.white, fontFamily: 'Quicksand')),
-              color: Color(0xff007f6e),
-              onPressed: () {
-                saveWarning();
-              },
-            ),
+        child: Text('Next ＞',
+            style:
+            TextStyle(color: Colors.white, fontFamily: 'Quicksand')),
+        color: Color(0xff007f6e),
+        onPressed: () {
+          saveWarning();
+        },
+      ),
     );
   }
 
   Widget showBody() {
-    double height = MediaQuery.of(context).size.height;
+    double height = MediaQuery
+        .of(context)
+        .size
+        .height;
     return Form(
       key: formKey,
       onWillPop: onWillPop,
@@ -366,19 +378,21 @@ class ItemEditState extends State<ItemEdit> {
 
   getAllImages(BuildContext context) {
     List<Widget> databaseImages = itemCopy.images
-        .map((image) => Container(
+        .map((image) =>
+        Container(
             decoration: BoxDecoration(border: Border.all()),
             child: FittedBox(
               fit: BoxFit.cover,
               child: CachedNetworkImage(
                   imageUrl: image,
                   placeholder: (context, url) =>
-                      new CircularProgressIndicator()),
+                  new CircularProgressIndicator()),
             )))
         .toList();
 
     List<Widget> assetImages = imageAssets
-        .map((asset) => Container(
+        .map((asset) =>
+        Container(
             decoration: BoxDecoration(border: Border.all()),
             child: AssetThumb(
               asset: asset,
@@ -395,9 +409,9 @@ class ItemEditState extends State<ItemEdit> {
         },
         child: totalImagesCount < 8
             ? Container(
-                decoration: BoxDecoration(border: Border.all()),
-                child: Icon(Icons.add),
-              )
+          decoration: BoxDecoration(border: Border.all()),
+          child: Icon(Icons.add),
+        )
             : Container(),
       ),
     );
@@ -419,9 +433,9 @@ class ItemEditState extends State<ItemEdit> {
   Widget showItemCreator() {
     return Container(
         child: Text(
-      "Item created by: ${itemCopy.creator}",
-      style: TextStyle(fontSize: 16),
-    ));
+          "Item created by: ${itemCopy.creator}",
+          style: TextStyle(fontSize: 16),
+        ));
   }
 
   Widget showTypeSelector() {
@@ -463,9 +477,9 @@ class ItemEditState extends State<ItemEdit> {
   Widget showImageCount() {
     return Container(
         child: Text(
-      "Num images selected: ${itemCopy.numImages}",
-      style: TextStyle(fontSize: 16),
-    ));
+          "Num images selected: ${itemCopy.numImages}",
+          style: TextStyle(fontSize: 16),
+        ));
   }
 
   Widget showImageButtons() {
@@ -522,13 +536,14 @@ class ItemEditState extends State<ItemEdit> {
     return Container(
       child: itemCopy.location['geopoint'] != null
           ? Text(
-              "Selected location: ${itemCopy.location['geopoint'].latitude}, ${itemCopy.location['geopoint'].longitude}",
-              style: TextStyle(fontSize: 16),
-            )
+        "Selected location: ${itemCopy.location['geopoint']
+            .latitude}, ${itemCopy.location['geopoint'].longitude}",
+        style: TextStyle(fontSize: 16),
+      )
           : Text(
-              "No location yet",
-              style: TextStyle(fontSize: 16),
-            ),
+        "No location yet",
+        style: TextStyle(fontSize: 16),
+      ),
     );
   }
 
@@ -536,7 +551,10 @@ class ItemEditState extends State<ItemEdit> {
     if (itemCopy.location['geopoint'] == null) {
       return Container();
     } else {
-      double widthOfScreen = MediaQuery.of(context).size.width;
+      double widthOfScreen = MediaQuery
+          .of(context)
+          .size
+          .width;
       GeoPoint gp = itemCopy.location['geopoint'];
       double lat = gp.latitude;
       double long = gp.longitude;
@@ -544,8 +562,8 @@ class ItemEditState extends State<ItemEdit> {
       return Container(
         padding: EdgeInsets.only(top: 10.0),
         decoration: BoxDecoration(
-            //border: Border(top: BorderSide(color: Colors.black), bottom: BorderSide(color: Colors.black)),
-            ),
+          //border: Border(top: BorderSide(color: Colors.black), bottom: BorderSide(color: Colors.black)),
+        ),
         width: widthOfScreen,
         height: 200.0,
         child: GoogleMap(
@@ -600,13 +618,13 @@ class ItemEditState extends State<ItemEdit> {
               textColor: Colors.white,
               child: itemCopy.location['geopoint'] == null
                   ? Text(
-                      "Add Location",
-                      style: TextStyle(fontFamily: 'Quicksand'),
-                    )
+                "Add Location",
+                style: TextStyle(fontFamily: 'Quicksand'),
+              )
                   : Text("Edit Location",
-                      style: TextStyle(
-                        fontFamily: 'Quicksand',
-                      )),
+                  style: TextStyle(
+                    fontFamily: 'Quicksand',
+                  )),
               onPressed: () {
                 setState(() {
                   navToLocation();
@@ -639,24 +657,24 @@ class ItemEditState extends State<ItemEdit> {
   Widget showCircularProgress() {
     return isLoading
         ? Container(
-            child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: <Widget>[
-                  Text(
-                    'Loading...',
-                    style: TextStyle(fontSize: 30),
-                  ),
-                  Container(
-                    height: 20.0,
-                  ),
-                  Center(child: CircularProgressIndicator())
-                ]),
-          )
+      child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+            Text(
+              'Loading...',
+              style: TextStyle(fontSize: 30),
+            ),
+            Container(
+              height: 20.0,
+            ),
+            Center(child: CircularProgressIndicator())
+          ]),
+    )
         : Container(
-            height: 0.0,
-            width: 0.0,
-          );
+      height: 0.0,
+      width: 0.0,
+    );
   }
 
   void saveItem() async {
@@ -685,7 +703,7 @@ class ItemEditState extends State<ItemEdit> {
 
     GeoPoint gp = itemCopy.location['geopoint'];
     GeoFirePoint myLocation =
-        geo.point(latitude: gp.latitude, longitude: gp.longitude);
+    geo.point(latitude: gp.latitude, longitude: gp.longitude);
 
     // new item
     if (!isEdit) {
@@ -913,9 +931,9 @@ class ItemEditState extends State<ItemEdit> {
     debugPrint('========= ${imageData.runtimeType}');
 
     StorageReference ref =
-        FirebaseStorage.instance.ref().child('/items/$fileName/$index.jpg');
+    FirebaseStorage.instance.ref().child('/items/$fileName/$index.jpg');
     StorageUploadTask uploadTask =
-        ref.putData(imageData, StorageMetadata(contentType: 'image/jpeg'));
+    ref.putData(imageData, StorageMetadata(contentType: 'image/jpeg'));
 
     return await (await uploadTask.onComplete).ref.getDownloadURL();
   }
@@ -927,8 +945,8 @@ class ItemEditState extends State<ItemEdit> {
   void navToLocation() async {
     GeoPoint returnLoc = await Navigator.push(context,
         MaterialPageRoute<GeoPoint>(builder: (BuildContext context) {
-      return SelectLocation(itemCopy.location['geopoint']);
-    }));
+          return SelectLocation(itemCopy.location['geopoint']);
+        }));
 
     if (returnLoc != null) {
       setState(() {
@@ -959,35 +977,35 @@ class ItemEditState extends State<ItemEdit> {
 
     final ThemeData theme = Theme.of(context);
     final TextStyle dialogTextStyle =
-        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+    theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
 
     return await showDialog<bool>(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              content: Text(
-                'Discard changes?',
-                style: dialogTextStyle,
-              ),
-              actions: <Widget>[
-                FlatButton(
-                  child: const Text('Cancel'),
-                  onPressed: () {
-                    Navigator.of(context).pop(
-                        false); // Pops the confirmation dialog but not the page.
-                  },
-                ),
-                FlatButton(
-                  child: const Text('Discard'),
-                  onPressed: () {
-                    Navigator.of(context).pop(
-                        true); // Returning true to _onWillPop will pop again.
-                  },
-                ),
-              ],
-            );
-          },
-        ) ??
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: Text(
+            'Discard changes?',
+            style: dialogTextStyle,
+          ),
+          actions: <Widget>[
+            FlatButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop(
+                    false); // Pops the confirmation dialog but not the page.
+              },
+            ),
+            FlatButton(
+              child: const Text('Discard'),
+              onPressed: () {
+                Navigator.of(context).pop(
+                    true); // Returning true to _onWillPop will pop again.
+              },
+            ),
+          ],
+        );
+      },
+    ) ??
         false;
   }
 
@@ -1000,40 +1018,40 @@ class ItemEditState extends State<ItemEdit> {
 
     final ThemeData theme = Theme.of(context);
     final TextStyle dialogTextStyle =
-        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+    theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
 
     return await showDialog<bool>(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text('Warning!'),
-              content: Text(
-                'You are currently editing an item. '
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Warning!'),
+          content: Text(
+            'You are currently editing an item. '
                 'Deleting its images will delete '
                 'the images in the database, even '
                 'if you don\'t press save',
-                style: dialogTextStyle,
-              ),
-              actions: <Widget>[
-                FlatButton(
-                  child: const Text('Cancel'),
-                  onPressed: () {
-                    Navigator.of(context).pop(
-                        false); // Pops the confirmation dialog but not the page.
-                  },
-                ),
-                FlatButton(
-                  child: const Text('Continue'),
-                  onPressed: () {
-                    deleteAssets();
-                    Navigator.of(context).pop(
-                        false); // Pops the confirmation dialog but not the page.
-                  },
-                ),
-              ],
-            );
-          },
-        ) ??
+            style: dialogTextStyle,
+          ),
+          actions: <Widget>[
+            FlatButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop(
+                    false); // Pops the confirmation dialog but not the page.
+              },
+            ),
+            FlatButton(
+              child: const Text('Continue'),
+              onPressed: () {
+                deleteAssets();
+                Navigator.of(context).pop(
+                    false); // Pops the confirmation dialog but not the page.
+              },
+            ),
+          ],
+        );
+      },
+    ) ??
         false;
   }
 
@@ -1059,36 +1077,36 @@ class ItemEditState extends State<ItemEdit> {
 
     final ThemeData theme = Theme.of(context);
     final TextStyle dialogTextStyle =
-        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+    theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
 
     return await showDialog<bool>(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text('Error!'),
-              content: Text(
-                message,
-                style: dialogTextStyle,
-              ),
-              actions: <Widget>[
-                FlatButton(
-                  child: const Text('Ok'),
-                  onPressed: () {
-                    Navigator.of(context).pop(
-                        false); // Pops the confirmation dialog but not the page.
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Error!'),
+          content: Text(
+            message,
+            style: dialogTextStyle,
+          ),
+          actions: <Widget>[
+            FlatButton(
+              child: const Text('Ok'),
+              onPressed: () {
+                Navigator.of(context).pop(
+                    false); // Pops the confirmation dialog but not the page.
 
-                    if (addPayment) {
-                      setState(() {
-                        isLoading = true;
-                      });
-                      addConnectedAccount();
-                    }
-                  },
-                ),
-              ],
-            );
-          },
-        ) ??
+                if (addPayment) {
+                  setState(() {
+                    isLoading = true;
+                  });
+                  addConnectedAccount();
+                }
+              },
+            ),
+          ],
+        );
+      },
+    ) ??
         false;
   }
 
@@ -1137,61 +1155,61 @@ class ItemEditState extends State<ItemEdit> {
 
   Future<bool> deleteItemDialog() async {
     return await showDialog<bool>(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text('Delete item?'),
-              content: Text('${itemCopy.name}'),
-              actions: <Widget>[
-                FlatButton(
-                  child: const Text('No'),
-                  onPressed: () {
-                    Navigator.of(context).pop(
-                        false); // Pops the confirmation dialog but not the page.
-                  },
-                ),
-                FlatButton(
-                  child: const Text('Yes'),
-                  onPressed: () {
-                    deleteItem();
-                    Navigator.of(context).pop(false);
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Delete item?'),
+          content: Text('${itemCopy.name}'),
+          actions: <Widget>[
+            FlatButton(
+              child: const Text('No'),
+              onPressed: () {
+                Navigator.of(context).pop(
+                    false); // Pops the confirmation dialog but not the page.
+              },
+            ),
+            FlatButton(
+              child: const Text('Yes'),
+              onPressed: () {
+                deleteItem();
+                Navigator.of(context).pop(false);
 
-                    // Pops the confirmation dialog but not the page.
-                  },
-                ),
-              ],
-            );
-          },
-        ) ??
+                // Pops the confirmation dialog but not the page.
+              },
+            ),
+          ],
+        );
+      },
+    ) ??
         false;
   }
 
   Future<bool> showUserLocationError() async {
     final ThemeData theme = Theme.of(context);
     final TextStyle dialogTextStyle =
-        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+    theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
 
     return await showDialog<bool>(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text('Error'),
-              content: Text(
-                'Problem with getting your current location',
-                style: dialogTextStyle,
-              ),
-              actions: <Widget>[
-                FlatButton(
-                  child: const Text('Close'),
-                  onPressed: () {
-                    Navigator.of(context).pop(
-                        false); // Pops the confirmation dialog but not the page.
-                  },
-                ),
-              ],
-            );
-          },
-        ) ??
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Error'),
+          content: Text(
+            'Problem with getting your current location',
+            style: dialogTextStyle,
+          ),
+          actions: <Widget>[
+            FlatButton(
+              child: const Text('Close'),
+              onPressed: () {
+                Navigator.of(context).pop(
+                    false); // Pops the confirmation dialog but not the page.
+              },
+            ),
+          ],
+        );
+      },
+    ) ??
         false;
   }
 
@@ -1204,9 +1222,10 @@ class ItemEditState extends State<ItemEdit> {
         .collection('items')
         .document(itemId)
         .delete()
-        .then((_) => Navigator.popUntil(
-              context,
-              ModalRoute.withName('/'),
-            ));
+        .then((_) =>
+        Navigator.popUntil(
+          context,
+          ModalRoute.withName('/'),
+        ));
   }
 }

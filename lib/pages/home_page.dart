@@ -98,7 +98,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
   AnimationController controller;
 
   FlutterLocalNotificationsPlugin localNotificationManager =
-      FlutterLocalNotificationsPlugin();
+  FlutterLocalNotificationsPlugin();
   var initializationSettingsAndroid;
   var initializationSettingsIOS;
   var initializationSettings;
@@ -185,7 +185,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
   /// remove this later
   void updateAll() async {
     CollectionReference collectionReference =
-        Firestore.instance.collection('rentals');
+    Firestore.instance.collection('rentals');
     Query query = collectionReference;
 
     QuerySnapshot querySnapshot = await query.getDocuments();
@@ -194,14 +194,14 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
     if (docs != null && docs.isNotEmpty) {
       for (DocumentSnapshot doc in docs) {
         DateTime start =
-            stripHourMin((doc['pickupStart'] as Timestamp).toDate());
+        stripHourMin((doc['pickupStart'] as Timestamp).toDate());
         DateTime end = stripHourMin((doc['rentalEnd'] as Timestamp).toDate())
             .add(Duration(hours: 1));
         List rentalDays = [];
 
         for (DateTime curr = start;
-            curr.isBefore(end);
-            curr = curr.add(Duration(days: 1))) {
+        curr.isBefore(end);
+        curr = curr.add(Duration(days: 1))) {
           rentalDays.add(curr);
         }
 
@@ -215,7 +215,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
   /// remove this later
   void deleteAll() async {
     CollectionReference collectionReference =
-        Firestore.instance.collection('charges');
+    Firestore.instance.collection('charges');
     Query query = collectionReference;
 
     QuerySnapshot querySnapshot = await query.getDocuments();
@@ -235,16 +235,16 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
 //  deleteAll();
 
     CollectionReference rentalsCollection =
-        Firestore.instance.collection('rentals');
+    Firestore.instance.collection('rentals');
 
     // Check for expired rentals
     var rentalQuerySnaps = await rentalsCollection
         .where('users',
-            arrayContains:
-                Firestore.instance.collection('users').document(currentUser.id))
+        arrayContains:
+        Firestore.instance.collection('users').document(currentUser.id))
         .where('requesting', isEqualTo: true)
         .where('lastUpdateTime',
-            isLessThan: DateTime.now().subtract(Duration(days: 1)))
+        isLessThan: DateTime.now().subtract(Duration(days: 1)))
         .getDocuments();
     List<DocumentSnapshot> rentalSnaps = rentalQuerySnaps.documents;
 
@@ -260,8 +260,8 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
     // Update status of rentals that are accepted but haven't begun
     rentalQuerySnaps = await rentalsCollection
         .where('users',
-            arrayContains:
-                Firestore.instance.collection('users').document(currentUser.id))
+        arrayContains:
+        Firestore.instance.collection('users').document(currentUser.id))
         .where('status', isEqualTo: 2)
         .where('pickupStart', isLessThanOrEqualTo: DateTime.now())
         .getDocuments();
@@ -281,8 +281,8 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
     // Update status of rentals that are completed
     rentalQuerySnaps = await rentalsCollection
         .where('users',
-            arrayContains:
-                Firestore.instance.collection('users').document(currentUser.id))
+        arrayContains:
+        Firestore.instance.collection('users').document(currentUser.id))
         .where('status', isEqualTo: 3)
         .where('rentalEnd', isLessThanOrEqualTo: DateTime.now())
         .getDocuments();
@@ -303,7 +303,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
     await localNotificationManager.cancelAll();
 
     DocumentReference userDR =
-        Firestore.instance.collection('users').document(currentUser.id);
+    Firestore.instance.collection('users').document(currentUser.id);
     rentalQuerySnaps = await Firestore.instance
         .collection('rentals')
         .where('users', arrayContains: userDR)
@@ -404,8 +404,8 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
     QuerySnapshot snaps = await itemRef
         .where('creator',
-            isEqualTo:
-                Firestore.instance.collection('users').document(currentUser.id))
+        isEqualTo:
+        Firestore.instance.collection('users').document(currentUser.id))
         .where('unavailable', isGreaterThan: []).getDocuments();
     List<DocumentSnapshot> docs = snaps.documents;
 
@@ -437,8 +437,8 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
     // Check for rentals where you are the renter
     rentalQuerySnaps = await rentalsCollection
         .where('renter',
-            isEqualTo:
-                Firestore.instance.collection('users').document(currentUser.id))
+        isEqualTo:
+        Firestore.instance.collection('users').document(currentUser.id))
         .where('status', isEqualTo: 4)
         .where('ownerReviewSubmitted', isEqualTo: false)
         .getDocuments();
@@ -452,8 +452,8 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
     // Check for rentals where you are the owner
     rentalQuerySnaps = await rentalsCollection
         .where('owner',
-            isEqualTo:
-                Firestore.instance.collection('users').document(currentUser.id))
+        isEqualTo:
+        Firestore.instance.collection('users').document(currentUser.id))
         .where('status', isEqualTo: 4)
         .where('renterReviewSubmitted', isEqualTo: false)
         .getDocuments();
@@ -537,8 +537,8 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
     await Navigator.of(context).pushNamed(HelpPage.routeName);
   }
 
-  Future onDidReceiveLocalNotification(
-      int id, String title, String body, String payload) async {
+  Future onDidReceiveLocalNotification(int id, String title, String body,
+      String payload) async {
     // display a dialog with the notification details, tap ok to go to another page
     /*
     showDialog(
@@ -573,7 +573,9 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
           .collection('users')
           .document(currentUser.id)
           .updateData({
-        'lastActive': DateTime.now().millisecondsSinceEpoch,
+        'lastActive': DateTime
+            .now()
+            .millisecondsSinceEpoch,
         'pushToken': token,
       });
 
@@ -583,9 +585,18 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    double statusBarHeight = MediaQuery.of(context).padding.top;
-    pageHeight = MediaQuery.of(context).size.height - statusBarHeight;
-    pageWidth = MediaQuery.of(context).size.width - statusBarHeight;
+    double statusBarHeight = MediaQuery
+        .of(context)
+        .padding
+        .top;
+    pageHeight = MediaQuery
+        .of(context)
+        .size
+        .height - statusBarHeight;
+    pageWidth = MediaQuery
+        .of(context)
+        .size
+        .width - statusBarHeight;
 
     bottomTabPages = <Widget>[
       searchPage(),
@@ -598,30 +609,30 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
     return pageIsLoading
         ? Scaffold(body: Center(child: CircularProgressIndicator()))
         : Scaffold(
-            backgroundColor: coolerWhite,
-            body: showBody(),
-            floatingActionButton: showFAB(),
-            bottomNavigationBar: bottomNavBar(),
-          );
+      backgroundColor: coolerWhite,
+      body: showBody(),
+      floatingActionButton: showFAB(),
+      bottomNavigationBar: bottomNavBar(),
+    );
   }
 
   Widget bottomNavBar() {
     return !isAuthenticated || currentUser.acceptedTOS
         ? SizedBox(
-            //height: 90,
-            child: BottomNavigationBar(
-              backgroundColor: coolerWhite,
-              selectedItemColor: primaryColor,
-              items: bottomNavBarTiles,
-              currentIndex: currentTabIndex,
-              type: BottomNavigationBarType.fixed,
-              onTap: (int index) {
-                setState(() {
-                  currentTabIndex = index;
-                });
-              },
-            ),
-          )
+      //height: 90,
+      child: BottomNavigationBar(
+        backgroundColor: coolerWhite,
+        selectedItemColor: primaryColor,
+        items: bottomNavBarTiles,
+        currentIndex: currentTabIndex,
+        type: BottomNavigationBarType.fixed,
+        onTap: (int index) {
+          setState(() {
+            currentTabIndex = index;
+          });
+        },
+      ),
+    )
         : SizedBox(height: 0);
   }
 
@@ -673,7 +684,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
       for (int i = 0; i < reviewRentals.length; i++) {
         DocumentSnapshot rentalDS = reviewRentals[i];
         DocumentReference userRef =
-            Firestore.instance.collection('users').document(currentUser.id);
+        Firestore.instance.collection('users').document(currentUser.id);
         bool isRenter = rentalDS['renter'] == userRef ? true : false;
 
         var value = await showDialog(
@@ -701,7 +712,9 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
     if (isAuthenticated && currentTabIndex == 2) {
       return RaisedButton(
           elevation: 3,
-          color: Theme.of(context).primaryColor,
+          color: Theme
+              .of(context)
+              .primaryColor,
           textColor: Colors.white,
           onPressed: () {
             if (!verifyUser(
@@ -751,81 +764,83 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
-  BottomNavigationBarItem bottomNavTile(
-      String label, Icon icon, bool showBadge) {
+  BottomNavigationBarItem bottomNavTile(String label, Icon icon,
+      bool showBadge) {
     return BottomNavigationBarItem(
       icon: Stack(
         children: <Widget>[
           icon,
           showBadge
               ? StreamBuilder<QuerySnapshot>(
-                  stream: Firestore.instance
-                      .collection('rentals')
-                      .where('owner',
-                          isEqualTo: Firestore.instance
-                              .collection('users')
-                              .document(currentUser.id))
-                      .where('requesting', isEqualTo: true)
-                      .snapshots(),
-                  builder: (BuildContext context,
-                      AsyncSnapshot<QuerySnapshot> snapshot) {
-                    if (snapshot.hasError) {
-                      return new Text('${snapshot.error}');
-                    }
-                    switch (snapshot.connectionState) {
-                      case ConnectionState.waiting:
+            stream: Firestore.instance
+                .collection('rentals')
+                .where('owner',
+                isEqualTo: Firestore.instance
+                    .collection('users')
+                    .document(currentUser.id))
+                .where('requesting', isEqualTo: true)
+                .snapshots(),
+            builder: (BuildContext context,
+                AsyncSnapshot<QuerySnapshot> snapshot) {
+              if (snapshot.hasError) {
+                return new Text('${snapshot.error}');
+              }
+              switch (snapshot.connectionState) {
+                case ConnectionState.waiting:
 
-                      default:
-                        if (snapshot.hasData) {
-                          var updated = snapshot.data.documents.toList().length;
-                          if (updated == 0) {
-                            FlutterAppBadger.removeBadge();
-                          } else {
-                            FlutterAppBadger.updateBadgeCount(updated);
-                          }
-
-                          return updated == 0
-                              ? Container(
-                                  height: 0,
-                                  width: 0,
-                                )
-                              : Positioned(
-                                  top: 0,
-                                  right: 0,
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.red[600],
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    constraints: BoxConstraints(
-                                      minWidth: 13,
-                                      minHeight: 13,
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        '$updated',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 11,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                        } else {
-                          return Container(
-                            height: 0,
-                            width: 0,
-                          );
-                        }
+                default:
+                  if (snapshot.hasData) {
+                    var updated = snapshot.data.documents
+                        .toList()
+                        .length;
+                    if (updated == 0) {
+                      FlutterAppBadger.removeBadge();
+                    } else {
+                      FlutterAppBadger.updateBadgeCount(updated);
                     }
-                  },
-                )
+
+                    return updated == 0
+                        ? Container(
+                      height: 0,
+                      width: 0,
+                    )
+                        : Positioned(
+                      top: 0,
+                      right: 0,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.red[600],
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        constraints: BoxConstraints(
+                          minWidth: 13,
+                          minHeight: 13,
+                        ),
+                        child: Center(
+                          child: Text(
+                            '$updated',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                    );
+                  } else {
+                    return Container(
+                      height: 0,
+                      width: 0,
+                    );
+                  }
+              }
+            },
+          )
               : Container(
-                  height: 0,
-                  width: 0,
-                ),
+            height: 0,
+            width: 0,
+          ),
         ],
       ),
       title: Center(
@@ -859,7 +874,10 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Widget nearby() {
-    double h = MediaQuery.of(context).size.height;
+    double h = MediaQuery
+        .of(context)
+        .size
+        .height;
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: h / 55),
@@ -928,14 +946,15 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 100.0,
               ]
                   .map(
-                    (selection) => DropdownMenuItem<double>(
+                    (selection) =>
+                    DropdownMenuItem<double>(
                       value: selection,
                       child: Text(
                         '$selection',
                         style: TextStyle(fontFamily: font),
                       ),
                     ),
-                  )
+              )
                   .toList()),
         ),
       ),
@@ -943,8 +962,14 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Widget showNearbyItems() {
-    double h = MediaQuery.of(context).size.height / 3.2;
-    double w = MediaQuery.of(context).size.width;
+    double h = MediaQuery
+        .of(context)
+        .size
+        .height / 3.2;
+    double w = MediaQuery
+        .of(context)
+        .size
+        .width;
 
     if (locIsLoading) {
       //return Text('Getting location...');
@@ -972,7 +997,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
       Stream<List<DocumentSnapshot>> stream = geo
           .collection(collectionRef: collectionReference)
           .within(
-              center: center, radius: radius, field: field, strictMode: true);
+          center: center, radius: radius, field: field, strictMode: true);
 
       return Container(
         height: h,
@@ -1001,12 +1026,12 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       return currentUser.id == creatorRef.documentID
                           ? Container()
                           : ScopedModel<User>(
-                              model: currentUser,
-                              child: Container(
-                                width: w / 2.2,
-                                child: itemCard(itemDS, context),
-                              ),
-                            );
+                        model: currentUser,
+                        child: Container(
+                          width: w / 2.2,
+                          child: itemCard(itemDS, context),
+                        ),
+                      );
                     },
                   );
                 } else {
@@ -1049,34 +1074,37 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Future<bool> showUserLocationError() async {
     final ThemeData theme = Theme.of(context);
     final TextStyle dialogTextStyle =
-        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+    theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
 
     return await showDialog<bool>(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text('Error'),
-              content: Text(
-                'Problem with getting your current location',
-                style: dialogTextStyle,
-              ),
-              actions: <Widget>[
-                FlatButton(
-                  child: const Text('Close'),
-                  onPressed: () {
-                    Navigator.of(context).pop(
-                        false); // Pops the confirmation dialog but not the page.
-                  },
-                ),
-              ],
-            );
-          },
-        ) ??
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Error'),
+          content: Text(
+            'Problem with getting your current location',
+            style: dialogTextStyle,
+          ),
+          actions: <Widget>[
+            FlatButton(
+              child: const Text('Close'),
+              onPressed: () {
+                Navigator.of(context).pop(
+                    false); // Pops the confirmation dialog but not the page.
+              },
+            ),
+          ],
+        );
+      },
+    ) ??
         false;
   }
 
   Widget lookingFor() {
-    double h = MediaQuery.of(context).size.height;
+    double h = MediaQuery
+        .of(context)
+        .size
+        .height;
     Widget _searchItem(item, user, description) {
       return Card(
         elevation: 0.7,
@@ -1150,7 +1178,10 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Widget introImageAndSearch() {
-    double h = MediaQuery.of(context).size.height;
+    double h = MediaQuery
+        .of(context)
+        .size
+        .height;
 
     Widget searchField() {
       return InkWell(
@@ -1183,7 +1214,10 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
     return Container(
       height: h / 4,
-      width: MediaQuery.of(context).size.width,
+      width: MediaQuery
+          .of(context)
+          .size
+          .width,
       decoration: new BoxDecoration(
           image: DecorationImage(
               image: AssetImage('assets/paddleboard.jpg'), fit: BoxFit.fill),
@@ -1225,7 +1259,10 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Widget iconCategories() {
-    double h = MediaQuery.of(context).size.height;
+    double h = MediaQuery
+        .of(context)
+        .size
+        .height;
 
     Widget _categoryTile(category, icon) {
       return ClipRRect(
@@ -1305,7 +1342,10 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Widget categories() {
-    double h = MediaQuery.of(context).size.height;
+    double h = MediaQuery
+        .of(context)
+        .size
+        .height;
 
     Widget _categoryTile(category, image) {
       return ClipRRect(
@@ -1317,10 +1357,10 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
             children: <Widget>[
               SizedBox.expand(
                   child: Image.asset(
-                image,
-                fit: BoxFit.cover,
-                gaplessPlayback: true,
-              )),
+                    image,
+                    fit: BoxFit.cover,
+                    gaplessPlayback: true,
+                  )),
               SizedBox.expand(
                 child: Container(color: Colors.black45),
               ),
@@ -1409,22 +1449,24 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ),
             shape: RoundedRectangleBorder(
                 borderRadius: new BorderRadius.only(
-              bottomRight: const Radius.elliptical(40.0, 25),
-              bottomLeft: const Radius.elliptical(40.0, 25),
-            ))),
+                  bottomRight: const Radius.elliptical(40.0, 25),
+                  bottomLeft: const Radius.elliptical(40.0, 25),
+                ))),
         body: Column(
           children: <Widget>[
             reusableCategoryWithAll("REQUESTING",
-                () => navToTransactionsPage(RentalPhase.requesting, 'renter')),
+                    () =>
+                    navToTransactionsPage(RentalPhase.requesting, 'renter')),
             buildRequests("renter"),
             reusableCategoryWithAll("UPCOMING",
-                () => navToTransactionsPage(RentalPhase.upcoming, 'renter')),
+                    () =>
+                    navToTransactionsPage(RentalPhase.upcoming, 'renter')),
             buildTransactions(RentalPhase.upcoming, "renter"),
             reusableCategoryWithAll("CURRENT",
-                () => navToTransactionsPage(RentalPhase.current, 'renter')),
+                    () => navToTransactionsPage(RentalPhase.current, 'renter')),
             buildTransactions(RentalPhase.current, "renter"),
             reusableCategoryWithAll("PAST",
-                () => navToTransactionsPage(RentalPhase.past, 'renter')),
+                    () => navToTransactionsPage(RentalPhase.past, 'renter')),
             buildTransactions(RentalPhase.past, "renter"),
           ],
         ));
@@ -1436,7 +1478,10 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Widget buildListingsList() {
-    int tilerows = MediaQuery.of(context).size.width > 500 ? 3 : 2;
+    int tilerows = MediaQuery
+        .of(context)
+        .size
+        .width > 500 ? 3 : 2;
     BuildContext homeContext = context;
 
     return Expanded(
@@ -1444,9 +1489,9 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
         stream: Firestore.instance
             .collection('items')
             .where('creator',
-                isEqualTo: Firestore.instance
-                    .collection('users')
-                    .document(currentUser.id))
+            isEqualTo: Firestore.instance
+                .collection('users')
+                .document(currentUser.id))
             .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
@@ -1464,7 +1509,10 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     crossAxisCount: tilerows,
                     childAspectRatio: (2 / 3),
                     padding: const EdgeInsets.all(15.0),
-                    crossAxisSpacing: MediaQuery.of(context).size.width / 25,
+                    crossAxisSpacing: MediaQuery
+                        .of(context)
+                        .size
+                        .width / 25,
                     children: snapshots
                         .map((snapshot) => itemCard(snapshot, homeContext))
                         .toList());
@@ -1481,8 +1529,8 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
     Stream stream = Firestore.instance
         .collection('rentals')
         .where(person,
-            isEqualTo:
-                Firestore.instance.collection('users').document(currentUser.id))
+        isEqualTo:
+        Firestore.instance.collection('users').document(currentUser.id))
         .where('requesting', isEqualTo: true)
         .snapshots();
     var status;
@@ -1527,7 +1575,9 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             DocumentSnapshot itemDS = snapshot.data;
                             int durationDays = rentalDS['duration'];
                             String duration =
-                                '${durationDays > 1 ? '$durationDays days' : '$durationDays day'}';
+                                '${durationDays > 1
+                                ? '$durationDays days'
+                                : '$durationDays day'}';
 
                             return StreamBuilder<DocumentSnapshot>(
                               stream: person == "renter"
@@ -1547,19 +1597,19 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                           snapshot.data;
                                       int status = rentalDS['status'];
                                       bool isRenter =
-                                          person == 'renter' ? true : false;
+                                      person == 'renter' ? true : false;
 
                                       CustomBoxShadow cbs =
-                                          (isRenter && status == 1) ||
-                                                  (!isRenter && status == 0)
-                                              ? CustomBoxShadow(
-                                                  color: primaryColor,
-                                                  blurRadius: 6.0,
-                                                  blurStyle: BlurStyle.outer)
-                                              : CustomBoxShadow(
-                                                  color: Colors.black38,
-                                                  blurRadius: 3.0,
-                                                  blurStyle: BlurStyle.outer);
+                                      (isRenter && status == 1) ||
+                                          (!isRenter && status == 0)
+                                          ? CustomBoxShadow(
+                                          color: primaryColor,
+                                          blurRadius: 6.0,
+                                          blurStyle: BlurStyle.outer)
+                                          : CustomBoxShadow(
+                                          color: Colors.black38,
+                                          blurRadius: 3.0,
+                                          blurStyle: BlurStyle.outer);
 
                                       return Column(
                                         children: <Widget>[
@@ -1567,14 +1617,14 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                             decoration: new BoxDecoration(
                                               image: DecorationImage(
                                                 image:
-                                                    CachedNetworkImageProvider(
-                                                        itemDS['images'][0]),
+                                                CachedNetworkImageProvider(
+                                                    itemDS['images'][0]),
                                                 fit: BoxFit.cover,
                                                 colorFilter:
-                                                    new ColorFilter.mode(
-                                                        Colors.black
-                                                            .withOpacity(0.45),
-                                                        BlendMode.srcATop),
+                                                new ColorFilter.mode(
+                                                    Colors.black
+                                                        .withOpacity(0.45),
+                                                    BlendMode.srcATop),
                                               ),
                                               boxShadow: <BoxShadow>[cbs],
                                             ),
@@ -1588,8 +1638,8 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                               },
                                               child: Row(
                                                 mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceAround,
+                                                MainAxisAlignment
+                                                    .spaceAround,
                                                 children: <Widget>[
                                                   Column(
                                                     children: <Widget>[
@@ -1603,11 +1653,11 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                                               shape: BoxShape
                                                                   .circle,
                                                               color:
-                                                                  Colors.white,
+                                                              Colors.white,
                                                               image: DecorationImage(
                                                                   image: CachedNetworkImageProvider(
                                                                       otherUserDS[
-                                                                          'avatar']),
+                                                                      'avatar']),
                                                                   fit: BoxFit
                                                                       .fill))),
                                                       Text(
@@ -1615,10 +1665,10 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                                         style: TextStyle(
                                                             color: Colors.white,
                                                             fontFamily:
-                                                                'Quicksand',
+                                                            'Quicksand',
                                                             fontWeight:
-                                                                FontWeight
-                                                                    .bold),
+                                                            FontWeight
+                                                                .bold),
                                                       ),
                                                     ],
                                                   ),
@@ -1630,20 +1680,20 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                                                 color: Colors
                                                                     .white,
                                                                 fontFamily:
-                                                                    'Quicksand')),
+                                                                'Quicksand')),
                                                         Text(
                                                           timeago.format(
                                                               rentalDS[
-                                                                      'created']
+                                                              'created']
                                                                   .toDate()),
                                                           style: TextStyle(
                                                               color:
-                                                                  Colors.white,
+                                                              Colors.white,
                                                               fontFamily:
-                                                                  'Quicksand',
+                                                              'Quicksand',
                                                               fontWeight:
-                                                                  FontWeight
-                                                                      .bold),
+                                                              FontWeight
+                                                                  .bold),
                                                         )
                                                       ]),
                                                       Row(
@@ -1654,17 +1704,17 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                                                 color: Colors
                                                                     .white,
                                                                 fontFamily:
-                                                                    'Quicksand'),
+                                                                'Quicksand'),
                                                           ),
                                                           Text(duration,
                                                               style: TextStyle(
                                                                   color: Colors
                                                                       .white,
                                                                   fontFamily:
-                                                                      'Quicksand',
+                                                                  'Quicksand',
                                                                   fontWeight:
-                                                                      FontWeight
-                                                                          .bold))
+                                                                  FontWeight
+                                                                      .bold))
                                                         ],
                                                       )
                                                     ],
@@ -1703,7 +1753,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Widget buildTransactions(RentalPhase rentalStatus, person) {
     Query query = Firestore.instance.collection('rentals').where(person,
         isEqualTo:
-            Firestore.instance.collection('users').document(currentUser.id));
+        Firestore.instance.collection('users').document(currentUser.id));
 
     switch (rentalStatus) {
       case RentalPhase.requesting:
@@ -1747,13 +1797,20 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
       );
 
       return Container(
-        width: MediaQuery.of(context).size.width / 2,
+        width: MediaQuery
+            .of(context)
+            .size
+            .width / 2,
         padding: EdgeInsets.only(left: 10.0),
         child: InkWell(
-          onTap: () => Navigator.pushNamed(context, RentalDetail.routeName,
-              arguments: RentalDetailArgs(Rental(rentalDS), currentUser)),
+          onTap: () =>
+              Navigator.pushNamed(context, RentalDetail.routeName,
+                  arguments: RentalDetailArgs(Rental(rentalDS), currentUser)),
           child: Container(
-            width: MediaQuery.of(context).size.width / 2,
+            width: MediaQuery
+                .of(context)
+                .size
+                .width / 2,
             decoration: BoxDecoration(
               boxShadow: <BoxShadow>[
                 CustomBoxShadow(
@@ -1776,30 +1833,32 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       Text(itemName, style: TextStyle(color: Colors.white)),
                       StreamBuilder(
                           stream:
-                              Stream.periodic(Duration(seconds: 30), (i) => i),
+                          Stream.periodic(Duration(seconds: 30), (i) => i),
                           builder: (BuildContext context,
                               AsyncSnapshot<int> snapshot) {
                             DateTime now = DateTime.now();
                             DateTime pickupTime =
-                                rentalDS['pickupStart'].toDate();
+                            rentalDS['pickupStart'].toDate();
 
-                            int days = pickupTime.difference(now).inDays;
+                            int days = pickupTime
+                                .difference(now)
+                                .inDays;
                             int hours = pickupTime
                                 .difference(now.add(Duration(days: days)))
                                 .inHours;
                             int minutes = pickupTime
                                 .difference(
-                                    now.add(Duration(days: days, hours: hours)))
+                                now.add(Duration(days: days, hours: hours)))
                                 .inMinutes;
 
                             var dateString = '';
 
                             if (days == 0) {
                               dateString =
-                                  '$hours hours, $minutes min until pickup';
+                              '$hours hours, $minutes min until pickup';
                             } else {
                               dateString =
-                                  '$days days, $hours hours, $minutes min until pickup';
+                              '$days days, $hours hours, $minutes min until pickup';
                             }
 
                             return Container(
@@ -1852,13 +1911,13 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     stream: Firestore.instance
                         .collection('rentals')
                         .where(person,
-                            isEqualTo: Firestore.instance
-                                .collection('users')
-                                .document(currentUser.id))
+                        isEqualTo: Firestore.instance
+                            .collection('users')
+                            .document(currentUser.id))
                         .where('status', isEqualTo: 5)
                         .where(
-                          'x',
-                        )
+                      'x',
+                    )
                         .orderBy('rentalEnd', descending: true)
                         .limit(3)
                         .snapshots(),
@@ -1920,7 +1979,10 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
       );
     }
 
-    double h = MediaQuery.of(context).size.height;
+    double h = MediaQuery
+        .of(context)
+        .size
+        .height;
 
     Stream stream;
 
@@ -1963,9 +2025,9 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   tabs: [
                     Tab(
                         child: Text(
-                      "All My Items",
-                      style: TextStyle(fontFamily: 'Quicksand'),
-                    )),
+                          "All My Items",
+                          style: TextStyle(fontFamily: 'Quicksand'),
+                        )),
                     Tab(
                       child: Stack(
                         children: <Widget>[
@@ -1983,9 +2045,9 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             stream: Firestore.instance
                                 .collection('rentals')
                                 .where('owner',
-                                    isEqualTo: Firestore.instance
-                                        .collection('users')
-                                        .document(currentUser.id))
+                                isEqualTo: Firestore.instance
+                                    .collection('users')
+                                    .document(currentUser.id))
                                 .where('requesting', isEqualTo: true)
                                 .snapshots(),
                             builder: (BuildContext context,
@@ -2006,30 +2068,30 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
                                     return transactionsCount > 0
                                         ? Positioned(
-                                            top: 6,
-                                            right: 0,
-                                            child: Container(
-                                              decoration: BoxDecoration(
-                                                color: Colors.red[600],
-                                                borderRadius:
-                                                    BorderRadius.circular(6),
-                                              ),
-                                              constraints: BoxConstraints(
-                                                minWidth: 15,
-                                                minHeight: 15,
-                                              ),
-                                              child: Center(
-                                                child: Text(
-                                                  '${transactionsCount}',
-                                                  style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 12,
-                                                  ),
-                                                  textAlign: TextAlign.center,
-                                                ),
-                                              ),
+                                      top: 6,
+                                      right: 0,
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.red[600],
+                                          borderRadius:
+                                          BorderRadius.circular(6),
+                                        ),
+                                        constraints: BoxConstraints(
+                                          minWidth: 15,
+                                          minHeight: 15,
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            '${transactionsCount}',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
                                             ),
-                                          )
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ),
+                                      ),
+                                    )
                                         : Container();
                                   } else {
                                     return Container();
@@ -2042,9 +2104,9 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     ),
                     Tab(
                         child: Text(
-                      "Calendar",
-                      style: TextStyle(fontFamily: 'Quicksand'),
-                    )),
+                          "Calendar",
+                          style: TextStyle(fontFamily: 'Quicksand'),
+                        )),
                   ],
                   labelColor: coolerWhite,
                   unselectedLabelColor: Colors.black54,
@@ -2074,9 +2136,9 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ),
             shape: RoundedRectangleBorder(
                 borderRadius: new BorderRadius.only(
-              bottomRight: const Radius.elliptical(40.0, 25),
-              bottomLeft: const Radius.elliptical(40.0, 25),
-            ))),
+                  bottomRight: const Radius.elliptical(40.0, 25),
+                  bottomLeft: const Radius.elliptical(40.0, 25),
+                ))),
         body: Stack(children: <Widget>[
           Container(
             color: coolerWhite,
@@ -2091,23 +2153,27 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   children: <Widget>[
                     reusableCategoryWithAll(
                         "REQUESTS",
-                        () => navToTransactionsPage(
-                            RentalPhase.requesting, 'owner')),
+                            () =>
+                            navToTransactionsPage(
+                                RentalPhase.requesting, 'owner')),
                     buildRequests("owner"),
                     reusableCategoryWithAll(
                         "UPCOMING",
-                        () => navToTransactionsPage(
-                            RentalPhase.requesting, 'owner')),
+                            () =>
+                            navToTransactionsPage(
+                                RentalPhase.requesting, 'owner')),
                     buildTransactions(RentalPhase.upcoming, "owner"),
                     reusableCategoryWithAll(
                         "CURRENT",
-                        () => navToTransactionsPage(
-                            RentalPhase.requesting, 'owner')),
+                            () =>
+                            navToTransactionsPage(
+                                RentalPhase.requesting, 'owner')),
                     buildTransactions(RentalPhase.current, "owner"),
                     reusableCategoryWithAll(
                         "PAST",
-                        () => navToTransactionsPage(
-                            RentalPhase.requesting, 'owner')),
+                            () =>
+                            navToTransactionsPage(
+                                RentalPhase.requesting, 'owner')),
                     buildTransactions(RentalPhase.past, "owner"),
                   ],
                 ),
@@ -2234,7 +2300,10 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
       );
     }
 
-    double h = MediaQuery.of(context).size.height;
+    double h = MediaQuery
+        .of(context)
+        .size
+        .height;
     return Container(
       padding: EdgeInsets.only(top: h / 15),
       child: Column(
@@ -2245,7 +2314,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   padding: EdgeInsets.only(left: 30.0, bottom: 10.0),
                   child: Text("Messages",
                       style:
-                          TextStyle(fontSize: 30.0, fontFamily: 'Quicksand')))),
+                      TextStyle(fontSize: 30.0, fontFamily: 'Quicksand')))),
           Divider(),
           buildMessagesList(),
         ],
@@ -2257,21 +2326,30 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
     return isAuthenticated
         ? profileIntroStream()
         : Center(
-            child: RaisedButton(
-              child: Text('Logout'),
-              onPressed: logout,
-            ),
-          );
+      child: RaisedButton(
+        child: Text('Logout'),
+        onPressed: logout,
+      ),
+    );
   }
 
   Widget profileIntroStream() {
     Widget showPersonalInformation() {
-      double width = MediaQuery.of(context).size.width;
+      double width = MediaQuery
+          .of(context)
+          .size
+          .width;
 
       Widget _userImage() {
         Widget _showCurrentProfilePic() {
-          double height = MediaQuery.of(context).size.height;
-          double width = MediaQuery.of(context).size.width;
+          double height = MediaQuery
+              .of(context)
+              .size
+              .height;
+          double width = MediaQuery
+              .of(context)
+              .size
+              .width;
 
           return Container(
             padding: EdgeInsets.only(left: width / 5, right: width / 5),
@@ -2313,25 +2391,25 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
           ),
           Center(
               child: Column(children: <Widget>[
-            Align(
-                alignment: Alignment.topLeft,
-                child: Icon(
-                  QuoteIcons.quote_left,
-                  size: width / 22,
-                )),
-            Text(
-              currentUser.description.isEmpty
-                  ? "The user hasn't added a description yet!"
-                  : currentUser.description,
-              style: TextStyle(fontFamily: font, fontSize: width / 22),
-            ),
-            Align(
-                alignment: Alignment.bottomRight,
-                child: Icon(
-                  QuoteIcons.quote_right,
-                  size: width / 22,
-                )),
-          ])),
+                Align(
+                    alignment: Alignment.topLeft,
+                    child: Icon(
+                      QuoteIcons.quote_left,
+                      size: width / 22,
+                    )),
+                Text(
+                  currentUser.description.isEmpty
+                      ? "The user hasn't added a description yet!"
+                      : currentUser.description,
+                  style: TextStyle(fontFamily: font, fontSize: width / 22),
+                ),
+                Align(
+                    alignment: Alignment.bottomRight,
+                    child: Icon(
+                      QuoteIcons.quote_right,
+                      size: width / 22,
+                    )),
+              ])),
           SizedBox(
             height: 10.0,
           ),
@@ -2339,13 +2417,14 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
               color: Colors.white,
               child: Column(
                 children: <Widget>[]
-                    .map((Widget child) => Container(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 10.0, vertical: 10.0),
-                          child: Column(
-                            children: <Widget>[child, Divider()],
-                          ),
-                        ))
+                    .map((Widget child) =>
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 10.0, vertical: 10.0),
+                      child: Column(
+                        children: <Widget>[child, Divider()],
+                      ),
+                    ))
                     .toList(),
               )),
         ],
@@ -2369,7 +2448,10 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
       child: Stack(
         children: <Widget>[
           Container(
-            height: MediaQuery.of(context).size.height - 90,
+            height: MediaQuery
+                .of(context)
+                .size
+                .height - 90,
             child: ListView(
               shrinkWrap: true,
               padding: EdgeInsets.all(0),
@@ -2382,9 +2464,9 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 reusableFlatButton("Reviews", Icons.rate_review, navToReviews),
                 reusableCategory("SUPPORT"),
                 reusableFlatButton("Get help", Icons.help_outline,
-                    () => navToSendEmail('Help')),
+                        () => navToSendEmail('Help')),
                 reusableFlatButton("Give us feedback", Icons.feedback,
-                    () => navToSendEmail('Feedback')),
+                        () => navToSendEmail('Feedback')),
                 reusableFlatButton("Log out", null, logout),
                 //getProfileDetails()
               ],
@@ -2413,7 +2495,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Widget getProfileDetails() {
     return FutureBuilder(
       future:
-          Firestore.instance.collection('users').document(currentUser.id).get(),
+      Firestore.instance.collection('users').document(currentUser.id).get(),
       builder: (BuildContext context, AsyncSnapshot snapshot) {
         if (snapshot.hasData) {
           DocumentSnapshot ds = snapshot.data;
@@ -2421,7 +2503,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
           details.add(ds.documentID);
           details.add(ds['email']);
           var date1 =
-              new DateTime.fromMillisecondsSinceEpoch(ds['creationDate']);
+          new DateTime.fromMillisecondsSinceEpoch(ds['creationDate']);
           details.add(date1.toString());
 
           var date2 = new DateTime.fromMillisecondsSinceEpoch(ds['lastActive']);
@@ -2519,7 +2601,9 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         title,
                         //lastActive,
                         Text(
-                            '${timeago.format(DateTime.fromMillisecondsSinceEpoch(timestamp))}'),
+                            '${timeago.format(
+                                DateTime.fromMillisecondsSinceEpoch(
+                                    timestamp))}'),
                         lastMessageCrop,
                         otherUserId);
                   },
@@ -2533,8 +2617,8 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget messageCard(
-      imageURL, title, lastActive, lastMessageCrop, otherUserID) {
+  Widget messageCard(imageURL, title, lastActive, lastMessageCrop,
+      otherUserID) {
     return Column(
       children: <Widget>[
         ListTile(
@@ -2614,13 +2698,14 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
     Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (BuildContext context) => ScopedModel<CurrentUser>(
-            model: currentUser,
-            child: SearchPage(
-              typeFilter: filter,
-              showSearch: false,
-            ),
-          ),
+          builder: (BuildContext context) =>
+              ScopedModel<CurrentUser>(
+                model: currentUser,
+                child: SearchPage(
+                  typeFilter: filter,
+                  showSearch: false,
+                ),
+              ),
         ));
   }
 
@@ -2644,66 +2729,67 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
     Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (BuildContext context) => ScopedModel<CurrentUser>(
-            model: currentUser,
-            child: ProfileEdit(
-              userEdit: userEdit,
-            ),
-          ),
+          builder: (BuildContext context) =>
+              ScopedModel<CurrentUser>(
+                model: currentUser,
+                child: ProfileEdit(
+                  userEdit: userEdit,
+                ),
+              ),
           fullscreenDialog: true,
         ));
   }
 
   Future<bool> deleteItemError() async {
     return await showDialog<bool>(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text('Error'),
-              content: Text(
-                  'Item is currently being rented, so it cannot be deleted'),
-              actions: <Widget>[
-                FlatButton(
-                  child: const Text('Ok'),
-                  onPressed: () {
-                    Navigator.of(context).pop(false);
-                    // Pops the confirmation dialog but not the page.
-                  },
-                ),
-              ],
-            );
-          },
-        ) ??
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Error'),
+          content: Text(
+              'Item is currently being rented, so it cannot be deleted'),
+          actions: <Widget>[
+            FlatButton(
+              child: const Text('Ok'),
+              onPressed: () {
+                Navigator.of(context).pop(false);
+                // Pops the confirmation dialog but not the page.
+              },
+            ),
+          ],
+        );
+      },
+    ) ??
         false;
   }
 
   Future<bool> deleteItemDialog(DocumentSnapshot ds) async {
     return await showDialog<bool>(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text('Delete item?'),
-              content: Text('${ds['name']}'),
-              actions: <Widget>[
-                FlatButton(
-                  child: const Text('Cancel'),
-                  onPressed: () {
-                    Navigator.of(context).pop(
-                        false); // Pops the confirmation dialog but not the page.
-                  },
-                ),
-                FlatButton(
-                  child: const Text('Delete'),
-                  onPressed: () {
-                    Navigator.of(context).pop(false);
-                    deleteItem(ds);
-                    // Pops the confirmation dialog but not the page.
-                  },
-                ),
-              ],
-            );
-          },
-        ) ??
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Delete item?'),
+          content: Text('${ds['name']}'),
+          actions: <Widget>[
+            FlatButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop(
+                    false); // Pops the confirmation dialog but not the page.
+              },
+            ),
+            FlatButton(
+              child: const Text('Delete'),
+              onPressed: () {
+                Navigator.of(context).pop(false);
+                deleteItem(ds);
+                // Pops the confirmation dialog but not the page.
+              },
+            ),
+          ],
+        );
+      },
+    ) ??
         false;
   }
 
@@ -2726,7 +2812,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Future<DocumentSnapshot> getUserFromFirestore(String userID) async {
     DocumentSnapshot ds =
-        await Firestore.instance.collection('users').document(userID).get();
+    await Firestore.instance.collection('users').document(userID).get();
 
     return ds;
   }
