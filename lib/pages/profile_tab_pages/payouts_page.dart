@@ -754,7 +754,7 @@ class PayoutsPageState extends State<PayoutsPage> {
           if (response != null && response is String && response.isNotEmpty) {
             currentUser.updateDefaultSource(response);
 
-            showToast('Success');
+            showToast('Card deleted');
 
             setState(() {
               isLoading = false;
