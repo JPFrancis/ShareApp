@@ -144,7 +144,7 @@ class PayoutsPageState extends State<PayoutsPage> {
             });
 
             if (value != null && value is int && value == 0) {
-              showToast('Profile successfully updated');
+              showToast('Card added');
 
               setState(() {
                 isLoading = false;
