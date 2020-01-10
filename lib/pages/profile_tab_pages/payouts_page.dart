@@ -134,7 +134,7 @@ class PayoutsPageState extends State<PayoutsPage> {
         if (stripeInit) {
           StripeSource.addSource().then((token) async {
             dynamic value = await DB()
-                .addSource(currentUser: currentUser, token: token)
+                .addStripeSource(currentUser: currentUser, token: token)
                 .catchError((e) {
               showToast('Error adding card');
 
@@ -663,33 +663,26 @@ class PayoutsPageState extends State<PayoutsPage> {
       isLoading = true;
     });
 
-    final HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
-      functionName: 'setDefaultSource',
-    );
+    dynamic value = await DB()
+        .setDefaultStripeSource(
+      currentUser: currentUser,
+      cardId: sourceDS['id'],
+    )
+        .catchError((e) {
+      setState(() {
+        isLoading = false;
+      });
 
-    callable.call(<String, dynamic>{
-      'userId': currentUser.id,
-      'customerId': currentUser.custId,
-      'newSourceId': sourceDS['id'],
-    }).then((var resp) {
-      var response = resp.data;
-
-      if (response != null && response is String && response.isNotEmpty) {
-        currentUser.updateDefaultSource(response);
-
-        showToast('Success');
-
-        setState(() {
-          isLoading = false;
-        });
-      } else {
-        showToast('An error occurred');
-
-        setState(() {
-          isLoading = false;
-        });
-      }
+      showToast(e.toString());
     });
+
+    if (value != null && value is int && value == 0) {
+      setState(() {
+        isLoading = false;
+      });
+
+      showToast('Updated default payment method');
+    }
   }
 
   Future<Null> deleteCard(sourceDS) async {
@@ -712,62 +705,47 @@ class PayoutsPageState extends State<PayoutsPage> {
         setState(() {
           isLoading = false;
         });
-        return await showDialog<bool>(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  content: Text(
-                    'You can\'t delete a card if you have active rentals',
-                  ),
-                  actions: <Widget>[
-                    FlatButton(
-                      child: const Text('CLOSE'),
-                      onPressed: () {
-                        Navigator.of(context).pop(false); // Pop dialog
-                      },
-                    ),
-                  ],
-                );
-              },
-            ) ??
-            false;
+        return await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              content: Text(
+                'You can\'t delete a card if you have active rentals',
+              ),
+              actions: <Widget>[
+                FlatButton(
+                  child: const Text('CLOSE'),
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Pop dialog
+                  },
+                ),
+              ],
+            );
+          },
+        );
       }
     } else {
-      final HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
-        functionName: 'deleteStripeSource',
-      );
-
-      Firestore.instance
-          .collection('users')
-          .document(currentUser.id)
-          .collection('sources')
-          .document(sourceDS['card']['fingerprint'])
-          .delete()
-          .then((_) {
-        callable.call(<String, dynamic>{
-          'userId': currentUser.id,
-          'customerId': currentUser.custId,
-          'source': sourceDS['id'],
-        }).then((resp) {
-          var response = resp.data;
-
-          if (response != null && response is String && response.isNotEmpty) {
-            currentUser.updateDefaultSource(response);
-
-            showToast('Card deleted');
-
-            setState(() {
-              isLoading = false;
-            });
-          } else {
-            showToast('An error occurred');
-
-            setState(() {
-              isLoading = false;
-            });
-          }
+      dynamic value = await DB()
+          .deleteStripeSource(
+        currentUser: currentUser,
+        cardId: sourceDS['id'],
+        fingerprint: sourceDS['card']['fingerprint'],
+      )
+          .catchError((e) {
+        setState(() {
+          isLoading = false;
         });
+
+        showToast(e.toString());
       });
+
+      if (value != null && value is int && value == 0) {
+        setState(() {
+          isLoading = false;
+        });
+
+        showToast('Card deleted');
+      }
     }
   }
 

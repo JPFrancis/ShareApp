@@ -64,7 +64,7 @@ class DB {
     }
   }
 
-  Future<dynamic> addSource({
+  Future<dynamic> addStripeSource({
     CurrentUser currentUser,
     String token,
   }) async {
@@ -91,6 +91,82 @@ class DB {
           currentUser.updateDefaultSource(defaultSource);
 
           return 0;
+        } else {
+          throw 'An error occurred';
+        }
+      }
+    } on CloudFunctionsException catch (e) {
+      throw e.message;
+    } catch (e) {
+      throw e.toString();
+    }
+  }
+
+  Future<dynamic> setDefaultStripeSource({
+    CurrentUser currentUser,
+    String cardId,
+  }) async {
+    try {
+      if (currentUser != null && cardId != null) {
+        final HttpsCallable callable = CloudFunctions.instance
+            .getHttpsCallable(functionName: 'setDefaultSource');
+
+        final HttpsCallableResult result =
+            await callable.call(<String, dynamic>{
+          'userId': currentUser.id,
+          'customerId': currentUser.custId,
+          'newSourceId': cardId,
+        });
+
+        final response = result.data;
+
+        if (response != null && response is String && response.isNotEmpty) {
+          currentUser.updateDefaultSource(response);
+
+          return 0;
+        } else {
+          throw 'An error occurred';
+        }
+      }
+    } on CloudFunctionsException catch (e) {
+      throw e.message;
+    } catch (e) {
+      throw e.toString();
+    }
+  }
+
+  Future<dynamic> deleteStripeSource({
+    CurrentUser currentUser,
+    String cardId,
+    String fingerprint,
+  }) async {
+    try {
+      if (currentUser != null && cardId != null) {
+        final HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
+          functionName: 'deleteStripeSource',
+        );
+
+        final HttpsCallableResult result =
+            await callable.call(<String, dynamic>{
+          'userId': currentUser.id,
+          'customerId': currentUser.custId,
+          'source': cardId,
+        });
+
+        final response = result.data;
+
+        if (response != null && response is String && response.isNotEmpty) {
+          currentUser.updateDefaultSource(response);
+
+          await Firestore.instance
+              .collection('users')
+              .document(currentUser.id)
+              .collection('sources')
+              .document(fingerprint)
+              .delete()
+              .then((_) {
+            return 0;
+          });
         } else {
           throw 'An error occurred';
         }
