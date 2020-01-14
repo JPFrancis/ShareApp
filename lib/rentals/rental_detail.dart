@@ -1275,6 +1275,7 @@ class RentalDetailState extends State<RentalDetail> {
         double itemPrice = (duration * price).toDouble();
         double tax = itemPrice * 0.06;
         double ourFee = itemPrice * 0.07;
+        int ourFeeFinal = ourFee.round();
         double baseChargeAmount = (itemPrice + tax + ourFee) * 1.029 + 0.3;
         int finalCharge = (baseChargeAmount * 100).round();
 
@@ -1284,7 +1285,7 @@ class RentalDetailState extends State<RentalDetail> {
             .get();
 
         Map transferData = {
-          'ourFee': ourFee * 100,
+          'ourFee': ourFeeFinal * 100,
           'ownerPayout': itemPrice * 100,
           'connectedAcctId': snap['connectedAcctId'],
         };
