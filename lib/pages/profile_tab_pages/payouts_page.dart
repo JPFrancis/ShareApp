@@ -115,10 +115,6 @@ class PayoutsPageState extends State<PayoutsPage> {
 
     return InkWell(
       onTap: () async {
-        setState(() {
-          isLoading = true;
-        });
-
         if (!stripeInit) {
           var snap = await Firestore.instance
               .collection('keys')
@@ -133,6 +129,10 @@ class PayoutsPageState extends State<PayoutsPage> {
 
         if (stripeInit) {
           StripeSource.addSource().then((token) async {
+            setState(() {
+              isLoading = true;
+            });
+
             dynamic value = await DB()
                 .addStripeSource(currentUser: currentUser, token: token)
                 .catchError((e) {

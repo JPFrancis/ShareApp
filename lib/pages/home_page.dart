@@ -39,6 +39,11 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:url_launcher/url_launcher.dart';
 
+enum BadgeType {
+  renter,
+  owner,
+}
+
 class HomePage extends StatefulWidget {
   static const routeName = '/homePage';
 
@@ -163,14 +168,6 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
       isAuthenticated = true;
       updateLastActiveAndPushToken();
     }
-
-    bottomNavBarTiles = <BottomNavigationBarItem>[
-      bottomNavTile('Search', Icon(Icons.search), false),
-      bottomNavTile('Rentals', Icon(Icons.shopping_cart), false),
-      bottomNavTile('Listings', Icon(Icons.style), true),
-      bottomNavTile('Messages', Icon(Icons.forum), false),
-      bottomNavTile('Profile', Icon(Icons.account_circle), false),
-    ];
 
     if (isAuthenticated) {
       initialize();
@@ -587,6 +584,14 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
     pageHeight = MediaQuery.of(context).size.height - statusBarHeight;
     pageWidth = MediaQuery.of(context).size.width - statusBarHeight;
 
+    bottomNavBarTiles = <BottomNavigationBarItem>[
+      bottomNavTile('Search', Icon(Icons.search), null),
+      bottomNavTile('Rentals', Icon(Icons.shopping_cart), BadgeType.renter),
+      bottomNavTile('Listings', Icon(Icons.style), BadgeType.owner),
+      bottomNavTile('Messages', Icon(Icons.forum), null),
+      bottomNavTile('Profile', Icon(Icons.account_circle), null),
+    ];
+
     bottomTabPages = <Widget>[
       searchPage(),
       myRentalsPage(),
@@ -752,21 +757,24 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   BottomNavigationBarItem bottomNavTile(
-      String label, Icon icon, bool showBadge) {
+      String label, Icon icon, BadgeType type) {
+    var stream;
+
+    if (type != null) {
+      if (type == BadgeType.owner) {
+        stream = DB().getUnreadItemOwnerRentals(userId: currentUser.id);
+      } else if (type == BadgeType.owner) {
+        stream = DB().getUnreadItemRenterRentals(userId: currentUser.id);
+      }
+    }
+
     return BottomNavigationBarItem(
       icon: Stack(
         children: <Widget>[
           icon,
-          showBadge
+          type != null
               ? StreamBuilder<QuerySnapshot>(
-                  stream: Firestore.instance
-                      .collection('rentals')
-                      .where('owner',
-                          isEqualTo: Firestore.instance
-                              .collection('users')
-                              .document(currentUser.id))
-                      .where('requesting', isEqualTo: true)
-                      .snapshots(),
+                  stream: stream,
                   builder: (BuildContext context,
                       AsyncSnapshot<QuerySnapshot> snapshot) {
                     if (snapshot.hasError) {
@@ -1980,14 +1988,8 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             ],
                           ),
                           StreamBuilder(
-                            stream: Firestore.instance
-                                .collection('rentals')
-                                .where('owner',
-                                    isEqualTo: Firestore.instance
-                                        .collection('users')
-                                        .document(currentUser.id))
-                                .where('requesting', isEqualTo: true)
-                                .snapshots(),
+                            stream: DB().getUnreadItemOwnerRentals(
+                                userId: currentUser.id),
                             builder: (BuildContext context,
                                 AsyncSnapshot<QuerySnapshot> snapshot) {
                               if (snapshot.hasError) {

@@ -6,6 +6,24 @@ import 'package:shareapp/models/rental.dart';
 class DB {
   final db = Firestore.instance;
 
+  Stream<QuerySnapshot> getUnreadItemOwnerRentals({String userId}) {
+    return db
+        .collection('rentals')
+        .where('owner',
+            isEqualTo: Firestore.instance.collection('users').document(userId))
+        .where('status', isEqualTo: 1)
+        .snapshots();
+  }
+
+  Stream<QuerySnapshot> getUnreadItemRenterRentals({String userId}) {
+    return db
+        .collection('rentals')
+        .where('renter',
+            isEqualTo: Firestore.instance.collection('users').document(userId))
+        .where('status', isEqualTo: 0)
+        .snapshots();
+  }
+
   Future<dynamic> addStripeConnectedAccount({String url, String userId}) async {
     try {
       String acctId;
