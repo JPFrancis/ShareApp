@@ -1139,8 +1139,9 @@ class RentalDetailState extends State<RentalDetail> {
 
         if (declined != null) {
           declinedText = rental.declined
-              ? 'This rental was declined'
-              : 'This rental was cancelled';
+              ? 'This rental was cancelled'
+              : 'This rental request was cancelled by the requester. No '
+                  'action is required on your end';
         }
 
         info = Column(
