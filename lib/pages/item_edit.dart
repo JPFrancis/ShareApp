@@ -1065,7 +1065,7 @@ class ItemEditState extends State<ItemEdit> {
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              title: Text('Error!'),
+              title: Text('Set up where you would like to receive payouts'),
               content: Text(
                 message,
                 style: dialogTextStyle,
