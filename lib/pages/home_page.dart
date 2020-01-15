@@ -1802,12 +1802,14 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
                             var dateString = '';
 
-                            if (days == 0) {
-                              dateString =
-                                  '$hours hours, $minutes min until pickup';
-                            } else {
-                              dateString =
-                                  '$days days, $hours hours, $minutes min until pickup';
+                            if (rentalStatus != RentalPhase.past) {
+                              if (days == 0) {
+                                dateString =
+                                    '$hours hours, $minutes min until pickup';
+                              } else {
+                                dateString =
+                                    '$days days, $hours hours, $minutes min until pickup';
+                              }
                             }
 
                             return Container(
