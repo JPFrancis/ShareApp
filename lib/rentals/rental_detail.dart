@@ -634,6 +634,22 @@ class RentalDetailState extends State<RentalDetail> {
                       ),
                     ],
                   ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        receiptText,
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                      Text(
+                        receiptValues,
+                        textAlign: TextAlign.right,
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                    ],
+                  ),
                 ],
               )
             : Column(
@@ -672,6 +688,22 @@ class RentalDetailState extends State<RentalDetail> {
                       ),
                       Text(
                         "$duration",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        receiptText,
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                      Text(
+                        receiptValues,
+                        textAlign: TextAlign.right,
                         style:
                             TextStyle(fontFamily: appFont, color: Colors.white),
                       ),
@@ -724,6 +756,22 @@ class RentalDetailState extends State<RentalDetail> {
                       ),
                     ],
                   ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        receiptText,
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                      Text(
+                        receiptValues,
+                        textAlign: TextAlign.right,
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                    ],
+                  ),
                 ],
               )
             : Column(
@@ -762,6 +810,22 @@ class RentalDetailState extends State<RentalDetail> {
                       ),
                       Text(
                         "$duration",
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        receiptText,
+                        style:
+                            TextStyle(fontFamily: appFont, color: Colors.white),
+                      ),
+                      Text(
+                        receiptValues,
+                        textAlign: TextAlign.right,
                         style:
                             TextStyle(fontFamily: appFont, color: Colors.white),
                       ),
