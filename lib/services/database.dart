@@ -6,6 +6,30 @@ import 'package:shareapp/models/rental.dart';
 class DB {
   final db = Firestore.instance;
 
+  Future<dynamic> checkAppVersion() async {
+    try {
+      HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
+        functionName: 'checkAppVersion',
+      );
+
+      final HttpsCallableResult result = await callable.call(
+        <String, dynamic>{
+          'version': 1,
+        },
+      );
+
+      final value = result.data;
+
+      if (value == 0) {
+        return 0;
+      }
+    } on CloudFunctionsException catch (e) {
+      throw e.message;
+    } catch (e) {
+      throw e.toString();
+    }
+  }
+
   Stream<QuerySnapshot> getUnreadItemOwnerRentals({String userId}) {
     return db
         .collection('rentals')

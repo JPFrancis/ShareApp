@@ -7,6 +7,8 @@ import 'package:shareapp/login/login_page.dart';
 import 'package:shareapp/models/current_user.dart';
 import 'package:shareapp/pages/home_page.dart';
 import 'package:shareapp/services/auth.dart';
+import 'package:shareapp/services/database.dart';
+import 'package:shareapp/services/functions.dart';
 import 'package:uni_links/uni_links.dart';
 
 class RootPage extends StatefulWidget {
@@ -111,49 +113,76 @@ class RootPageState extends State<RootPage> {
   Widget build(BuildContext context) {
     if (authStatus == AuthStatus.signedIn) {
       return FutureBuilder(
-          future: widget.auth.getFirebaseUser(),
-          builder: (BuildContext context, AsyncSnapshot snapshot) {
-            if (snapshot.hasData) {
-              FirebaseUser user = snapshot.data;
+        future: DB().checkAppVersion(),
+        builder: (BuildContext context, AsyncSnapshot snapshot) {
+          if (snapshot.hasError) {
+            showToast('Please update your app to continue');
 
+            return LoginPage(
+              auth: widget.auth,
+              onSignIn: () => _updateAuthStatus(AuthStatus.signedIn),
+            );
+          } else if (snapshot.hasData) {
+            var value = snapshot.data;
+
+            if (value != null && value is int && value == 0) {
               return FutureBuilder(
-                future: Firestore.instance
-                    .collection('users')
-                    .document(user.uid)
-                    .get(),
-                builder: (BuildContext context, AsyncSnapshot snapshot) {
-                  DocumentSnapshot snap = snapshot.data;
+                  future: widget.auth.getFirebaseUser(),
+                  builder: (BuildContext context, AsyncSnapshot snapshot) {
+                    if (snapshot.hasData) {
+                      FirebaseUser user = snapshot.data;
 
-                  if (snapshot.hasData && snap != null && snap.exists) {
-                    DocumentSnapshot userSnap = snapshot.data;
+                      return FutureBuilder(
+                        future: Firestore.instance
+                            .collection('users')
+                            .document(user.uid)
+                            .get(),
+                        builder:
+                            (BuildContext context, AsyncSnapshot snapshot) {
+                          DocumentSnapshot snap = snapshot.data;
 
-                    return ScopedModel<CurrentUser>(
-                      model: CurrentUser(userSnap),
-                      child: HomePage(
-                        auth: widget.auth,
-                        firebaseUser: user,
-                        onSignOut: () =>
-                            _updateAuthStatus(AuthStatus.notSignedIn),
-                      ),
-                    );
-                  } else if (snap != null && !snap.exists) {
-                    return LoginPage(
-                      title: 'ShareApp Login',
-                      auth: widget.auth,
-                      onSignIn: () => _updateAuthStatus(AuthStatus.signedIn),
-                    );
-                  } else {
-                    return Container(color: Colors.white);
-                  }
-                },
-              );
+                          if (snapshot.hasData && snap != null && snap.exists) {
+                            DocumentSnapshot userSnap = snapshot.data;
+
+                            return ScopedModel<CurrentUser>(
+                              model: CurrentUser(userSnap),
+                              child: HomePage(
+                                auth: widget.auth,
+                                firebaseUser: user,
+                                onSignOut: () =>
+                                    _updateAuthStatus(AuthStatus.notSignedIn),
+                              ),
+                            );
+                          } else if (snap != null && !snap.exists) {
+                            return LoginPage(
+                              auth: widget.auth,
+                              onSignIn: () =>
+                                  _updateAuthStatus(AuthStatus.signedIn),
+                            );
+                          } else {
+                            return Container(color: Colors.white);
+                          }
+                        },
+                      );
+                    } else {
+                      return Container(color: Colors.white);
+                    }
+                  });
             } else {
-              return Container(color: Colors.white);
+              return LoginPage(
+                auth: widget.auth,
+                onSignIn: () => _updateAuthStatus(AuthStatus.signedIn),
+              );
             }
-          });
+          } else {
+            return Container(
+              color: Colors.white,
+            );
+          }
+        },
+      );
     } else {
       return LoginPage(
-        title: 'ShareApp Login',
         auth: widget.auth,
         onSignIn: () => _updateAuthStatus(AuthStatus.signedIn),
       );
