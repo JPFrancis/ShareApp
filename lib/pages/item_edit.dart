@@ -777,39 +777,53 @@ class ItemEditState extends State<ItemEdit> {
     else {
       try {
         HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
-          functionName: 'updateItem',
+          functionName: 'checkUpdateItem',
         );
 
-        final HttpsCallableResult result = await callable.call(
+        final HttpsCallableResult version = await callable.call(
           <String, dynamic>{
-            'itemId': itemId,
-            'name': itemCopy.name,
-            'description': itemCopy.description,
-            'type': itemCopy.type,
-            'condition': itemCopy.condition,
-            'price': itemCopy.price,
-            'numImages': totalImagesCount,
-            'geohash': myLocation.data['geohash'],
-            'lat': gp.latitude,
-            'long': gp.longitude,
-            'searchKey': searchKeyList,
+            'version': 1,
           },
         );
 
-        if (result != null) {
-          Fluttertoast.showToast(msg: '${result.data}');
+        final value = version.data;
 
-          if (imageAssets.length == 0) {
-            Navigator.of(context).pop(itemCopy);
-          } else {
-            String done;
+        if (value == 0) {
+          HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
+            functionName: 'updateItem',
+          );
 
-            if (imageAssets.length > 0) {
-              done = await uploadImages(itemId);
-            }
+          final HttpsCallableResult result = await callable.call(
+            <String, dynamic>{
+              'itemId': itemId,
+              'name': itemCopy.name,
+              'description': itemCopy.description,
+              'type': itemCopy.type,
+              'condition': itemCopy.condition,
+              'price': itemCopy.price,
+              'numImages': totalImagesCount,
+              'geohash': myLocation.data['geohash'],
+              'lat': gp.latitude,
+              'long': gp.longitude,
+              'searchKey': searchKeyList,
+            },
+          );
 
-            if (done != null) {
+          if (result != null) {
+            Fluttertoast.showToast(msg: '${result.data}');
+
+            if (imageAssets.length == 0) {
               Navigator.of(context).pop(itemCopy);
+            } else {
+              String done;
+
+              if (imageAssets.length > 0) {
+                done = await uploadImages(itemId);
+              }
+
+              if (done != null) {
+                Navigator.of(context).pop(itemCopy);
+              }
             }
           }
         }
