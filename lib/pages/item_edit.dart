@@ -691,58 +691,72 @@ class ItemEditState extends State<ItemEdit> {
     if (!isEdit) {
       try {
         HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
-          functionName: 'addItem',
+          functionName: 'checkCreateItem',
         );
 
-        final HttpsCallableResult result = await callable.call(
+        final HttpsCallableResult version = await callable.call(
           <String, dynamic>{
-            'status': itemCopy.isVisible,
-            'creator': itemCopy.creator.documentID,
-            'name': itemCopy.name,
-            'description': itemCopy.description,
-            'type': itemCopy.type,
-            'condition': itemCopy.condition,
-            'rating': 0,
-            'numRatings': 0,
-            'price': itemCopy.price,
-            'images': [],
-            'numImages': totalImagesCount,
-            'geohash': myLocation.data['geohash'],
-            'lat': gp.latitude,
-            'long': gp.longitude,
-            'searchKey': searchKeyList,
-            'isVisible': true,
-            'owner': {
-              'name': firebaseUser.displayName,
-              'avatar': firebaseUser.photoUrl,
-            },
+            'version': 1,
           },
         );
 
-        final String returnedID = result.data;
-        itemId = returnedID;
+        final value = version.data;
 
-        String done;
+        if (value == 0) {
+          callable = CloudFunctions.instance.getHttpsCallable(
+            functionName: 'addItem',
+          );
 
-        if (imageAssets.length > 0) {
-          done = await uploadImages(returnedID);
-        }
+          final HttpsCallableResult result = await callable.call(
+            <String, dynamic>{
+              'status': itemCopy.isVisible,
+              'creator': itemCopy.creator.documentID,
+              'name': itemCopy.name,
+              'description': itemCopy.description,
+              'type': itemCopy.type,
+              'condition': itemCopy.condition,
+              'rating': 0,
+              'numRatings': 0,
+              'price': itemCopy.price,
+              'images': [],
+              'numImages': totalImagesCount,
+              'geohash': myLocation.data['geohash'],
+              'lat': gp.latitude,
+              'long': gp.longitude,
+              'searchKey': searchKeyList,
+              'isVisible': true,
+              'owner': {
+                'name': firebaseUser.displayName,
+                'avatar': firebaseUser.photoUrl,
+              },
+            },
+          );
 
-        if (done != null) {
-          Firestore.instance
-              .collection('items')
-              .document(returnedID)
-              .get()
-              .then((DocumentSnapshot ds) {
-            Navigator.popAndPushNamed(
-              context,
-              ItemDetail.routeName,
-              arguments: ItemDetailArgs(
-                ds,
+          final String returnedID = result.data;
+          itemId = returnedID;
+
+          String done;
+
+          if (imageAssets.length > 0) {
+            done = await uploadImages(returnedID);
+          }
+
+          if (done != null) {
+            Firestore.instance
+                .collection('items')
+                .document(returnedID)
+                .get()
+                .then((DocumentSnapshot ds) {
+              Navigator.popAndPushNamed(
                 context,
-              ),
-            );
-          });
+                ItemDetail.routeName,
+                arguments: ItemDetailArgs(
+                  ds,
+                  context,
+                ),
+              );
+            });
+          }
         }
       } on CloudFunctionsException catch (e) {
         Fluttertoast.showToast(msg: '${e.message}');
