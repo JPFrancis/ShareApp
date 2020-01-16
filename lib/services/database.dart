@@ -88,6 +88,10 @@ class DB {
     try {
       List rentalDays = []..addAll(rental.rentalDays);
 
+      if (rentalDays.length > 10) {
+        rentalDays = []..addAll(rentalDays.sublist(0, 10));
+      }
+
       var snaps = await db
           .collection('rentals')
           .where('item', isEqualTo: rental.itemRef)

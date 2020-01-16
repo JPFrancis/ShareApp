@@ -28,6 +28,7 @@ class PaymentService {
       },
       'transferData': transferData,
       'userData': userData,
+      'users': [idFrom, idTo]
     });
   }
 
