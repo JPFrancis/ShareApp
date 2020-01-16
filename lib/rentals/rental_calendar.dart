@@ -993,150 +993,183 @@ class RentalCalendarState extends State<RentalCalendar>
       isLoading = true;
     });
 
-    String rentalID;
-    String groupChatId;
-    List combinedId;
+    try {
+      HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
+        functionName: 'checkCreateRental',
+      );
 
-    DocumentReference itemCreatorDR = itemDS['creator'];
-    DocumentSnapshot itemOwnerDS = await itemCreatorDR.get();
+      final HttpsCallableResult version = await callable.call(
+        <String, dynamic>{
+          'version': 1,
+        },
+      );
 
-    if (itemOwnerDS != null && itemOwnerDS.exists) {
-      Map data = getChatRoomData(currentUser.id, itemOwnerDS.documentID);
+      final value = version.data;
 
-      if (data != null) {
-        groupChatId = data['combinedId'];
-        combinedId = data['users'];
-      }
-    }
+      if (value == 0) {
+        String rentalID;
+        String groupChatId;
+        List combinedId;
 
-    DateTime rentalEnd = pickupTime.add(Duration(days: duration, hours: 1));
-    List rentalDays =
-        getDatesInRange(pickupTime, rentalEnd.add(Duration(hours: 1)));
+        DocumentReference itemCreatorDR = itemDS['creator'];
+        DocumentSnapshot itemOwnerDS = await itemCreatorDR.get();
 
-    // create rental in 'rentals' collection
-    DocumentReference rentalDR =
-        await Firestore.instance.collection("rentals").add({
-      'declined': null,
-      'status': 0,
-      'requesting': true,
-      'item':
-          Firestore.instance.collection('items').document(itemDS.documentID),
-      'itemName': itemDS['name'],
-      'itemAvatar': itemDS['images'][0],
-      'owner': Firestore.instance
-          .collection('users')
-          .document(itemOwnerDS.documentID),
-      'ownerData': {
-        'name': itemOwnerDS['name'],
-        'avatar': itemOwnerDS['avatar'],
-      },
-      'renter': Firestore.instance.collection('users').document(currentUser.id),
-      'renterData': {
-        'name': currentUser.name,
-        'avatar': currentUser.avatar,
-      },
-      'pickupStart': pickupTime,
-      'pickupEnd': pickupTime.add(Duration(hours: 1)),
-      'rentalEnd': rentalEnd,
-      'created': DateTime.now(),
-      'lastUpdateTime': DateTime.now(),
-      'duration': duration,
-      'users': [
-        Firestore.instance.collection('users').document(itemOwnerDS.documentID),
-        Firestore.instance.collection('users').document(currentUser.id),
-      ],
-      'renterCC': null,
-      'ownerCC': null,
-      'renterReviewSubmitted': false,
-      'ownerReviewSubmitted': false,
-      'renterReview': null,
-      'ownerReview': null,
-      'initialPushNotif': {
-        'nameFrom': currentUser.name,
-        'pushToken': itemOwnerDS['pushToken'],
-        'itemName': itemDS['name'],
-      },
-      'price': dailyRate,
-      'rentalDays': rentalDays,
-    });
+        if (itemOwnerDS != null && itemOwnerDS.exists) {
+          Map data = getChatRoomData(currentUser.id, itemOwnerDS.documentID);
 
-    if (rentalDR != null) {
-      rentalID = rentalDR.documentID;
+          if (data != null) {
+            groupChatId = data['combinedId'];
+            combinedId = data['users'];
+          }
+        }
 
-      DocumentSnapshot ds = await Firestore.instance
-          .collection('messages')
-          .document(groupChatId)
-          .get();
+        DateTime rentalEnd = pickupTime.add(Duration(days: duration, hours: 1));
+        List rentalDays =
+            getDatesInRange(pickupTime, rentalEnd.add(Duration(hours: 1)));
 
-      if (ds != null) {
-        if (!ds.exists) {
-          Map map = setChatUserData({
-            'id': currentUser.id,
-            'name': currentUser.name,
-            'avatar': currentUser.avatar,
-          }, {
-            'id': itemOwnerDS.documentID,
+        // create rental in 'rentals' collection
+        DocumentReference rentalDR =
+            await Firestore.instance.collection("rentals").add({
+          'declined': null,
+          'status': 0,
+          'requesting': true,
+          'item': Firestore.instance
+              .collection('items')
+              .document(itemDS.documentID),
+          'itemName': itemDS['name'],
+          'itemAvatar': itemDS['images'][0],
+          'owner': Firestore.instance
+              .collection('users')
+              .document(itemOwnerDS.documentID),
+          'ownerData': {
             'name': itemOwnerDS['name'],
             'avatar': itemOwnerDS['avatar'],
-          });
-
-          try {
-            HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
-              functionName: 'createChatRoom',
-            );
-
-            final HttpsCallableResult result = await callable.call(
-              <String, dynamic>{
-                'users': combinedId,
-                'combinedId': groupChatId,
-                'user0': map['user0'],
-                'user1': map['user1'],
-              },
-            );
-          } on CloudFunctionsException catch (e) {
-            Fluttertoast.showToast(msg: '${e.message}');
-          } catch (e) {}
-        }
-
-        var messageReference = Firestore.instance
-            .collection('messages')
-            .document(groupChatId)
-            .collection('messages')
-            .document(DateTime.now().millisecondsSinceEpoch.toString());
-
-        Firestore.instance.runTransaction((transaction) async {
-          await transaction.set(
-            messageReference,
-            {
-              'idFrom': currentUser.id,
-              'idTo': itemOwnerDS.documentID,
-              'timestamp': DateTime.now().millisecondsSinceEpoch,
-              'content': message,
-              'type': 0,
-              'pushToken': itemOwnerDS['pushToken'],
-              'nameFrom': currentUser.name,
-              'rental': rentalDR,
-            },
-          );
+          },
+          'renter':
+              Firestore.instance.collection('users').document(currentUser.id),
+          'renterData': {
+            'name': currentUser.name,
+            'avatar': currentUser.avatar,
+          },
+          'pickupStart': pickupTime,
+          'pickupEnd': pickupTime.add(Duration(hours: 1)),
+          'rentalEnd': rentalEnd,
+          'created': DateTime.now(),
+          'lastUpdateTime': DateTime.now(),
+          'duration': duration,
+          'users': [
+            Firestore.instance
+                .collection('users')
+                .document(itemOwnerDS.documentID),
+            Firestore.instance.collection('users').document(currentUser.id),
+          ],
+          'renterCC': null,
+          'ownerCC': null,
+          'renterReviewSubmitted': false,
+          'ownerReviewSubmitted': false,
+          'renterReview': null,
+          'ownerReview': null,
+          'initialPushNotif': {
+            'nameFrom': currentUser.name,
+            'pushToken': itemOwnerDS['pushToken'],
+            'itemName': itemDS['name'],
+          },
+          'price': dailyRate,
+          'rentalDays': rentalDays,
         });
 
-        if (messageReference != null) {
-          await new Future.delayed(Duration(milliseconds: delay));
+        if (rentalDR != null) {
+          rentalID = rentalDR.documentID;
 
-          rentalDR.get().then((ds) {
-            if (rentalID != null) {
-              Navigator.popAndPushNamed(
-                context,
-                RentalDetail.routeName,
-                arguments: RentalDetailArgs(
-                  Rental(ds),
-                  currentUser,
-                ),
-              );
+          DocumentSnapshot ds = await Firestore.instance
+              .collection('messages')
+              .document(groupChatId)
+              .get();
+
+          if (ds != null) {
+            if (!ds.exists) {
+              Map map = setChatUserData({
+                'id': currentUser.id,
+                'name': currentUser.name,
+                'avatar': currentUser.avatar,
+              }, {
+                'id': itemOwnerDS.documentID,
+                'name': itemOwnerDS['name'],
+                'avatar': itemOwnerDS['avatar'],
+              });
+
+              try {
+                HttpsCallable callable =
+                    CloudFunctions.instance.getHttpsCallable(
+                  functionName: 'createChatRoom',
+                );
+
+                final HttpsCallableResult result = await callable.call(
+                  <String, dynamic>{
+                    'users': combinedId,
+                    'combinedId': groupChatId,
+                    'user0': map['user0'],
+                    'user1': map['user1'],
+                  },
+                );
+              } on CloudFunctionsException catch (e) {
+                Fluttertoast.showToast(msg: '${e.message}');
+              } catch (e) {}
             }
-          });
+
+            var messageReference = Firestore.instance
+                .collection('messages')
+                .document(groupChatId)
+                .collection('messages')
+                .document(DateTime.now().millisecondsSinceEpoch.toString());
+
+            Firestore.instance.runTransaction((transaction) async {
+              await transaction.set(
+                messageReference,
+                {
+                  'idFrom': currentUser.id,
+                  'idTo': itemOwnerDS.documentID,
+                  'timestamp': DateTime.now().millisecondsSinceEpoch,
+                  'content': message,
+                  'type': 0,
+                  'pushToken': itemOwnerDS['pushToken'],
+                  'nameFrom': currentUser.name,
+                  'rental': rentalDR,
+                },
+              );
+            });
+
+            if (messageReference != null) {
+              await new Future.delayed(Duration(milliseconds: delay));
+
+              rentalDR.get().then((ds) {
+                if (rentalID != null) {
+                  Navigator.popAndPushNamed(
+                    context,
+                    RentalDetail.routeName,
+                    arguments: RentalDetailArgs(
+                      Rental(ds),
+                      currentUser,
+                    ),
+                  );
+                }
+              });
+            }
+          }
         }
       }
+    } on CloudFunctionsException catch (e) {
+      Fluttertoast.showToast(msg: '${e.message}');
+
+      setState(() {
+        isLoading = false;
+      });
+    } catch (e) {
+      Fluttertoast.showToast(msg: '${e}');
+
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 }

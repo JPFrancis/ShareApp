@@ -17,6 +17,7 @@ const versionErrorMessage = 'Please update your app to perform this action';
 // checkAppVersion = 1              Wed Jan 15, 2020
 // checkCreateItem = 1              Wed Jan 15, 2020
 // checkUpdateItem = 1              Wed Jan 15, 2020
+// checkCreateRental = 1              Wed Jan 15, 2020
 
 // create new user document when account created
 exports.createUser = functions.auth.user().onCreate(event => {
@@ -1053,6 +1054,16 @@ exports.checkCreateItem = functions.https.onCall(async (data, context) => {
 });
 
 exports.checkUpdateItem = functions.https.onCall(async (data, context) => {
+    var version = data.version;
+
+    if (version !== null && version >= 1) {
+        return 0;
+    } else {
+        throw new functions.https.HttpsError('unknown', versionErrorMessage);
+    }
+});
+
+exports.checkCreateRental = functions.https.onCall(async (data, context) => {
     var version = data.version;
 
     if (version !== null && version >= 1) {
