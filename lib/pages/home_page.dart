@@ -124,19 +124,19 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
     geo = Geoflutterfire();
 
-    initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
-
-    initializationSettingsIOS = IOSInitializationSettings(
-        onDidReceiveLocalNotification: onDidReceiveLocalNotification);
-
-    initializationSettings = InitializationSettings(
-        initializationSettingsAndroid, initializationSettingsIOS);
-
-    localNotificationManager.initialize(initializationSettings,
-        onSelectNotification: onSelectNotification);
-
-    specs = NotificationDetails(androidSpecs, iosSpecs);
+//    initializationSettingsAndroid =
+//        AndroidInitializationSettings('@mipmap/ic_launcher');
+//
+//    initializationSettingsIOS = IOSInitializationSettings(
+//        onDidReceiveLocalNotification: onDidReceiveLocalNotification);
+//
+//    initializationSettings = InitializationSettings(
+//        initializationSettingsAndroid, initializationSettingsIOS);
+//
+//    localNotificationManager.initialize(initializationSettings,
+//        onSelectNotification: onSelectNotification);
+//
+//    specs = NotificationDetails(androidSpecs, iosSpecs);
 
     currentTabIndex = 0;
 
@@ -297,104 +297,104 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
 
     // schedule notifications
-    await localNotificationManager.cancelAll();
-
-    DocumentReference userDR =
-        Firestore.instance.collection('users').document(currentUser.id);
-    rentalQuerySnaps = await Firestore.instance
-        .collection('rentals')
-        .where('users', arrayContains: userDR)
-        .where('status', isEqualTo: 2)
-        .getDocuments();
-    rentalSnaps = rentalQuerySnaps.documents;
-
-    for (int i = 0; i < rentalSnaps.length; i++) {
-      DocumentSnapshot rentalDS = rentalSnaps[i];
-      DateTime now = DateTime.now();
-      DateTime pickupStart = rentalDS['pickupStart'].toDate();
-      DateTime pickupEnd = rentalDS['pickupEnd'].toDate();
-      DateTime rentalEnd = rentalDS['rentalEnd'].toDate();
-      DateTime created = rentalDS['created'].toDate();
-      DateTime expired = created.add(Duration(days: 1));
-      String itemName = rentalDS['itemName'];
-      int status = rentalDS['status'];
-      List expiredRentalStatus = [0, 1];
-
-      if (expiredRentalStatus.contains(status) && now.isAfter(expired)) {
-        await Firestore.instance
-            .collection('rentals')
-            .document(rentalDS.documentID)
-            .delete();
-      } else {
-        int id = i * 10;
-        int idCounter = 0;
-
-        id += idCounter;
-        await localNotificationManager.schedule(
-          id,
-          'Pickup window will begin in 1 day',
-          'Item: $itemName',
-          pickupStart.subtract(Duration(days: 1)),
-          specs,
-          payload: '$id',
-        );
-        idCounter++;
-
-        id += idCounter;
-        await localNotificationManager.schedule(
-          id,
-          'Pickup window will begin in 1 hour',
-          'Item: $itemName',
-          pickupStart.subtract(Duration(hours: 1)),
-          specs,
-          payload: '$id',
-        );
-        idCounter++;
-
-        id += idCounter;
-        await localNotificationManager.schedule(
-          id,
-          'Pickup window will begin in 20 minutes',
-          'Item: $itemName',
-          pickupStart.subtract(Duration(minutes: 20)),
-          specs,
-          payload: '$id',
-        );
-        idCounter++;
-
-        id += idCounter;
-        await localNotificationManager.schedule(
-          id,
-          'Pickup window has begun!',
-          'Item: $itemName',
-          pickupStart,
-          specs,
-          payload: '$id',
-        );
-        idCounter++;
-
-        id += idCounter;
-        await localNotificationManager.schedule(
-          id,
-          'Pickup window has ended! Begin rental',
-          'Item: $itemName',
-          pickupEnd,
-          specs,
-          payload: '$id',
-        );
-        idCounter++;
-
-        id += idCounter;
-        await localNotificationManager.schedule(
-          id,
-          'Item rental has ended',
-          'Item: $itemName',
-          rentalEnd,
-          specs,
-          payload: '$id',
-        );
-      }
-    }
+//    await localNotificationManager.cancelAll();
+//
+//    DocumentReference userDR =
+//        Firestore.instance.collection('users').document(currentUser.id);
+//    rentalQuerySnaps = await Firestore.instance
+//        .collection('rentals')
+//        .where('users', arrayContains: userDR)
+//        .where('status', isEqualTo: 2)
+//        .getDocuments();
+//    rentalSnaps = rentalQuerySnaps.documents;
+//
+//    for (int i = 0; i < rentalSnaps.length; i++) {
+//      DocumentSnapshot rentalDS = rentalSnaps[i];
+//      DateTime now = DateTime.now();
+//      DateTime pickupStart = rentalDS['pickupStart'].toDate();
+//      DateTime pickupEnd = rentalDS['pickupEnd'].toDate();
+//      DateTime rentalEnd = rentalDS['rentalEnd'].toDate();
+//      DateTime created = rentalDS['created'].toDate();
+//      DateTime expired = created.add(Duration(days: 1));
+//      String itemName = rentalDS['itemName'];
+//      int status = rentalDS['status'];
+//      List expiredRentalStatus = [0, 1];
+//
+//      if (expiredRentalStatus.contains(status) && now.isAfter(expired)) {
+//        await Firestore.instance
+//            .collection('rentals')
+//            .document(rentalDS.documentID)
+//            .delete();
+//      } else {
+//        int id = i * 10;
+//        int idCounter = 0;
+//
+//        id += idCounter;
+//        await localNotificationManager.schedule(
+//          id,
+//          'Pickup window will begin in 1 day',
+//          'Item: $itemName',
+//          pickupStart.subtract(Duration(days: 1)),
+//          specs,
+//          payload: '$id',
+//        );
+//        idCounter++;
+//
+//        id += idCounter;
+//        await localNotificationManager.schedule(
+//          id,
+//          'Pickup window will begin in 1 hour',
+//          'Item: $itemName',
+//          pickupStart.subtract(Duration(hours: 1)),
+//          specs,
+//          payload: '$id',
+//        );
+//        idCounter++;
+//
+//        id += idCounter;
+//        await localNotificationManager.schedule(
+//          id,
+//          'Pickup window will begin in 20 minutes',
+//          'Item: $itemName',
+//          pickupStart.subtract(Duration(minutes: 20)),
+//          specs,
+//          payload: '$id',
+//        );
+//        idCounter++;
+//
+//        id += idCounter;
+//        await localNotificationManager.schedule(
+//          id,
+//          'Pickup window has begun!',
+//          'Item: $itemName',
+//          pickupStart,
+//          specs,
+//          payload: '$id',
+//        );
+//        idCounter++;
+//
+//        id += idCounter;
+//        await localNotificationManager.schedule(
+//          id,
+//          'Pickup window has ended! Begin rental',
+//          'Item: $itemName',
+//          pickupEnd,
+//          specs,
+//          payload: '$id',
+//        );
+//        idCounter++;
+//
+//        id += idCounter;
+//        await localNotificationManager.schedule(
+//          id,
+//          'Item rental has ended',
+//          'Item: $itemName',
+//          rentalEnd,
+//          specs,
+//          payload: '$id',
+//        );
+//      }
+//    }
 
     // remove unavailable item days
     CollectionReference itemRef = Firestore.instance.collection('items');
