@@ -449,6 +449,7 @@ class PayoutsPageState extends State<PayoutsPage> {
       child: StreamBuilder<QuerySnapshot>(
         stream: Firestore.instance
             .collection('charges')
+            .where('users', arrayContains: currentUser.id)
             .where('status', isEqualTo: 'succeeded')
             .orderBy('timestamp', descending: true)
             .snapshots(),
