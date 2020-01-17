@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:scoped_model/scoped_model.dart';
 import 'package:shareapp/models/rental.dart';
 import 'package:shareapp/services/dialogs.dart';
 
@@ -532,7 +533,10 @@ class RentalCalendarState extends State<RentalCalendar>
       onTap: () => Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (BuildContext context) => PayoutsPage(),
+            builder: (BuildContext context) => ScopedModel<CurrentUser>(
+              model: currentUser,
+              child: PayoutsPage(),
+            ),
           )),
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 20.0),
