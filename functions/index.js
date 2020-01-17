@@ -433,13 +433,13 @@ exports.createCharge = functions.firestore.document('charges/{chargeId}')
             const ourFee = transferDataMap['ourFee'];
             const ownerPayout = transferDataMap['ownerPayout'];
             const idempotentKey = context.params.chargeId;
-            const connectedAcctId = transferDataMap['connectedAcctId'];
+            const connectedAcctId = transferDataMap['connectedAcctId'];            
 
             const response = await stripe.charges.create({
                 amount: amount,
                 currency: currency,
-                //source: customer,
-                source: "tok_visa",
+                source: customer,
+                // source: "tok_visa",
                 application_fee_amount: ourFee,
                 transfer_data: {
                     destination: connectedAcctId,
