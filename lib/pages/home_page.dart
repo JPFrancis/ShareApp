@@ -1340,18 +1340,17 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
               bottomRight: const Radius.circular(40.0))),
       child: Stack(
         children: <Widget>[
-          Align(
+          Container(
+            padding: EdgeInsets.only(top:35.0),
             alignment: Alignment.bottomCenter,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
+            child: Column(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
                 Row(
                   mainAxisAlignment: MainAxisAlignment.start,
                   mainAxisSize:  MainAxisSize.max,
                   children: <Widget>[
                     SizedBox(width: 15.0,),
                     Container( 
-                      alignment: Alignment.bottomLeft,
+                      alignment: Alignment.topLeft,
                       height: 40,
                       width: 40,
                       decoration: new BoxDecoration(
