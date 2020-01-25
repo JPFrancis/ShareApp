@@ -10,15 +10,6 @@ null = neither
  */
 
 /*
-int status
-1 = requested
-2 = accepted
-3 = active'
-4 = returned
-5 = cancelled
-*/
-
-/*
 0) renter has proposed time - burden of accept is on owner.
   Entered when renter proposes new time
 1) owner has proposed time - burden of accept is on renter

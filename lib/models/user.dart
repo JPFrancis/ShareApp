@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:scoped_model/scoped_model.dart';
 import 'package:shareapp/models/user_edit.dart';
@@ -28,9 +29,14 @@ class User extends Model {
   String name;
   String phoneNum;
   bool verified;
+  Map renterRating;
+  Map ownerRating;
+  String pushToken;
 
   // current user only
   Position currentLocation;
+
+  static User getModel(BuildContext context) => ScopedModel.of<User>(context);
 
   User(DocumentSnapshot snap) {
     if (snap == null) {
@@ -61,6 +67,16 @@ class User extends Model {
     this.gender = data['gender'];
     this.name = data['name'];
     this.phoneNum = data['phoneNum'];
+    this.ownerRating = {}..addAll(data['ownerRating']);
+    this.renterRating = {}..addAll(data['renterRating']);
+
+    var pushToken = data['pushToken'];
+
+    if (pushToken is List && pushToken.isNotEmpty) {
+      this.pushToken = pushToken[0];
+    }
+
+    this.pushToken = data['pushToken'];
 
     // current user only
     this.currentLocation = null;

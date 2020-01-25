@@ -13,6 +13,13 @@ const bucket = storage.bucket();
 const stripe = require('stripe')(functions.config().stripe.token);
 const error_message = 'Invalid input. Make sure you\'re using the latest version of the app';
 
+const versionErrorMessage = 'Please update your app to perform this action';
+// checkAppVersion = 1              Wed Jan 15, 2020
+// checkCreateItem = 1              Wed Jan 15, 2020
+// checkUpdateItem = 1              Wed Jan 15, 2020
+// checkCreateRental = 1            Wed Jan 15, 2020
+// checkChargeRental = 1            Wed Jan 15, 2020
+
 // create new user document when account created
 exports.createUser = functions.auth.user().onCreate(event => {
     console.log('User id to be created: ', event.uid);
@@ -426,13 +433,13 @@ exports.createCharge = functions.firestore.document('charges/{chargeId}')
             const ourFee = transferDataMap['ourFee'];
             const ownerPayout = transferDataMap['ownerPayout'];
             const idempotentKey = context.params.chargeId;
-            const connectedAcctId = transferDataMap['connectedAcctId'];
+            const connectedAcctId = transferDataMap['connectedAcctId'];            
 
             const response = await stripe.charges.create({
                 amount: amount,
                 currency: currency,
-                //source: customer,
-                source: "tok_visa",
+                source: customer,
+                // source: "tok_visa",
                 application_fee_amount: ourFee,
                 transfer_data: {
                     destination: connectedAcctId,
@@ -1022,5 +1029,57 @@ exports.createRental = functions.https.onCall(async (data, context) => {
         } else {
             return docRef.id;
         }
+    }
+});
+
+// Functions to check if user's app is up to date
+
+exports.checkAppVersion = functions.https.onCall(async (data, context) => {
+    var version = data.version;
+
+    if (version !== null && version >= 1) {
+        return 0;
+    } else {
+        throw new functions.https.HttpsError('unknown', versionErrorMessage);
+    }
+});
+
+exports.checkCreateItem = functions.https.onCall(async (data, context) => {
+    var version = data.version;
+
+    if (version !== null && version >= 1) {
+        return 0;
+    } else {
+        throw new functions.https.HttpsError('unknown', versionErrorMessage);
+    }
+});
+
+exports.checkUpdateItem = functions.https.onCall(async (data, context) => {
+    var version = data.version;
+
+    if (version !== null && version >= 1) {
+        return 0;
+    } else {
+        throw new functions.https.HttpsError('unknown', versionErrorMessage);
+    }
+});
+
+exports.checkCreateRental = functions.https.onCall(async (data, context) => {
+    var version = data.version;
+
+    if (version !== null && version >= 1) {
+        return 0;
+    } else {
+        throw new functions.https.HttpsError('unknown', versionErrorMessage);
+    }
+});
+
+exports.checkChargeRental = functions.https.onCall(async (data, context) => {
+    var version = data.version;
+
+    if (version !== null && version >= 1) {
+        return 0;
+    } else {
+        throw new functions.https.HttpsError('unknown', versionErrorMessage);
     }
 });

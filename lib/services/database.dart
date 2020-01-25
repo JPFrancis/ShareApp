@@ -1,9 +1,52 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:shareapp/models/current_user.dart';
 import 'package:shareapp/models/rental.dart';
 
 class DB {
   final db = Firestore.instance;
+
+  Future<dynamic> checkAppVersion() async {
+    try {
+      HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
+        functionName: 'checkAppVersion',
+      );
+
+      final HttpsCallableResult result = await callable.call(
+        <String, dynamic>{
+          'version': 1,
+        },
+      );
+
+      final value = result.data;
+
+      if (value == 0) {
+        return 0;
+      }
+    } on CloudFunctionsException catch (e) {
+      throw e.message;
+    } catch (e) {
+      throw e.toString();
+    }
+  }
+
+  Stream<QuerySnapshot> getUnreadItemOwnerRentals({String userId}) {
+    return db
+        .collection('rentals')
+        .where('owner',
+            isEqualTo: Firestore.instance.collection('users').document(userId))
+        .where('status', isEqualTo: 1)
+        .snapshots();
+  }
+
+  Stream<QuerySnapshot> getUnreadItemRenterRentals({String userId}) {
+    return db
+        .collection('rentals')
+        .where('renter',
+            isEqualTo: Firestore.instance.collection('users').document(userId))
+        .where('status', isEqualTo: 0)
+        .snapshots();
+  }
 
   Future<dynamic> addStripeConnectedAccount({String url, String userId}) async {
     try {
@@ -45,6 +88,10 @@ class DB {
     try {
       List rentalDays = []..addAll(rental.rentalDays);
 
+      if (rentalDays.length > 10) {
+        rentalDays = []..addAll(rentalDays.sublist(0, 10));
+      }
+
       var snaps = await db
           .collection('rentals')
           .where('item', isEqualTo: rental.itemRef)
@@ -58,6 +105,120 @@ class DB {
       } else {
         return 0;
       }
+    } catch (e) {
+      throw e.toString();
+    }
+  }
+
+  Future<dynamic> addStripeSource({
+    CurrentUser currentUser,
+    String token,
+  }) async {
+    try {
+      if (currentUser != null && token != null) {
+        final HttpsCallable callable = CloudFunctions.instance
+            .getHttpsCallable(functionName: 'addStripeCard');
+
+        final HttpsCallableResult result =
+            await callable.call(<String, dynamic>{
+          'tokenId': token,
+          'userId': currentUser.id,
+          'email': currentUser.email,
+          'customerId': currentUser.custId,
+        });
+
+        final response = result.data;
+
+        if (response != null && response is Map) {
+          String custId = response['custId'];
+          String defaultSource = response['defaultSource'];
+
+          currentUser.updateCustomerId(custId);
+          currentUser.updateDefaultSource(defaultSource);
+
+          return 0;
+        } else {
+          throw 'An error occurred';
+        }
+      }
+    } on CloudFunctionsException catch (e) {
+      throw e.message;
+    } catch (e) {
+      throw e.toString();
+    }
+  }
+
+  Future<dynamic> setDefaultStripeSource({
+    CurrentUser currentUser,
+    String cardId,
+  }) async {
+    try {
+      if (currentUser != null && cardId != null) {
+        final HttpsCallable callable = CloudFunctions.instance
+            .getHttpsCallable(functionName: 'setDefaultSource');
+
+        final HttpsCallableResult result =
+            await callable.call(<String, dynamic>{
+          'userId': currentUser.id,
+          'customerId': currentUser.custId,
+          'newSourceId': cardId,
+        });
+
+        final response = result.data;
+
+        if (response != null && response is String && response.isNotEmpty) {
+          currentUser.updateDefaultSource(response);
+
+          return 0;
+        } else {
+          throw 'An error occurred';
+        }
+      }
+    } on CloudFunctionsException catch (e) {
+      throw e.message;
+    } catch (e) {
+      throw e.toString();
+    }
+  }
+
+  Future<dynamic> deleteStripeSource({
+    CurrentUser currentUser,
+    String cardId,
+    String fingerprint,
+  }) async {
+    try {
+      if (currentUser != null && cardId != null) {
+        final HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
+          functionName: 'deleteStripeSource',
+        );
+
+        final HttpsCallableResult result =
+            await callable.call(<String, dynamic>{
+          'userId': currentUser.id,
+          'customerId': currentUser.custId,
+          'source': cardId,
+        });
+
+        final response = result.data;
+
+        if (response != null && response is String && response.isNotEmpty) {
+          currentUser.updateDefaultSource(response);
+
+          await Firestore.instance
+              .collection('users')
+              .document(currentUser.id)
+              .collection('sources')
+              .document(fingerprint)
+              .delete()
+              .then((_) {
+            return 0;
+          });
+        } else {
+          throw 'An error occurred';
+        }
+      }
+    } on CloudFunctionsException catch (e) {
+      throw e.message;
     } catch (e) {
       throw e.toString();
     }

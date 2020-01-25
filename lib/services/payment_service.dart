@@ -2,19 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class PaymentService {
-  addCard(token) {
-    FirebaseAuth.instance.currentUser().then((user) {
-      Firestore.instance
-          .collection('users')
-          .document(user.uid)
-          .collection('tokens')
-          .add({
-        'tokenId': token,
-        'timestamp': DateTime.now(),
-      }).then((val) {});
-    });
-  }
-
   chargeRental(
       String rentalId,
       int rentalDuration,
@@ -41,6 +28,7 @@ class PaymentService {
       },
       'transferData': transferData,
       'userData': userData,
+      'users': [idFrom, idTo]
     });
   }
 

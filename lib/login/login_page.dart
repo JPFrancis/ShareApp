@@ -14,9 +14,8 @@ import 'package:shareapp/services/functions.dart';
 class LoginPage extends StatefulWidget {
   static const routeName = '/loginPage';
 
-  LoginPage({Key key, this.title, this.auth, this.onSignIn}) : super(key: key);
+  LoginPage({Key key, this.auth, this.onSignIn}) : super(key: key);
 
-  final String title;
   final BaseAuth auth;
   final VoidCallback onSignIn;
 

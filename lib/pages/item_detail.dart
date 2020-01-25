@@ -15,6 +15,7 @@ import 'package:shareapp/extras/helpers.dart';
 import 'package:shareapp/main.dart';
 import 'package:shareapp/models/current_user.dart';
 import 'package:shareapp/models/item.dart';
+import 'package:shareapp/models/user.dart';
 import 'package:shareapp/pages/all_reviews.dart';
 import 'package:shareapp/pages/item_edit.dart';
 import 'package:shareapp/pages/profile_page.dart';
@@ -296,10 +297,15 @@ class ItemDetailState extends State<ItemDetail> {
       child: isOwner
           ? Container()
           : GestureDetector(
-              onTap: () {
+              onTap: () async {
+                DocumentSnapshot snap = await Firestore.instance
+                    .collection('users')
+                    .document(itemOwnerID)
+                    .get();
+
                 Navigator.of(context).pushNamed(
                   Chat.routeName,
-                  arguments: ChatArgs(itemOwnerID, currentUser),
+                  arguments: ChatArgs(currentUser, User(snap)),
                 );
               },
               child: Row(
@@ -807,13 +813,16 @@ class ItemDetailState extends State<ItemDetail> {
         false;
   }
 
-  void navToItemCreatorProfile() {
+  void navToItemCreatorProfile() async {
+    DocumentReference ref = itemDS['creator'] as DocumentReference;
+    DocumentSnapshot snap = await ref.get();
+
     Navigator.pushNamed(
       context,
       ProfilePage.routeName,
       arguments: ProfilePageArgs(
-        itemOwnerID,
         currentUser,
+        User(snap),
       ),
     );
   }

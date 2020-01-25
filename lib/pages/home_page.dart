@@ -40,6 +40,11 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:url_launcher/url_launcher.dart';
 
+enum BadgeType {
+  renter,
+  owner,
+}
+
 class HomePage extends StatefulWidget {
   static const routeName = '/homePage';
 
@@ -120,19 +125,19 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
     geo = Geoflutterfire();
 
-    initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
-
-    initializationSettingsIOS = IOSInitializationSettings(
-        onDidReceiveLocalNotification: onDidReceiveLocalNotification);
-
-    initializationSettings = InitializationSettings(
-        initializationSettingsAndroid, initializationSettingsIOS);
-
-    localNotificationManager.initialize(initializationSettings,
-        onSelectNotification: onSelectNotification);
-
-    specs = NotificationDetails(androidSpecs, iosSpecs);
+//    initializationSettingsAndroid =
+//        AndroidInitializationSettings('@mipmap/ic_launcher');
+//
+//    initializationSettingsIOS = IOSInitializationSettings(
+//        onDidReceiveLocalNotification: onDidReceiveLocalNotification);
+//
+//    initializationSettings = InitializationSettings(
+//        initializationSettingsAndroid, initializationSettingsIOS);
+//
+//    localNotificationManager.initialize(initializationSettings,
+//        onSelectNotification: onSelectNotification);
+//
+//    specs = NotificationDetails(androidSpecs, iosSpecs);
 
     currentTabIndex = 0;
 
@@ -164,14 +169,6 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
       isAuthenticated = true;
       updateLastActiveAndPushToken();
     }
-
-    bottomNavBarTiles = <BottomNavigationBarItem>[
-      bottomNavTile('Search', Icon(Icons.search), false),
-      bottomNavTile('Rentals', Icon(Icons.shopping_cart), false),
-      bottomNavTile('Listings', Icon(Icons.style), true),
-      bottomNavTile('Messages', Icon(Icons.forum), false),
-      bottomNavTile('Profile', Icon(Icons.account_circle), false),
-    ];
 
     if (isAuthenticated) {
       initialize();
@@ -301,104 +298,104 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
 
     // schedule notifications
-    await localNotificationManager.cancelAll();
-
-    DocumentReference userDR =
-        Firestore.instance.collection('users').document(currentUser.id);
-    rentalQuerySnaps = await Firestore.instance
-        .collection('rentals')
-        .where('users', arrayContains: userDR)
-        .where('status', isEqualTo: 2)
-        .getDocuments();
-    rentalSnaps = rentalQuerySnaps.documents;
-
-    for (int i = 0; i < rentalSnaps.length; i++) {
-      DocumentSnapshot rentalDS = rentalSnaps[i];
-      DateTime now = DateTime.now();
-      DateTime pickupStart = rentalDS['pickupStart'].toDate();
-      DateTime pickupEnd = rentalDS['pickupEnd'].toDate();
-      DateTime rentalEnd = rentalDS['rentalEnd'].toDate();
-      DateTime created = rentalDS['created'].toDate();
-      DateTime expired = created.add(Duration(days: 1));
-      String itemName = rentalDS['itemName'];
-      int status = rentalDS['status'];
-      List expiredRentalStatus = [0, 1];
-
-      if (expiredRentalStatus.contains(status) && now.isAfter(expired)) {
-        await Firestore.instance
-            .collection('rentals')
-            .document(rentalDS.documentID)
-            .delete();
-      } else {
-        int id = i * 10;
-        int idCounter = 0;
-
-        id += idCounter;
-        await localNotificationManager.schedule(
-          id,
-          'Pickup window will begin in 1 day',
-          'Item: $itemName',
-          pickupStart.subtract(Duration(days: 1)),
-          specs,
-          payload: '$id',
-        );
-        idCounter++;
-
-        id += idCounter;
-        await localNotificationManager.schedule(
-          id,
-          'Pickup window will begin in 1 hour',
-          'Item: $itemName',
-          pickupStart.subtract(Duration(hours: 1)),
-          specs,
-          payload: '$id',
-        );
-        idCounter++;
-
-        id += idCounter;
-        await localNotificationManager.schedule(
-          id,
-          'Pickup window will begin in 20 minutes',
-          'Item: $itemName',
-          pickupStart.subtract(Duration(minutes: 20)),
-          specs,
-          payload: '$id',
-        );
-        idCounter++;
-
-        id += idCounter;
-        await localNotificationManager.schedule(
-          id,
-          'Pickup window has begun!',
-          'Item: $itemName',
-          pickupStart,
-          specs,
-          payload: '$id',
-        );
-        idCounter++;
-
-        id += idCounter;
-        await localNotificationManager.schedule(
-          id,
-          'Pickup window has ended! Begin rental',
-          'Item: $itemName',
-          pickupEnd,
-          specs,
-          payload: '$id',
-        );
-        idCounter++;
-
-        id += idCounter;
-        await localNotificationManager.schedule(
-          id,
-          'Item rental has ended',
-          'Item: $itemName',
-          rentalEnd,
-          specs,
-          payload: '$id',
-        );
-      }
-    }
+//    await localNotificationManager.cancelAll();
+//
+//    DocumentReference userDR =
+//        Firestore.instance.collection('users').document(currentUser.id);
+//    rentalQuerySnaps = await Firestore.instance
+//        .collection('rentals')
+//        .where('users', arrayContains: userDR)
+//        .where('status', isEqualTo: 2)
+//        .getDocuments();
+//    rentalSnaps = rentalQuerySnaps.documents;
+//
+//    for (int i = 0; i < rentalSnaps.length; i++) {
+//      DocumentSnapshot rentalDS = rentalSnaps[i];
+//      DateTime now = DateTime.now();
+//      DateTime pickupStart = rentalDS['pickupStart'].toDate();
+//      DateTime pickupEnd = rentalDS['pickupEnd'].toDate();
+//      DateTime rentalEnd = rentalDS['rentalEnd'].toDate();
+//      DateTime created = rentalDS['created'].toDate();
+//      DateTime expired = created.add(Duration(days: 1));
+//      String itemName = rentalDS['itemName'];
+//      int status = rentalDS['status'];
+//      List expiredRentalStatus = [0, 1];
+//
+//      if (expiredRentalStatus.contains(status) && now.isAfter(expired)) {
+//        await Firestore.instance
+//            .collection('rentals')
+//            .document(rentalDS.documentID)
+//            .delete();
+//      } else {
+//        int id = i * 10;
+//        int idCounter = 0;
+//
+//        id += idCounter;
+//        await localNotificationManager.schedule(
+//          id,
+//          'Pickup window will begin in 1 day',
+//          'Item: $itemName',
+//          pickupStart.subtract(Duration(days: 1)),
+//          specs,
+//          payload: '$id',
+//        );
+//        idCounter++;
+//
+//        id += idCounter;
+//        await localNotificationManager.schedule(
+//          id,
+//          'Pickup window will begin in 1 hour',
+//          'Item: $itemName',
+//          pickupStart.subtract(Duration(hours: 1)),
+//          specs,
+//          payload: '$id',
+//        );
+//        idCounter++;
+//
+//        id += idCounter;
+//        await localNotificationManager.schedule(
+//          id,
+//          'Pickup window will begin in 20 minutes',
+//          'Item: $itemName',
+//          pickupStart.subtract(Duration(minutes: 20)),
+//          specs,
+//          payload: '$id',
+//        );
+//        idCounter++;
+//
+//        id += idCounter;
+//        await localNotificationManager.schedule(
+//          id,
+//          'Pickup window has begun!',
+//          'Item: $itemName',
+//          pickupStart,
+//          specs,
+//          payload: '$id',
+//        );
+//        idCounter++;
+//
+//        id += idCounter;
+//        await localNotificationManager.schedule(
+//          id,
+//          'Pickup window has ended! Begin rental',
+//          'Item: $itemName',
+//          pickupEnd,
+//          specs,
+//          payload: '$id',
+//        );
+//        idCounter++;
+//
+//        id += idCounter;
+//        await localNotificationManager.schedule(
+//          id,
+//          'Item rental has ended',
+//          'Item: $itemName',
+//          rentalEnd,
+//          specs,
+//          payload: '$id',
+//        );
+//      }
+//    }
 
     // remove unavailable item days
     CollectionReference itemRef = Firestore.instance.collection('items');
@@ -588,6 +585,14 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
     pageHeight = MediaQuery.of(context).size.height - statusBarHeight;
     pageWidth = MediaQuery.of(context).size.width - statusBarHeight;
 
+    bottomNavBarTiles = <BottomNavigationBarItem>[
+      bottomNavTile('Search', Icon(Icons.search), null),
+      bottomNavTile('Rentals', Icon(Icons.shopping_cart), BadgeType.renter),
+      bottomNavTile('Listings', Icon(Icons.style), BadgeType.owner),
+      bottomNavTile('Messages', Icon(Icons.forum), null),
+      bottomNavTile('Profile', Icon(Icons.account_circle), null),
+    ];
+
     bottomTabPages = <Widget>[
       searchPage(),
       myRentalsPage(),
@@ -753,21 +758,24 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   BottomNavigationBarItem bottomNavTile(
-      String label, Icon icon, bool showBadge) {
+      String label, Icon icon, BadgeType type) {
+    var stream;
+
+    if (type != null) {
+      if (type == BadgeType.owner) {
+        stream = DB().getUnreadItemOwnerRentals(userId: currentUser.id);
+      } else if (type == BadgeType.owner) {
+        stream = DB().getUnreadItemRenterRentals(userId: currentUser.id);
+      }
+    }
+
     return BottomNavigationBarItem(
       icon: Stack(
         children: <Widget>[
           icon,
-          showBadge
+          type != null
               ? StreamBuilder<QuerySnapshot>(
-                  stream: Firestore.instance
-                      .collection('rentals')
-                      .where('owner',
-                          isEqualTo: Firestore.instance
-                              .collection('users')
-                              .document(currentUser.id))
-                      .where('requesting', isEqualTo: true)
-                      .snapshots(),
+                  stream: stream,
                   builder: (BuildContext context,
                       AsyncSnapshot<QuerySnapshot> snapshot) {
                     if (snapshot.hasError) {
@@ -833,130 +841,6 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
           child: Text(label,
               style: TextStyle(fontFamily: appFont, fontSize: 13.0))),
     );
-  }
-
-  Widget cardItemRentals(ds, ownerDS, rentalDS) {
-    CachedNetworkImage image = CachedNetworkImage(
-      //key: ValueKey(DateTime.now().millisecondsSinceEpoch),
-      imageUrl: ds['images'][0],
-      placeholder: (context, url) => new CircularProgressIndicator(),
-    );
-
-    return new Container(child: new LayoutBuilder(
-        builder: (BuildContext context, BoxConstraints constraints) {
-      double h = constraints.maxHeight;
-      double w = constraints.maxWidth;
-
-      return InkWell(
-        onTap: () {
-          navigateToDetail(ds);
-        },
-        child: Container(
-          decoration: new BoxDecoration(
-            boxShadow: <BoxShadow>[
-              CustomBoxShadow(
-                  color: Colors.black45,
-                  blurRadius: 3.0,
-                  blurStyle: BlurStyle.outer),
-            ],
-          ),
-          child: Column(
-            children: <Widget>[
-              Container(
-                  height: 1.9 * h / 3,
-                  width: w,
-                  child: Flexible(child: FittedBox(fit: BoxFit.cover, child: image, ))),
-              SizedBox(
-                height: 10.0,
-              ),
-              Container(
-                padding: EdgeInsets.only(left: 5.0, right: 5.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: <Widget>[
-                        ds['type'] != null
-                            ? Text(
-                                '${ds['type']}'.toUpperCase(),
-                                style: TextStyle(
-                                    fontSize: h / 25,
-                                    fontFamily: 'Quicksand',
-                                    fontWeight: FontWeight.bold),
-                              )
-                            : Text(''),
-                        Text('${ownerDS['name']}',
-                            style: TextStyle(
-                                fontSize: h / 24, fontFamily: 'Quicksand')),
-                      ],
-                    ),
-                    Text('${ds['name']}',
-                        style: TextStyle(
-                            fontSize: h / 21,
-                            fontFamily: 'Quicksand',
-                            fontWeight: FontWeight.bold)),
-                    Text("\$${ds['price']} per day",
-                        style: TextStyle(
-                            fontSize: h / 22, fontFamily: 'Quicksand')),
-                    Divider(height: 15),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: <Widget>[
-                        ButtonTheme(
-                          minWidth: w / 5,
-                          height: h / 13,
-                          child: FlatButton(
-                            materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap,
-                            child: Icon(
-                              Icons.add_shopping_cart,
-                              size: h / 13,
-                            ),
-                            onPressed: () {
-                              Navigator.pushNamed(
-                                context,
-                                RentalDetail.routeName,
-                                arguments: RentalDetailArgs(
-                                  Rental(rentalDS),
-                                  currentUser,
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                        ButtonTheme(
-                          minWidth: w / 5,
-                          height: h / 13,
-                          child: FlatButton(
-                            materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap,
-                            child: Icon(
-                              Icons.chat_bubble_outline,
-                              size: h / 13,
-                            ),
-                            onPressed: () {
-                              Navigator.pushNamed(
-                                context,
-                                Chat.routeName,
-                                arguments: ChatArgs(
-                                  rentalDS,
-                                  currentUser,
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    )
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }));
   }
 
   Widget searchPage() {
@@ -1945,12 +1829,14 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
                             var dateString = '';
 
-                            if (days == 0) {
-                              dateString =
-                                  '$hours hours, $minutes min until pickup';
-                            } else {
-                              dateString =
-                                  '$days days, $hours hours, $minutes min until pickup';
+                            if (rentalStatus != RentalPhase.past) {
+                              if (days == 0) {
+                                dateString =
+                                    '$hours hours, $minutes min until pickup';
+                              } else {
+                                dateString =
+                                    '$days days, $hours hours, $minutes min until pickup';
+                              }
                             }
 
                             return Container(
@@ -2131,14 +2017,8 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             ],
                           ),
                           StreamBuilder(
-                            stream: Firestore.instance
-                                .collection('rentals')
-                                .where('owner',
-                                    isEqualTo: Firestore.instance
-                                        .collection('users')
-                                        .document(currentUser.id))
-                                .where('requesting', isEqualTo: true)
-                                .snapshots(),
+                            stream: DB().getUnreadItemOwnerRentals(
+                                userId: currentUser.id),
                             builder: (BuildContext context,
                                 AsyncSnapshot<QuerySnapshot> snapshot) {
                               if (snapshot.hasError) {
@@ -2553,105 +2433,6 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget buildRentalsList(bool requesting) {
-    int tileRows = MediaQuery.of(context).size.width > 500 ? 3 : 2;
-
-    return Expanded(
-      child: StreamBuilder<QuerySnapshot>(
-        stream: Firestore.instance
-            .collection('rentals')
-            .where('renter',
-                isEqualTo: Firestore.instance
-                    .collection('users')
-                    .document(currentUser.id))
-            .snapshots(),
-        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.hasError) {
-            return new Text('${snapshot.error}');
-          }
-          switch (snapshot.connectionState) {
-            case ConnectionState.waiting:
-
-            default:
-              if (snapshot.hasData) {
-                List<DocumentSnapshot> items = snapshot.data.documents
-                    .where((d) =>
-                        requesting ^ (d['status'] == 0 || d['status'] == 1))
-                    .toList();
-                return GridView.count(
-                    padding: EdgeInsets.all(20.0),
-                    mainAxisSpacing: 15,
-                    shrinkWrap: true,
-                    crossAxisCount: tileRows,
-                    childAspectRatio: (2 / 3),
-                    crossAxisSpacing: MediaQuery.of(context).size.width / 20,
-                    children: items.map((DocumentSnapshot rentalDS) {
-                      if (snapshot.hasData) {
-                        DocumentReference itemDR = rentalDS['item'];
-
-                        return StreamBuilder<DocumentSnapshot>(
-                          stream: itemDR.snapshots(),
-                          builder: (BuildContext context,
-                              AsyncSnapshot<DocumentSnapshot> snapshot) {
-                            if (snapshot.hasError) {
-                              return new Text('${snapshot.error}');
-                            }
-                            switch (snapshot.connectionState) {
-                              case ConnectionState.waiting:
-
-                              default:
-                                if (snapshot.hasData) {
-                                  DocumentSnapshot itemDS = snapshot.data;
-                                  DocumentReference ownerDR = rentalDS['owner'];
-
-                                  return StreamBuilder<DocumentSnapshot>(
-                                    stream: ownerDR.snapshots(),
-                                    builder: (BuildContext context,
-                                        AsyncSnapshot<DocumentSnapshot>
-                                            snapshot) {
-                                      if (snapshot.hasError) {
-                                        return new Text('${snapshot.error}');
-                                      }
-                                      switch (snapshot.connectionState) {
-                                        case ConnectionState.waiting:
-
-                                        default:
-                                          if (snapshot.hasData) {
-                                            DocumentSnapshot ownerDS =
-                                                snapshot.data;
-
-                                            String created = 'Created: ' +
-                                                timeago.format(
-                                                    rentalDS['created']
-                                                        .toDate());
-
-                                            return cardItemRentals(
-                                                itemDS, ownerDS, rentalDS);
-                                          } else {
-                                            return Container();
-                                          }
-                                      }
-                                    },
-                                  );
-                                } else {
-                                  return Container();
-                                }
-                            }
-                          },
-                        );
-                      } else {
-                        return Container();
-                      }
-                    }).toList());
-              } else {
-                return Container();
-              }
-          }
-        },
-      ),
-    );
-  }
-
   Widget buildMessagesList() {
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
@@ -2755,11 +2536,16 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ),
           ),
           //subtitle: Text( '$lastActive\n$itemName\n$lastMessageCrop'),
-          onTap: () {
+          onTap: () async {
+            DocumentSnapshot snap = await Firestore.instance
+                .collection('users')
+                .document(otherUserID)
+                .get();
+
             Navigator.pushNamed(
               context,
               Chat.routeName,
-              arguments: ChatArgs(otherUserID, currentUser),
+              arguments: ChatArgs(currentUser, User(snap)),
             );
           },
         ),
@@ -2966,7 +2752,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
             .collection('users')
             .document(currentUser.id)
             .updateData({
-          'pushToken': FieldValue.arrayRemove([deviceToken]),
+          'pushToken': '',
         });
 
         widget.auth.signOut().then((_) {
